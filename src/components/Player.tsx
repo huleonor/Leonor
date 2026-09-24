@@ -58,6 +58,10 @@ export function Player({ song, settings, update, links, onExit }: Props) {
   }), [song]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (import.meta.env.DEV) (window as unknown as { __engine: Engine }).__engine = engine;
+  }, [engine]);
+
+  useEffect(() => {
     engine.setOptions({
       speed: settings.speed, wait: settings.wait, hands, listen,
       accompaniment: settings.accompaniment, localSound: settings.localSound, lenient: settings.input === 'mic',

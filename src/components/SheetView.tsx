@@ -54,7 +54,7 @@ export function SheetView({ engine, onTap }: Props) {
       clickListener: (el) => {
         if (engine.playing) return;
         const start = (el as { startChar?: number }).startChar;
-        const tok = score.tokens.find(tk => tk.start === start);
+        const tok = score.tokens.find(tk => tk.start === start || tk.start === (start ?? -9) + 1);
         if (tok) engine.seek(tok.time - 0.4);
       },
     });
@@ -72,7 +72,8 @@ export function SheetView({ engine, onTap }: Props) {
       }
     }
     const noteTokens = score.tokens.filter(tk => !tk.rest);
-    const elsOf = (tk: AbcToken) => svgByStart.get(tk.start) ?? [];
+    // abcjs counts the space before a note that follows a bar line or a voice tag as part of it.
+    const elsOf = (tk: AbcToken) => svgByStart.get(tk.start) ?? svgByStart.get(tk.start - 1) ?? [];
     const tokensByNote = new Map<number, AbcToken[]>();
     for (const tk of noteTokens) for (const id of tk.ids) {
       const list = tokensByNote.get(id) ?? [];

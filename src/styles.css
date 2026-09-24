@@ -499,8 +499,10 @@ button:disabled { opacity: .45; cursor: default; }
   .bar { flex-wrap: wrap; padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px; row-gap: 8px; }
   .bar-title { flex-basis: calc(100% - 52px); }
   .bar .seg span { display: none; }
-  .bar .speeds { flex: 1; }
-  .bar .speeds button { flex: 1; min-width: 0; }
+  /* Speeds get their own full-width row: four 44px targets that never squeeze. */
+  .bar .speeds { order: 5; flex: 1 1 100%; }
+  .bar .speeds button { flex: 1; min-width: 44px; }
+  .bar .chip, .input-tag { flex: 1; justify-content: center; }
   .rotate-hint { display: block; }
   .klabel { display: none; }
   .key.b .kname { display: none; }
