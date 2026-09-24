@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-24T12:00:00Z",
+  "title": "Design System: Hugo's Piano",
+  "extensions": {
+    "colorMeta": {
+      "booth-black": { "role": "neutral", "displayName": "Booth Black", "canonical": "#0f0d0b", "tonalRamp": ["#0f0d0b", "#14110e", "#17130f", "#1d1712", "#2a2520", "#3a3632", "#5c574f", "#8a847a"] },
+      "strip-base": { "role": "neutral", "displayName": "Strip Base", "canonical": "#14110e", "tonalRamp": ["#0a0907", "#14110e", "#221d18", "#342d26", "#4d453b", "#6d6457", "#a1978a", "#e0d8cc"] },
+      "can-stock": { "role": "neutral", "displayName": "Can Stock", "canonical": "#17130f", "tonalRamp": ["#0c0a08", "#17130f", "#1d1712", "#2a231c", "#3e352b", "#5c5145", "#958a7c", "#ddd4c7"] },
+      "can-stock-lit": { "role": "neutral", "displayName": "Can Stock Lit", "canonical": "#1d1712", "tonalRamp": ["#0c0a08", "#17130f", "#1d1712", "#2a231c", "#3e352b", "#5c5145", "#958a7c", "#ddd4c7"] },
+      "frame-edge": { "role": "neutral", "displayName": "Frame Edge", "canonical": "#3a3632", "tonalRamp": ["#141210", "#221f1c", "#2a2520", "#3a3632", "#55504a", "#77726b", "#a8a39b", "#e2ded7"] },
+      "frame-edge-soft": { "role": "neutral", "displayName": "Frame Edge Soft", "canonical": "#2a2520", "tonalRamp": ["#141210", "#1e1a16", "#2a2520", "#3a3632", "#55504a", "#77726b", "#a8a39b", "#e2ded7"] },
+      "title-card-white": { "role": "neutral", "displayName": "Title-Card White", "canonical": "#f2eee6", "tonalRamp": ["#2b2925", "#4a4741", "#6d6a63", "#97938b", "#c1bcb3", "#dcd7ce", "#ece6da", "#f2eee6"] },
+      "ivory-key": { "role": "neutral", "displayName": "Ivory Key", "canonical": "#ece6da", "tonalRamp": ["#2b2822", "#4a453c", "#6d675c", "#979083", "#c0b8aa", "#cfc6b6", "#d8cdbd", "#ece6da"] },
+      "halide-dim": { "role": "neutral", "displayName": "Halide Dim", "canonical": "#a39d93", "tonalRamp": ["#221f1c", "#3b3833", "#5c5850", "#77736c", "#8a847a", "#a39d93", "#c9c4bb", "#ece8e1"] },
+      "halide-faint": { "role": "neutral", "displayName": "Halide Faint", "canonical": "#8a847a", "tonalRamp": ["#221f1c", "#3b3833", "#5c5850", "#77736c", "#8a847a", "#a39d93", "#c9c4bb", "#ece8e1"] },
+      "film-base-amber": { "role": "primary", "displayName": "Film-Base Amber", "canonical": "#d9822b", "tonalRamp": ["#2e1a07", "#6b3f12", "#a85f1b", "#c2721f", "#d9822b", "#f3ab62", "#f2d2ac", "#fbeede"] },
+      "amber-lit": { "role": "primary", "displayName": "Amber Lit", "canonical": "#f3ab62", "tonalRamp": ["#2e1a07", "#6b3f12", "#a85f1b", "#c2721f", "#d9822b", "#f3ab62", "#f2d2ac", "#fbeede"] },
+      "amber-deep": { "role": "primary", "displayName": "Amber Deep", "canonical": "#a85f1b", "tonalRamp": ["#2e1a07", "#6b3f12", "#a85f1b", "#c2721f", "#d9822b", "#f3ab62", "#f2d2ac", "#fbeede"] },
+      "silver-halide-cyan": { "role": "secondary", "displayName": "Silver-Halide Cyan", "canonical": "#6fb7c4", "tonalRamp": ["#0f2629", "#245e69", "#2e5b64", "#3f8391", "#6fb7c4", "#a4dbe4", "#cde5ea", "#eaf6f8"] },
+      "cyan-lit": { "role": "secondary", "displayName": "Cyan Lit", "canonical": "#a4dbe4", "tonalRamp": ["#0f2629", "#245e69", "#2e5b64", "#3f8391", "#6fb7c4", "#a4dbe4", "#cde5ea", "#eaf6f8"] },
+      "cyan-deep": { "role": "secondary", "displayName": "Cyan Deep", "canonical": "#3f8391", "tonalRamp": ["#0f2629", "#245e69", "#2e5b64", "#3f8391", "#6fb7c4", "#a4dbe4", "#cde5ea", "#eaf6f8"] },
+      "splice-rust": { "role": "tertiary", "displayName": "Splice Rust", "canonical": "#c4533a", "tonalRamp": ["#2a100a", "#5a2317", "#8e3524", "#aa452f", "#c4533a", "#d9806b", "#ebb3a5", "#f8e3de"] },
+      "leader-grey": { "role": "neutral", "displayName": "Leader Grey", "canonical": "#77736c", "tonalRamp": ["#1a1714", "#34312d", "#4a4742", "#5f5b55", "#77736c", "#96928b", "#bbb8b2", "#e4e2de"] },
+      "leader-grey-dark": { "role": "neutral", "displayName": "Leader Grey Dark", "canonical": "#5f5b55", "tonalRamp": ["#1a1714", "#34312d", "#4a4742", "#5f5b55", "#77736c", "#96928b", "#bbb8b2", "#e4e2de"] },
+      "signal-green": { "role": "tertiary", "displayName": "Signal Green", "canonical": "#8fc98a", "tonalRamp": ["#122511", "#23461f", "#386a33", "#548f4e", "#72ad6c", "#8fc98a", "#bde0b9", "#e6f4e4"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Leader Numeral", "purpose": "Academy-leader countdown numerals only." },
+      "headline": { "displayName": "Title Card", "purpose": "Setup, pause and end title cards; the library wordmark at 22px." },
+      "title": { "displayName": "Can Title", "purpose": "Song names on reel cans." },
+      "title-bar": { "displayName": "Bar Title", "purpose": "Song name in the player top bar, single line with ellipsis." },
+      "body": { "displayName": "Sentence", "purpose": "Hints, warnings, the missing-file line and toasts; sentence case, read from the music stand." },
+      "control": { "displayName": "Control", "purpose": "Segmented controls, chips and buttons; uppercase, tabular figures." },
+      "label": { "displayName": "Edge Code", "purpose": "Section labels, edge codes, subtitles, table headings, input state; uppercase." },
+      "numeral": { "displayName": "Stat Numeral", "purpose": "End-card stats and can stat values." }
+    },
+    "shadows": [
+      { "name": "title-card", "value": "0 18px 40px rgba(0, 0, 0, .5)", "purpose": "Setup, pause and end cards floating over the strip." },
+      { "name": "toast", "value": "0 8px 24px rgba(0, 0, 0, .45)", "purpose": "Transient confirmations." },
+      { "name": "film-gate-vignette", "value": "inset 0 0 0 1px rgba(242, 238, 230, .08), inset 0 -40px 40px -24px rgba(15, 13, 11, .75)", "purpose": "Inside the photo frame on a reel can, so the photo sits in the reel." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(.16, 1, .3, 1)", "purpose": "Drawer slide-in (.28s), toast rise (.3s), photo scale on press (.5s)." },
+      { "name": "ease-snap", "value": "cubic-bezier(.2, .8, .2, 1)", "purpose": "Can press lift (.2s) and toggle thumb (.2s)." },
+      { "name": "state-quick", "value": ".12s to .15s", "purpose": "Border, background and colour changes on controls." },
+      { "name": "key-strike", "value": ".06s", "purpose": "Key fill on strike; near-instant so it tracks the playing hand." },
+      { "name": "wait-pulse", "value": "pulse .7s ease-in-out infinite alternate", "purpose": "Sheet gate cursor while waiting for a note." },
+      { "name": "reduced-motion", "value": "animation and transition durations .01ms", "purpose": "Respect prefers-reduced-motion for all UI animation." }
+    ],
+    "breakpoints": [
+      { "name": "landscape-narrow", "value": "max-width: 940px and landscape" },
+      { "name": "landscape-small", "value": "max-width: 760px and landscape" },
+      { "name": "landscape-short", "value": "max-height: 480px and landscape" },
+      { "name": "landscape-tiny", "value": "max-height: 360px and landscape" },
+      { "name": "portrait", "value": "orientation: portrait" },
+      { "name": "large", "value": "min-width: 1100px and min-height: 700px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one amber-filled action on a title card (Start, Continue).",
+      "html": "<button class=\"ds-primary\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M8 5v14l11-7z\"/></svg>Start</button>",
+      "css": ".ds-primary { height: 46px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 6px; background: var(--amber, #d9822b); color: var(--black, #0f0d0b); font-family: Archivo, system-ui, sans-serif; font-stretch: 87.5%; font-weight: 800; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; } .ds-primary:hover, .ds-primary:active { background: var(--amber-lit, #f3ab62); } .ds-primary:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary actions on title cards, outlined in frame edge.",
+      "html": "<button class=\"ds-ghost\">Restart</button>",
+      "css": ".ds-ghost { height: 46px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--edge, #3a3632); border-radius: 6px; color: var(--white, #f2eee6); font-family: Archivo, system-ui, sans-serif; font-stretch: 87.5%; font-weight: 800; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; transition: background-color .15s; } .ds-ghost:hover, .ds-ghost:active { background: var(--can-lit, #1d1712); } .ds-ghost:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: 2px; }"
+    },
+    {
+      "name": "Import Button",
+      "kind": "button",
+      "refersTo": "button-import",
+      "description": "The library's first-class action: white fill, pinned to the side panel.",
+      "html": "<button class=\"ds-import\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 4v11m-5-5 5 5 5-5M5 20h14\"/></svg>Import .mid</button>",
+      "css": ".ds-import { width: 240px; height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 6px; background: var(--white, #f2eee6); color: var(--black, #0f0d0b); font-family: Archivo, system-ui, sans-serif; font-stretch: 87.5%; font-weight: 800; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; } .ds-import:hover, .ds-import:active { background: var(--key, #ece6da); } .ds-import:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: 2px; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "nav",
+      "refersTo": "segmented",
+      "description": "Speed presets and the notes/sheet view toggle; the active cell fills amber.",
+      "html": "<div class=\"ds-seg\"><button>0.6×</button><button class=\"on\">0.8×</button><button>1×</button><button>1.2×</button></div>",
+      "css": ".ds-seg { display: inline-flex; border: 1px solid var(--edge, #3a3632); border-radius: 6px; overflow: hidden; background: var(--black, #0f0d0b); } .ds-seg button { min-width: 48px; height: 44px; padding: 0 6px; background: none; border: 0; color: var(--dim, #a39d93); font-family: Archivo, system-ui, sans-serif; font-stretch: 75%; font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color .12s, color .12s; } .ds-seg button + button { border-left: 1px solid var(--edge, #3a3632); } .ds-seg button.on { background: var(--amber, #d9822b); color: var(--black, #0f0d0b); } .ds-seg button:not(.on):hover { background: var(--can-lit, #1d1712); } .ds-seg button:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: -2px; }"
+    },
+    {
+      "name": "Wait Chip",
+      "kind": "chip",
+      "refersTo": "chip-on",
+      "description": "Toggle chip with a ring dot; on turns border, text and dot amber.",
+      "html": "<button class=\"ds-chip on\"><i></i>Wait</button>",
+      "css": ".ds-chip { height: 44px; padding: 0 12px; display: inline-flex; align-items: center; gap: 8px; background: var(--black, #0f0d0b); border: 1px solid var(--edge, #3a3632); border-radius: 6px; color: var(--dim, #a39d93); font-family: Archivo, system-ui, sans-serif; font-stretch: 75%; font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; } .ds-chip i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid currentColor; } .ds-chip.on { border-color: var(--amber, #d9822b); color: var(--amber, #d9822b); } .ds-chip.on i { background: var(--amber, #d9822b); } .ds-chip:hover { border-color: var(--faint, #8a847a); } .ds-chip:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: 2px; }"
+    },
+    {
+      "name": "Input Tag",
+      "kind": "custom",
+      "refersTo": "input-tag",
+      "description": "Live input edge code in the top bar: status dot, source, last note heard.",
+      "html": "<div class=\"ds-input-tag on\"><i></i><span>MIDI</span><b>A4</b></div>",
+      "css": ".ds-input-tag { height: 44px; padding: 0 10px; display: inline-flex; align-items: center; gap: 7px; background: var(--black, #0f0d0b); border: 1px solid var(--edge, #3a3632); border-radius: 6px; color: var(--dim, #a39d93); font-family: Archivo, system-ui, sans-serif; font-stretch: 62%; font-weight: 700; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-variant-numeric: tabular-nums; } .ds-input-tag i { width: 8px; height: 8px; border-radius: 50%; background: var(--rust, #c4533a); } .ds-input-tag.on i { background: var(--good, #8fc98a); } .ds-input-tag b { min-width: 3.2em; font-stretch: 87.5%; font-weight: 800; font-size: 15px; letter-spacing: .02em; color: var(--white, #f2eee6); text-transform: none; }"
+    },
+    {
+      "name": "Reel Can",
+      "kind": "card",
+      "refersTo": "reel-can",
+      "description": "A song in the library: vertical amber edge code, wide-caps title, graded photo in a film frame, stat grid.",
+      "html": "<article class=\"ds-can\"><span class=\"ds-can-edge\">Reel 01 · H. Zimmer</span><h3>Cornfield Chase</h3><p class=\"ds-can-sub\">Interstellar · 2014</p><div class=\"ds-frame\"></div><dl><div><dt>Length</dt><dd>2:06</dd></div><div><dt>Best</dt><dd>—</dd></div></dl></article>",
+      "css": ".ds-can { position: relative; width: 204px; height: 320px; display: flex; flex-direction: column; padding: 16px 14px 14px 30px; background: var(--can, #17130f); border: 1px solid var(--edge, #3a3632); border-radius: 8px; color: var(--white, #f2eee6); font-family: Archivo, system-ui, sans-serif; transition: border-color .2s, background-color .2s, transform .2s cubic-bezier(.2, .8, .2, 1); cursor: pointer; } .ds-can:hover { border-color: var(--faint, #8a847a); } .ds-can:active { border-color: var(--amber, #d9822b); background: var(--can-lit, #1d1712); transform: translateY(-2px); } .ds-can-edge { position: absolute; left: 7px; top: 14px; bottom: 14px; writing-mode: vertical-rl; transform: rotate(180deg); font-stretch: 62%; font-weight: 600; font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: var(--amber, #d9822b); white-space: nowrap; overflow: hidden; } .ds-can h3 { margin: 0; font-stretch: 125%; font-weight: 800; font-size: 19px; line-height: 1.12; letter-spacing: .14em; text-transform: uppercase; } .ds-can-sub { margin: 6px 0 0; font-stretch: 75%; font-weight: 500; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim, #a39d93); } .ds-frame { flex: 1; margin: 12px 0; border-radius: 3px; background: linear-gradient(160deg, #3a3129, #0f0d0b); box-shadow: inset 0 0 0 1px rgba(242, 238, 230, .08), inset 0 -40px 40px -24px rgba(15, 13, 11, .75); } .ds-can dl { display: grid; grid-template-columns: 1fr 1fr; margin: 0; border-top: 1px solid var(--edge, #3a3632); } .ds-can dl div { padding-top: 8px; } .ds-can dt { font-stretch: 62%; font-weight: 600; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--faint, #8a847a); } .ds-can dd { margin: 2px 0 0; font-stretch: 87.5%; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Title Card",
+      "kind": "card",
+      "refersTo": "title-card",
+      "description": "Setup, pause and end cards over the strip; the only resting surface with a shadow.",
+      "html": "<div class=\"ds-card\"><h2>Cornfield Chase</h2><p class=\"ds-card-sub\">Reel complete</p><dl class=\"ds-stats\"><div><dt>Precision</dt><dd>92%</dd></div><div><dt>Hits</dt><dd>184</dd></div><div><dt>Time</dt><dd>2:06</dd></div></dl></div>",
+      "css": ".ds-card { width: min(560px, 100%); padding: 20px 22px; background: var(--can, #17130f); border: 1px solid var(--edge, #3a3632); border-radius: 10px; box-shadow: 0 18px 40px rgba(0, 0, 0, .5); color: var(--white, #f2eee6); font-family: Archivo, system-ui, sans-serif; } .ds-card h2 { margin: 0; font-stretch: 125%; font-weight: 800; font-size: 26px; line-height: 1.1; letter-spacing: .2em; text-transform: uppercase; } .ds-card-sub { margin: 6px 0 0; font-stretch: 62%; font-weight: 600; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--dim, #a39d93); } .ds-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 16px 0 0; border-top: 1px solid var(--edge, #3a3632); } .ds-stats div { padding-top: 10px; } .ds-stats dt { font-stretch: 62%; font-weight: 600; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint, #8a847a); } .ds-stats dd { margin: 2px 0 0; font-weight: 800; font-size: 28px; font-variant-numeric: tabular-nums; } .ds-stats div:first-child dd { color: var(--amber, #d9822b); }"
+    },
+    {
+      "name": "Toggle",
+      "kind": "input",
+      "refersTo": "",
+      "description": "Settings switch in the drawer and setup card; checked fills amber.",
+      "html": "<label class=\"ds-row\"><span>Accompaniment</span><input type=\"checkbox\" class=\"ds-toggle\" checked></label>",
+      "css": ".ds-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 300px; color: var(--dim, #a39d93); font-family: Archivo, system-ui, sans-serif; font-stretch: 62%; font-weight: 600; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; cursor: pointer; } .ds-toggle { appearance: none; flex: none; width: 46px; height: 26px; margin: 0; border-radius: 13px; border: 1px solid var(--edge, #3a3632); background: var(--black, #0f0d0b); position: relative; cursor: pointer; transition: background-color .15s, border-color .15s; } .ds-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--faint, #8a847a); transition: transform .2s cubic-bezier(.2, .8, .2, 1), background-color .15s; } .ds-toggle:checked { background: var(--amber, #d9822b); border-color: var(--amber, #d9822b); } .ds-toggle:checked::after { transform: translateX(20px); background: var(--black, #0f0d0b); } .ds-toggle:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Projection Booth",
+    "overview": "Every song is a reel of 35mm film, and the keyboard is the projection gate. The library is a shelf of film cans with edge codes printed down their spine; the player is the strip itself, perforations travelling with the music, frame lines at every bar, notes falling onto a cream gate line where they meet the keys. The countdown is an Academy leader; a finished reel ends on a title card. The world rejects the neon-bars-on-navy, gamified-stars look of mainstream piano trainers.\n\nThe room is dark and warm: projection-booth black carries everything, and colour is reserved for meaning. Film-base amber is the right hand and the primary action; silver-halide cyan is the left hand; splice rust is a wrong or missing note. One family, Archivo, speaks in three widths: wide heavy tracked caps for titles, a narrow condensed voice for edge codes and labels, and a mid width for the sentences Hugo must read from the music stand.\n\nDensity follows the phone on a music stand in landscape: a thin top bar, a strip that owns the middle, a keyboard at the bottom, 44px targets throughout.",
+    "keyCharacteristics": [
+      "Warm near-black film base with 1px frame lines, never cool navy.",
+      "Two hand colours (amber right, cyan left) that also colour the keys they strike.",
+      "One type family, width as the voice: wdth 125 titles, 87.5 sentences, 75 controls, 62 edge codes.",
+      "Film furniture as real UI: sprocket perforations, edge codes, gate brackets, Academy leader.",
+      "Photography graded toward the print and held inside a film frame."
+    ],
+    "rules": [
+      { "name": "The Two Hands Rule", "body": "Amber belongs to the right hand and cyan to the left, everywhere: falling notes, struck keys, sheet noteheads. A note the app plays for the other hand keeps its hue at 28% opacity rather than switching colour.", "section": "colors" },
+      { "name": "The Amber Carries Action Rule", "body": "Amber is the only fill on an interactive control. Secondary actions are outlined in frame edge; the exceptions are the white import button, the library's first-class action, and the rust fill on a destructive confirm.", "section": "colors" },
+      { "name": "The Width Is the Voice Rule", "body": "Hierarchy comes from width and tracking, not from new families or sizes: wide caps title, narrow caps label, mid-width sentence case for anything read as a sentence.", "section": "typography" },
+      { "name": "The Sentences Stay Sentences Rule", "body": "Anything longer than a label (hints, warnings, the missing-file line, toasts) is sentence case at wdth 87.5 so it reads at a glance from the music stand.", "section": "typography" },
+      { "name": "The Tonal Step Rule", "body": "A surface that sits above another is one tonal step lighter and edged in 1px frame edge; shadows are reserved for things that genuinely float over the strip.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do colour right-hand material amber and left-hand material cyan in every view, and dim the app-played hand to 28% rather than recolouring it.",
+      "Do draw structure with 1px frame-edge lines and tonal steps from booth black up to can stock lit.",
+      "Do set titles in Archivo wdth 125, 800, tracked caps; labels and edge codes in wdth 62 caps; sentences in wdth 87.5 sentence case.",
+      "Do keep every control that matters mid-song at 44px or larger.",
+      "Do grade photography toward the print (warm, slightly desaturated, deeper blacks) and hold it inside a 3px-cornered film frame.",
+      "Do use dashed borders for \"not yet there\" states and rust for wrong or missing."
+    ],
+    "donts": [
+      "Don't use neon glowing bars on navy, gamified stars, or cool blue-black grounds.",
+      "Don't introduce a second type family; change width instead.",
+      "Don't fill a control with any colour other than amber (exceptions: the white import button, and rust for a destructive confirm).",
+      "Don't use cyan for chrome, links or actions; it belongs to the left hand.",
+      "Don't add shadows to resting surfaces; only title cards and toasts float."
+    ]
+  }
+}

@@ -11,7 +11,7 @@ interface Stop { time: number; x: number; line: number; }
 interface Box { top: number; bottom: number; }
 
 const INK = '#f2eee6';
-const COLORS = { R: '#e08a36', L: '#6fb7c4', auto: '#7d776e', miss: '#c4533a' };
+const COLORS = { R: '#d9822b', L: '#6fb7c4', auto: '#7d776e', miss: '#c4533a' };
 
 function rectIn(el: Element, host: HTMLElement) {
   const r = el.getBoundingClientRect(), h = host.getBoundingClientRect();
