@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hugo's Piano — Previews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,100..900&family=Archivo:wdth,wght@62..125,100..900&family=Martian+Mono:wdth,wght@75..112.5,300..600&family=Schibsted+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --page: #1c1c1e; --page-ink: #e9e7e3; --page-dim: #8d8a85; }
+  body { background: var(--page); color: var(--page-ink); font: 14px/1.5 "Schibsted Grotesk", system-ui, sans-serif; padding: 24px 16px 80px; }
+  .intro { max-width: 880px; margin: 0 auto 28px; }
+  .intro h1 { font-size: 20px; font-weight: 700; }
+  .intro p { color: var(--page-dim); max-width: 62ch; }
+  .dir { max-width: 880px; margin: 0 auto 64px; }
+  .dir-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .dir-head .tag { font: 600 11px/1 "Martian Mono", monospace; letter-spacing: .12em; padding: 6px 8px; border: 1px solid #444; border-radius: 4px; color: var(--page-dim); }
+  .dir-head h2 { font-size: 18px; font-weight: 700; }
+  .dir-head p { flex-basis: 100%; color: var(--page-dim); max-width: 70ch; }
+  .frames { display: grid; gap: 18px; }
+  .caption { font: 500 11px/1 "Martian Mono", monospace; letter-spacing: .1em; color: var(--page-dim); margin: 0 0 8px 4px; text-transform: uppercase; }
+  .scaler { width: 100%; }
+  .phone { width: 844px; height: 390px; border-radius: 44px; padding: 10px; background: #050505; box-shadow: 0 0 0 1px #333, 0 20px 50px rgba(0,0,0,.45); transform-origin: top left; }
+  .screen { position: relative; width: 824px; height: 370px; border-radius: 34px; overflow: hidden; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+  /* ---------- shared player skeleton ---------- */
+  .player { position: absolute; inset: 0; display: grid; grid-template-rows: 46px 1fr 104px; }
+  .lanes { position: relative; }
+  .lanes canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .kb { position: relative; }
+  .key { position: absolute; top: 0; }
+  .bar { display: flex; align-items: center; gap: 10px; padding: 0 22px 0 34px; }
+  .seg { display: flex; }
+  .grow { flex: 1; min-width: 0; }
+
+  /* ================= A — BOBINA 35MM ================= */
+  .film { --black: #0f0d0b; --amber: #d9822b; --cyan: #6fb7c4; --white: #f2eee6; --edge: #3a3632; --leader: #77736c;
+    background: var(--black); color: var(--white); font-family: "Archivo", sans-serif; }
+  .film .bar { border-bottom: 1px solid var(--edge); }
+  .film .back { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--edge); border-radius: 6px; }
+  .film .title { font-stretch: 125%; font-weight: 800; font-size: 15px; letter-spacing: .24em; line-height: 1; white-space: nowrap; }
+  .film .sub { font-stretch: 62%; font-weight: 500; font-size: 11px; letter-spacing: .16em; color: #a39d93; margin-top: 3px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .film .seg { border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
+  .film .seg button { font-stretch: 75%; font-weight: 700; font-size: 13px; letter-spacing: .06em; height: 34px; min-width: 44px; padding: 0 8px; color: #b9b2a7; font-variant-numeric: tabular-nums; }
+  .film .seg button + button { border-left: 1px solid var(--edge); }
+  .film .seg button.on { background: var(--amber); color: var(--black); }
+  .film .chip { font-stretch: 75%; font-weight: 700; font-size: 12px; letter-spacing: .14em; height: 34px; padding: 0 12px; border: 1px solid var(--amber); border-radius: 6px; color: var(--amber); display: flex; align-items: center; gap: 7px; }
+  .film .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+  .film .src { font-stretch: 75%; font-weight: 600; font-size: 12px; letter-spacing: .12em; color: #a39d93; display: flex; align-items: center; gap: 6px; }
+  .film .src i { width: 7px; height: 7px; border-radius: 50%; background: #7fc27a; }
+  .film .kb { background: var(--black); padding: 0 22px; border-top: 2px solid var(--white); }
+  .film .kbin { position: relative; height: 100%; }
+  .film .key.w { height: 100%; background: #ece6da; border-right: 1px solid var(--black); border-radius: 0 0 5px 5px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-stretch: 62%; font-weight: 600; font-size: 10px; letter-spacing: .08em; color: #8b857b; }
+  .film .key.b { height: 60%; background: #1d1a16; border: 1px solid #000; border-top: 0; border-radius: 0 0 4px 4px; z-index: 2; }
+  .film .key.w.onR { background: var(--amber); color: var(--black); }
+  .film .key.w.onL { background: var(--cyan); color: var(--black); }
+  .film .key.b.onR { background: #a85f1b; }
+  .film .key.b.onL { background: #3f8391; }
+
+  .film .lib { position: absolute; inset: 0; display: grid; grid-template-columns: 250px 1fr; }
+  .film .lib-side { padding: 26px 20px 22px 36px; border-right: 1px solid var(--edge); display: flex; flex-direction: column; gap: 18px; }
+  .film .brand { font-stretch: 125%; font-weight: 800; font-size: 22px; letter-spacing: .22em; line-height: 1.15; }
+  .film .brand small { display: block; font-stretch: 62%; font-weight: 500; font-size: 11px; letter-spacing: .2em; color: #a39d93; margin-top: 8px; }
+  .film .lab { font-stretch: 62%; font-weight: 600; font-size: 11px; letter-spacing: .2em; color: #a39d93; margin-bottom: 8px; }
+  .film .inputs { display: grid; gap: 6px; }
+  .film .inputs button { height: 38px; border: 1px solid var(--edge); border-radius: 6px; text-align: left; padding: 0 12px; font-stretch: 87.5%; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: space-between; }
+  .film .inputs button.on { border-color: var(--amber); color: var(--amber); }
+  .film .imp { margin-top: auto; height: 42px; background: var(--white); color: var(--black); border-radius: 6px; font-stretch: 87.5%; font-weight: 800; font-size: 13px; letter-spacing: .14em; }
+  .film .reel { display: flex; gap: 14px; padding: 26px 0 22px 18px; overflow: hidden; }
+  .film .can { flex: 0 0 196px; border: 1px solid var(--edge); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; position: relative; background: #15120f; }
+  .film .can.focus { border-color: var(--amber); background: #1b1611; }
+  .film .can .no { font-stretch: 62%; font-weight: 600; font-size: 11px; letter-spacing: .22em; color: var(--amber); }
+  .film .can h3 { font-stretch: 125%; font-weight: 800; font-size: 20px; letter-spacing: .16em; line-height: 1.12; margin: 10px 0 6px; text-transform: uppercase; }
+  .film .can .mv { font-stretch: 75%; font-weight: 500; font-size: 12px; letter-spacing: .1em; color: #a39d93; text-transform: uppercase; }
+  .film .can dl { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--edge); }
+  .film .can dl div { padding: 8px 0 0; }
+  .film .can dt { font-stretch: 62%; font-size: 10px; letter-spacing: .2em; color: #7d776e; }
+  .film .can dd { font-stretch: 87.5%; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .film .can .fig { flex: 1; margin: 12px 0; position: relative; border-left: 6px solid #0f0d0b; border-right: 6px solid #0f0d0b; background: #0f0d0b; }
+  .film .can .fig svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .film .perf { position: absolute; left: 0; right: 0; top: 0; height: 10px; background: radial-gradient(circle at 50% 50%, #0f0d0b 2.5px, transparent 3px) 0 0/14px 10px repeat-x; opacity: .8; }
+
+  /* ================= B — ANUÁRIO ================= */
+  .annual { --ground: #f5f4f6; --ink: #16181a; --seal: #dcddf3; --hair: #c9c7c4; --dim: #6b6d70;
+    background: radial-gradient(120% 90% at 0% 0%, #faf6f5 0%, transparent 55%), radial-gradient(120% 90% at 100% 100%, #eef3ef 0%, transparent 55%), var(--ground);
+    color: var(--ink); font-family: "Schibsted Grotesk", sans-serif; }
+  .annual .mono { font-family: "Martian Mono", monospace; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; }
+  .annual .bar { padding: 0 26px 0 34px; gap: 0; border-bottom: 1px solid var(--hair); }
+  .annual .bar > * { height: 100%; display: flex; align-items: center; padding: 0 12px; border-right: 1px solid var(--hair); }
+  .annual .bar > *:last-child { border-right: 0; padding-right: 0; }
+  .annual .bar > *:first-child { padding-left: 0; }
+  .annual .t1 { font-size: 16px; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; }
+  .annual .t1 span { color: var(--dim); font-weight: 400; margin-left: 6px; }
+  .annual .seg { gap: 4px; }
+  .annual .seg button { height: 30px; min-width: 40px; padding: 0 6px; border: 1px solid var(--ink); }
+  .annual .seg button.on { background: var(--ink); color: var(--ground); }
+  .annual .tog { display: flex; align-items: center; gap: 8px; }
+  .annual .tog b { width: 30px; height: 16px; border: 1px solid var(--ink); position: relative; }
+  .annual .tog b::after { content: ""; position: absolute; top: 2px; right: 2px; width: 10px; height: 10px; background: var(--ink); }
+  .annual .kb { padding: 0 26px 0 34px; border-top: 1px solid var(--ink); }
+  .annual .kbin { position: relative; height: 100%; }
+  .annual .key.w { height: 100%; border-right: 1px solid var(--hair); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-family: "Martian Mono", monospace; font-size: 8.5px; letter-spacing: .08em; color: var(--dim); }
+  .annual .key.w:first-child { border-left: 1px solid var(--hair); }
+  .annual .key.b { height: 58%; background: var(--ink); z-index: 2; }
+  .annual .key.w.onR, .annual .key.w.onL { background: var(--seal); color: var(--ink); box-shadow: inset 0 3px 0 var(--ink); }
+  .annual .key.b.onR, .annual .key.b.onL { background: #5a5d8a; }
+
+  .annual .lib { position: absolute; inset: 0; display: grid; grid-template-rows: 46px 1fr; }
+  .annual .plates { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); margin: 22px 26px 22px 34px; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+  .annual .plate { position: relative; padding: 16px 16px 14px; border-right: 1px solid var(--hair); display: flex; flex-direction: column; }
+  .annual .plate:last-child { border-right: 0; }
+  .annual .plate .num { display: flex; justify-content: space-between; }
+  .annual .plate .fig { flex: 1; margin: 12px 0; background-image: radial-gradient(var(--hair) 1px, transparent 1.2px); background-size: 8px 8px; position: relative; }
+  .annual .plate .fig svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .annual .plate h3 { font-size: 21px; font-weight: 400; letter-spacing: -.02em; line-height: 1.1; }
+  .annual .plate p { color: var(--dim); font-size: 13px; }
+  .annual .plate .cred { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--hair); display: flex; justify-content: space-between; }
+  .annual .plate.sel { background: rgba(220,221,243,.45); }
+  .annual .cross { position: absolute; width: 13px; height: 13px; }
+  .annual .cross::before, .annual .cross::after { content: ""; position: absolute; background: var(--ink); }
+  .annual .cross::before { left: 6px; top: 0; width: 1px; height: 13px; }
+  .annual .cross::after { top: 6px; left: 0; height: 1px; width: 13px; }
+  .annual .stamp { position: absolute; width: 96px; height: 96px; left: calc(25% - 48px); bottom: -30px; z-index: 3; }
+  .annual .stamp .core { inset: 19px !important; }
+  .annual .stamp .ring { width: 100%; height: 100%; animation: spin 25s linear infinite; }
+  .annual .stamp .core { position: absolute; inset: 22px; border-radius: 50%; background: var(--seal); display: grid; place-items: center; font-family: "Martian Mono", monospace; font-size: 9px; letter-spacing: .1em; text-align: center; line-height: 1.3; }
+  .annual .primary { background: var(--ink); color: var(--ground); height: 30px; padding: 0 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ================= C — TEMPESTADE ================= */
+  .storm { --paper: #fafafa; --ink: #0d0d0d; --silver: #c0c4c8; --rain: #9a9ea3;
+    background: var(--paper); color: var(--ink); font-family: "Anybody", sans-serif; }
+  .storm .bar { gap: 18px; padding: 0 26px 0 34px; }
+  .storm .title { font-weight: 900; font-stretch: 130%; font-size: 22px; letter-spacing: -.02em; line-height: 1; white-space: nowrap; }
+  .storm .title span { font-weight: 400; font-stretch: 80%; font-size: 13px; color: var(--rain); letter-spacing: .02em; margin-left: 8px; }
+  .storm .seg { gap: 2px; align-items: baseline; }
+  .storm .seg button { font-weight: 800; font-stretch: 70%; font-size: 22px; line-height: 1; padding: 0 5px; color: #a9adb1; font-variant-numeric: tabular-nums; }
+  .storm .seg button.on { color: var(--ink); font-stretch: 110%; }
+  .storm .word { font-weight: 900; font-stretch: 60%; font-size: 22px; line-height: 1; letter-spacing: .01em; }
+  .storm .word.off { color: #a9adb1; }
+  .storm .src { font-weight: 600; font-stretch: 75%; font-size: 13px; color: var(--rain); display: flex; align-items: center; gap: 6px; }
+  .storm .src i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
+  .storm .kb { padding: 0 26px 0 34px; }
+  .storm .kbin { position: relative; height: 100%; border-top: 3px solid var(--ink); }
+  .storm .key.w { height: 100%; border-right: 1.5px solid var(--ink); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; font-weight: 800; font-stretch: 60%; font-size: 11px; color: #b5b8bb; }
+  .storm .key.w:first-child { border-left: 1.5px solid var(--ink); }
+  .storm .key.b { height: 58%; background: var(--ink); z-index: 2; }
+  .storm .key.w.onR, .storm .key.w.onL { background: var(--ink); color: var(--paper); }
+  .storm .key.b.onR, .storm .key.b.onL { background: var(--silver); }
+
+  .storm .lib { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 230px; }
+  .storm .titles { padding: 22px 0 0 34px; overflow: hidden; position: relative; }
+  .storm .titles .row { font-weight: 900; line-height: .86; letter-spacing: -.03em; text-transform: uppercase; white-space: nowrap; color: #dfe1e3; }
+  .storm .titles .row.sel { color: var(--ink); }
+  .storm .titles .row.sel .l { display: inline-block; animation: drift 5s ease-in-out infinite; }
+  .storm .titles .top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; padding-right: 20px; }
+  .storm .titles .top b { font-weight: 900; font-stretch: 140%; font-size: 14px; letter-spacing: .02em; }
+  .storm .titles .top span { font-weight: 600; font-stretch: 75%; font-size: 13px; color: var(--rain); }
+  .storm .detail { border-left: 3px solid var(--ink); padding: 22px 26px 22px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .storm .detail .k { font-weight: 600; font-stretch: 75%; font-size: 12px; color: var(--rain); text-transform: uppercase; letter-spacing: .08em; }
+  .storm .detail .v { font-weight: 800; font-stretch: 90%; font-size: 17px; line-height: 1.15; }
+  .storm .go { margin-top: auto; background: var(--ink); color: var(--paper); height: 48px; font-weight: 900; font-stretch: 130%; font-size: 18px; letter-spacing: .02em; }
+  .storm .imp { border: 2px solid var(--ink); height: 40px; font-weight: 800; font-stretch: 90%; font-size: 14px; }
+  @keyframes drift { 0%,100% { letter-spacing: -.03em; } 50% { letter-spacing: .01em; } }
+</style>
+</head>
+<body>
+<header class="intro">
+  <h1>Hugo's Piano — 3 direções</h1>
+  <p>Cada direção mostra o player em landscape (telemóvel deitado no suporte) e a biblioteca. As notas são uma demo genérica em loop: contagem, notas a cair, um erro, e uma pausa do modo espera. Nomes das notas em Dó-Ré-Mi (vai haver opção para C-D-E). Durações e progresso nas bibliotecas são dados de exemplo.</p>
+</header>
+
+<!-- ============ A ============ -->
+<section class="dir" id="film">
+  <div class="dir-head"><span class="tag">A</span><h2>Bobina 35mm</h2>
+    <p>A música é uma bobina de filme a correr no projetor. Perfurações nas margens correm ao ritmo, números de borda marcam os compassos, a contagem é o leader 3-2-1 do cinema. Âmbar = mão direita, ciano = esquerda.</p></div>
+  <div class="frames">
+    <div><p class="caption">Player — a tocar</p><div class="scaler"><div class="phone"><div class="screen film">
+      <div class="player">
+        <div class="bar">
+          <button class="back" aria-label="Voltar"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M9 2 4 7l5 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          <div class="grow"><div class="title">TIME</div><div class="sub">INCEPTION · 2010 · BOBINA 01</div></div>
+          <div class="seg"><button>0.6×</button><button class="on">0.8×</button><button>1×</button><button>1.2×</button></div>
+          <div class="chip"><i></i>ESPERA</div>
+          <div class="src"><i></i>MIC</div>
+        </div>
+        <div class="lanes"><canvas data-style="film"></canvas></div>
+        <div class="kb"><div class="kbin" data-kb></div></div>
+      </div>
+    </div></div></div></div>
+    <div><p class="caption">Biblioteca</p><div class="scaler"><div class="phone"><div class="screen film">
+      <div class="lib">
+        <aside class="lib-side">
+          <div class="brand">HUGO'S<br>PIANO<small>PROJEÇÃO PRIVADA</small></div>
+          <div><div class="lab">ENTRADA</div>
+            <div class="inputs"><button class="on">Microfone <span>●</span></button><button>Bluetooth MIDI <span>○</span></button></div></div>
+          <button class="imp">+ IMPORTAR .MID</button>
+        </aside>
+        <div class="reel">
+          <article class="can focus"><div class="perf"></div><div class="no">BOBINA 01</div><h3>Time</h3><div class="mv">Inception · 2010</div><div class="fig" data-film-fig="0"></div>
+            <dl><div><dt>DURAÇÃO</dt><dd>4:35</dd></div><div><dt>MÃOS</dt><dd>2</dd></div><div><dt>MELHOR</dt><dd>0.8×</dd></div><div><dt>PROGRESSO</dt><dd>62%</dd></div></dl></article>
+          <article class="can"><div class="perf"></div><div class="no">BOBINA 02</div><h3>Cornfield Chase</h3><div class="mv">Interstellar · 2014</div><div class="fig" data-film-fig="1"></div>
+            <dl><div><dt>DURAÇÃO</dt><dd>2:06</dd></div><div><dt>MÃOS</dt><dd>2</dd></div><div><dt>MELHOR</dt><dd>—</dd></div><div><dt>PROGRESSO</dt><dd>0%</dd></div></dl></article>
+          <article class="can"><div class="perf"></div><div class="no">BOBINA 03</div><h3>He's a Pirate</h3><div class="mv">Piratas das Caraíbas · 2003</div><div class="fig" data-film-fig="2"></div>
+            <dl><div><dt>DURAÇÃO</dt><dd>1:18</dd></div><div><dt>MÃOS</dt><dd>2</dd></div><div><dt>MELHOR</dt><dd>—</dd></div><div><dt>PROGRESSO</dt><dd>0%</dd></div></dl></article>
+        </div>
+      </div>
+    </div></div></div></div>
+  </div>
+</section>
+
+<!-- ============ B ============ -->
+<section class="dir" id="annual">
+  <div class="dir-head"><span class="tag">B</span><h2>Anuário de design</h2>
+    <p>Cada música é uma prancha impressa: papel quase branco, tinta quase preta, linhas de 1px, cruzes de registo nos cantos, um selo lavanda. Mão direita = nota cheia, esquerda = contorno. Acertar pinta a nota de lavanda.</p></div>
+  <div class="frames">
+    <div><p class="caption">Player — a tocar</p><div class="scaler"><div class="phone"><div class="screen annual">
+      <div class="player">
+        <div class="bar">
+          <button class="mono" aria-label="Voltar">← Pl.</button>
+          <div class="grow"><div class="t1">Time <span>Inception, 2010</span></div></div>
+          <div class="seg mono"><button>0.6</button><button class="on">0.8</button><button>1.0</button><button>1.2</button></div>
+          <div class="tog mono">Espera <b></b></div>
+          <div class="mono">Mic ●</div>
+        </div>
+        <div class="lanes"><canvas data-style="annual"></canvas></div>
+        <div class="kb"><div class="kbin" data-kb></div></div>
+      </div>
+    </div></div></div></div>
+    <div><p class="caption">Biblioteca</p><div class="scaler"><div class="phone"><div class="screen annual">
+      <div class="lib">
+        <div class="bar">
+          <div class="t1">Hugo's Piano <span>Anuário de prática</span></div>
+          <div class="grow"></div>
+          <div class="mono">Entrada: Mic ●</div>
+          <div><button class="primary mono">+ Importar MIDI</button></div>
+        </div>
+        <div class="plates">
+          <span class="cross" style="left:-7px;top:-7px"></span><span class="cross" style="right:-7px;top:-7px"></span>
+          <span class="cross" style="left:-7px;bottom:-7px"></span><span class="cross" style="right:-7px;bottom:-7px"></span>
+          <article class="plate sel"><div class="num mono"><span>Pl. 01</span><span>62%</span></div><div class="fig" data-fig="0"></div><h3>Time</h3><p>Inception, 2010</p><div class="cred mono"><span>4:35</span><span>2 mãos</span></div></article>
+          <article class="plate"><div class="num mono"><span>Pl. 02</span><span>—</span></div><div class="fig" data-fig="1"></div><h3>Cornfield Chase</h3><p>Interstellar, 2014</p><div class="cred mono"><span>2:06</span><span>2 mãos</span></div></article>
+          <article class="plate"><div class="num mono"><span>Pl. 03</span><span>—</span></div><div class="fig" data-fig="2"></div><h3>He's a Pirate</h3><p>Piratas das Caraíbas, 2003</p><div class="cred mono"><span>1:18</span><span>2 mãos</span></div></article>
+          <article class="plate"><div class="num mono"><span>Pl. 04</span><span>—</span></div><div class="fig" data-fig="3"></div><h3>Now We Are Free</h3><p>Gladiator, 2000</p><div class="cred mono"><span>—</span><span>2 mãos</span></div></article>
+          <div class="stamp"><svg class="ring" viewBox="0 0 110 110"><defs><path id="circ" d="M55,55 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"/></defs><text font-family="Martian Mono" font-size="8.4" letter-spacing="2.2" fill="#16181a"><textPath href="#circ">HUGO'S PIANO · ANUÁRIO DE PRÁTICA · 2026 ·</textPath></text></svg><div class="core">EST.<br>2026</div></div>
+        </div>
+      </div>
+    </div></div></div></div>
+  </div>
+</section>
+
+<!-- ============ C ============ -->
+<section class="dir" id="storm">
+  <div class="dir-head"><span class="tag">C</span><h2>Tempestade de letras</h2>
+    <p>As notas são as próprias letras (DÓ, RÉ, MI…) a cair, esticadas pela duração. Ao tocar, a letra passa a prateado e desfaz-se em chuva. Nota falhada fica em contorno. Tudo tinta preta em papel branco; a tipografia é a matéria.</p></div>
+  <div class="frames">
+    <div><p class="caption">Player — a tocar</p><div class="scaler"><div class="phone"><div class="screen storm">
+      <div class="player">
+        <div class="bar">
+          <div class="grow"><div class="title">← TIME<span>Inception</span></div></div>
+          <div class="seg"><button>.6</button><button class="on">.8</button><button>1</button><button>1.2</button></div>
+          <div class="word">ESPERA</div>
+          <div class="src"><i></i>mic</div>
+        </div>
+        <div class="lanes"><canvas data-style="storm"></canvas></div>
+        <div class="kb"><div class="kbin" data-kb></div></div>
+      </div>
+    </div></div></div></div>
+    <div><p class="caption">Biblioteca</p><div class="scaler"><div class="phone"><div class="screen storm">
+      <div class="lib">
+        <div class="titles">
+          <div class="top"><b>HUGO'S PIANO</b><span>5 músicas · mic ●</span></div>
+          <div class="row sel" style="font-stretch:150%;font-size:96px"><span class="l">TIME</span></div>
+          <div class="row" style="font-stretch:62%;font-size:64px">CORNFIELD CHASE</div>
+          <div class="row" style="font-stretch:80%;font-size:58px">HE'S A PIRATE</div>
+          <div class="row" style="font-stretch:55%;font-size:58px">NOW WE ARE FREE</div>
+        </div>
+        <aside class="detail">
+          <div><div class="k">Filme</div><div class="v">Inception, 2010</div></div>
+          <div><div class="k">Duração · Mãos</div><div class="v">4:35 · duas</div></div>
+          <div><div class="k">Progresso</div><div class="v">62% a 0.8×</div></div>
+          <button class="go">TOCAR</button>
+          <button class="imp">+ importar .mid</button>
+        </aside>
+      </div>
+    </div></div></div></div>
+  </div>
+</section>
+
+<script>
+// ---------- scaling phones to page width ----------
+function fit() {
+  document.querySelectorAll('.scaler').forEach(s => {
+    const k = Math.min(1, s.clientWidth / 844);
+    const p = s.firstElementChild; p.style.transform = `scale(${k})`;
+    s.style.height = (390 * k) + 'px';
+  });
+}
+addEventListener('resize', fit); fit();
+
+// ---------- demo song (generic, not from any film) ----------
+const LO = 45, HI = 76; // A2..E5
+const BPM = 72, SPB = 60 / BPM;
+const RH = [[69,0,1],[72,1,1],[76,2,1.5],[74,3.5,.5],[72,4,1],[71,5,1],[69,6,2],[67,8,1],[69,9,1],[71,10,1.5],[72,11.5,.5],[74,12,1],[72,13,1],[71,14,2]];
+const LH = [[45,0,4],[52,0,4],[53,4,4],[57,4,4],[48,8,4],[55,8,4],[50,12,4],[55,12,4]];
+const notes = [...RH.map(([m,s,d])=>({m,s,d,h:'R'})), ...LH.map(([m,s,d])=>({m,s,d,h:'L'}))];
+notes.forEach((n,i)=>{ n.id=i; n.miss = (n.h==='R' && n.s===5); });
+const WAIT_AT = 8; // beat where wait mode holds (pretend Hugo hesitates)
+const WAIT_LEN = 1.6; // seconds held
+const COUNT = 3; // seconds countdown
+const SONG = 17 * SPB;
+const LOOP = COUNT + SONG + WAIT_LEN + 1;
+const SOLF = ['DÓ','DÓ♯','RÉ','RÉ♯','MI','FÁ','FÁ♯','SOL','SOL♯','LÁ','LÁ♯','SI'];
+const isBlack = m => [1,3,6,8,10].includes(m % 12);
+
+function clock(t) { // t = seconds in loop -> {phase, beat, waiting, count}
+  const u = t % LOOP;
+  if (u < COUNT) return { phase:'count', count: 3 - Math.floor(u), frac: u % 1, beat: -((COUNT - u) / SPB) * 0 };
+  let s = u - COUNT; // song seconds incl. wait
+  const waitStart = WAIT_AT * SPB;
+  let waiting = false;
+  if (s > waitStart && s < waitStart + WAIT_LEN) { waiting = true; s = waitStart; }
+  else if (s >= waitStart + WAIT_LEN) s -= WAIT_LEN;
+  return { phase:'play', beat: s / SPB, waiting };
+}
+
+function layout(width) {
+  const whites = []; for (let m = LO; m <= HI; m++) if (!isBlack(m)) whites.push(m);
+  const ww = width / whites.length, bw = ww * 0.6, map = {};
+  whites.forEach((m, i) => map[m] = { x: i * ww, w: ww, black: false });
+  for (let m = LO; m <= HI; m++) if (isBlack(m)) { const l = map[m - 1]; map[m] = { x: l.x + ww - bw / 2, w: bw, black: true }; }
+  return map;
+}
+
+// ---------- keyboards ----------
+const kbs = [...document.querySelectorAll('[data-kb]')].map(el => {
+  const w = el.clientWidth || 760; const map = layout(w); const keys = {};
+  for (let m = LO; m <= HI; m++) {
+    const k = document.createElement('div'); const g = map[m];
+    k.className = 'key ' + (g.black ? 'b' : 'w');
+    k.style.left = g.x + 'px'; k.style.width = g.w + 'px';
+    if (!g.black && m % 12 === 0) k.textContent = 'DÓ' + (Math.floor(m / 12) - 1);
+    el.appendChild(k); keys[m] = k;
+  }
+  return { el, keys };
+});
+
+// ---------- lanes ----------
+const lanes = [...document.querySelectorAll('canvas[data-style]')].map(c => {
+  const kbin = c.closest('.player').querySelector('[data-kb]');
+  return { c, ctx: c.getContext('2d'), style: c.dataset.style, kbin, parts: [], spawned: new Set(), lastLoop: -1 };
+});
+
+function sizeCanvas(L) {
+  const dpr = devicePixelRatio || 1, r = L.c.getBoundingClientRect();
+  const W = L.c.offsetWidth, H = L.c.offsetHeight;
+  if (L.c.width !== W * dpr) { L.c.width = W * dpr; L.c.height = H * dpr; }
+  L.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // keyboard inner offset relative to canvas
+  const kr = L.kbin.offsetLeft + (L.kbin.parentElement.offsetLeft || 0);
+  const pad = parseFloat(getComputedStyle(L.kbin.parentElement).paddingLeft) || 0;
+  return { W, H, x0: pad, kw: L.kbin.clientWidth };
+}
+
+const PPS_BEATS = 3.2; // beats visible in lane height
+
+function draw(L, t) {
+  const { W, H, x0, kw } = sizeCanvas(L); const ctx = L.ctx; const map = layout(kw);
+  const ck = clock(t); const loopN = Math.floor(t / LOOP);
+  if (loopN !== L.lastLoop) { L.spawned.clear(); L.parts = []; L.lastLoop = loopN; }
+  const beat = ck.phase === 'play' ? ck.beat : -0.0001;
+  const ppb = H / PPS_BEATS; // pixels per beat
+  const Y = b => H - (b - beat) * ppb; // beat -> y (hit line at H)
+  const S = STYLES[L.style];
+  S.bg(ctx, W, H, beat, ppb, x0, kw, map, t);
+  for (const n of notes) {
+    const yb = Y(n.s), yt = Y(n.s + n.d);
+    if (yt > H || yb < -10) continue;
+    const g = map[n.m]; if (!g) continue;
+    const active = ck.phase === 'play' && beat >= n.s && beat < n.s + n.d && !n.miss;
+    const past = beat >= n.s + n.d;
+    const waitingNote = ck.waiting && Math.abs(n.s - WAIT_AT) < .01;
+    const state = n.miss && beat >= n.s ? 'miss' : waitingNote ? 'wait' : active ? 'hit' : past ? 'past' : 'next';
+    const x = x0 + g.x + (g.black ? 0 : 2), w = g.w - (g.black ? 0 : 4);
+    const top = Math.max(yt, -10), bot = Math.min(yb, H);
+    if (bot - top < 1) continue;
+    if (state === 'hit' && !L.spawned.has(n.id)) { L.spawned.add(n.id); S.spawn && S.spawn(L, n, x, w, H); }
+    S.note(ctx, n, x, top, w, bot - top, state, t, yb > H);
+  }
+  // particles
+  L.parts = L.parts.filter(p => (p.life -= 1/60) > 0);
+  L.parts.forEach(p => { p.vy += 0.18; p.x += p.vx; p.y += p.vy; S.part && S.part(ctx, p); });
+  S.hitline(ctx, W, H, x0, kw, ck, t);
+  if (ck.phase === 'count') S.count(ctx, W, H, ck.count, ck.frac, t);
+  if (ck.waiting) S.waitBadge && S.waitBadge(ctx, W, H, t);
+  // keyboard state
+  const kb = kbs.find(k => k.el === L.kbin);
+  for (let m = LO; m <= HI; m++) kb.keys[m].classList.remove('onR', 'onL');
+  if (ck.phase === 'play' && !ck.waiting) for (const n of notes) if (!n.miss && beat >= n.s && beat < n.s + n.d - .05) kb.keys[n.m].classList.add(n.h === 'R' ? 'onR' : 'onL');
+}
+
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function cross(ctx, x, y, s, c) { ctx.strokeStyle = c; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - s, y + .5); ctx.lineTo(x + s, y + .5); ctx.moveTo(x + .5, y - s); ctx.lineTo(x + .5, y + s); ctx.stroke(); }
+
+const STYLES = {
+  // ======== A: film ========
+  film: {
+    bg(ctx, W, H, beat, ppb, x0, kw) {
+      ctx.fillStyle = '#0f0d0b'; ctx.fillRect(0, 0, W, H);
+      // strip base
+      ctx.fillStyle = '#14110e'; ctx.fillRect(x0, 0, kw, H);
+      // bar frame lines + edge numbers
+      for (let b = Math.floor(beat / 4) * 4; b < beat + PPS_BEATS + 4; b += 4) {
+        const y = H - (b - beat) * ppb; if (y < 0 || y > H) continue;
+        ctx.fillStyle = '#2a2520'; ctx.fillRect(x0, Math.round(y), kw, 1);
+        ctx.save(); ctx.translate(W - 11, y - 6); ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = 'rgba(217,130,43,.9)'; ctx.font = '700 10px Archivo'; ctx.textAlign = 'left';
+        ctx.fillText('▸ ' + String(b / 4 + 1).padStart(2, '0'), 0, 0); ctx.restore();
+      }
+      // sprocket holes moving with music
+      const step = 22, off = ((beat * ppb) % step + step) % step;
+      ctx.fillStyle = '#3b342c';
+      for (let y = -step + off; y < H + step; y += step) {
+        rr(ctx, 9, y, 9, 13, 2.5); ctx.fill();
+        rr(ctx, W - 32, y, 9, 13, 2.5); ctx.fill();
+      }
+      // subtle grain
+      for (let i = 0; i < 40; i++) { ctx.fillStyle = `rgba(242,238,230,${Math.random() * .035})`; ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1); }
+    },
+    note(ctx, n, x, y, w, h, state) {
+      const R = n.h === 'R';
+      const base = R ? '#d9822b' : '#6fb7c4';
+      ctx.globalAlpha = state === 'past' ? .25 : 1;
+      if (state === 'miss') {
+        ctx.strokeStyle = base; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]); rr(ctx, x + .75, y + .75, w - 1.5, h - 1.5, 4); ctx.stroke(); ctx.setLineDash([]);
+      } else {
+        ctx.fillStyle = state === 'hit' ? (R ? '#f1a65a' : '#9ad6e0') : base;
+        rr(ctx, x, y, w, h, 4); ctx.fill();
+        if (state === 'hit' || state === 'wait') { ctx.fillStyle = '#f2eee6'; ctx.fillRect(x + 3, y + h - 3, w - 6, 2); }
+      }
+      if (h > 18 && state !== 'past') {
+        ctx.fillStyle = state === 'miss' ? base : '#0f0d0b'; ctx.font = `700 ${w > 30 ? 11 : 9}px Archivo`; ctx.textAlign = 'center';
+        ctx.fillText(SOLF[n.m % 12], x + w / 2, y + h - 7);
+      }
+      ctx.globalAlpha = 1;
+    },
+    hitline(ctx, W, H, x0, kw) {
+      ctx.fillStyle = '#f2eee6'; ctx.fillRect(x0, H - 2, kw, 2);
+      // aperture corners
+      ctx.strokeStyle = '#f2eee6'; ctx.lineWidth = 1.5;
+      [[x0 + 1, H - 16, 1], [x0 + kw - 1, H - 16, -1]].forEach(([x, y, d]) => { ctx.beginPath(); ctx.moveTo(x + d * 12, y); ctx.lineTo(x, y); ctx.lineTo(x, y + 12); ctx.stroke(); });
+    },
+    count(ctx, W, H, n, f) {
+      ctx.fillStyle = '#77736c'; ctx.fillRect(0, 0, W, H);
+      const cx = W / 2, cy = H / 2, r = Math.min(H * .42, 110);
+      // sweep wedge
+      ctx.fillStyle = '#5f5b55'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r * 1.6, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#1a1714'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, r * .8, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+      ctx.fillStyle = '#0f0d0b'; ctx.font = '800 150px Archivo'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(n, cx, cy + 6); ctx.textBaseline = 'alphabetic';
+      ctx.font = '600 11px Archivo'; ctx.fillText('TIME  ·  0.8×  ·  MODO ESPERA', cx, H - 16);
+    },
+    waitBadge(ctx, W, H, t) {
+      const a = .6 + .4 * Math.sin(t * 6);
+      ctx.fillStyle = `rgba(217,130,43,${a})`; ctx.font = '800 12px Archivo'; ctx.textAlign = 'center';
+      ctx.fillText('À ESPERA — TOCA  SOL', W / 2, H - 26);
+    }
+  },
+
+  // ======== B: annual ========
+  annual: {
+    bg(ctx, W, H, beat, ppb, x0, kw, map) {
+      ctx.clearRect(0, 0, W, H);
+      // dot matrix
+      ctx.fillStyle = 'rgba(22,24,26,.10)';
+      for (let y = 6; y < H; y += 8) for (let x = x0 + 4; x < x0 + kw; x += 8) ctx.fillRect(x, y, 1, 1);
+      // octave hairlines at C
+      ctx.fillStyle = '#c9c7c4';
+      for (const m in map) if (m % 12 === 0) ctx.fillRect(x0 + map[m].x, 0, 1, H);
+      ctx.fillRect(x0, 0, 1, H); ctx.fillRect(x0 + kw, 0, 1, H);
+      // bars
+      for (let b = Math.floor(beat / 4) * 4; b < beat + PPS_BEATS + 4; b += 4) {
+        const y = H - (b - beat) * ppb; if (y < 12 || y > H) continue;
+        ctx.fillStyle = '#c9c7c4'; ctx.fillRect(x0, Math.round(y), kw, 1);
+        ctx.fillStyle = '#6b6d70'; ctx.font = '400 8.5px "Martian Mono"'; ctx.textAlign = 'left';
+        ctx.fillText('C.' + String(b / 4 + 1).padStart(2, '0'), 6, y - 3);
+      }
+      cross(ctx, x0, 8, 6, '#16181a'); cross(ctx, x0 + kw, 8, 6, '#16181a');
+    },
+    note(ctx, n, x, y, w, h, state) {
+      const R = n.h === 'R';
+      ctx.globalAlpha = state === 'past' ? .3 : 1;
+      if (state === 'miss') {
+        ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+        ctx.strokeStyle = '#16181a'; ctx.lineWidth = 1;
+        for (let i = -h; i < w + h; i += 5) { ctx.beginPath(); ctx.moveTo(x + i, y); ctx.lineTo(x + i + h, y + h); ctx.stroke(); }
+        ctx.restore(); ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+      } else if (state === 'hit' || state === 'wait') {
+        ctx.fillStyle = '#dcddf3'; ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#16181a'; ctx.lineWidth = R ? 2 : 1; ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+      } else if (R) {
+        ctx.fillStyle = '#16181a'; ctx.fillRect(x, y, w, h);
+      } else {
+        ctx.fillStyle = '#f5f4f6'; ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#16181a'; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+      }
+      if (h > 16 && state !== 'past') {
+        ctx.fillStyle = (R && state === 'next') ? '#f5f4f6' : '#16181a';
+        ctx.font = '500 8px "Martian Mono"'; ctx.textAlign = 'center';
+        ctx.fillText(SOLF[n.m % 12], x + w / 2, y + h - 6);
+      }
+      ctx.globalAlpha = 1;
+    },
+    hitline(ctx, W, H, x0, kw) {
+      ctx.fillStyle = '#16181a'; ctx.fillRect(x0, H - 1, kw, 1);
+      cross(ctx, x0, H - 1, 6, '#16181a'); cross(ctx, x0 + kw, H - 1, 6, '#16181a');
+    },
+    count(ctx, W, H, n) {
+      ctx.fillStyle = '#f5f4f6'; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#16181a'; ctx.font = '400 190px "Schibsted Grotesk"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(n, W / 2, H / 2 + 8); ctx.textBaseline = 'alphabetic';
+      cross(ctx, W / 2 - 110, H / 2 - 90, 7, '#16181a'); cross(ctx, W / 2 + 110, H / 2 - 90, 7, '#16181a');
+      cross(ctx, W / 2 - 110, H / 2 + 90, 7, '#16181a'); cross(ctx, W / 2 + 110, H / 2 + 90, 7, '#16181a');
+      ctx.font = '400 9px "Martian Mono"'; ctx.fillText(`CONTAGEM ${4 - n}/3  ·  PL. 01  ·  0.8×`, W / 2, H - 14);
+    },
+    waitBadge(ctx, W, H) {
+      ctx.fillStyle = '#16181a'; ctx.fillRect(W / 2 - 92, H - 34, 184, 22);
+      ctx.fillStyle = '#f5f4f6'; ctx.font = '500 9px "Martian Mono"'; ctx.textAlign = 'center';
+      ctx.fillText('À ESPERA · TOCA SOL3', W / 2, H - 20);
+    }
+  },
+
+  // ======== C: storm ========
+  storm: {
+    bg(ctx, W, H) { ctx.fillStyle = '#fafafa'; ctx.fillRect(0, 0, W, H); },
+    note(ctx, n, x, y, w, h, state, t, clipped) {
+      const txt = SOLF[n.m % 12].replace('♯', '#');
+      ctx.save();
+      ctx.font = '900 100px Anybody';
+      const mt = ctx.measureText(txt), tw = mt.width, cap = mt.actualBoundingBoxAscent;
+      let jx = 0; if (state === 'wait') jx = Math.sin(t * 40) * 1.5;
+      ctx.translate(x + jx, y + h); ctx.scale((w - 2) / tw, Math.max(h, 8) / cap);
+      if (state === 'miss') { ctx.strokeStyle = '#0d0d0d'; ctx.lineWidth = 2.2 * tw / w; ctx.strokeText(txt, 1, 0); }
+      else { ctx.fillStyle = state === 'hit' || state === 'wait' ? '#c0c4c8' : state === 'past' ? '#e4e6e8' : (n.h === 'R' ? '#0d0d0d' : '#3d3f42'); ctx.fillText(txt, 1, 0); }
+      ctx.restore();
+    },
+    spawn(L, n, x, w, H) {
+      const txt = SOLF[n.m % 12];
+      for (let i = 0; i < 14; i++) L.parts.push({ ch: txt[i % txt.length], x: x + Math.random() * w, y: H - 4, vx: (Math.random() - .5) * 3, vy: -2 - Math.random() * 3.5, life: 1.1, s: 8 + Math.random() * 10 });
+    },
+    part(ctx, p) { ctx.globalAlpha = Math.max(0, Math.min(1, p.life)); ctx.fillStyle = '#9a9ea3'; ctx.font = `800 ${p.s}px Anybody`; ctx.fillText(p.ch, p.x, p.y); ctx.globalAlpha = 1; },
+    hitline() {},
+    count(ctx, W, H, n, f) {
+      ctx.fillStyle = '#fafafa'; ctx.fillRect(0, 0, W, H);
+      const word = ['', 'UM', 'DOIS', 'TRÊS'][n];
+      ctx.fillStyle = '#0d0d0d'; ctx.textAlign = 'center';
+      ctx.font = '900 160px Anybody'; const tw = ctx.measureText(word).width;
+      ctx.save(); ctx.translate(W / 2, H / 2 + 60);
+      const sx = Math.min(1, (W - 80) / tw); ctx.scale(sx, 1 + (1 - f) * .15);
+      // letters loosen as the second passes
+      let cx = -tw / 2; ctx.textAlign = 'left';
+      for (const ch of word) { const cw = ctx.measureText(ch).width; ctx.fillStyle = f > .75 ? '#c0c4c8' : '#0d0d0d'; ctx.fillText(ch, cx + (f * f) * (cx + cw / 2) * .25, (f > .75 ? (f - .75) * 120 * Math.sin(cx) : 0)); cx += cw; }
+      ctx.restore();
+    },
+    waitBadge(ctx, W, H) {
+      ctx.fillStyle = '#0d0d0d'; ctx.font = '900 26px Anybody'; ctx.textAlign = 'center';
+      ctx.fillText('SOL?', W / 2, H - 22);
+    }
+  }
+};
+
+// ---------- library figures (annual plates: mini piano-roll of each song) ----------
+document.querySelectorAll('[data-fig]').forEach((el, k) => {
+  const seed = [3, 7, 11, 5][k]; let s = seed;
+  const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  let svg = '<svg viewBox="0 0 100 60" preserveAspectRatio="none">';
+  for (let i = 0; i < 18; i++) { const x = rnd() * 92, y = rnd() * 52, w = 4 + rnd() * 10; svg += `<rect x="${x}" y="${y}" width="${w}" height="3" fill="${i % 3 ? '#16181a' : '#dcddf3'}" ${i % 3 ? '' : 'stroke="#16181a" stroke-width=".4"'}/>`; }
+  el.innerHTML = svg + '</svg>';
+});
+
+document.querySelectorAll('[data-film-fig]').forEach((el, k) => {
+  let s = [5, 9, 13][k]; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  let svg = '<svg viewBox="0 0 100 100" preserveAspectRatio="none">';
+  for (let y = 4; y < 100; y += 9) svg += `<rect x="-5" y="${y}" width="3" height="4" fill="#3b342c"/><rect x="102" y="${y}" width="3" height="4" fill="#3b342c"/>`;
+  for (let i = 0; i < 16; i++) { const x = 4 + rnd() * 84, y = rnd() * 88, h = 5 + rnd() * 14; svg += `<rect x="${x}" y="${y}" width="7" height="${h}" rx="1" fill="${i % 3 ? '#d9822b' : '#6fb7c4'}"/>`; }
+  for (let y = 0; y < 100; y += 25) svg += `<rect x="0" y="${y}" width="100" height=".6" fill="#2a2520"/>`;
+  el.innerHTML = svg + '</svg>';
+});
+
+document.fonts.ready.then(() => {
+  const t0 = performance.now();
+  (function loop(now) { const t = (now - t0) / 1000; lanes.forEach(L => draw(L, t)); requestAnimationFrame(loop); })(t0);
+});
+</script>
+</body>
+</html>
