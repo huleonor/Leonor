@@ -6,3 +6,5 @@ dist
 .impeccable/decision-*.json
 .impeccable/questions
 .env*
+HugosPiano.ipa
+ios/App/build

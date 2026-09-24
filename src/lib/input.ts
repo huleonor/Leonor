@@ -1,3 +1,4 @@
+import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
 import { PitchDetector } from 'pitchy';
 import { audioContext, setAudioSession } from './audio';
 
@@ -20,9 +21,20 @@ function emit(e: NoteEvent) { handlers.forEach(h => h(e)); }
 function setState(src: Source, s: LinkState) { state[src] = s; stateHandlers.forEach(h => h({ ...state })); }
 export const linkState = () => ({ ...state });
 
+/** Running inside the iPhone app (Capacitor): MIDI comes from CoreMIDI, not the browser. */
+export const isNative = Capacitor.isNativePlatform();
+
+interface NativeMidiPlugin {
+  start(): Promise<{ devices: string[] }>;
+  showBluetooth(): Promise<void>;
+  addListener(event: 'note', cb: (e: { type: 'on' | 'off'; midi: number; velocity: number }) => void): Promise<PluginListenerHandle>;
+  addListener(event: 'devices', cb: (e: { devices: string[] }) => void): Promise<PluginListenerHandle>;
+}
+const NativeMidi = registerPlugin<NativeMidiPlugin>('Midi');
+
 export const support = {
-  webMidi: typeof navigator !== 'undefined' && 'requestMIDIAccess' in navigator,
-  bluetooth: typeof navigator !== 'undefined' && 'bluetooth' in navigator,
+  webMidi: isNative || (typeof navigator !== 'undefined' && 'requestMIDIAccess' in navigator),
+  bluetooth: isNative || (typeof navigator !== 'undefined' && 'bluetooth' in navigator),
   mic: typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia,
   isIOS: typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)),
 };
@@ -55,8 +67,25 @@ function bindMidiInputs(quiet: boolean) {
   else setState('midi', quiet ? { status: 'off' } : { status: 'error', error: 'in.noMidiDevice' });
 }
 
+let nativeStarted = false;
+function nativeDevices(devices: string[], quiet: boolean) {
+  const real = devices.filter(n => !/network|session/i.test(n));
+  if (real.length) setState('midi', { status: 'on', label: real[0] });
+  else setState('midi', quiet ? { status: 'off' } : { status: 'error', error: 'in.noMidiDevice' });
+}
+async function connectNativeMidi(quiet: boolean) {
+  if (!nativeStarted) {
+    nativeStarted = true;
+    await NativeMidi.addListener('note', e => emit({ type: e.type, midi: e.midi, velocity: e.velocity, source: 'midi' }));
+    await NativeMidi.addListener('devices', e => nativeDevices(e.devices, true));
+  }
+  const { devices } = await NativeMidi.start();
+  nativeDevices(devices, quiet);
+}
+
 /** `quiet`: no error when nothing is plugged in yet; plugging a keyboard in later still connects it. */
 export async function connectWebMidi(quiet = false) {
+  if (isNative) return connectNativeMidi(quiet);
   if (!support.webMidi) {
     if (!quiet) setState('midi', { status: 'error', error: support.isIOS ? 'in.iosMidi' : 'in.noMidiSupport' });
     return;
@@ -79,6 +108,7 @@ export async function connectWebMidi(quiet = false) {
  * connects right away; otherwise it asks once, on the first tap anywhere (browsers need a gesture).
  */
 export async function watchForMidi() {
+  if (isNative) { connectNativeMidi(true); return; }
   if (!support.webMidi) return;
   let granted = false;
   try {
@@ -137,6 +167,13 @@ async function bleAttach(device: BluetoothDevice) {
 }
 
 export async function connectBle() {
+  if (isNative) {
+    // iOS pairs Bluetooth MIDI in a system sheet; the keyboard then arrives as a MIDI source.
+    await connectNativeMidi(true);
+    await NativeMidi.showBluetooth();
+    setState('ble', { status: 'off' });
+    return;
+  }
   if (!support.bluetooth) {
     setState('ble', {
       status: 'error',

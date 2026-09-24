@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // The iPhone app serves files from the bundle; a service worker has nothing to do there.
+      disable: process.env.CAP === '1',
       registerType: 'autoUpdate',
       includeAssets: ['icons/*', 'songs/*'],
       manifest: {
