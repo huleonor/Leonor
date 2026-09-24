@@ -30,9 +30,6 @@ class HugoBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(MidiPlugin())
     }
-
-    override var prefersStatusBarHidden: Bool { true }
-    override var prefersHomeIndicatorAutoHidden: Bool { true }
 }
 
 /// CoreMIDI for the web app: every connected source (USB cable, or a Bluetooth keyboard

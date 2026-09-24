@@ -8,3 +8,4 @@ dist
 .env*
 HugosPiano.ipa
 ios/App/build
+ios/App/build-sim

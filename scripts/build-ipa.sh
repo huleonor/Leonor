@@ -12,11 +12,13 @@ fi
 npm run build:ios
 
 cd ios/App
-rm -rf build Payload
+rm -rf build Payload && mkdir -p build
 xcodebuild -project App.xcodeproj -scheme App -configuration Release \
   -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-  build | grep -E "error|warning: .*Swift|BUILD" || true
+  build > build/xcodebuild.log 2>&1 || true
+grep -E "error:" build/xcodebuild.log | sort -u || true
+grep -q "BUILD SUCCEEDED" build/xcodebuild.log || { echo "Build failed (see ios/App/build/xcodebuild.log)"; exit 1; }
 
 APP=build/Build/Products/Release-iphoneos/App.app
 [ -d "$APP" ] || { echo "Build failed: no App.app"; exit 1; }
