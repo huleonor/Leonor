@@ -9,7 +9,7 @@ Live: https://hugos-piano.vercel.app
 - **Input** (library, left panel)
   - **Microphone**: works everywhere, including iPhone Chrome and Safari. It hears one note at a time; in a chord, one note counts.
   - **Bluetooth MIDI**: Android/desktop Chrome. On iPhone only inside the free **Bluefy** browser (Apple blocks Bluetooth and MIDI in Chrome/Safari on iOS).
-  - **USB / MIDI keyboard**: desktop or Android Chrome with a cable, or a keyboard paired in the OS.
+  - **USB / MIDI keyboard**: plug the cable in and it is picked up automatically (Android or desktop Chrome; the browser asks once for MIDI permission). iPhone browsers have no MIDI support at all, so a cable to an iPhone cannot reach a web app.
 - **Speed**: 0.6× / 0.8× / 1× / 1.2× in the top bar.
 - **Wait** (Espera): the song stops at each note until you play it.
 - **Notes / Sheet** (Notas / Pauta): falling notes, or the score with a cursor; played notes turn amber (right hand) or cyan (left hand), missed ones rust.
@@ -37,3 +37,5 @@ vercel deploy --prod
 ```
 
 The bundled Hans Zimmer pieces are fan transcriptions for personal practice (bitmidi.com, midisfree.com). Keep the link private.
+
+Cover photos are from Unsplash (free license): Quaritsch Photography, Raimond Klavins, Ash Amplifies, BoliviaInteligente, Alina Chernovolova, Susann Schuster, Ian Keefe, Bogdan Arhipov.

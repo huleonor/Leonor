@@ -37,32 +37,60 @@ function handleMidiMessage(status: number, d1: number, d2: number, source: Sourc
 // ---------------- Web MIDI (USB, or Bluetooth paired in the OS) ----------------
 let midiAccess: MIDIAccess | null = null;
 
-function bindMidiInputs() {
+/** Software loopback ports are not a keyboard. */
+const VIRTUAL_PORT = /through|iac driver|loopmidi|virtual/i;
+
+function bindMidiInputs(quiet: boolean) {
   if (!midiAccess) return;
   const names: string[] = [];
   midiAccess.inputs.forEach(input => {
+    if (input.state !== 'connected' || VIRTUAL_PORT.test(input.name ?? '')) return;
     names.push(input.name ?? '');
     input.onmidimessage = (ev: MIDIMessageEvent) => {
       const d = ev.data;
       if (d && d.length >= 3) handleMidiMessage(d[0], d[1], d[2], 'midi');
     };
   });
-  setState('midi', names.length ? { status: 'on', label: names[0] || undefined } : { status: 'error', error: 'in.noMidiDevice' });
+  if (names.length) setState('midi', { status: 'on', label: names[0] || undefined });
+  else setState('midi', quiet ? { status: 'off' } : { status: 'error', error: 'in.noMidiDevice' });
 }
 
-export async function connectWebMidi() {
+/** `quiet`: no error when nothing is plugged in yet; plugging a keyboard in later still connects it. */
+export async function connectWebMidi(quiet = false) {
   if (!support.webMidi) {
-    setState('midi', { status: 'error', error: support.isIOS ? 'in.iosMidi' : 'in.noMidiSupport' });
+    if (!quiet) setState('midi', { status: 'error', error: support.isIOS ? 'in.iosMidi' : 'in.noMidiSupport' });
     return;
   }
-  setState('midi', { status: 'connecting' });
+  if (midiAccess) { bindMidiInputs(quiet); return; }
+  if (!quiet) setState('midi', { status: 'connecting' });
   try {
     midiAccess = await navigator.requestMIDIAccess();
-    bindMidiInputs();
-    midiAccess.onstatechange = () => bindMidiInputs();
+    bindMidiInputs(quiet);
+    // Cable plugged in or pulled out: rebind without asking again.
+    midiAccess.onstatechange = () => bindMidiInputs(true);
   } catch {
-    setState('midi', { status: 'error', error: 'in.midiDenied' });
+    midiAccess = null;
+    setState('midi', quiet ? { status: 'off' } : { status: 'error', error: 'in.midiDenied' });
   }
+}
+
+/**
+ * Watch for a keyboard on a cable from the start. If MIDI permission is already granted this
+ * connects right away; otherwise it asks once, on the first tap anywhere (browsers need a gesture).
+ */
+export async function watchForMidi() {
+  if (!support.webMidi) return;
+  let granted = false;
+  try {
+    const p = await navigator.permissions.query({ name: 'midi' as PermissionName });
+    granted = p.state === 'granted';
+  } catch { /* permissions API without 'midi': fall through to the gesture */ }
+  if (granted) { connectWebMidi(true); return; }
+  const onFirstTap = () => {
+    window.removeEventListener('pointerdown', onFirstTap, true);
+    connectWebMidi(true);
+  };
+  window.addEventListener('pointerdown', onFirstTap, true);
 }
 
 // ---------------- Bluetooth LE MIDI (Web Bluetooth) ----------------

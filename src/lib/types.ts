@@ -23,6 +23,8 @@ export interface SongEntry {
   filmPt?: string;
   year?: number;
   composer?: string;
+  /** Cover photo (Unsplash) and its credit. */
+  image?: { src: string; by: string; alt: string };
   builtIn: boolean;
   /** Built-in slot whose MIDI is not shipped yet: the can asks for the file. */
   missing?: boolean;

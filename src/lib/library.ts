@@ -2,16 +2,22 @@ import { createStore, del, get, keys, set } from 'idb-keyval';
 import { parseSong } from './midi';
 import type { Progress, Settings, Song, SongEntry } from './types';
 
+const unsplash = (id: string) => `https://images.unsplash.com/${id}?w=560&h=440&fit=crop&crop=entropy&q=70&auto=format`;
+const cover = (id: string, by: string, alt: string) => ({ src: unsplash(id), by, alt });
+
+/** Shown on imported songs, which have no cover of their own. */
+export const GENERIC_COVER = cover('photo-1689506422730-6a8e09038b1b', 'Bogdan Arhipov', 'Close-up of piano keys in low light');
+
 /** Songs shipped with the app, served from /songs. */
 export const BUILT_IN: SongEntry[] = [
-  { id: 'cornfield-chase', title: 'Cornfield Chase', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, file: '/songs/cornfield-chase.mid' },
-  { id: 'hes-a-pirate', title: "He's a Pirate", film: 'Pirates of the Caribbean', filmPt: 'Piratas das Caraíbas', year: 2003, composer: 'K. Badelt · H. Zimmer', builtIn: true, file: '/songs/hes-a-pirate.mid' },
+  { id: 'cornfield-chase', image: cover('photo-1530797670390-7b7118ec3f3a', 'Quaritsch Photography', 'Corn stalks against a low sun'), title: 'Cornfield Chase', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, file: '/songs/cornfield-chase.mid' },
+  { id: 'hes-a-pirate', image: cover('photo-1625509972901-9c6c8e8d1069', 'Raimond Klavins', 'A tall ship in silhouette at sunset'), title: "He's a Pirate", film: 'Pirates of the Caribbean', filmPt: 'Piratas das Caraíbas', year: 2003, composer: 'K. Badelt · H. Zimmer', builtIn: true, file: '/songs/hes-a-pirate.mid' },
   // Wanted, but no usable free MIDI yet: each can asks for the file and keeps its credits.
-  { id: 'time', title: 'Time', film: 'Inception', filmPt: 'A Origem', year: 2010, composer: 'H. Zimmer', builtIn: true, missing: true },
-  { id: 'interstellar-main-theme', title: 'Interstellar Main Theme', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, missing: true },
-  { id: 'now-we-are-free', title: 'Now We Are Free', film: 'Gladiator', filmPt: 'Gladiador', year: 2000, composer: 'H. Zimmer · L. Gerrard', builtIn: true, missing: true },
-  { id: 'a-way-of-life', title: 'A Way of Life', film: 'The Last Samurai', filmPt: 'O Último Samurai', year: 2003, composer: 'H. Zimmer', builtIn: true, missing: true },
-  { id: 'maestro', title: 'Maestro', film: 'The Holiday', filmPt: 'O Amor Não Tira Férias', year: 2006, composer: 'H. Zimmer', builtIn: true, missing: true },
+  { id: 'time', image: cover('photo-1594848421556-19ee3f85d417', 'Ash Amplifies', 'A metal spinning top on a table'), title: 'Time', film: 'Inception', filmPt: 'A Origem', year: 2010, composer: 'H. Zimmer', builtIn: true, missing: true },
+  { id: 'interstellar-main-theme', image: cover('photo-1670884307458-4977f638a933', 'BoliviaInteligente', 'A black hole ringed with light'), title: 'Interstellar Main Theme', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, missing: true },
+  { id: 'now-we-are-free', image: cover('photo-1764138747893-a05666926e62', 'Alina Chernovolova', 'A hand brushing through wheat at sunset'), title: 'Now We Are Free', film: 'Gladiator', filmPt: 'Gladiador', year: 2000, composer: 'H. Zimmer · L. Gerrard', builtIn: true, missing: true },
+  { id: 'a-way-of-life', image: cover('photo-1615790469537-7c9d8e95c047', 'Susann Schuster', 'A gold and red samurai helmet'), title: 'A Way of Life', film: 'The Last Samurai', filmPt: 'O Último Samurai', year: 2003, composer: 'H. Zimmer', builtIn: true, missing: true },
+  { id: 'maestro', image: cover('photo-1510798831971-661eb04b3739', 'Ian Keefe', 'A wooden cottage in the snow at dusk'), title: 'Maestro', film: 'The Holiday', filmPt: 'O Amor Não Tira Férias', year: 2006, composer: 'H. Zimmer', builtIn: true, missing: true },
 ];
 
 const songStore = createStore('hugos-piano', 'songs');
@@ -63,7 +69,7 @@ export async function importMidi(file: File, slot?: SongEntry): Promise<SongEntr
   const entry: SongEntry = {
     id: 'imp-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     title: slot?.title ?? titleFromFile(file.name),
-    film: slot?.film, filmPt: slot?.filmPt, year: slot?.year, composer: slot?.composer,
+    film: slot?.film, filmPt: slot?.filmPt, year: slot?.year, composer: slot?.composer, image: slot?.image,
     slot: slot?.id,
     builtIn: false,
     addedAt: Date.now(),
@@ -108,16 +114,20 @@ export async function recordRun(id: string, accuracy: number, speed: number): Pr
 
 const SETTINGS_KEY = 'hugos-piano:settings';
 export const DEFAULT_SETTINGS: Settings = {
-  input: 'mic', lang: 'pt', naming: 'solfege', view: 'notes', speed: 0.8, wait: true, hands: 'both', accompaniment: true, localSound: false,
+  input: 'mic', lang: 'en', naming: 'letters', view: 'notes', speed: 0.8, wait: true, hands: 'both', accompaniment: true, localSound: false,
 };
 
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    if (raw) {
+      const saved = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } as Settings;
+      // The app is English-only now; older Portuguese settings also switch the note names.
+      if (saved.lang !== 'en') return { ...saved, lang: 'en', naming: 'letters' };
+      return saved;
+    }
   } catch { /* ignore */ }
-  const en = !/^pt\b/i.test(navigator.language || 'pt');
-  return { ...DEFAULT_SETTINGS, lang: en ? 'en' : 'pt', naming: en ? 'letters' : 'solfege' };
+  return { ...DEFAULT_SETTINGS };
 }
 
 export function saveSettings(s: Settings) {

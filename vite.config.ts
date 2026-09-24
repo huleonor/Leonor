@@ -12,7 +12,7 @@ export default defineConfig({
         name: "Hugo's Piano",
         short_name: "Hugo's Piano",
         description: 'Learn your songs with falling notes or the score, at your own pace.',
-        lang: 'pt-PT',
+        lang: 'en',
         start_url: '/',
         display: 'fullscreen',
         orientation: 'landscape',
@@ -32,6 +32,11 @@ export default defineConfig({
             urlPattern: ({ url }) => url.hostname === 'smpldsnds.github.io' || url.hostname === 'danigb.github.io',
             handler: 'CacheFirst',
             options: { cacheName: 'piano-samples', expiration: { maxEntries: 400 }, cacheableResponse: { statuses: [0, 200] } },
+          },
+          {
+            urlPattern: ({ url }) => url.hostname === 'images.unsplash.com',
+            handler: 'CacheFirst',
+            options: { cacheName: 'covers', expiration: { maxEntries: 60 }, cacheableResponse: { statuses: [0, 200] } },
           },
           {
             urlPattern: ({ url }) => url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com',

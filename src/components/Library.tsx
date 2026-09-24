@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { filmName, useI18n } from '../lib/i18n';
 import { support, type LinkState, type Source } from '../lib/input';
-import { getProgress, importMidi, listSongs, loadSong, removeSong } from '../lib/library';
+import { GENERIC_COVER, getProgress, importMidi, listSongs, loadSong, removeSong } from '../lib/library';
 import { formatSpeed, formatTime } from '../lib/names';
 import type { Progress, Settings, Song, SongEntry } from '../lib/types';
 import { IconBluetooth, IconClose, IconGear, IconImport, IconKeys, IconMic, IconTrash } from './Icons';
@@ -16,22 +16,13 @@ interface Props {
   onPick: () => void;
 }
 
-function Strip({ song }: { song?: Song }) {
-  if (!song) return <div className="strip" />;
-  const span = Math.min(20, song.duration - song.firstNoteTime);
-  const [lo, hi] = song.range;
-  const notes = song.notes.filter(n => n.time - song.firstNoteTime < span).slice(0, 160);
+/** The reel's picture: a still that stands for the song, framed like a film frame. */
+function Cover({ entry }: { entry: SongEntry }) {
+  const img = entry.image ?? GENERIC_COVER;
   return (
-    <div className="strip" aria-hidden="true">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-        {notes.map(n => {
-          const x = ((n.midi - lo) / Math.max(1, hi - lo)) * 94 + 1;
-          const y = 100 - ((n.time - song.firstNoteTime + n.duration) / span) * 100;
-          const h = Math.max(1.6, (n.duration / span) * 100);
-          return <rect key={n.id} x={x} y={y} width={4.2} height={h} rx={0.8} fill={n.hand === 'R' ? '#d9822b' : '#6fb7c4'} />;
-        })}
-      </svg>
-    </div>
+    <figure className="frame">
+      <img src={img.src} alt={img.alt} loading="lazy" decoding="async" draggable={false} />
+    </figure>
   );
 }
 
@@ -140,7 +131,8 @@ export function Library({ settings, update, links, connectInput, onOpen, onPick 
               <span className="edge">{t('reel')} {String(i + 1).padStart(2, '0')} ▸ {e.composer ?? t('imported')}</span>
               <h3>{e.title}</h3>
               <p className="can-sub">{film ? `${film}${e.year ? ' · ' + e.year : ''}` : t('imported')}</p>
-              {e.missing ? <div className="strip empty"><IconImport size={20} /><span>{t('missingSong')}</span></div> : <Strip song={s} />}
+              <Cover entry={e} />
+              {e.missing && <p className="missing-note"><IconImport size={16} />{t('missingSong')}</p>}
               <dl>
                 <div><dt>{t('length')}</dt><dd>{s ? formatTime(s.duration) : '—'}</dd></div>
                 <div><dt>{t('hands')}</dt><dd>{s ? (s.hands.length === 2 ? '2' : t(s.hands[0] === 'R' ? 'handsR' : 'handsL')) : '—'}</dd></div>
@@ -175,13 +167,6 @@ export function Library({ settings, update, links, connectInput, onOpen, onPick 
               <button className="icon-btn" onClick={() => setShowSettings(false)} aria-label={t('close')}><IconClose /></button>
             </div>
             <div className="row">
-              <span className="lab">{t('language')}</span>
-              <div className="seg">
-                <button className={settings.lang === 'pt' ? 'on' : ''} onClick={() => update({ lang: 'pt', naming: 'solfege' })}>Português</button>
-                <button className={settings.lang === 'en' ? 'on' : ''} onClick={() => update({ lang: 'en', naming: 'letters' })}>English</button>
-              </div>
-            </div>
-            <div className="row">
               <span className="lab">{t('naming')}</span>
               <div className="seg">
                 <button className={settings.naming === 'solfege' ? 'on' : ''} onClick={() => update({ naming: 'solfege' })}>Dó Ré Mi</button>
@@ -196,6 +181,7 @@ export function Library({ settings, update, links, connectInput, onOpen, onPick 
               <span><span className="lab">{t('localSound')}</span><small>{t('localSoundHint')}</small></span>
               <input type="checkbox" checked={settings.localSound} onChange={e => update({ localSound: e.target.checked })} />
             </label>
+            <p className="credits">{t('photoCredits')} {entries.filter(e => e.image).map(e => e.image!.by).filter((v, i, a) => a.indexOf(v) === i).join(', ')}, {GENERIC_COVER.by}.</p>
           </div>
         </div>
       )}

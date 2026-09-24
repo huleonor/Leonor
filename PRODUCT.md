@@ -30,18 +30,18 @@ A personal Simply Piano built around Hugo's own library: any MIDI file he import
 
 ## Capabilities and Constraints
 
-- Input: Bluetooth LE MIDI (Web Bluetooth, BLE-MIDI service), Web MIDI (USB or OS-paired), microphone pitch detection (monophonic; chords are unreliable by mic).
-- Song library: bundled songs plus MIDI (.mid) import, stored on the device.
+- Input: Bluetooth LE MIDI (Web Bluetooth, BLE-MIDI service), Web MIDI (USB or OS-paired, detected automatically when a cable is plugged in on Android/desktop Chrome), microphone pitch detection (monophonic; chords are unreliable by mic). iOS browsers expose no MIDI at all, so a cable to the iPhone cannot reach a web app.
+- Song library: bundled songs plus MIDI (.mid) import, stored on the device. Each reel shows a cover photo that evokes the song (free Unsplash photos; film posters are not used).
 - Playback speed presets: 0.6x, 0.8x, 1x, 1.2x.
 - Wait mode: the song only advances when the correct note(s) are played.
 - Falling-notes view (Synthesia-style) above a piano keyboard.
-- Bundled Hans Zimmer songs are fan MIDI transcriptions downloaded from bitmidi.com / midisfree.com (no official MIDI exists): Time (Inception), Now We Are Free (Gladiator), He's a Pirate (Pirates of the Caribbean, Badelt/Zimmer), Cornfield Chase and Interstellar Main Theme (Interstellar). Personal use; the deployed link is not to be shared publicly.
+- Bundled songs are fan MIDI transcriptions (no official MIDI exists): Cornfield Chase (midisfree.com) and He's a Pirate (bitmidi.com, Badelt/Zimmer). Time, Interstellar Main Theme, Now We Are Free, A Way of Life and Maestro are reels waiting for a file: tapping one imports a .mid into that slot. Personal use; the deployed link is not to be shared publicly.
 
 ## Brand Commitments
 
 - Name: "Hugo's Piano".
 - Reference the user named: Simply Piano (as a functional reference for the learning loop, not a look to copy).
-- Language: Portuguese (Portugal) UI copy.
+- Language: English-only UI (the user first asked for Portuguese plus English, then for English only). Note names default to C D E, with Dó Ré Mi as an option.
 
 ## Evidence on Hand
 
