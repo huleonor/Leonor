@@ -5,8 +5,8 @@ import { filmName, useI18n } from '../lib/i18n';
 import { onNote, type LinkState, type Source } from '../lib/input';
 import { pickRange } from '../lib/keys';
 import { recordRun } from '../lib/library';
-import { formatSpeed, formatTime } from '../lib/names';
-import type { HandsChoice, Settings, Song } from '../lib/types';
+import { formatSpeed, formatTime, noteName } from '../lib/names';
+import type { HandsChoice, NoteNaming, Settings, Song } from '../lib/types';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
 import { IconBack, IconBack5, IconFalling, IconPlay, IconRestart, IconSheet } from './Icons';
@@ -17,6 +17,21 @@ const SheetView = lazy(() => import('./SheetView').then(m => ({ default: m.Sheet
 
 const SPEEDS = [0.6, 0.8, 1, 1.2];
 const INSET = 26;
+const SOURCE_CODE: Record<Source, string> = { mic: 'MIC', ble: 'BT', midi: 'MIDI' };
+
+/** Edge code in the bar: which input is live and the last note it heard. */
+function InputTag({ kind, link, naming }: { kind: Settings['input']; link?: LinkState; naming: NoteNaming }) {
+  const { t } = useI18n();
+  const [heard, setHeard] = useState<number | null>(null);
+  useEffect(() => onNote(e => { if (e.type === 'on') setHeard(e.midi); }), []);
+  const on = kind !== 'none' && link?.status === 'on';
+  return (
+    <div className={`input-tag ${on ? 'on' : 'off'}`} role="status" aria-live="polite">
+      <i />
+      {on ? <>{SOURCE_CODE[kind as Source]}<b>{heard !== null ? noteName(heard, naming, true) : '—'}</b></> : t('noInputShort')}
+    </div>
+  );
+}
 
 interface Props {
   song: Song;
@@ -115,10 +130,10 @@ export function Player({ song, settings, update, links, onExit }: Props) {
           <p>{sub}</p>
         </div>
         <div className="seg" role="group" aria-label={t('viewNotes') + ' / ' + t('viewSheet')}>
-          <button className={settings.view === 'notes' ? 'on' : ''} onClick={() => update({ view: 'notes' })} aria-pressed={settings.view === 'notes'}>
+          <button className={settings.view === 'notes' ? 'on' : ''} onClick={() => update({ view: 'notes' })} aria-pressed={settings.view === 'notes'} aria-label={t('viewNotes')} title={t('viewNotes')}>
             <IconFalling size={16} /><span>{t('viewNotes')}</span>
           </button>
-          <button className={settings.view === 'sheet' ? 'on' : ''} onClick={() => update({ view: 'sheet' })} aria-pressed={settings.view === 'sheet'}>
+          <button className={settings.view === 'sheet' ? 'on' : ''} onClick={() => update({ view: 'sheet' })} aria-pressed={settings.view === 'sheet'} aria-label={t('viewSheet')} title={t('viewSheet')}>
             <IconSheet size={16} /><span>{t('viewSheet')}</span>
           </button>
         </div>
@@ -132,6 +147,7 @@ export function Player({ song, settings, update, links, onExit }: Props) {
         <button className={`chip ${settings.wait ? 'on' : ''}`} onClick={() => update({ wait: !settings.wait })} aria-pressed={settings.wait} disabled={listen}>
           <i />{t('wait')}
         </button>
+        {!listen && <InputTag kind={settings.input} link={settings.input !== 'none' ? links[settings.input as Source] : undefined} naming={settings.naming} />}
       </header>
 
       <div className="progress" onPointerDown={seekFromBar} role="slider" aria-label="progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(engine.progress() * 100)}>

@@ -5,11 +5,18 @@ let piano: SplendidGrandPiano | null = null;
 let loading: Promise<SplendidGrandPiano> | null = null;
 const held = new Map<number, () => void>();
 
+/**
+ * iOS audio session: 'playback' ignores the silent switch like a music app;
+ * 'play-and-record' is required while the microphone is listening.
+ */
+export function setAudioSession(type: 'playback' | 'play-and-record') {
+  const nav = navigator as Navigator & { audioSession?: { type: string } };
+  if (nav.audioSession) { try { nav.audioSession.type = type; } catch { /* ignore */ } }
+}
+
 export function audioContext(): AudioContext {
   if (!ctx) {
-    // iOS: play through the silent switch, like a music app would.
-    const nav = navigator as Navigator & { audioSession?: { type: string } };
-    if (nav.audioSession) { try { nav.audioSession.type = 'playback'; } catch { /* ignore */ } }
+    setAudioSession('playback');
     ctx = new AudioContext({ latencyHint: 'interactive' });
   }
   return ctx;

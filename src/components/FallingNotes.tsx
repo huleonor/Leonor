@@ -81,6 +81,7 @@ export function FallingNotes({ engine, lo, hi, naming, inset, onTap }: Props) {
         g?.ids.forEach(id => waitingIds.add(id));
       }
       const listen = engine.opts.listen;
+      const wrongFresh = performance.now() - engine.lastWrong.at < 450;
       for (let i = a; i < notes.length; i++) {
         const n = notes[i];
         const yb = Y(n.time);
@@ -124,13 +125,24 @@ export function FallingNotes({ engine, lo, hi, naming, inset, onTap }: Props) {
             ctx.fillStyle = C.white;
             ctx.fillRect(x + 3, bot - 3, w - 6, 2);
           }
+          if (waitingIds.has(n.id) && wrongFresh) {
+            ctx.strokeStyle = C.rust;
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.roundRect(x - 1, top - 1, w + 2, h + 2, 5); ctx.stroke();
+          }
           ctx.globalAlpha = 1;
         }
-        if (h > 20 && w > 14) {
+        if (h > 22 && w > 12) {
+          // Sized to the lane so it reads from the music stand.
+          const label = noteName(n.midi, naming);
+          let size = Math.max(11, Math.min(16, w * 0.62));
+          ctx.fontStretch = 'condensed';
+          ctx.font = `800 ${size}px Archivo, sans-serif`;
+          while (size > 10 && ctx.measureText(label).width > w - 3) { size -= 1; ctx.font = `800 ${size}px Archivo, sans-serif`; }
           ctx.fillStyle = st === MISS ? C.rust : C.black;
-          ctx.font = `700 ${w > 30 ? 11 : 9}px Archivo, sans-serif`;
           ctx.textAlign = 'center';
-          ctx.fillText(noteName(n.midi, naming), x + w / 2, bot - 8);
+          ctx.fillText(label, x + w / 2, bot - 7);
+          ctx.fontStretch = 'normal';
         }
       }
 
@@ -143,15 +155,30 @@ export function FallingNotes({ engine, lo, hi, naming, inset, onTap }: Props) {
         ctx.beginPath(); ctx.moveTo(gx + d * 12, H - 16); ctx.lineTo(gx, H - 16); ctx.lineTo(gx, H - 4); ctx.stroke();
       }
 
+      // What the app just heard that was wrong: a rust mark in that key's lane, at the gate.
+      if (wrongFresh && layout[engine.lastWrong.midi]) {
+        const g = layout[engine.lastWrong.midi];
+        ctx.fillStyle = C.rust;
+        ctx.fillRect(inset + g.x * kw + 1, H - 14, g.w * kw - 2, 12);
+      }
+
       if (engine.waiting) {
         const g = engine.groups[engine.gi];
         if (g) {
           const names = [...new Set(g.midis.map(m => noteName(m, naming)))].join(' + ');
-          const alpha = 0.65 + 0.35 * Math.sin(performance.now() / 160);
-          ctx.fillStyle = `rgba(217,130,43,${alpha})`;
-          ctx.font = '800 13px Archivo, sans-serif';
+          const text = t('waitingFor', { notes: names }).toUpperCase();
+          ctx.font = '800 17px Archivo, sans-serif';
+          const tw = ctx.measureText(text).width;
+          const bx = W / 2 - tw / 2 - 14, by = H - 58;
+          ctx.fillStyle = 'rgba(15,13,11,.88)';
+          ctx.beginPath(); ctx.roundRect(bx, by, tw + 28, 32, 6); ctx.fill();
+          ctx.strokeStyle = wrongFresh ? C.rust : C.amber;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          const alpha = 0.75 + 0.25 * Math.sin(performance.now() / 160);
+          ctx.fillStyle = wrongFresh ? C.rust : `rgba(243,171,98,${alpha})`;
           ctx.textAlign = 'center';
-          ctx.fillText(t('waitingFor', { notes: names }).toUpperCase(), W / 2, H - 26);
+          ctx.fillText(text, W / 2, by + 22);
         }
       }
       raf = requestAnimationFrame(frame);

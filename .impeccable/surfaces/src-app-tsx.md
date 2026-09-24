@@ -21,6 +21,6 @@ STORY: He sees the reel labels (film cans) of his songs, picks one, the Academy-
 
 FIRST VIEWPORT: Landscape. 46px top bar: back, title in wide caps with film + reel number, NOTAS/PAUTA toggle, speed 0.6/0.8/1/1.2 segmented, ESPERA chip. Film strip lanes fill the middle with sprocket margins; keyboard 104px at the bottom under a cream gate line. Tap the strip to pause: control overlay (continue, restart, back 5s, hands, listen).
 
-FORM: grounded candidate 6 of 7 (35mm film leader and projection), seed key 31c8a130. Raises: state restyles notes in place (split-flap); one type family + 1px lines (design annual); fixed label grid on each can (sneaker boxes); monumental countdown numerals (alphabet storm).
+FORM: grounded candidate 6 of 7 (35mm film leader and projection), seed key 31c8a130 (printed by the first concept-seed run; a second run, key 5a077ed9, was triggered by accident while re-reading output and was not used). The user then asked for live previews of three cards (A film, B design annual, C alphabet storm) and chose A. Raises: state restyles notes in place (split-flap); one type family + 1px lines (design annual); fixed label grid on each can (sneaker boxes); monumental countdown numerals (alphabet storm).
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

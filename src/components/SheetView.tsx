@@ -83,7 +83,9 @@ export function SheetView({ engine, onTap }: Props) {
     const paint = (tk: AbcToken) => {
       const st = tk.ids.map(id => engine.status[id]);
       let color = INK;
-      if (st.some(s => s === MISS)) color = COLORS.miss;
+      // A tied continuation is only "played" once the cursor reaches it.
+      if (tk.cont && tk.time > engine.time + 0.01) color = INK;
+      else if (st.some(s => s === MISS)) color = COLORS.miss;
       else if (st.every(s => s === HIT || s === AUTO)) {
         const mine = tk.ids.some(id => engine.user[id]) || engine.opts.listen;
         color = mine ? COLORS[tk.hand] : COLORS.auto;
@@ -93,7 +95,13 @@ export function SheetView({ engine, onTap }: Props) {
         el.querySelectorAll?.('path').forEach(p => ((p as SVGElement).style.fill = color));
       }
     };
-    const paintAll = () => noteTokens.forEach(paint);
+    const contTokens = noteTokens.filter(tk => tk.cont);
+    let ci = 0;
+    const paintAll = () => {
+      noteTokens.forEach(paint);
+      ci = contTokens.findIndex(tk => tk.time > engine.time + 0.01);
+      if (ci < 0) ci = contTokens.length;
+    };
     paintAll();
     const off = engine.on(e => {
       if (e.type !== 'status') return;
@@ -132,6 +140,7 @@ export function SheetView({ engine, onTap }: Props) {
     let raf = 0, lastLine = -1;
     const frame = () => {
       const now = engine.time;
+      while (ci < contTokens.length && contTokens[ci].time <= now + 0.01) paint(contTokens[ci++]);
       let a = 0, b = stops.length - 1;
       if (b < 0) return;
       while (a < b) { const m = (a + b + 1) >> 1; if (stops[m].time <= now) a = m; else b = m - 1; }

@@ -1,5 +1,5 @@
 import { PitchDetector } from 'pitchy';
-import { audioContext } from './audio';
+import { audioContext, setAudioSession } from './audio';
 
 export type Source = 'midi' | 'ble' | 'mic';
 export interface NoteEvent { type: 'on' | 'off'; midi: number; velocity: number; source: Source; }
@@ -157,11 +157,13 @@ export async function connectMic() {
     return;
   }
   setState('mic', { status: 'connecting' });
+  setAudioSession('play-and-record');
   try {
     micStream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
     });
   } catch {
+    setAudioSession('playback');
     setState('mic', { status: 'error', error: 'in.micBlocked' });
     return;
   }
@@ -222,6 +224,7 @@ export function disconnectMic() {
   window.clearInterval(micTimer);
   micStream?.getTracks().forEach(t => t.stop());
   micStream = null;
+  setAudioSession('playback');
   setState('mic', { status: 'off' });
 }
 

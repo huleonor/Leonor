@@ -25,11 +25,17 @@ export default function App() {
     if (links[kind].status !== 'on') connect(kind);
   };
 
+  // Reconnect the chosen input when a song opens (Bluetooth needs its own tap: the browser shows a picker).
+  const ensureInput = () => {
+    const k = settings.input;
+    if ((k === 'mic' || k === 'midi') && links[k].status === 'off') connect(k);
+  };
+
   return (
     <I18nContext.Provider value={i18n}>
       {song
         ? <Player song={song} settings={settings} update={update} links={links} onExit={() => setSong(null)} />
-        : <Library settings={settings} update={update} links={links} connectInput={connectInput} onOpen={s => { unlockAudio(); setSong(s); }} />}
+        : <Library settings={settings} update={update} links={links} connectInput={connectInput} onOpen={s => setSong(s)} onPick={() => { unlockAudio(); ensureInput(); }} />}
     </I18nContext.Provider>
   );
 }

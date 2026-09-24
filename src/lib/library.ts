@@ -4,8 +4,14 @@ import type { Progress, Settings, Song, SongEntry } from './types';
 
 /** Songs shipped with the app, served from /songs. */
 export const BUILT_IN: SongEntry[] = [
-  { id: 'cornfield-chase', title: 'Cornfield Chase', film: 'Interstellar', year: 2014, builtIn: true, file: '/songs/cornfield-chase.mid' },
-  { id: 'hes-a-pirate', title: "He's a Pirate", film: 'Pirates of the Caribbean', filmPt: 'Piratas das Caraíbas', year: 2003, builtIn: true, file: '/songs/hes-a-pirate.mid' },
+  { id: 'cornfield-chase', title: 'Cornfield Chase', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, file: '/songs/cornfield-chase.mid' },
+  { id: 'hes-a-pirate', title: "He's a Pirate", film: 'Pirates of the Caribbean', filmPt: 'Piratas das Caraíbas', year: 2003, composer: 'K. Badelt · H. Zimmer', builtIn: true, file: '/songs/hes-a-pirate.mid' },
+  // Wanted, but no usable free MIDI yet: each can asks for the file and keeps its credits.
+  { id: 'time', title: 'Time', film: 'Inception', filmPt: 'A Origem', year: 2010, composer: 'H. Zimmer', builtIn: true, missing: true },
+  { id: 'interstellar-main-theme', title: 'Interstellar Main Theme', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, missing: true },
+  { id: 'now-we-are-free', title: 'Now We Are Free', film: 'Gladiator', filmPt: 'Gladiador', year: 2000, composer: 'H. Zimmer · L. Gerrard', builtIn: true, missing: true },
+  { id: 'a-way-of-life', title: 'A Way of Life', film: 'The Last Samurai', filmPt: 'O Último Samurai', year: 2003, composer: 'H. Zimmer', builtIn: true, missing: true },
+  { id: 'maestro', title: 'Maestro', film: 'The Holiday', filmPt: 'O Amor Não Tira Férias', year: 2006, composer: 'H. Zimmer', builtIn: true, missing: true },
 ];
 
 const songStore = createStore('hugos-piano', 'songs');
@@ -25,7 +31,8 @@ export async function listSongs(): Promise<SongEntry[]> {
   } catch {
     // Private mode or blocked storage: the built-in reel still works.
   }
-  return [...BUILT_IN, ...imported];
+  const filled = BUILT_IN.map(b => (b.missing && imported.find(i => i.slot === b.id)) || b);
+  return [...filled, ...imported.filter(i => !i.slot)];
 }
 
 export async function loadSong(entry: SongEntry): Promise<Song> {
@@ -51,11 +58,13 @@ function titleFromFile(name: string): string {
   return base.charAt(0).toUpperCase() + base.slice(1);
 }
 
-export async function importMidi(file: File): Promise<SongEntry> {
+export async function importMidi(file: File, slot?: SongEntry): Promise<SongEntry> {
   const data = await file.arrayBuffer();
   const entry: SongEntry = {
     id: 'imp-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    title: titleFromFile(file.name),
+    title: slot?.title ?? titleFromFile(file.name),
+    film: slot?.film, filmPt: slot?.filmPt, year: slot?.year, composer: slot?.composer,
+    slot: slot?.id,
     builtIn: false,
     addedAt: Date.now(),
   };

@@ -5,3 +5,4 @@ dist
 .impeccable/review
 .impeccable/decision-*.json
 .impeccable/questions
+.env*

@@ -12,6 +12,8 @@ interface Props {
   links: Record<Source, LinkState>;
   connectInput: (kind: Source) => void;
   onOpen: (song: Song) => void;
+  /** Called synchronously on tap, inside the user gesture. */
+  onPick: () => void;
 }
 
 function Strip({ song }: { song?: Song }) {
@@ -33,7 +35,7 @@ function Strip({ song }: { song?: Song }) {
   );
 }
 
-export function Library({ settings, update, links, connectInput, onOpen }: Props) {
+export function Library({ settings, update, links, connectInput, onOpen, onPick }: Props) {
   const { t, lang } = useI18n();
   const [entries, setEntries] = useState<SongEntry[]>([]);
   const [songs, setSongs] = useState<Record<string, Song>>({});
@@ -43,6 +45,8 @@ export function Library({ settings, update, links, connectInput, onOpen }: Props
   const [showSettings, setShowSettings] = useState(false);
   const [opening, setOpening] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const slotRef = useRef<SongEntry | undefined>(undefined);
+  const pickFile = (slot?: SongEntry) => { slotRef.current = slot; fileRef.current?.click(); };
 
   const refresh = async () => {
     const list = await listSongs();
@@ -63,16 +67,19 @@ export function Library({ settings, update, links, connectInput, onOpen }: Props
   const onFile = async (file?: File) => {
     if (!file) return;
     try {
-      const entry = await importMidi(file);
+      const entry = await importMidi(file, slotRef.current);
       setToast({ text: t('imported_ok', { title: entry.title }) });
       await refresh();
     } catch (err) {
       setToast({ text: t(err instanceof Error ? err.message : 'err.badFile'), error: true });
     }
     if (fileRef.current) fileRef.current.value = '';
+    slotRef.current = undefined;
   };
 
   const open = async (e: SongEntry) => {
+    if (e.missing) { pickFile(e); return; }
+    onPick();
     setOpening(e.id);
     try { onOpen(songs[e.id] ?? (await loadSong(e))); }
     catch (err) { setToast({ text: t(err instanceof Error ? err.message : 'err.loadFailed'), error: true }); }
@@ -109,7 +116,7 @@ export function Library({ settings, update, links, connectInput, onOpen }: Props
                 >
                   {icon}
                   <span className="input-name">{label}</span>
-                  <span className="input-state">{st.status === 'on' ? (st.label ?? t('on')) : st.status === 'connecting' ? t('connecting') : ''}</span>
+                  <span className="input-state">{st.status === 'on' ? (st.label ?? t('on')) : st.status === 'connecting' ? t('connecting') : selected ? t('tapToConnect') : ''}</span>
                   <i className="dot" />
                 </button>
               );
@@ -118,7 +125,7 @@ export function Library({ settings, update, links, connectInput, onOpen }: Props
           {active?.status === 'error' && active.error && <p className="note warn">{t(active.error)}</p>}
           {settings.input === 'mic' && active?.status === 'on' && <p className="note">{t('micHint')}</p>}
         </section>
-        <button className="import" onClick={() => fileRef.current?.click()}><IconImport size={16} />{t('import')}</button>
+        <button className="import" onClick={() => pickFile()}><IconImport size={16} />{t('import')}</button>
         <input ref={fileRef} type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden onChange={e => onFile(e.target.files?.[0])} />
       </aside>
 
@@ -128,12 +135,12 @@ export function Library({ settings, update, links, connectInput, onOpen }: Props
           const p = progress[e.id];
           const film = filmName(e, lang);
           return (
-            <article key={e.id} className={`can ${opening === e.id ? 'opening' : ''}`}>
-              <button className="can-hit" onClick={() => open(e)} aria-label={e.title} />
-              <span className="edge">{t('reel')} {String(i + 1).padStart(2, '0')} ▸ {e.builtIn ? 'HZ' : t('imported')}</span>
+            <article key={e.id} className={`can ${opening === e.id ? 'opening' : ''} ${e.missing ? 'missing' : ''}`}>
+              <button className="can-hit" onClick={() => open(e)} aria-label={e.missing ? `${e.title}: ${t('missingSong')}` : e.title} />
+              <span className="edge">{t('reel')} {String(i + 1).padStart(2, '0')} ▸ {e.composer ?? t('imported')}</span>
               <h3>{e.title}</h3>
               <p className="can-sub">{film ? `${film}${e.year ? ' · ' + e.year : ''}` : t('imported')}</p>
-              <Strip song={s} />
+              {e.missing ? <div className="strip empty"><IconImport size={20} /><span>{t('missingSong')}</span></div> : <Strip song={s} />}
               <dl>
                 <div><dt>{t('length')}</dt><dd>{s ? formatTime(s.duration) : '—'}</dd></div>
                 <div><dt>{t('hands')}</dt><dd>{s ? (s.hands.length === 2 ? '2' : t(s.hands[0] === 'R' ? 'handsR' : 'handsL')) : '—'}</dd></div>
@@ -154,7 +161,7 @@ export function Library({ settings, update, links, connectInput, onOpen }: Props
             </article>
           );
         })}
-        <button className="can can-add" onClick={() => fileRef.current?.click()}>
+        <button className="can can-add" onClick={() => pickFile()}>
           <IconImport size={22} />
           <span>{t('emptyImports')}</span>
         </button>

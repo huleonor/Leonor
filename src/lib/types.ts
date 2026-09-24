@@ -22,7 +22,12 @@ export interface SongEntry {
   /** Portuguese release title, when it differs. */
   filmPt?: string;
   year?: number;
+  composer?: string;
   builtIn: boolean;
+  /** Built-in slot whose MIDI is not shipped yet: the can asks for the file. */
+  missing?: boolean;
+  /** For an import that fills a built-in slot. */
+  slot?: string;
   file?: string;
   addedAt?: number;
 }
