@@ -468,6 +468,9 @@ button:disabled { opacity: .45; cursor: default; }
 @media (max-width: 940px) and (orientation: landscape) {
   .bar .seg span { display: none; }
   .bar .seg button { padding: 0 12px; }
+  /* Keep the song title: the tag keeps its dot and the note it heard. */
+  .input-tag .src { display: none; }
+  .input-tag b { min-width: 0; }
 }
 @media (max-width: 760px) and (orientation: landscape) {
   .bar { gap: 6px; padding: 0 8px 0 12px; }

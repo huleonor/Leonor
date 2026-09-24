@@ -28,7 +28,7 @@ function InputTag({ kind, link, naming }: { kind: Settings['input']; link?: Link
   return (
     <div className={`input-tag ${on ? 'on' : 'off'}`} role="status" aria-live="polite">
       <i />
-      {on ? <>{SOURCE_CODE[kind as Source]}<b>{heard !== null ? noteName(heard, naming, true) : '—'}</b></> : t('noInputShort')}
+      {on ? <><span className="src">{SOURCE_CODE[kind as Source]}</span><b>{heard !== null ? noteName(heard, naming, true) : '—'}</b></> : t('noInputShort')}
     </div>
   );
 }
