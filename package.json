@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "build:ios": "CAP=1 vite build && cap sync ios",
-    "ipa": "sh scripts/build-ipa.sh"
+    "ipa": "sh scripts/build-ipa.sh",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.2",
