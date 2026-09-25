@@ -5,6 +5,7 @@ import { GENERIC_COVER, getProgress, importMidi, listSongs, loadSong, removeSong
 import { formatSpeed, formatTime } from '../lib/names';
 import type { Progress, Settings, Song, SongEntry } from '../lib/types';
 import { IconBluetooth, IconClose, IconGear, IconImport, IconKeys, IconMic, IconTrash } from './Icons';
+import { InputCheck } from './InputCheck';
 
 interface Props {
   settings: Settings;
@@ -34,6 +35,7 @@ export function Library({ settings, update, links, connectInput, onOpen, onPick 
   const [toast, setToast] = useState<{ text: string; error?: boolean } | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCheck, setShowCheck] = useState(false);
   const [opening, setOpening] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const slotRef = useRef<SongEntry | undefined>(undefined);
@@ -115,6 +117,7 @@ export function Library({ settings, update, links, connectInput, onOpen, onPick 
           </div>
           {active?.status === 'error' && active.error && <p className="note warn">{t(active.error)}</p>}
           {settings.input === 'mic' && active?.status === 'on' && <p className="note">{t('micHint')}</p>}
+          <button className="check-open" onClick={() => setShowCheck(true)}>Check input: play a key and see it here</button>
         </section>
         <button className="import" onClick={() => pickFile()}><IconImport size={16} />{t('import')}</button>
         <input ref={fileRef} type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden onChange={e => onFile(e.target.files?.[0])} />
@@ -185,6 +188,8 @@ export function Library({ settings, update, links, connectInput, onOpen, onPick 
           </div>
         </div>
       )}
+
+      {showCheck && <InputCheck links={links} naming={settings.naming} onClose={() => setShowCheck(false)} />}
 
       {toast && <div className={`toast ${toast.error ? 'error' : ''}`} role="status">{toast.text}</div>}
     </div>

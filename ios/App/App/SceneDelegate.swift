@@ -4,15 +4,10 @@ import CoreMIDI
 import CoreAudioKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    // Main.storyboard builds the window with HugoBridgeViewController as its root.
     var window: UIWindow?
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        guard let windowScene = scene as? UIWindowScene else { return }
-
-        window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = HugoBridgeViewController()
-        window?.makeKeyAndVisible()
-
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }
 
@@ -40,38 +35,65 @@ public class MidiPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "Midi"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "status", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showBluetooth", returnType: CAPPluginReturnPromise),
     ]
 
     private var client = MIDIClientRef()
     private var port = MIDIPortRef()
     private var started = false
+    private var clientStatus: OSStatus = noErr
+    private var portStatus: OSStatus = noErr
     private var connected = Set<MIDIEndpointRef>()
+    private var lastNames: [String] = []
+    private var events = 0
+    private var timer: Timer?
 
     @objc func start(_ call: CAPPluginCall) {
-        if !started {
-            started = true
-            MIDIClientCreateWithBlock("Hugo's Piano" as CFString, &client) { [weak self] notification in
-                if notification.pointee.messageID == .msgSetupChanged {
-                    DispatchQueue.main.async { self?.connectSources() }
-                }
-            }
-            MIDIInputPortCreateWithProtocol(client, "Hugo's Piano In" as CFString, ._1_0, &port) { [weak self] list, _ in
-                self?.read(list)
+        DispatchQueue.main.async {
+            self.setUp()
+            self.connectSources()
+            call.resolve(self.statusData())
+        }
+    }
+
+    @objc func status(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { call.resolve(self.statusData()) }
+    }
+
+    private func setUp() {
+        guard !started else { return }
+        started = true
+        clientStatus = MIDIClientCreateWithBlock("Hugo's Piano" as CFString, &client) { [weak self] notification in
+            switch notification.pointee.messageID {
+            case .msgSetupChanged, .msgObjectAdded, .msgObjectRemoved, .msgPropertyChanged:
+                DispatchQueue.main.async { self?.connectSources() }
+            default: break
             }
         }
-        connectSources()
-        call.resolve(["devices": deviceNames()])
+        portStatus = MIDIInputPortCreateWithProtocol(client, "Hugo's Piano In" as CFString, ._1_0, &port) { [weak self] list, _ in
+            self?.read(list)
+        }
+        NSLog("HugoMIDI client=%d port=%d", clientStatus, portStatus)
+        // A cable plugged in while the app was in the background, or a missed notification.
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.connectSources()
+        }
+        timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in self?.connectSources() }
     }
 
     /// The system Bluetooth MIDI picker; a paired keyboard then shows up as a normal source.
     @objc func showBluetooth(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
+            self.setUp()
             guard let host = self.bridge?.viewController else { call.reject("No view"); return }
             let picker = CABTMIDICentralViewController()
             picker.navigationItem.rightBarButtonItem = UIBarButtonItem(
                 systemItem: .done,
-                primaryAction: UIAction { _ in host.dismiss(animated: true) })
+                primaryAction: UIAction { [weak self] _ in
+                    host.dismiss(animated: true)
+                    self?.connectSources()
+                })
             let nav = UINavigationController(rootViewController: picker)
             nav.modalPresentationStyle = .formSheet
             host.present(nav, animated: true)
@@ -80,22 +102,39 @@ public class MidiPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     private func connectSources() {
+        guard started else { return }
         var now = Set<MIDIEndpointRef>()
         for i in 0..<MIDIGetNumberOfSources() {
             let src = MIDIGetSource(i)
+            guard src != 0 else { continue }
             now.insert(src)
-            if !connected.contains(src) { MIDIPortConnectSource(port, src, nil) }
+            if !connected.contains(src) {
+                let st = MIDIPortConnectSource(port, src, nil)
+                NSLog("HugoMIDI connect %@ -> %d", name(of: src), st)
+            }
         }
+        for gone in connected.subtracting(now) { MIDIPortDisconnectSource(port, gone) }
         connected = now
-        notifyListeners("devices", data: ["devices": deviceNames()])
+        let names = deviceNames()
+        if names != lastNames {
+            lastNames = names
+            NSLog("HugoMIDI devices %@", names.joined(separator: ", "))
+            notifyListeners("devices", data: ["devices": names])
+        }
+    }
+
+    private func name(of endpoint: MIDIEndpointRef) -> String {
+        var name: Unmanaged<CFString>?
+        MIDIObjectGetStringProperty(endpoint, kMIDIPropertyDisplayName, &name)
+        return (name?.takeRetainedValue() as String?) ?? "MIDI device"
     }
 
     private func deviceNames() -> [String] {
-        (0..<MIDIGetNumberOfSources()).compactMap { i in
-            var name: Unmanaged<CFString>?
-            MIDIObjectGetStringProperty(MIDIGetSource(i), kMIDIPropertyDisplayName, &name)
-            return name?.takeRetainedValue() as String?
-        }
+        (0..<MIDIGetNumberOfSources()).map { name(of: MIDIGetSource($0)) }
+    }
+
+    private func statusData() -> [String: Any] {
+        ["devices": deviceNames(), "client": Int(clientStatus), "port": Int(portStatus), "events": events]
     }
 
     /// Universal MIDI Packets: only MIDI 1.0 channel voice (type 2) note on/off matter here.
@@ -128,6 +167,7 @@ public class MidiPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private func emit(_ type: String, _ midi: Int, _ velocity: Int) {
         DispatchQueue.main.async {
+            self.events += 1
             self.notifyListeners("note", data: ["type": type, "midi": midi, "velocity": velocity])
         }
     }

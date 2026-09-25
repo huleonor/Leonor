@@ -114,7 +114,7 @@ export async function recordRun(id: string, accuracy: number, speed: number): Pr
 
 const SETTINGS_KEY = 'hugos-piano:settings';
 export const DEFAULT_SETTINGS: Settings = {
-  input: 'mic', lang: 'en', naming: 'letters', view: 'notes', speed: 0.8, wait: true, hands: 'both', accompaniment: true, localSound: false,
+  input: 'mic', lang: 'en', naming: 'letters', view: 'notes', speed: 0.8, wait: true, hands: 'both', accompaniment: true, localSound: true, v: 2,
 };
 
 export function loadSettings(): Settings {
@@ -123,7 +123,9 @@ export function loadSettings(): Settings {
     if (raw) {
       const saved = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } as Settings;
       // The app is English-only now; older Portuguese settings also switch the note names.
-      if (saved.lang !== 'en') return { ...saved, lang: 'en', naming: 'letters' };
+      if (saved.lang !== 'en') Object.assign(saved, { lang: 'en', naming: 'letters' });
+      // v2: keys played on a MIDI keyboard sound in the app by default.
+      if ((saved.v ?? 1) < 2) Object.assign(saved, { localSound: true, v: 2 });
       return saved;
     }
   } catch { /* ignore */ }

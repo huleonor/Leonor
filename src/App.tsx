@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Library } from './components/Library';
 import { Player } from './components/Player';
-import { unlockAudio } from './lib/audio';
+import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { I18nContext, makeT } from './lib/i18n';
-import { connect, disconnectBle, disconnectMic, onLinkState, linkState, watchForMidi, type LinkState, type Source } from './lib/input';
+import { connect, disconnectBle, disconnectMic, onLinkState, onNote, linkState, watchForMidi, type LinkState, type Source } from './lib/input';
 import { loadSettings, saveSettings } from './lib/library';
 import type { Settings, Song } from './lib/types';
 
@@ -17,6 +17,21 @@ export default function App() {
   useEffect(() => onLinkState(setLinks), []);
   useEffect(() => { watchForMidi(); }, []);
   useEffect(() => { saveSettings(settings); document.documentElement.lang = settings.lang === 'pt' ? 'pt-PT' : 'en'; }, [settings]);
+
+  // Keys played on a MIDI or Bluetooth keyboard sound through the app's piano, on every screen.
+  useEffect(() => {
+    if (!settings.localSound) return;
+    return onNote(e => {
+      if (e.source === 'mic') return;
+      if (e.type === 'on') { unlockAudio(); holdNote(e.midi, e.velocity); }
+      else releaseNote(e.midi);
+    });
+  }, [settings.localSound]);
+
+  // Have the piano sound ready as soon as a keyboard is connected.
+  useEffect(() => {
+    if (links.midi.status === 'on' || links.ble.status === 'on') loadPiano().catch(() => {});
+  }, [links.midi.status, links.ble.status]);
 
   const update = (patch: Partial<Settings>) => setSettings(s => ({ ...s, ...patch }));
   const i18n = useMemo(() => ({ lang: settings.lang, t: makeT(settings.lang) }), [settings.lang]);

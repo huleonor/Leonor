@@ -1,4 +1,4 @@
-import { holdNote, playNote, releaseNote, stopAll } from './audio';
+import { playNote, stopAll } from './audio';
 import { markAppPlayed, setExpected, type NoteEvent } from './input';
 import { AUTO, HIT, MISS, PENDING, type HandsChoice, type Song } from './types';
 
@@ -9,9 +9,7 @@ export interface EngineOptions {
   /** Listen mode: the app plays every note, nothing is scored. */
   listen: boolean;
   accompaniment: boolean;
-  /** Play incoming MIDI notes through the app's piano. */
-  localSound: boolean;
-  /** Microphone: match by pitch class, and any one note of a chord counts. */
+  /** Microphone: match by pitch class (octave slips are forgiven), half of a chord counts. */
   lenient: boolean;
 }
 
@@ -45,6 +43,11 @@ export class Engine {
   wrong = 0;
   lastWrong = { midi: -1, at: 0 };
   measureTimes: number[] = [];
+  /** When the current wait began, and wrong notes played during it (for the hint). */
+  waitSince = 0;
+  wrongInWait = 0;
+  /** Practice loop, in song seconds. */
+  loop: { from: number; to: number } | null = null;
 
   private presses: Press[] = [];
   private lastGroupAt = 0;
@@ -113,7 +116,17 @@ export class Engine {
 
   restart() {
     this.wrong = 0;
-    this.seek(this.startTime);
+    this.seek(this.loop ? this.loopStart() : this.startTime);
+  }
+
+  /** A little run-up before the loop's first note. */
+  private loopStart() { return this.loop ? Math.max(this.startTime, this.loop.from - 1.2) : this.startTime; }
+
+  /** Practise one stretch over and over (null plays the whole song again). */
+  setLoop(loop: { from: number; to: number } | null) {
+    this.loop = loop;
+    this.wrong = 0;
+    this.seek(loop ? this.loopStart() : this.startTime);
   }
 
   play(countdown = 3) {
@@ -158,6 +171,13 @@ export class Engine {
     return g.midis;
   }
 
+  /** The group the player is stuck on, with the hand of each note (for the hint keyboard). */
+  waitingFor(): { midi: number; hand: 'R' | 'L' }[] {
+    const g = this.groups[this.gi];
+    if (!g) return [];
+    return g.ids.map(id => ({ midi: this.song.notes[id].midi, hand: this.song.notes[id].hand }));
+  }
+
   private tolerance() { return 0.2 * this.opts.speed + 0.06; }
 
   private tick(now: number) {
@@ -181,7 +201,11 @@ export class Engine {
         blocked = true;
         break;
       }
-      if (blocked !== this.waiting) { this.waiting = blocked; this.emit({ type: 'state' }); }
+      if (blocked !== this.waiting) {
+        this.waiting = blocked;
+        if (blocked) { this.waitSince = now; this.wrongInWait = 0; }
+        this.emit({ type: 'state' });
+      }
     } else {
       const tol = this.tolerance();
       while (this.gi < this.groups.length && next > this.groups[this.gi].time + tol) {
@@ -206,6 +230,11 @@ export class Engine {
 
     this.time = next;
     if (changed.length) this.emit({ type: 'status', ids: changed });
+    if (this.loop && this.time >= this.loop.to) {
+      this.seek(this.loopStart());
+      this.countdown = 1;
+      return;
+    }
     if (this.time >= this.song.duration + 0.8) {
       this.playing = false;
       this.finished = true;
@@ -222,9 +251,11 @@ export class Engine {
   private trySatisfy(g: Group, now: number): boolean {
     const fresh = this.presses.filter(p => !p.used && p.t >= this.lastGroupAt - 150 && p.t > now - 2500);
     if (this.opts.lenient) {
-      const p = fresh.find(p => g.midis.some(m => this.matches(p.midi, m)));
-      if (!p) return false;
-      p.used = true;
+      const want = [...new Set(g.midis.map(m => m % 12))];
+      const got = fresh.filter(p => want.includes(p.midi % 12));
+      const heard = new Set(got.map(p => p.midi % 12));
+      if (heard.size < Math.ceil(want.length / 2)) return false;
+      got.forEach(p => (p.used = true));
       return true;
     }
     const picked: Press[] = [];
@@ -245,29 +276,31 @@ export class Engine {
 
   private registerWrong(midi: number) {
     this.wrong++;
+    if (this.waiting) this.wrongInWait++;
     this.lastWrong = { midi, at: performance.now() };
     this.emit({ type: 'wrong', midi });
   }
 
   input(e: NoteEvent) {
     const now = performance.now();
-    if (e.type === 'off') {
-      this.held.delete(e.midi);
-      if (this.opts.localSound && e.source !== 'mic') releaseNote(e.midi);
-      return;
-    }
+    if (e.type === 'off') { this.held.delete(e.midi); return; }
     this.held.add(e.midi);
-    if (this.opts.localSound && e.source !== 'mic') holdNote(e.midi, e.velocity);
     if (!this.playing || this.countdown > 0 || this.opts.listen) return;
-    this.presses.push({ midi: e.midi, t: now, used: false });
+    // The mic reports a strike ~0.1 s after it happened: judge it at the moment it was played.
+    const lag = e.at !== undefined && !this.waiting ? Math.max(0, now - e.at) / 1000 : 0;
+    const at = e.at ?? now;
+    this.presses.push({ midi: e.midi, t: at, used: false });
     if (this.presses.length > 40) this.presses.splice(0, this.presses.length - 40);
 
     const changed: number[] = [];
+    const g = this.groups[this.gi];
+    const nextG = this.groups[this.gi + 1];
+    const relevantNote = (midi: number) =>
+      (g && g.midis.some(m => this.matches(midi, m))) || (nextG && nextG.midis.some(m => this.matches(midi, m)));
+    // In a strike the mic heard several notes: a stray overtone next to a right note is not a mistake.
+    const strikeOk = e.chord ? e.chord.some(relevantNote) : false;
     if (this.opts.wait) {
-      const g = this.groups[this.gi];
-      const nextG = this.groups[this.gi + 1];
-      const relevant = (g && g.midis.some(m => this.matches(e.midi, m))) || (nextG && nextG.midis.some(m => this.matches(e.midi, m)));
-      if (!relevant) { this.registerWrong(e.midi); return; }
+      if (!relevantNote(e.midi)) { if (!strikeOk) this.registerWrong(e.midi); return; }
       if (g && this.waiting && this.trySatisfy(g, now)) {
         this.markHit(g, changed);
         this.waiting = false;
@@ -275,15 +308,16 @@ export class Engine {
       }
     } else {
       const tol = this.tolerance();
+      const t = this.time - lag * this.opts.speed;
       let best = -1, bestDt = Infinity;
       for (let i = Math.max(0, this.gi - 3); i < Math.min(this.groups.length, this.gi + 4); i++) {
         for (const id of this.groups[i].ids) {
           const n = this.song.notes[id];
-          const d = Math.abs(n.time - this.time);
+          const d = Math.abs(n.time - t);
           if (this.status[id] === PENDING && d <= tol && d < bestDt && this.matches(e.midi, n.midi)) { best = id; bestDt = d; }
         }
       }
-      if (best < 0) { this.registerWrong(e.midi); return; }
+      if (best < 0) { if (!strikeOk) this.registerWrong(e.midi); return; }
       this.status[best] = HIT;
       changed.push(best);
     }

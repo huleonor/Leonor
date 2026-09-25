@@ -34,10 +34,14 @@ export function Keyboard({ engine, lo, hi, naming }: Props) {
         if (!el) continue;
         let cls = '';
         const expHand = expected.has(m) ? notes.find(n => n.midi === m && Math.abs(n.time - t) < 1.3)?.hand ?? 'R' : null;
-        if (engine.lastWrong.midi === m && now - engine.lastWrong.at < 380) cls = 'wrong';
-        else if (engine.held.has(m)) cls = sounding[m]?.startsWith('hit') ? sounding[m] : expHand ? 'hit' + expHand : 'down';
+        const held = engine.held.has(m);
+        const wrong = engine.lastWrong.midi === m && (now - engine.lastWrong.at < 380 || (held && engine.lastWrong.at > now - 4000));
+        if (wrong) cls = 'wrong';
+        else if (held) cls = sounding[m]?.startsWith('hit') ? sounding[m] : expHand ? 'hit' + expHand : 'down';
         else if (sounding[m]) cls = sounding[m];
-        if (expHand && !cls.startsWith('hit')) cls += ' next next' + expHand;
+        if (expHand && !cls.startsWith('hit') && !wrong) cls += ' next next' + expHand;
+        // The key under Hugo's finger names itself, so he always sees what he played.
+        if (held) cls += ' held';
         if (prev[m] !== cls) { el.className = `key ${layout[m].black ? 'b' : 'w'} ${cls}`; prev[m] = cls; }
       }
       raf = requestAnimationFrame(frame);
@@ -60,6 +64,7 @@ export function Keyboard({ engine, lo, hi, naming }: Props) {
       >
         {!g.black && <span className="klabel">{m % 12 === 0 ? noteName(m, naming, true) : ''}</span>}
         <span className="kname">{noteName(m, naming)}</span>
+        <span className="kbubble">{noteName(m, naming, true)}</span>
       </div>,
     );
   }

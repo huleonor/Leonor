@@ -1,94 +1,8 @@
 import { createContext, useContext } from 'react';
 import type { Lang, SongEntry } from './types';
 
-const pt = {
-  brandSub: 'Projeção privada',
-  input: 'Entrada',
-  inMic: 'Microfone',
-  inBle: 'Bluetooth MIDI',
-  inMidi: 'Teclado USB / MIDI',
-  import: 'Importar .mid',
-  settings: 'Ajustes',
-  reel: 'Bobina',
-  imported: 'Importada',
-  length: 'Duração',
-  hands: 'Mãos',
-  handsR: 'Dir.',
-  handsL: 'Esq.',
-  best: 'Melhor',
-  accuracy: 'Precisão',
-  delete: 'Apagar',
-  confirmDelete: 'Apagar mesmo?',
-  cancel: 'Cancelar',
-  imported_ok: '“{title}” importada.',
-  loading: 'A carregar…',
-  on: 'Ligado',
-  connecting: 'A ligar…',
-  micHint: 'O microfone ouve uma nota de cada vez. Num acorde, basta uma.',
-  language: 'Idioma',
-  naming: 'Nomes das notas',
-  accompaniment: 'Acompanhamento',
-  accompanimentHint: 'A app toca a mão que não estás a tocar.',
-  localSound: 'Som das teclas na app',
-  localSoundHint: 'Para teclados MIDI sem colunas.',
-  close: 'Fechar',
-  back: 'Voltar',
-  viewNotes: 'Notas',
-  viewSheet: 'Pauta',
-  wait: 'Espera',
-  waitingFor: 'À espera: toca {notes}',
-  start: 'Começar',
-  continue: 'Continuar',
-  restart: 'Do início',
-  back5: 'Recuar 5 s',
-  handsLabel: 'Mãos',
-  right: 'Direita',
-  left: 'Esquerda',
-  both: 'Ambas',
-  play: 'Tocar',
-  listen: 'Só ouvir',
-  mode: 'Modo',
-  speed: 'Velocidade',
-  loadingPiano: 'A carregar o som do piano… {pct}%',
-  loadingPianoPlain: 'A carregar o som do piano…',
-  noInput: 'Sem entrada. Liga o microfone ou um teclado na biblioteca.',
-  tapToPause: 'Toca nas notas para pausar',
-  theEnd: 'Fim',
-  notesHit: 'Notas certas',
-  wrongNotes: 'Notas erradas',
-  again: 'Repetir',
-  faster: 'Mais rápido',
-  library: 'Biblioteca',
-  rotate: 'Roda o telemóvel para ver mais teclas.',
-  pause: 'Pausar',
-  emptyImports: 'Importa um .mid para o juntar à tua bobina.',
-  sheetLoading: 'A preparar a pauta…',
-  missingSong: 'Falta o ficheiro. Toca para importar o .mid.',
-  tapToConnect: 'Toca para ligar',
-  noInputShort: 'Sem entrada',
-  photoCredits: 'Fotos das capas no Unsplash por',
-  midiConnected: 'Teclado ligado: {name}',
-  midiConnectedPlain: 'Teclado ligado',
-  'err.badFile': 'Não consegui ler este ficheiro. Confirma que é um .mid válido.',
-  'err.noNotes': 'Este ficheiro MIDI não tem notas de piano.',
-  'err.loadFailed': 'Não consegui carregar a música. Verifica a ligação à internet.',
-  'err.missing': 'Esta música já não está guardada neste telemóvel.',
-  'in.noMidiDevice': 'Nenhum teclado MIDI ligado.',
-  'in.iosMidi': 'O iPhone não permite MIDI no browser. Usa o microfone, ou Bluetooth no browser Bluefy.',
-  'in.noMidiSupport': 'Este browser não suporta MIDI. Usa o Chrome.',
-  'in.midiDenied': 'Acesso a MIDI recusado.',
-  'in.iosBle': 'No iPhone, o Bluetooth só funciona no browser grátis Bluefy.',
-  'in.noBle': 'Este browser não suporta Bluetooth. Usa o Chrome.',
-  'in.bleNotChosen': 'Nenhum teclado escolhido. Liga o Bluetooth MIDI do piano e tenta outra vez.',
-  'in.bleFailed': 'Não consegui ligar ao teclado por Bluetooth.',
-  'in.bleDropped': 'O teclado desligou-se.',
-  'in.noMic': 'Este browser não dá acesso ao microfone.',
-  'in.micBlocked': 'Microfone bloqueado. Autoriza nas definições do browser.',
-};
-
-type Dict = Record<keyof typeof pt, string>;
-
-const en: Dict = {
+// The app is English-only; this is its one dictionary.
+const en = {
   brandSub: 'Private screening',
   input: 'Input',
   inMic: 'Microphone',
@@ -111,7 +25,6 @@ const en: Dict = {
   loading: 'Loading…',
   on: 'On',
   connecting: 'Connecting…',
-  micHint: 'The mic hears one note at a time. In a chord, one note counts.',
   language: 'Language',
   naming: 'Note names',
   accompaniment: 'Accompaniment',
@@ -156,6 +69,9 @@ const en: Dict = {
   photoCredits: 'Cover photos from Unsplash by',
   midiConnected: 'Keyboard connected: {name}',
   midiConnectedPlain: 'Keyboard connected',
+  'in.nativeFailed': "The app couldn't start its MIDI connection. Close the app fully and open it again.",
+  'in.micSilent': 'The microphone is sending silence. Close other apps using it, then tap Microphone again.',
+  micHint: 'Play clearly, one hand or both. Chords count. Keep the phone near the piano.',
   'err.badFile': "Couldn't read this file. Make sure it's a valid .mid.",
   'err.noNotes': 'This MIDI file has no piano notes.',
   'err.loadFailed': "Couldn't load the song. Check your internet connection.",
@@ -173,21 +89,19 @@ const en: Dict = {
   'in.micBlocked': 'Microphone blocked. Allow it in your browser settings.',
 };
 
-export type TKey = keyof typeof pt;
-const DICTS: Record<Lang, Dict> = { pt, en };
+export type TKey = keyof typeof en;
 
 export type T = (key: TKey | string, vars?: Record<string, string | number>) => string;
 
-export function makeT(lang: Lang): T {
-  const d = DICTS[lang];
+export function makeT(_lang: Lang): T {
   return (key, vars) => {
-    let s = (d as Record<string, string>)[key] ?? (pt as Record<string, string>)[key] ?? key;
+    let s = (en as Record<string, string>)[key] ?? key;
     if (vars) for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v));
     return s;
   };
 }
 
-export const I18nContext = createContext<{ lang: Lang; t: T }>({ lang: 'pt', t: makeT('pt') });
+export const I18nContext = createContext<{ lang: Lang; t: T }>({ lang: 'en', t: makeT('en') });
 export const useI18n = () => useContext(I18nContext);
 
 export function filmName(entry: SongEntry, lang: Lang): string | undefined {

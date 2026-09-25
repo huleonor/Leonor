@@ -1,9 +1,18 @@
 import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
-import { PitchDetector } from 'pitchy';
-import { audioContext, setAudioSession } from './audio';
+import { setAudioSession } from './audio';
+import { NoteListener } from './pitch';
 
 export type Source = 'midi' | 'ble' | 'mic';
-export interface NoteEvent { type: 'on' | 'off'; midi: number; velocity: number; source: Source; }
+export interface NoteEvent {
+  type: 'on' | 'off';
+  midi: number;
+  velocity: number;
+  source: Source;
+  /** Microphone: when the key was actually struck (performance.now()), before detection delay. */
+  at?: number;
+  /** Microphone: every note heard in the same strike. */
+  chord?: number[];
+}
 type Handler = (e: NoteEvent) => void;
 export type LinkState = { status: 'off' | 'connecting' | 'on' | 'error'; label?: string; error?: string };
 type StateHandler = (s: Record<Source, LinkState>) => void;
@@ -24,8 +33,10 @@ export const linkState = () => ({ ...state });
 /** Running inside the iPhone app (Capacitor): MIDI comes from CoreMIDI, not the browser. */
 export const isNative = Capacitor.isNativePlatform();
 
+export interface NativeMidiStatus { devices: string[]; client: number; port: number; events: number; }
 interface NativeMidiPlugin {
-  start(): Promise<{ devices: string[] }>;
+  start(): Promise<NativeMidiStatus>;
+  status(): Promise<NativeMidiStatus>;
   showBluetooth(): Promise<void>;
   addListener(event: 'note', cb: (e: { type: 'on' | 'off'; midi: number; velocity: number }) => void): Promise<PluginListenerHandle>;
   addListener(event: 'devices', cb: (e: { devices: string[] }) => void): Promise<PluginListenerHandle>;
@@ -68,19 +79,34 @@ function bindMidiInputs(quiet: boolean) {
 }
 
 let nativeStarted = false;
+/** CoreMIDI sources the app is reading (for the input check). */
+export let nativeMidiDevices: string[] = [];
 function nativeDevices(devices: string[], quiet: boolean) {
+  nativeMidiDevices = devices;
   const real = devices.filter(n => !/network|session/i.test(n));
   if (real.length) setState('midi', { status: 'on', label: real[0] });
   else setState('midi', quiet ? { status: 'off' } : { status: 'error', error: 'in.noMidiDevice' });
 }
 async function connectNativeMidi(quiet: boolean) {
-  if (!nativeStarted) {
-    nativeStarted = true;
-    await NativeMidi.addListener('note', e => emit({ type: e.type, midi: e.midi, velocity: e.velocity, source: 'midi' }));
-    await NativeMidi.addListener('devices', e => nativeDevices(e.devices, true));
+  try {
+    if (!nativeStarted) {
+      nativeStarted = true;
+      await NativeMidi.addListener('note', e => emit({ type: e.type, midi: e.midi, velocity: e.velocity, source: 'midi' }));
+      await NativeMidi.addListener('devices', e => nativeDevices(e.devices, true));
+    }
+    const st = await NativeMidi.start();
+    console.info('[midi] native start', JSON.stringify(st));
+    nativeDevices(st.devices, quiet);
+  } catch (err) {
+    nativeStarted = false;
+    console.error('[midi] native start failed', err);
+    setState('midi', quiet ? { status: 'off' } : { status: 'error', error: 'in.nativeFailed' });
   }
-  const { devices } = await NativeMidi.start();
-  nativeDevices(devices, quiet);
+}
+
+export async function nativeMidiStatus(): Promise<NativeMidiStatus | null> {
+  if (!isNative) return null;
+  try { return await NativeMidi.status(); } catch { return null; }
 }
 
 /** `quiet`: no error when nothing is plugged in yet; plugging a keyboard in later still connects it. */
@@ -170,8 +196,13 @@ export async function connectBle() {
   if (isNative) {
     // iOS pairs Bluetooth MIDI in a system sheet; the keyboard then arrives as a MIDI source.
     await connectNativeMidi(true);
-    await NativeMidi.showBluetooth();
-    setState('ble', { status: 'off' });
+    try {
+      await NativeMidi.showBluetooth();
+      setState('ble', { status: 'off', label: undefined });
+    } catch (err) {
+      console.error('[midi] bluetooth sheet failed', err);
+      setState('ble', { status: 'error', error: 'in.nativeFailed' });
+    }
     return;
   }
   if (!support.bluetooth) {
@@ -207,14 +238,22 @@ export function disconnectBle() {
   setState('ble', { status: 'off' });
 }
 
-// ---------------- Microphone pitch detection ----------------
+// ---------------- Microphone note detection ----------------
 let micStream: MediaStream | null = null;
+let micCtx: AudioContext | null = null;
 let micTimer = 0;
 /** Pitch classes the app itself just played, so the mic does not "hear" the accompaniment as Hugo. */
 const appPlayed = new Map<number, number>();
 export function markAppPlayed(midi: number) { appPlayed.set(midi % 12, performance.now()); }
-let expectedPcs = new Set<number>();
-export function setExpected(midis: number[]) { expectedPcs = new Set(midis.map(m => m % 12)); }
+let expected: number[] = [];
+/** Notes the song wants next: the detector checks these on weaker evidence. */
+export function setExpected(midis: number[]) { expected = midis; }
+let micRange: [number, number] = [33, 100];
+/** Limit what the mic listens for to the song's range (fewer false notes). */
+export function setMicRange(lo: number, hi: number) { micRange = [Math.max(21, lo - 5), Math.min(108, hi + 5)]; }
+
+/** Live level (0..1) and the last strike, for the input check. */
+export const micMeter = { level: 0, notes: [] as number[], at: 0 };
 
 export async function connectMic() {
   if (!support.mic) {
@@ -225,63 +264,72 @@ export async function connectMic() {
   setAudioSession('play-and-record');
   try {
     micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
     });
-  } catch {
+  } catch (err) {
+    console.error('[mic] getUserMedia failed', err);
     setAudioSession('playback');
     setState('mic', { status: 'error', error: 'in.micBlocked' });
     return;
   }
-  const ctx = audioContext();
+  // A context of its own, made after capture started: on iOS a context created earlier can
+  // run at the old sample rate and hear only silence.
+  micCtx?.close().catch(() => {});
+  const ctx = new AudioContext();
+  micCtx = ctx;
   await ctx.resume().catch(() => {});
   const src = ctx.createMediaStreamSource(micStream);
+  const listener = new NoteListener(ctx.sampleRate);
   const analyser = ctx.createAnalyser();
-  analyser.fftSize = 2048;
+  analyser.fftSize = listener.size;
+  analyser.smoothingTimeConstant = 0;
   src.connect(analyser);
   const buf = new Float32Array(analyser.fftSize);
-  const detector = PitchDetector.forFloat32Array(analyser.fftSize);
-  detector.minVolumeDecibels = -45;
+  console.info('[mic] listening at', ctx.sampleRate, 'Hz, window', listener.size);
 
-  let current: number | null = null;
-  let candidate = -1, stable = 0, quiet = 0, noise = 0.004, lastRms = 0, armed = true;
+  let sounding: number[] = [];
+  let offTimer = 0;
+  let silentSince = performance.now();
+  const release = () => {
+    sounding.forEach(m => emit({ type: 'off', midi: m, velocity: 0, source: 'mic' }));
+    sounding = [];
+  };
 
   const step = () => {
+    if (ctx.state !== 'running') { ctx.resume().catch(() => {}); return; }
     analyser.getFloatTimeDomainData(buf);
-    let sum = 0;
-    for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-    const rms = Math.sqrt(sum / buf.length);
-    noise = rms < noise * 2 ? noise * 0.97 + rms * 0.03 : noise * 0.999 + rms * 0.001;
-    const threshold = Math.max(0.008, noise * 3);
-    const rising = rms > lastRms * 1.35 && rms > threshold;
-    lastRms = rms;
-
-    const [freq, clarity] = detector.findPitch(buf, ctx.sampleRate);
-    if (rms > threshold && clarity > 0.86 && freq > 26 && freq < 4300) {
-      quiet = 0;
-      const midi = Math.round(69 + 12 * Math.log2(freq / 440));
-      if (midi === candidate) stable++; else { candidate = midi; stable = 1; }
-      if (rising) armed = true;
-      if (stable >= 2 && (midi !== current || armed)) {
-        const pc = midi % 12;
-        const echo = (appPlayed.get(pc) ?? 0) > performance.now() - 450 && !expectedPcs.has(pc);
-        if (!echo) {
-          if (current !== null) emit({ type: 'off', midi: current, velocity: 0, source: 'mic' });
-          emit({ type: 'on', midi, velocity: Math.min(127, 40 + rms * 900), source: 'mic' });
-          current = midi;
-        }
-        armed = false;
-      }
-    } else {
-      stable = 0;
-      if (++quiet > 3 && current !== null) {
-        emit({ type: 'off', midi: current, velocity: 0, source: 'mic' });
-        current = null;
-      }
-      if (quiet > 1) armed = true;
+    let peak = 0;
+    for (let i = buf.length - 1024; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i]));
+    micMeter.level = Math.min(1, Math.sqrt(peak) * 1.4);
+    const now = performance.now();
+    // A capture that delivers only digital zeros is broken (another app holds the mic, or iOS
+    // interrupted the session): say so instead of silently hearing nothing.
+    if (peak > 1e-6) {
+      silentSince = now;
+      if (state.mic.status === 'error') setState('mic', { status: 'on' });
+    } else if (now - silentSince > 3000 && state.mic.status === 'on') {
+      setState('mic', { status: 'error', error: 'in.micSilent' });
     }
+
+    listener.range = micRange;
+    const strike = listener.process(buf, now, expected);
+    if (!strike || !strike.notes.length) return;
+    const notes = strike.notes.filter(m => {
+      const echo = (appPlayed.get(m % 12) ?? 0) > strike.at - 500;
+      return !echo || expected.some(e => e % 12 === m % 12);
+    });
+    if (!notes.length) return;
+    micMeter.notes = notes;
+    micMeter.at = now;
+    release();
+    const velocity = Math.round(Math.min(127, 45 + micMeter.level * 80));
+    for (const m of notes) emit({ type: 'on', midi: m, velocity, source: 'mic', at: strike.at, chord: notes });
+    sounding = notes;
+    window.clearTimeout(offTimer);
+    offTimer = window.setTimeout(release, 320);
   };
   window.clearInterval(micTimer);
-  micTimer = window.setInterval(step, 23);
+  micTimer = window.setInterval(step, 12);
   setState('mic', { status: 'on' });
 }
 
@@ -289,6 +337,8 @@ export function disconnectMic() {
   window.clearInterval(micTimer);
   micStream?.getTracks().forEach(t => t.stop());
   micStream = null;
+  micCtx?.close().catch(() => {});
+  micCtx = null;
   setAudioSession('playback');
   setState('mic', { status: 'off' });
 }

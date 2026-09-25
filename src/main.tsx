@@ -8,3 +8,9 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
+// Dev bench for the microphone detector: window.__runPitch() in the console.
+if (import.meta.env.DEV) {
+  (window as unknown as { __runPitch: unknown }).__runPitch = async (tuning?: object) =>
+    (await import('./dev/pitchTest')).runPitchTest(tuning);
+}

@@ -67,7 +67,10 @@ export interface Settings {
   wait: boolean;
   hands: HandsChoice;
   accompaniment: boolean;
+  /** The app sounds the keys played on a MIDI / Bluetooth keyboard. */
   localSound: boolean;
+  /** Settings format, for one-off migrations. */
+  v?: number;
 }
 
 export type NoteStatus = 0 | 1 | 2 | 3; // pending, hit, miss, played by the app

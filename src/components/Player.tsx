@@ -2,15 +2,18 @@ import { lazy, Suspense, useEffect, useMemo, useReducer, useRef, useState } from
 import { loadPiano, unlockAudio } from '../lib/audio';
 import { Engine } from '../lib/engine';
 import { filmName, useI18n } from '../lib/i18n';
-import { onNote, type LinkState, type Source } from '../lib/input';
+import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
+import { barsToTime, type Tip } from '../lib/analysis';
 import { pickRange } from '../lib/keys';
 import { recordRun } from '../lib/library';
 import { formatSpeed, formatTime, noteName } from '../lib/names';
 import type { HandsChoice, NoteNaming, Settings, Song } from '../lib/types';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
-import { IconBack, IconBack5, IconFalling, IconPlay, IconRestart, IconSheet } from './Icons';
+import { IconBack, IconBack5, IconClose, IconFalling, IconPlay, IconRestart, IconSheet } from './Icons';
 import { Keyboard } from './Keyboard';
+import { StudyPanel } from './StudyPanel';
+import { WaitHint } from './WaitHint';
 
 // The score engraver is heavy; load it only when the sheet view is opened.
 const SheetView = lazy(() => import('./SheetView').then(m => ({ default: m.SheetView })));
@@ -48,14 +51,18 @@ export function Player({ song, settings, update, links, onExit }: Props) {
   const [, bump] = useReducer((x: number) => x + 1, 0);
   const progressRef = useRef<HTMLDivElement>(null);
   const [result, setResult] = useState<ReturnType<Engine['stats']> | null>(null);
+  const [study, setStudy] = useState(false);
+  const [loopBars, setLoopBars] = useState<{ from: number; to: number } | null>(null);
 
   const oneHand = song.hands.length === 1;
   const hands: HandsChoice = oneHand ? song.hands[0] : settings.hands;
 
   const engine = useMemo(() => new Engine(song, {
     speed: settings.speed, wait: settings.wait, hands, listen: false,
-    accompaniment: settings.accompaniment, localSound: settings.localSound, lenient: settings.input === 'mic',
+    accompaniment: settings.accompaniment, lenient: settings.input === 'mic',
   }), [song]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { setMicRange(song.range[0], song.range[1]); }, [song]);
 
   useEffect(() => {
     if (import.meta.env.DEV) (window as unknown as { __engine: Engine }).__engine = engine;
@@ -64,9 +71,9 @@ export function Player({ song, settings, update, links, onExit }: Props) {
   useEffect(() => {
     engine.setOptions({
       speed: settings.speed, wait: settings.wait, hands, listen,
-      accompaniment: settings.accompaniment, localSound: settings.localSound, lenient: settings.input === 'mic',
+      accompaniment: settings.accompaniment, lenient: settings.input === 'mic',
     });
-  }, [engine, settings.speed, settings.wait, hands, listen, settings.accompaniment, settings.localSound, settings.input]);
+  }, [engine, settings.speed, settings.wait, hands, listen, settings.accompaniment, settings.input]);
 
   useEffect(() => {
     const off = engine.on(e => {
@@ -122,6 +129,23 @@ export function Player({ song, settings, update, links, onExit }: Props) {
     engine.seek(engine.startTime + f * (song.duration - engine.startTime));
   };
 
+  // A tip's "Practise" button: loop those bars with the hands and speed that suit them.
+  const practise = (p: NonNullable<Tip['practice']>) => {
+    const patch: Partial<Settings> = { wait: true };
+    if (p.speed) patch.speed = p.speed;
+    if (p.hands && !oneHand) patch.hands = p.hands;
+    update(patch);
+    engine.setOptions({ wait: true, speed: p.speed ?? settings.speed, hands: p.hands && !oneHand ? p.hands : hands });
+    engine.setLoop(barsToTime(engine.measureTimes, p.from, p.to));
+    setLoopBars({ from: p.from, to: p.to });
+    setStudy(false);
+    setListen(false);
+    setResult(null);
+    unlockAudio();
+    engine.play();
+  };
+  const clearLoop = () => { engine.setLoop(null); setLoopBars(null); bump(); };
+
   const showResult = engine.finished && !!result;
   const showSetup = !engine.playing && !showResult;
 
@@ -151,6 +175,11 @@ export function Player({ song, settings, update, links, onExit }: Props) {
         <button className={`chip ${settings.wait ? 'on' : ''}`} onClick={() => update({ wait: !settings.wait })} aria-pressed={settings.wait} disabled={listen}>
           <i />{t('wait')}
         </button>
+        {loopBars && (
+          <button className="chip on loop-chip" onClick={clearLoop} aria-label="Stop looping">
+            {loopBars.from === loopBars.to ? `Bar ${loopBars.from}` : `Bars ${loopBars.from}–${loopBars.to}`}<IconClose size={14} />
+          </button>
+        )}
         {!listen && <InputTag kind={settings.input} link={settings.input !== 'none' ? links[settings.input as Source] : undefined} naming={settings.naming} />}
       </header>
 
@@ -163,6 +192,7 @@ export function Player({ song, settings, update, links, onExit }: Props) {
           ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} inset={INSET} onTap={togglePlay} />
           : <Suspense fallback={<p className="sheet-loading">{t('sheetLoading')}</p>}><SheetView key={song.entry.id} engine={engine} onTap={togglePlay} /></Suspense>}
         <Countdown engine={engine} caption={`${song.entry.title}  ·  ${formatSpeed(settings.speed)}${settings.wait && !listen ? '  ·  ' + t('wait') : ''}`} />
+        {!listen && settings.wait && <WaitHint engine={engine} naming={settings.naming} />}
 
         {showSetup && (
           <div className="overlay">
@@ -201,6 +231,10 @@ export function Player({ song, settings, update, links, onExit }: Props) {
                   </>
                 )}
               </div>
+              <button className="study-open" onClick={() => setStudy(true)}>
+                <span>Learn it faster</span>
+                <small>Repeats, patterns and tricky bars, with loops to practise</small>
+              </button>
               {!listen && !inputOn && <p className="note warn">{t('noInput')}</p>}
               {pianoPct !== null && <p className="note">{pianoPct > 0 ? t('loadingPiano', { pct: pianoPct }) : t('loadingPianoPlain')}</p>}
               <p className="note rotate-hint">{t('rotate')}</p>
@@ -233,6 +267,8 @@ export function Player({ song, settings, update, links, onExit }: Props) {
           </div>
         )}
       </main>
+
+      {study && <StudyPanel song={song} onPractice={practise} onClose={() => setStudy(false)} />}
 
       <footer className="keys" style={{ paddingInline: INSET }}>
         <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} />
