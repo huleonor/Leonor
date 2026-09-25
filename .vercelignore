@@ -4,3 +4,6 @@ previews
 .claude
 dist
 node_modules
+ios
+build
+*.ipa
