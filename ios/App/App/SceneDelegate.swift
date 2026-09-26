@@ -61,9 +61,21 @@ public class MidiPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async { call.resolve(self.statusData()) }
     }
 
+    /// Creates the CoreMIDI client and input port. If CoreMIDI refuses (it can while the MIDI
+    /// server is still starting), this runs again on the next start call or timer tick.
     private func setUp() {
+        if timer == nil {
+            // A cable plugged in while the app was in the background, or a missed notification.
+            NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                self?.setUp()
+                self?.connectSources()
+            }
+            timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+                self?.setUp()
+                self?.connectSources()
+            }
+        }
         guard !started else { return }
-        started = true
         clientStatus = MIDIClientCreateWithBlock("Hugo's Piano" as CFString, &client) { [weak self] notification in
             switch notification.pointee.messageID {
             case .msgSetupChanged, .msgObjectAdded, .msgObjectRemoved, .msgPropertyChanged:
@@ -71,15 +83,22 @@ public class MidiPlugin: CAPPlugin, CAPBridgedPlugin {
             default: break
             }
         }
+        guard clientStatus == noErr else {
+            NSLog("HugoMIDI client failed %d, will retry", clientStatus)
+            client = 0
+            return
+        }
         portStatus = MIDIInputPortCreateWithProtocol(client, "Hugo's Piano In" as CFString, ._1_0, &port) { [weak self] list, _ in
             self?.read(list)
         }
-        NSLog("HugoMIDI client=%d port=%d", clientStatus, portStatus)
-        // A cable plugged in while the app was in the background, or a missed notification.
-        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.connectSources()
+        guard portStatus == noErr else {
+            NSLog("HugoMIDI port failed %d, will retry", portStatus)
+            MIDIClientDispose(client)
+            client = 0
+            return
         }
-        timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in self?.connectSources() }
+        started = true
+        NSLog("HugoMIDI ready")
     }
 
     /// The system Bluetooth MIDI picker; a paired keyboard then shows up as a normal source.

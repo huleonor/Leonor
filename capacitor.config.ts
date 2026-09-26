@@ -18,6 +18,8 @@ const config: CapacitorConfig = {
   // so input problems on the phone can be traced.
   loggingBehavior: 'production',
   ios: {
+    // Aluminium panel colour while the page loads, instead of a white flash.
+    backgroundColor: '#dcdbd6',
     webContentsDebuggingEnabled: true,
     contentInset: 'never',
     // Let Web Audio keep playing with the silent switch on, like a music app.

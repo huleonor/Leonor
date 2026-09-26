@@ -91,7 +91,9 @@ export function InputCheck({ links, naming, onClose }: Props) {
           {native && (
             <div>
               <dt>MIDI devices</dt>
-              <dd>{native.devices.length ? native.devices.join(', ') : 'None found'} · {native.events} events</dd>
+              <dd>
+                {native.client !== 0 ? `CoreMIDI not ready (${native.client}), retrying` : `${native.devices.length ? native.devices.join(', ') : 'None found'} · ${native.events} events`}
+              </dd>
             </div>
           )}
         </dl>

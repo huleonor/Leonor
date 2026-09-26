@@ -30,7 +30,7 @@ function InputLcd({ kind, link, naming }: { kind: Settings['input']; link?: Link
   const on = kind !== 'none' && link?.status === 'on';
   return (
     <div className={`lcd input-lcd ${on ? '' : 'off'}`} role="status" aria-live="polite">
-      <small><i className={`led ${on ? 'green' : 'red'}`} />{on ? `${SOURCE_CODE[kind as Source]} · heard` : 'input'}</small>
+      <small><i className={`led ${on ? 'green' : ''}`} />{on ? `${SOURCE_CODE[kind as Source]} · heard` : 'input'}</small>
       <b>{on ? (heard.length ? heard.slice(0, 3).map(m => noteName(m, naming, true)).join(' ') : '—') : t('noInputShort')}</b>
     </div>
   );
@@ -116,7 +116,7 @@ export function Player({ song, settings, update, links, onExit }: Props) {
       // Bar and time readout, written only when it changes.
       let bar = 0;
       while (bar + 1 < engine.measureTimes.length && engine.measureTimes[bar + 1] <= engine.time) bar++;
-      const text = `BAR ${String(Math.max(1, bar + 1)).padStart(2, '0')}/${bars} · ${formatTime(Math.max(0, engine.time))} / ${formatTime(song.duration)}`;
+      const text = `BAR ${Math.max(1, bar + 1)}/${bars}  ${formatTime(Math.max(0, engine.time))}`;
       if (text !== last && readoutRef.current) { readoutRef.current.textContent = text; last = text; }
       raf = requestAnimationFrame(frame);
     };
@@ -162,7 +162,7 @@ export function Player({ song, settings, update, links, onExit }: Props) {
         <button className="keycap" onClick={onExit} aria-label={t('back')}><IconBack /></button>
         <div className="bar-title">
           <h1>{song.entry.title}</h1>
-          <p ref={readoutRef}>{sub}</p>
+          <p className="lcd readout-lcd" ref={readoutRef} aria-label="Bar and time">{sub}</p>
         </div>
         <div className="slider" role="group" aria-label={t('viewNotes') + ' / ' + t('viewSheet')}>
           <button className={settings.view === 'notes' ? 'on' : ''} onClick={() => update({ view: 'notes' })} aria-pressed={settings.view === 'notes'} aria-label={t('viewNotes')}>

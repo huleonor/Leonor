@@ -8,7 +8,7 @@ import { AUTO, HIT, MISS, type NoteNaming } from '../lib/types';
 interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; inset: number; onTap: () => void; }
 
 const C = {
-  display: '#111214', lane: '#16171a', bar: 'rgba(255,255,255,.08)', barText: 'rgba(255,255,255,.38)', white: '#f6f5f1', ink: '#1a1a1a',
+  display: '#111214', lane: '#16171a', bar: 'rgba(255,255,255,.1)', barText: 'rgba(255,255,255,.62)', white: '#f6f5f1', ink: '#1a1a1a',
   orange: '#ff6a13', orangeLit: '#ffb07a', cobalt: '#2f5bff', cobaltLit: '#8aa2ff', red: '#e0301e',
 };
 const SANS = 'Supreme, "Helvetica Neue", Arial, sans-serif';
@@ -50,7 +50,7 @@ export function FallingNotes({ engine, lo, hi, naming, inset, onTap }: Props) {
       }
 
       // Bar lines with their numbers.
-      ctx.font = `500 10px ${MONO}`;
+      ctx.font = `700 12px ${MONO}`;
       ctx.textAlign = 'left';
       engine.measureTimes.forEach((mt, i) => {
         const y = Y(mt);

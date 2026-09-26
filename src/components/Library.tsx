@@ -119,7 +119,7 @@ export function Library({ settings, update, links, connectInput, onOpen, onPick 
               );
             })}
           </div>
-          <p className={`lcd input-status ${active?.status === 'on' ? '' : 'off'}`} role="status">{status}</p>
+          <p className={`lcd input-status ${active?.status === 'on' ? '' : active?.status === 'error' ? 'off fault' : 'off'}`} role="status">{status}</p>
           {active?.status === 'error' && active.error && <p className="note warn" style={{ marginTop: 10 }}>{t(active.error)}</p>}
           {settings.input === 'mic' && active?.status === 'on' && <p className="note" style={{ marginTop: 10 }}>{t('micHint')}</p>}
         </section>
@@ -130,7 +130,7 @@ export function Library({ settings, update, links, connectInput, onOpen, onPick 
       </aside>
 
       <main className="rack" aria-label={t('library')}>
-        {entries.map((e, i) => {
+        {entries.map(e => {
           const s = songs[e.id];
           const p = progress[e.id];
           const film = filmName(e, lang);
@@ -142,9 +142,9 @@ export function Library({ settings, update, links, connectInput, onOpen, onPick 
               <div className="grip" />
               <figure className="photo"><img src={img.src} alt={img.alt} loading="lazy" decoding="async" draggable={false} /></figure>
               <div className="label">
-                <span className="cart-id">{String(i + 1).padStart(2, '0')} · {s ? formatTime(s.duration) : e.missing ? 'no file' : '—'}</span>
                 <h3>{e.title}</h3>
-                <p className="cart-sub">{film ? `${film}${e.year ? ' · ' + e.year : ''}` : t('imported')}</p>
+                <p className="cart-sub">{film ?? t('imported')}</p>
+                <p className="cart-meta">{[e.year, s ? formatTime(s.duration) : null].filter(Boolean).join(' · ') || '—'}</p>
                 {e.missing
                   ? <p className="missing-note"><IconImport size={16} />{t('missingSong')}</p>
                   : (
