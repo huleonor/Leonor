@@ -4,9 +4,6 @@ import { keyLayout } from '../lib/keys';
 import { noteName } from '../lib/names';
 import type { NoteNaming } from '../lib/types';
 
-/** Stuck this long in Wait mode (or one wrong note), and the hint shows which keys to press. */
-const SHOW_AFTER = 3500;
-
 export function WaitHint({ engine, naming }: { engine: Engine; naming: NoteNaming }) {
   const [, tick] = useState(0);
   useEffect(() => {
@@ -15,8 +12,7 @@ export function WaitHint({ engine, naming }: { engine: Engine; naming: NoteNamin
     return () => { window.clearInterval(id); off(); };
   }, [engine]);
 
-  const show = engine.playing && engine.waiting && engine.countdown === 0 && !engine.opts.listen
-    && (engine.wrongInWait > 0 || performance.now() - engine.waitSince > SHOW_AFTER);
+  const show = engine.hintVisible();
   const want = show ? engine.waitingFor() : [];
   const wrong = show && engine.wrongInWait > 0 ? engine.lastWrong.midi : -1;
   const key = want.map(w => w.midi).join(',') + '/' + wrong;
@@ -31,7 +27,7 @@ export function WaitHint({ engine, naming }: { engine: Engine; naming: NoteNamin
 
   if (!view) return null;
   const hands = new Set(want.map(w => w.hand));
-  const handText = hands.size === 2 ? 'both hands' : hands.has('L') ? 'left hand' : 'right hand';
+  const handText = hands.size === 2 ? 'Both hands' : hands.has('L') ? 'Left hand' : 'Right hand';
   const keys = [];
   for (let m = view.lo; m <= view.hi; m++) {
     const g = view.layout[m];
@@ -46,10 +42,10 @@ export function WaitHint({ engine, naming }: { engine: Engine; naming: NoteNamin
   }
   return (
     <div className="wait-hint" role="status" aria-live="polite">
-      <p className="wh-title">
-        Play <b>{want.map(w => noteName(w.midi, naming, true)).join(' + ')}</b> <span>{handText}</span>
-      </p>
-      {wrong >= 0 && !want.some(w => w.midi === wrong) && <p className="wh-sub">You played {noteName(wrong, naming, true)}</p>}
+      <div className="wh-text">
+        <p className="wh-title">Play <b>{want.map(w => noteName(w.midi, naming, true)).join(' + ')}</b></p>
+        <p className="wh-sub">{wrong >= 0 && !want.some(w => w.midi === wrong) ? <em>You played {noteName(wrong, naming, true)}</em> : handText}</p>
+      </div>
       <div className="wh-keys">{keys}</div>
     </div>
   );

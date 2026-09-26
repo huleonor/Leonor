@@ -204,8 +204,8 @@ export function Player({ song, settings, update, links, onExit }: Props) {
           <div ref={progressRef} className="progress-fill" />
         </div>
         <Countdown engine={engine} caption={`${song.entry.title}  ·  ${formatSpeed(settings.speed)}${settings.wait && !listen ? '  ·  ' + t('wait') : ''}`} />
-        {!listen && settings.wait && <WaitHint engine={engine} naming={settings.naming} />}
       </main>
+      {!listen && settings.wait && <WaitHint engine={engine} naming={settings.naming} />}
 
       {showSetup && (
         <div className="overlay">

@@ -171,6 +171,12 @@ export class Engine {
     return g.midis;
   }
 
+  /** Wait mode: stuck for a while, or after a wrong note, the app shows which keys to press. */
+  hintVisible() {
+    return this.playing && this.waiting && this.countdown === 0 && this.opts.wait && !this.opts.listen
+      && (this.wrongInWait > 0 || performance.now() - this.waitSince > 3500);
+  }
+
   /** The group the player is stuck on, with the hand of each note (for the hint keyboard). */
   waitingFor(): { midi: number; hand: 'R' | 'L' }[] {
     const g = this.groups[this.gi];

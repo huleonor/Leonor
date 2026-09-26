@@ -69,7 +69,8 @@ export function FallingNotes({ engine, lo, hi, naming, inset, onTap }: Props) {
       let a = 0, b = notes.length;
       while (a < b) { const mid = (a + b) >> 1; if (notes[mid].time < now - maxDur - 0.2) a = mid + 1; else b = mid; }
       const waitingIds = new Set<number>();
-      if (engine.waiting) {
+      // (Once the hint panel under the display takes over, this plate steps aside: one message.)
+      if (engine.waiting && !engine.hintVisible()) {
         const g = engine.groups[engine.gi];
         g?.ids.forEach(id => waitingIds.add(id));
       }
@@ -153,7 +154,8 @@ export function FallingNotes({ engine, lo, hi, naming, inset, onTap }: Props) {
       }
 
       // Waiting: an LCD plate over the gate names the notes it is waiting for.
-      if (engine.waiting) {
+      // (Once the hint panel under the display takes over, this plate steps aside: one message.)
+      if (engine.waiting && !engine.hintVisible()) {
         const g = engine.groups[engine.gi];
         if (g) {
           const names = [...new Set(g.midis.map(m => noteName(m, naming)))].join(' + ');
