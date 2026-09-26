@@ -41,8 +41,9 @@ Limite do Apple ID grátis: 3 apps assinadas ao mesmo tempo, e a SideStore conta
 ## 5. Ligar o piano
 
 - **Cabo:** o iPhone 13 tem porta Lightning, por isso precisas do **Lightning to USB Camera Adapter** (Apple). A versão "USB 3" deixa-te carregar o telemóvel ao mesmo tempo. O cabo USB do piano liga ao adaptador. A app deteta o teclado sozinha e mostra "Keyboard connected".
-- **Bluetooth:** em Input → Bluetooth MIDI abre-se a janela de Bluetooth MIDI do iOS. Escolhe o piano, toca em Done e ele passa a aparecer como teclado ligado.
-- **Microfone:** funciona como na versão web.
+- **Bluetooth:** na biblioteca, carrega na tecla **Bluetooth**. Abre-se a janela de Bluetooth MIDI do iOS. Escolhe o piano, toca em Done e ele passa a aparecer como teclado ligado.
+- **Microfone:** tecla **Mic** na biblioteca. Deteta acordes; põe o telemóvel perto do piano.
+- **Algo não funciona?** Na biblioteca, toca em **Check input**: mostra as notas que a app ouve, de que entrada vêm, o nível do microfone e os dispositivos MIDI que o iPhone vê.
 
 ## Atualizar a app
 

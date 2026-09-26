@@ -24,13 +24,14 @@ A personal Simply Piano built around Hugo's own library: any MIDI file he import
 
 ## Operating Context
 
-- Phone: iPhone, usually Google Chrome (WebKit). iOS browsers have no Web MIDI or Web Bluetooth, so on iPhone the microphone is the default input; Bluetooth MIDI works through the Bluefy browser (Web Bluetooth). Android/desktop Chrome get Web MIDI and Web Bluetooth directly.
+- Phone: iPhone 13 (Lightning), mainly through the Hugo's Piano iPhone app (Capacitor, sideloaded with SideStore), which loads the live site from Vercel and reads the piano through CoreMIDI: USB cable via the Lightning to USB Camera Adapter, or Bluetooth MIDI paired in the system sheet. In iPhone browsers only the microphone works (no Web MIDI or Web Bluetooth). Android/desktop Chrome get Web MIDI and Web Bluetooth directly.
 - Landscape on a music stand, room lighting of a home, often evening.
 - Sessions: pick a song, loop a hard passage slowly, speed up.
 
 ## Capabilities and Constraints
 
-- Input: Bluetooth LE MIDI (Web Bluetooth, BLE-MIDI service), Web MIDI (USB or OS-paired, detected automatically when a cable is plugged in on Android/desktop Chrome), microphone pitch detection (monophonic; chords are unreliable by mic). iOS browsers expose no MIDI at all, so a cable to the iPhone cannot reach a web app.
+- Input: CoreMIDI in the iPhone app (cable and Bluetooth, rescanned automatically), Web MIDI and Web Bluetooth in desktop/Android Chrome, and the microphone everywhere. The mic detector is polyphonic (onsets plus harmonic analysis, with a targeted check of the notes the song expects), so chords count by mic. Keys played on a MIDI keyboard sound through the app's piano by default.
+- Learning aids: a wait-mode hint showing the keys to press after a wrong note or a long stall, and a study panel that analyses each song (repeats, accompaniment patterns, chord loop, hand positions, tricky bars, key, rhythm) with bar loops to practise.
 - Song library: bundled songs plus MIDI (.mid) import, stored on the device. Each reel shows a cover photo that evokes the song (free Unsplash photos; film posters are not used).
 - Playback speed presets: 0.6x, 0.8x, 1x, 1.2x.
 - Wait mode: the song only advances when the correct note(s) are played.
