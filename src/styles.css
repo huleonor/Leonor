@@ -413,6 +413,8 @@ button:disabled { opacity: .45; cursor: default; }
   box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
 }
 .key.held .kbubble { display: block; }
+/* The hint panel already says what was played; the key's own label would sit on top of it. */
+.player:has(.wait-hint) .kbubble { display: none; }
 .key.held.wrong .kbubble { background: var(--red); }
 .key.held.hitR .kbubble { background: var(--orange-deep); color: var(--ink); }
 .key.held.hitL .kbubble { background: var(--cobalt); }
