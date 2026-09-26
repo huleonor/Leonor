@@ -9,7 +9,7 @@ export default defineConfig({
       // The iPhone app serves files from the bundle; a service worker has nothing to do there.
       disable: process.env.CAP === '1',
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*', 'songs/*'],
+      includeAssets: ['icons/*', 'songs/*', 'fonts/*'],
       manifest: {
         name: "Hugo's Piano",
         short_name: "Hugo's Piano",
@@ -18,8 +18,8 @@ export default defineConfig({
         start_url: '/',
         display: 'fullscreen',
         orientation: 'landscape',
-        background_color: '#0f0d0b',
-        theme_color: '#0f0d0b',
+        background_color: '#dcdbd6',
+        theme_color: '#dcdbd6',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -27,7 +27,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,mid}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,mid,woff2}'],
         runtimeCaching: [
           {
             // Piano samples: large and immutable, keep them offline once heard.

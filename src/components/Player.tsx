@@ -19,19 +19,19 @@ import { WaitHint } from './WaitHint';
 const SheetView = lazy(() => import('./SheetView').then(m => ({ default: m.SheetView })));
 
 const SPEEDS = [0.6, 0.8, 1, 1.2];
-const INSET = 26;
-const SOURCE_CODE: Record<Source, string> = { mic: 'MIC', ble: 'BT', midi: 'MIDI' };
+const INSET = 0;
+const SOURCE_CODE: Record<Source, string> = { mic: 'MIC', ble: 'BT', midi: 'USB' };
 
-/** Edge code in the bar: which input is live and the last note it heard. */
-function InputTag({ kind, link, naming }: { kind: Settings['input']; link?: LinkState; naming: NoteNaming }) {
+/** The input LCD: which input is live and the notes it just heard. */
+function InputLcd({ kind, link, naming }: { kind: Settings['input']; link?: LinkState; naming: NoteNaming }) {
   const { t } = useI18n();
-  const [heard, setHeard] = useState<number | null>(null);
-  useEffect(() => onNote(e => { if (e.type === 'on') setHeard(e.midi); }), []);
+  const [heard, setHeard] = useState<number[]>([]);
+  useEffect(() => onNote(e => { if (e.type === 'on') setHeard(e.chord && e.chord.length > 1 ? e.chord : [e.midi]); }), []);
   const on = kind !== 'none' && link?.status === 'on';
   return (
-    <div className={`input-tag ${on ? 'on' : 'off'}`} role="status" aria-live="polite">
-      <i />
-      {on ? <><span className="src">{SOURCE_CODE[kind as Source]}</span><b>{heard !== null ? noteName(heard, naming, true) : '—'}</b></> : t('noInputShort')}
+    <div className={`lcd input-lcd ${on ? '' : 'off'}`} role="status" aria-live="polite">
+      <small><i className={`led ${on ? 'green' : 'red'}`} />{on ? `${SOURCE_CODE[kind as Source]} · heard` : 'input'}</small>
+      <b>{on ? (heard.length ? heard.slice(0, 3).map(m => noteName(m, naming, true)).join(' ') : '—') : t('noInputShort')}</b>
     </div>
   );
 }
@@ -50,6 +50,7 @@ export function Player({ song, settings, update, links, onExit }: Props) {
   const [pianoPct, setPianoPct] = useState<number | null>(0);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   const progressRef = useRef<HTMLDivElement>(null);
+  const readoutRef = useRef<HTMLParagraphElement>(null);
   const [result, setResult] = useState<ReturnType<Engine['stats']> | null>(null);
   const [study, setStudy] = useState(false);
   const [loopBars, setLoopBars] = useState<{ from: number; to: number } | null>(null);
@@ -108,14 +109,20 @@ export function Player({ song, settings, update, links, onExit }: Props) {
   }, [engine, engine.playing]);
 
   useEffect(() => {
-    let raf = 0;
+    let raf = 0, last = '';
+    const bars = engine.measureTimes.filter(t => t <= song.duration).length;
     const frame = () => {
       if (progressRef.current) progressRef.current.style.transform = `scaleX(${engine.progress()})`;
+      // Bar and time readout, written only when it changes.
+      let bar = 0;
+      while (bar + 1 < engine.measureTimes.length && engine.measureTimes[bar + 1] <= engine.time) bar++;
+      const text = `BAR ${String(Math.max(1, bar + 1)).padStart(2, '0')}/${bars} · ${formatTime(Math.max(0, engine.time))} / ${formatTime(song.duration)}`;
+      if (text !== last && readoutRef.current) { readoutRef.current.textContent = text; last = text; }
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [engine]);
+  }, [engine, song]);
 
   const [lo, hi] = useMemo(() => pickRange(song.range[0], song.range[1]), [song]);
   const togglePlay = () => { unlockAudio(); setResult(null); engine.toggle(); };
@@ -152,121 +159,123 @@ export function Player({ song, settings, update, links, onExit }: Props) {
   return (
     <div className={`player view-${settings.view}`}>
       <header className="bar">
-        <button className="icon-btn" onClick={onExit} aria-label={t('back')}><IconBack /></button>
+        <button className="keycap" onClick={onExit} aria-label={t('back')}><IconBack /></button>
         <div className="bar-title">
           <h1>{song.entry.title}</h1>
-          <p>{sub}</p>
+          <p ref={readoutRef}>{sub}</p>
         </div>
-        <div className="seg" role="group" aria-label={t('viewNotes') + ' / ' + t('viewSheet')}>
-          <button className={settings.view === 'notes' ? 'on' : ''} onClick={() => update({ view: 'notes' })} aria-pressed={settings.view === 'notes'} aria-label={t('viewNotes')} title={t('viewNotes')}>
-            <IconFalling size={16} /><span>{t('viewNotes')}</span>
+        <div className="slider" role="group" aria-label={t('viewNotes') + ' / ' + t('viewSheet')}>
+          <button className={settings.view === 'notes' ? 'on' : ''} onClick={() => update({ view: 'notes' })} aria-pressed={settings.view === 'notes'} aria-label={t('viewNotes')}>
+            <IconFalling size={15} /><span>{t('viewNotes')}</span>
           </button>
-          <button className={settings.view === 'sheet' ? 'on' : ''} onClick={() => update({ view: 'sheet' })} aria-pressed={settings.view === 'sheet'} aria-label={t('viewSheet')} title={t('viewSheet')}>
-            <IconSheet size={16} /><span>{t('viewSheet')}</span>
+          <button className={settings.view === 'sheet' ? 'on' : ''} onClick={() => update({ view: 'sheet' })} aria-pressed={settings.view === 'sheet'} aria-label={t('viewSheet')}>
+            <IconSheet size={15} /><span>{t('viewSheet')}</span>
           </button>
         </div>
-        <div className="seg speeds" role="group" aria-label={t('speed')}>
-          {SPEEDS.map(s => (
-            <button key={s} className={settings.speed === s ? 'on' : ''} onClick={() => update({ speed: s })} aria-pressed={settings.speed === s}>
-              {formatSpeed(s)}
-            </button>
-          ))}
+        <div className="speeds" role="group" aria-label={t('speed')}>
+          <div className="keys-row">
+            {SPEEDS.map(v => (
+              <button key={v} className={`keycap ${settings.speed === v ? 'lit' : ''}`} onClick={() => update({ speed: v })} aria-pressed={settings.speed === v} aria-label={`${t('speed')} ${formatSpeed(v)}`}>
+                {v === 1 ? '1' : String(v).replace(/^0/, '')}
+              </button>
+            ))}
+          </div>
+          <span className="legend">{t('speed')}</span>
         </div>
-        <button className={`chip ${settings.wait ? 'on' : ''}`} onClick={() => update({ wait: !settings.wait })} aria-pressed={settings.wait} disabled={listen}>
-          <i />{t('wait')}
-        </button>
+        <div className="cap wait-key">
+          <i className={`led ${settings.wait && !listen ? 'orange' : ''}`} />
+          <button className={`keycap dark ${settings.wait ? 'down' : ''}`} onClick={() => update({ wait: !settings.wait })} aria-pressed={settings.wait} disabled={listen}>
+            {t('wait').toUpperCase()}
+          </button>
+        </div>
         {loopBars && (
-          <button className="chip on loop-chip" onClick={clearLoop} aria-label="Stop looping">
-            {loopBars.from === loopBars.to ? `Bar ${loopBars.from}` : `Bars ${loopBars.from}–${loopBars.to}`}<IconClose size={14} />
+          <button className="loop-key" onClick={clearLoop} aria-label="Stop looping">
+            {loopBars.from === loopBars.to ? `BAR ${loopBars.from}` : `BARS ${loopBars.from}–${loopBars.to}`}<IconClose size={14} />
           </button>
         )}
-        {!listen && <InputTag kind={settings.input} link={settings.input !== 'none' ? links[settings.input as Source] : undefined} naming={settings.naming} />}
+        {!listen && <InputLcd kind={settings.input} link={settings.input !== 'none' ? links[settings.input as Source] : undefined} naming={settings.naming} />}
       </header>
 
-      <div className="progress" onPointerDown={seekFromBar} role="slider" aria-label="progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(engine.progress() * 100)}>
-        <div ref={progressRef} className="progress-fill" />
-      </div>
-
-      <main className="stage">
+      <main className="display">
         {settings.view === 'notes'
           ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} inset={INSET} onTap={togglePlay} />
-          : <Suspense fallback={<p className="sheet-loading">{t('sheetLoading')}</p>}><SheetView key={song.entry.id} engine={engine} onTap={togglePlay} /></Suspense>}
+          : <Suspense fallback={<p className="score-loading">{t('sheetLoading')}</p>}><SheetView key={song.entry.id} engine={engine} onTap={togglePlay} /></Suspense>}
+        <div className="progress" onPointerDown={seekFromBar} role="slider" aria-label="Position in the song" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(engine.progress() * 100)}>
+          <div ref={progressRef} className="progress-fill" />
+        </div>
         <Countdown engine={engine} caption={`${song.entry.title}  ·  ${formatSpeed(settings.speed)}${settings.wait && !listen ? '  ·  ' + t('wait') : ''}`} />
         {!listen && settings.wait && <WaitHint engine={engine} naming={settings.naming} />}
+      </main>
 
-        {showSetup && (
-          <div className="overlay">
-            <div className="card">
-              <h2>{song.entry.title}</h2>
-              <p className="card-sub">{sub}</p>
-              <div className="card-rows">
+      {showSetup && (
+        <div className="overlay">
+          <div className="plate">
+            <h2>{song.entry.title}</h2>
+            <p className="plate-sub">{sub}</p>
+            <div className="plate-rows">
+              <div className="row">
+                <span className="legend">{t('mode')}</span>
+                <div className="slider">
+                  <button className={!listen ? 'on' : ''} onClick={() => setListen(false)}>{t('play')}</button>
+                  <button className={listen ? 'on' : ''} onClick={() => setListen(true)}>{t('listen')}</button>
+                </div>
+              </div>
+              {!oneHand && !listen && (
                 <div className="row">
-                  <span className="lab">{t('mode')}</span>
-                  <div className="seg">
-                    <button className={!listen ? 'on' : ''} onClick={() => setListen(false)}>{t('play')}</button>
-                    <button className={listen ? 'on' : ''} onClick={() => setListen(true)}>{t('listen')}</button>
+                  <span className="legend">{t('handsLabel')}</span>
+                  <div className="slider">
+                    {(['R', 'L', 'both'] as HandsChoice[]).map(h => (
+                      <button key={h} className={settings.hands === h ? 'on' : ''} onClick={() => update({ hands: h })}>
+                        {t(h === 'R' ? 'right' : h === 'L' ? 'left' : 'both')}
+                      </button>
+                    ))}
                   </div>
                 </div>
-                {!oneHand && !listen && (
-                  <div className="row">
-                    <span className="lab">{t('handsLabel')}</span>
-                    <div className="seg">
-                      {(['R', 'L', 'both'] as HandsChoice[]).map(h => (
-                        <button key={h} className={settings.hands === h ? 'on' : ''} onClick={() => update({ hands: h })}>
-                          {t(h === 'R' ? 'right' : h === 'L' ? 'left' : 'both')}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="card-actions">
-                <button className="primary" onClick={togglePlay} disabled={pianoPct !== null && listen}>
-                  <IconPlay size={16} />{engine.started ? t('continue') : t('start')}
-                </button>
-                {engine.started && (
-                  <>
-                    <button className="ghost" onClick={() => { engine.restart(); bump(); }}><IconRestart size={16} />{t('restart')}</button>
-                    <button className="ghost" onClick={() => engine.seek(engine.time - 5)}><IconBack5 size={16} />{t('back5')}</button>
-                  </>
-                )}
-              </div>
-              <button className="study-open" onClick={() => setStudy(true)}>
-                <span>Learn it faster</span>
-                <small>Repeats, patterns and tricky bars, with loops to practise</small>
+              )}
+            </div>
+            <div className="plate-actions">
+              <button className="pill go" onClick={togglePlay} disabled={pianoPct !== null && listen}>
+                <IconPlay size={15} />{engine.started ? t('continue') : t('start')}
               </button>
-              {!listen && !inputOn && <p className="note warn">{t('noInput')}</p>}
-              {pianoPct !== null && <p className="note">{pianoPct > 0 ? t('loadingPiano', { pct: pianoPct }) : t('loadingPianoPlain')}</p>}
-              <p className="note rotate-hint">{t('rotate')}</p>
+              {engine.started && (
+                <>
+                  <button className="pill" onClick={() => { engine.restart(); bump(); }}><IconRestart size={16} />{t('restart')}</button>
+                  <button className="pill" onClick={() => engine.seek(engine.time - 5)}><IconBack5 size={16} />{t('back5')}</button>
+                </>
+              )}
+              <button className="pill study-open" onClick={() => setStudy(true)}><i className="led orange" />Learn it faster</button>
             </div>
+            {!listen && !inputOn && <p className="note warn">{t('noInput')}</p>}
+            {pianoPct !== null && <p className="note">{pianoPct > 0 ? t('loadingPiano', { pct: pianoPct }) : t('loadingPianoPlain')}</p>}
+            <p className="note rotate-hint">{t('rotate')}</p>
           </div>
-        )}
+        </div>
+      )}
 
-        {showResult && result && (
-          <div className="overlay">
-            <div className="card end">
-              <h2>{t('theEnd')}</h2>
-              <p className="card-sub">{song.entry.title} · {formatSpeed(engine.opts.speed)}</p>
-              <dl className="stats">
-                <div><dt>{t('accuracy')}</dt><dd>{Math.round(result.accuracy * 100)}%</dd></div>
-                <div><dt>{t('notesHit')}</dt><dd>{result.hit}/{result.total}</dd></div>
-                <div><dt>{t('wrongNotes')}</dt><dd>{result.wrong}</dd></div>
-              </dl>
-              <div className="card-actions">
-                <button className="primary" onClick={() => { setResult(null); engine.restart(); engine.play(); }}><IconRestart size={16} />{t('again')}</button>
-                {settings.speed < 1.2 && (
-                  <button className="ghost" onClick={() => {
-                    const next = SPEEDS[SPEEDS.indexOf(settings.speed) + 1] ?? 1.2;
-                    update({ speed: next });
-                    setResult(null); engine.setOptions({ speed: next }); engine.restart(); engine.play();
-                  }}>{t('faster')}</button>
-                )}
-                <button className="ghost" onClick={onExit}>{t('library')}</button>
-              </div>
+      {showResult && result && (
+        <div className="overlay">
+          <div className="plate">
+            <h2>{t('theEnd')}</h2>
+            <p className="plate-sub">{song.entry.title} · {formatSpeed(engine.opts.speed)}</p>
+            <dl className="lcd readout">
+              <div><dt>{t('accuracy')}</dt><dd>{Math.round(result.accuracy * 100)}%</dd></div>
+              <div><dt>{t('notesHit')}</dt><dd>{result.hit}/{result.total}</dd></div>
+              <div><dt>{t('wrongNotes')}</dt><dd>{result.wrong}</dd></div>
+            </dl>
+            <div className="plate-actions">
+              <button className="pill go" onClick={() => { setResult(null); engine.restart(); engine.play(); }}><IconRestart size={16} />{t('again')}</button>
+              {settings.speed < 1.2 && (
+                <button className="pill" onClick={() => {
+                  const next = SPEEDS[SPEEDS.indexOf(settings.speed) + 1] ?? 1.2;
+                  update({ speed: next });
+                  setResult(null); engine.setOptions({ speed: next }); engine.restart(); engine.play();
+                }}>{t('faster')}</button>
+              )}
+              <button className="pill" onClick={onExit}>{t('library')}</button>
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
 
       {study && <StudyPanel song={song} onPractice={practise} onClose={() => setStudy(false)} />}
 

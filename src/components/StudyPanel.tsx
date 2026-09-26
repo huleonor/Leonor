@@ -3,15 +3,16 @@ import { analyseSong, type Tip, type TipKind } from '../lib/analysis';
 import type { Song } from '../lib/types';
 import { IconClose, IconPlay } from './Icons';
 
-const KICKER: Record<TipKind, string> = {
-  plan: 'Plan',
-  repeat: 'Repeats',
-  left: 'Pattern',
-  chords: 'Chords',
-  position: 'Hands',
-  tricky: 'Tricky',
-  key: 'Key',
-  rhythm: 'Rhythm',
+/** Legend printed beside each tip, and the LED colour that marks its kind. */
+const KIND: Record<TipKind, { legend: string; led: string }> = {
+  plan: { legend: 'Plan', led: 'orange' },
+  repeat: { legend: 'Repeats', led: 'green' },
+  left: { legend: 'Pattern', led: 'green' },
+  chords: { legend: 'Chords', led: '' },
+  position: { legend: 'Hands', led: '' },
+  tricky: { legend: 'Tricky', led: 'red' },
+  key: { legend: 'Key', led: '' },
+  rhythm: { legend: 'Rhythm', led: '' },
 };
 
 interface Props {
@@ -24,25 +25,26 @@ interface Props {
 export function StudyPanel({ song, onPractice, onClose }: Props) {
   const analysis = useMemo(() => analyseSong(song), [song]);
   return (
-    <div className="study-scrim" onClick={onClose}>
-      <section className="study" role="dialog" aria-label="Learn this song" onClick={e => e.stopPropagation()}>
-        <header className="study-head">
+    <div className="scrim" onClick={onClose}>
+      <section className="sheet-panel wide" role="dialog" aria-label="Learn this song faster" onClick={e => e.stopPropagation()}>
+        <header className="sheet-head">
           <div>
-            <p className="study-kicker">Learn it faster</p>
-            <h2>{song.entry.title}</h2>
-            <p className="study-meta">{analysis.bars} bars · {analysis.uniqueBars} different</p>
+            <h2>Learn {song.entry.title} faster</h2>
+            <p className="study-meta">{analysis.bars} bars · {analysis.uniqueBars} really different</p>
           </div>
-          <button className="icon-btn" onClick={onClose} aria-label="Close"><IconClose /></button>
+          <button className="keycap" onClick={onClose} aria-label="Close"><IconClose /></button>
         </header>
         <ol className="tips">
           {analysis.tips.map((tip, i) => (
-            <li key={i} className={`tip tip-${tip.kind}`}>
-              <span className="tip-kicker">{KICKER[tip.kind]}</span>
+            <li key={i} className="tip">
+              <span className="tip-kind"><i className={`led ${KIND[tip.kind].led}`} /><span className="legend">{KIND[tip.kind].legend}</span></span>
               <h3>{tip.title}</h3>
-              <p>{tip.body}</p>
+              {tip.kind === 'plan'
+                ? <ol className="plan">{tip.body.split(/\s*\d+\.\s+/).filter(Boolean).map((step, j) => <li key={j}>{step}</li>)}</ol>
+                : <p>{tip.body}</p>}
               {tip.practice && (
-                <button className="tip-go" onClick={() => onPractice(tip.practice!)}>
-                  <IconPlay size={14} />
+                <button className="pill go" onClick={() => onPractice(tip.practice!)}>
+                  <IconPlay size={13} />
                   Practise {tip.practice.from === tip.practice.to ? `bar ${tip.practice.from}` : `bars ${tip.practice.from}–${tip.practice.to}`}
                   {tip.practice.hands === 'L' ? ' · left hand' : tip.practice.hands === 'R' ? ' · right hand' : ''}
                   {tip.practice.speed ? ` · ${tip.practice.speed}×` : ''}

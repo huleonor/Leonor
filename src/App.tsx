@@ -71,7 +71,7 @@ export default function App() {
       {song
         ? <Player song={song} settings={settings} update={update} links={links} onExit={() => setSong(null)} />
         : <Library settings={settings} update={update} links={links} connectInput={connectInput} onOpen={s => setSong(s)} onPick={() => { unlockAudio(); ensureInput(); }} />}
-      {notice && <div className="toast" role="status">{notice}</div>}
+      {notice && <div className="toast lcd" role="status">{notice}</div>}
     </I18nContext.Provider>
   );
 }

@@ -10,8 +10,8 @@ interface Props { engine: Engine; onTap: () => void; }
 interface Stop { time: number; x: number; line: number; }
 interface Box { top: number; bottom: number; }
 
-const INK = '#f2eee6';
-const COLORS = { R: '#d9822b', L: '#6fb7c4', auto: '#7d776e', miss: '#c4533a' };
+const INK = '#1a1a1a';
+const COLORS = { R: '#f25c08', L: '#2f5bff', auto: '#a3a29b', miss: '#e0301e' };
 
 function rectIn(el: Element, host: HTMLElement) {
   const r = el.getBoundingClientRect(), h = host.getBoundingClientRect();
@@ -165,12 +165,12 @@ export function SheetView({ engine, onTap }: Props) {
   }, [engine, width]);
 
   return (
-    <div className="sheet" ref={scrollRef} onClick={e => { if (engine.playing || !(e.target as Element).closest('.abcjs-note')) onTap(); }}>
-      <div className="sheet-paper">
+    <div className="score" ref={scrollRef} onClick={e => { if (engine.playing || !(e.target as Element).closest('.abcjs-note')) onTap(); }}>
+      <div className="score-paper">
         <div ref={paperRef} />
-        <div ref={cursorRef} className="sheet-cursor" />
+        <div ref={cursorRef} className="score-cursor" />
       </div>
-      {!ready && <p className="sheet-loading">{t('sheetLoading')}</p>}
+      {!ready && <p className="score-loading">{t('sheetLoading')}</p>}
     </div>
   );
 }

@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hugo's Piano redesign previews</title>
+<link rel="preconnect" href="https://api.fontshare.com" />
+<link href="https://api.fontshare.com/v2/css?f[]=supreme@400,500,700,800&display=swap" rel="stylesheet" />
+<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800,900&display=swap" rel="stylesheet" />
+<link href="https://api.fontshare.com/v2/css?f[]=sentient@400,500,700&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #2a2a2c; color: #eee; font-family: 'Switzer', system-ui, sans-serif; padding: 28px 20px 60px; }
+  .dir { max-width: 1760px; margin: 0 auto 56px; }
+  .dir > header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .dir > header b { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #ff8a3d; }
+  .dir > header h2 { font-size: 26px; font-weight: 800; }
+  .dir > header p { color: #bdbdbd; font-size: 14px; max-width: 70ch; }
+  .frames { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; }
+  .shot { aspect-ratio: 844 / 390; position: relative; container-type: inline-size; }
+  .shot > .frame { position: absolute; top: 0; left: 0; width: 844px; height: 390px; transform-origin: 0 0;  border-radius: 30px; overflow: hidden; box-shadow: 0 0 0 7px #0c0c0d, 0 20px 50px rgba(0,0,0,.5); }
+  .cap { margin-top: 12px; font-size: 12.5px; color: #9d9d9d; }
+
+  /* shared bits */
+  .kb { position: relative; height: 100%; }
+  .kb .k { position: absolute; top: 0; }
+  .lane { position: absolute; }
+  .nb { position: absolute; display: flex; align-items: flex-end; justify-content: center; }
+
+  /* ================= A · INSTRUMENT PANEL ================= */
+  .A { background: linear-gradient(180deg, #e4e3de, #d3d2cc); color: #1a1a1a; font-family: 'Supreme', sans-serif; }
+  .A .grain { position: absolute; inset: 0; background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px); pointer-events: none; }
+  .A .lib { display: grid; grid-template-columns: 236px 1fr; height: 100%; }
+  .A .side { padding: 26px 20px 20px 34px; display: flex; flex-direction: column; gap: 18px; border-right: 1px solid rgba(0,0,0,.12); box-shadow: 1px 0 0 rgba(255,255,255,.5); }
+  .A .brand { font-weight: 800; font-size: 25px; letter-spacing: -.01em; line-height: .95; }
+  .A .brand small { display: block; margin-top: 7px; font: 500 10px 'Geist Mono', monospace; letter-spacing: .12em; color: #6b6a64; text-transform: uppercase; }
+  .A .legend { font: 700 9.5px 'Supreme'; letter-spacing: .16em; text-transform: uppercase; color: #55544f; }
+  .A .caps { display: flex; gap: 14px; }
+  .A .cap-k { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .A .led { width: 6px; height: 6px; border-radius: 50%; background: #9c9b95; box-shadow: inset 0 1px 1px rgba(0,0,0,.3); }
+  .A .led.on { background: #3dbe6b; box-shadow: 0 0 6px #3dbe6b; }
+  .A .led.amber { background: #ff6a13; box-shadow: 0 0 6px #ff6a13; }
+  .A .keycap { width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 50% 35%, #fbfbf9, #dcdbd6 70%); box-shadow: 0 2px 0 #a9a8a2, 0 3px 6px rgba(0,0,0,.18), inset 0 -1px 0 rgba(0,0,0,.08); display: grid; place-items: center; font: 700 11px 'Supreme'; }
+  .A .keycap.dark { background: radial-gradient(circle at 50% 35%, #3a3b3f, #1c1d20 70%); color: #eee; box-shadow: 0 2px 0 #000, 0 3px 6px rgba(0,0,0,.3); }
+  .A .keycap.orange { background: radial-gradient(circle at 50% 35%, #ff8a45, #f25c08 70%); color: #fff; box-shadow: 0 1px 0 #b94000, 0 1px 3px rgba(0,0,0,.2), inset 0 1px 2px rgba(0,0,0,.15); transform: translateY(1px); }
+  .A .keycap svg { width: 18px; height: 18px; }
+  .A .import { margin-top: auto; height: 46px; border-radius: 23px; background: radial-gradient(ellipse at 50% 30%, #ff8a45, #f25c08 75%); color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; font: 800 12px 'Supreme'; letter-spacing: .14em; text-transform: uppercase; box-shadow: 0 2px 0 #b94000, 0 4px 10px rgba(242,92,8,.3); }
+  .A .check { font: 500 11.5px 'Supreme'; color: #55544f; text-decoration: underline; text-underline-offset: 3px; }
+  .A .rack { display: flex; gap: 14px; padding: 22px 0 22px 20px; overflow: hidden; }
+  .A .cart { flex: 0 0 186px; border-radius: 14px; background: linear-gradient(180deg, #cfcec8, #bebdb6); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(0,0,0,.08), 0 8px 18px rgba(0,0,0,.12); padding: 10px; display: flex; flex-direction: column; gap: 10px; position: relative; }
+  .A .cart .grip { height: 6px; margin: 0 40px; border-radius: 3px; background: repeating-linear-gradient(90deg, #a5a49d 0 2px, transparent 2px 5px); }
+  .A .cart img { width: 100%; height: 118px; object-fit: cover; border-radius: 7px; filter: saturate(.9) contrast(1.05); box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
+  .A .label { background: #f6f5f1; border-radius: 7px; padding: 10px 11px 11px; flex: 1; display: flex; flex-direction: column; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+  .A .num { font: 500 11px 'Geist Mono'; color: #f25c08; letter-spacing: .06em; }
+  .A .label h3 { font: 800 19px/1.02 'Supreme'; margin: 4px 0 4px; letter-spacing: -.01em; }
+  .A .label p { font: 500 11px 'Supreme'; color: #6b6a64; }
+  .A .stamps { margin-top: auto; display: flex; gap: 5px; }
+  .A .stamps span { flex: 1; height: 22px; border-radius: 11px; border: 1.5px solid #c9c8c2; font: 500 10px 'Geist Mono'; display: grid; place-items: center; color: #8a8983; }
+  .A .stamps span.done { border-color: #f25c08; background: #f25c08; color: #fff; }
+  .A .cart.missing img { filter: grayscale(1) brightness(.85); }
+  .A .cart.missing .label { background: repeating-linear-gradient(135deg, #f6f5f1 0 8px, #efeee9 8px 16px); }
+  /* A player */
+  .A .ply { display: grid; grid-template-rows: 64px 1fr 92px; height: 100%; }
+  .A .top { display: flex; align-items: center; gap: 12px; padding: 0 22px 0 40px; }
+  .A .top .keycap { width: 38px; height: 38px; }
+  .A .title h1 { font: 800 16px/1 'Supreme'; letter-spacing: -.005em; }
+  .A .title p { font: 500 10px 'Geist Mono'; color: #6b6a64; margin-top: 4px; letter-spacing: .04em; }
+  .A .grow { flex: 1; }
+  .A .slider { display: flex; background: #bfbeb8; border-radius: 16px; padding: 3px; box-shadow: inset 0 1px 2px rgba(0,0,0,.25); }
+  .A .slider span { padding: 6px 11px; border-radius: 13px; font: 700 10px 'Supreme'; letter-spacing: .12em; text-transform: uppercase; color: #55544f; }
+  .A .slider span.on { background: #f6f5f1; color: #1a1a1a; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .A .grp { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .A .grp .row { display: flex; gap: 6px; }
+  .A .grp .keycap { width: 34px; height: 34px; font-size: 10.5px; }
+  .A .lcd { background: #121314; border-radius: 8px; padding: 6px 10px; font: 500 12px 'Geist Mono'; color: #7ef0a0; box-shadow: inset 0 2px 4px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.6); min-width: 86px; }
+  .A .lcd small { display: block; font-size: 8.5px; color: #4e8f63; letter-spacing: .12em; }
+  .A .display { margin: 0 22px 0 40px; border-radius: 16px; background: #111214; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px #000, inset 0 3px 10px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.7); }
+  .A .display .gate { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #ff6a13; box-shadow: 0 0 10px #ff6a13; }
+  .A .display .bar { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,255,255,.07); }
+  .A .display .barno { position: absolute; left: 8px; font: 500 9px 'Geist Mono'; color: rgba(255,255,255,.35); }
+  .A .nb { border-radius: 6px; font: 700 10px 'Supreme'; padding-bottom: 4px; color: rgba(0,0,0,.72); }
+  .A .keys { margin: 6px 22px 12px 40px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 0 #a9a8a2; }
+  .A .k.w { height: 100%; background: linear-gradient(#fbfaf7, #efeee9); border-right: 1px solid #c9c8c2; border-radius: 0 0 4px 4px; }
+  .A .k.b { height: 58%; background: linear-gradient(#2a2b2e, #111214); border-radius: 0 0 3px 3px; z-index: 2; }
+  .A .k.pR { background: #ff6a13 !important; } .A .k.pL { background: #2f5bff !important; }
+  .A .k .nm { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; font: 700 10px 'Supreme'; color: #fff; }
+  .A .bubble { position: absolute; transform: translate(-50%, -100%); background: #1a1a1a; color: #fff; font: 700 11px 'Geist Mono'; padding: 3px 7px; border-radius: 6px; }
+
+  /* ================= B · MUSICA VIVA ================= */
+  .B { background: #f4f4f0; color: #111; font-family: 'Switzer', sans-serif; }
+  .B .lib { display: grid; grid-template-columns: 210px 1fr; height: 100%; }
+  .B .side { padding: 24px 18px 20px 34px; display: flex; flex-direction: column; border-right: 2px solid #111; }
+  .B .brand { font: 900 38px/.86 'Switzer'; letter-spacing: -.04em; }
+  .B .rows { margin-top: 22px; border-top: 2px solid #111; }
+  .B .rows div { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid #111; font: 600 13px 'Switzer'; }
+  .B .rows i { width: 10px; height: 10px; background: #111; }
+  .B .rows i.on { background: #e3371e; border-radius: 50%; }
+  .B .rows div.sel { font-weight: 800; }
+  .B .import { margin-top: auto; background: #111; color: #f4f4f0; padding: 12px 14px; font: 800 14px 'Switzer'; display: flex; justify-content: space-between; }
+  .B .wall { display: flex; gap: 0; overflow: hidden; }
+  .B .poster { flex: 0 0 196px; height: 100%; position: relative; padding: 18px 16px; display: flex; flex-direction: column; border-right: 2px solid #111; overflow: hidden; }
+  .B .poster svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .B .poster .meta { position: relative; font: 600 10.5px/1.35 'Switzer'; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+  .B .poster h3 { position: relative; margin-top: auto; font: 900 30px/.9 'Switzer'; letter-spacing: -.035em; }
+  .B .poster .n { position: relative; font: 900 13px 'Switzer'; margin-bottom: 8px; }
+  .B .poster .prog { position: relative; margin-top: 10px; display: flex; gap: 3px; font: 800 10px 'Switzer'; }
+  .B .poster .prog span { padding: 2px 5px; border: 1.5px solid currentColor; }
+  .B .poster .prog span.done { background: currentColor; }
+  .B .poster .prog span.done b { color: var(--bg); }
+  /* B player */
+  .B .ply { display: grid; grid-template-rows: 56px 1fr 88px; height: 100%; }
+  .B .top { display: grid; grid-template-columns: 44px 1fr auto auto auto auto; align-items: stretch; border-bottom: 2px solid #111; padding-left: 30px; }
+  .B .top > * { display: flex; align-items: center; padding: 0 14px; border-right: 1px solid #111; }
+  .B .top > *:last-child { border-right: 0; }
+  .B .back { font: 800 20px 'Switzer'; padding: 0 !important; justify-content: center; }
+  .B .t h1 { font: 900 19px/1 'Switzer'; letter-spacing: -.03em; }
+  .B .t p { font: 600 10.5px 'Switzer'; margin-left: 10px; color: #555; }
+  .B .opts { gap: 10px; font: 700 13px 'Switzer'; }
+  .B .opts .on { background: #111; color: #f4f4f0; padding: 3px 7px; }
+  .B .opts .off { color: #777; }
+  .B .wait { background: #e3371e; color: #fff; font: 800 13px 'Switzer'; }
+  .B .inp { font: 700 12px 'Switzer'; gap: 8px; }
+  .B .inp b { font-size: 17px; font-weight: 900; }
+  .B .stage { position: relative; overflow: hidden; margin-left: 30px; }
+  .B .big { position: absolute; right: 18px; top: -18px; font: 900 150px/1 'Switzer'; letter-spacing: -.06em; color: #111; opacity: .08; }
+  .B .nb { font: 800 10px 'Switzer'; color: #fff; padding-bottom: 3px; }
+  .B .vline { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,.12); }
+  .B .hline { position: absolute; left: 0; right: 0; height: 2px; background: #111; }
+  .B .hbar { position: absolute; left: 0; right: 0; height: 1px; background: rgba(0,0,0,.15); }
+  .B .keys { border-top: 3px solid #111; margin-left: 30px; }
+  .B .k.w { height: 100%; background: #fff; border-right: 1.5px solid #111; }
+  .B .k.b { height: 58%; background: #111; z-index: 2; }
+  .B .k.pR { background: #e3371e !important; } .B .k.pL { background: #1d4ed8 !important; }
+  .B .hint { position: absolute; right: 18px; bottom: 14px; background: #111; color: #f4f4f0; padding: 10px 12px; font: 700 12px 'Switzer'; width: 190px; }
+  .B .hint b { display: block; font: 900 22px/1 'Switzer'; letter-spacing: -.02em; margin-top: 3px; }
+
+  /* ================= C · METHOD MANUAL ================= */
+  .C { color: #1b1b1b; font-family: 'Sentient', serif; background: #f2c230; }
+  .C .rail { position: absolute; right: 0; top: 0; bottom: 0; width: 40px; display: flex; flex-direction: column; }
+  .C .rail span { flex: 1; font: 700 10px 'Barlow Condensed'; letter-spacing: .08em; writing-mode: vertical-rl; display: flex; align-items: center; justify-content: center; color: rgba(0,0,0,.75); border-top: 1px solid rgba(0,0,0,.15); border-radius: 8px 0 0 8px; margin-left: 6px; }
+  .C .rail span.cur { margin-left: 0; box-shadow: -2px 0 0 rgba(0,0,0,.12); }
+  .C .lib { position: absolute; inset: 0 40px 0 0; display: grid; grid-template-columns: 1fr 1.1fr; gap: 20px; padding: 24px 22px 22px 40px; }
+  .C .head small { font: 700 11px 'Barlow Condensed'; letter-spacing: .2em; text-transform: uppercase; }
+  .C .head h2 { font: 800 56px/.86 'Barlow Condensed'; text-transform: uppercase; letter-spacing: -.005em; margin-top: 10px; }
+  .C .head p { font: 400 15px/1.4 'Sentient'; margin-top: 12px; max-width: 30ch; }
+  .C .inputs { margin-top: 16px; display: flex; gap: 8px; font: 700 12px 'Barlow Condensed'; letter-spacing: .1em; text-transform: uppercase; }
+  .C .inputs span { padding: 7px 10px; border: 1.5px solid #1b1b1b; border-radius: 4px; }
+  .C .inputs span.on { background: #1b1b1b; color: #f2c230; }
+  .C .leaf { background: rgba(250, 249, 245, .86); border-radius: 6px; padding: 16px 18px 16px 30px; position: relative; box-shadow: 3px 3px 0 rgba(0,0,0,.14); display: flex; flex-direction: column; gap: 10px; }
+  .C .leaf::before, .C .leaf::after { content: ''; position: absolute; left: 10px; width: 9px; height: 9px; border-radius: 50%; background: #f2c230; box-shadow: inset 0 1px 2px rgba(0,0,0,.35); }
+  .C .leaf::before { top: 22px; } .C .leaf::after { bottom: 22px; }
+  .C .leaf img { width: 100%; height: 96px; object-fit: cover; border-radius: 3px; }
+  .C .facts { display: grid; grid-template-columns: repeat(4, 1fr); font: 600 10px 'Barlow Condensed'; letter-spacing: .12em; text-transform: uppercase; }
+  .C .facts b { display: block; font: 500 14px 'Geist Mono'; letter-spacing: 0; text-transform: none; margin-top: 2px; }
+  .C .tipline { font: 400 13px/1.35 'Sentient'; border-top: 1px solid rgba(0,0,0,.15); padding-top: 8px; }
+  .C .tipline b { font: 700 11px 'Barlow Condensed'; letter-spacing: .14em; text-transform: uppercase; margin-right: 6px; }
+  .C .go { align-self: flex-start; background: #1b1b1b; color: #faf9f5; font: 700 13px 'Barlow Condensed'; letter-spacing: .14em; text-transform: uppercase; padding: 10px 16px; border-radius: 4px; }
+  /* C player */
+  .C .ply { position: absolute; inset: 0 40px 0 0; display: grid; grid-template-rows: 54px 1fr 86px; }
+  .C .top { display: flex; align-items: center; gap: 12px; padding: 0 16px 0 40px; }
+  .C .top h1 { font: 800 24px/1 'Barlow Condensed'; text-transform: uppercase; }
+  .C .top p { font: 400 12px 'Sentient'; }
+  .C .tabs { display: flex; gap: 4px; }
+  .C .tabs span { font: 700 12px 'Barlow Condensed'; letter-spacing: .08em; padding: 7px 10px; border-radius: 4px; border: 1.5px solid #1b1b1b; }
+  .C .tabs span.on { background: #1b1b1b; color: #f2c230; }
+  .C .stage { margin: 0 16px 0 40px; background: rgba(250, 249, 245, .82); border-radius: 6px 6px 0 0; position: relative; overflow: hidden; box-shadow: 3px 0 0 rgba(0,0,0,.12); }
+  .C .nb { border-radius: 3px; font: 700 11px 'Barlow Condensed'; color: #fff; padding-bottom: 3px; }
+  .C .hbar { position: absolute; left: 0; right: 0; height: 1px; background: rgba(0,0,0,.1); }
+  .C .barno { position: absolute; left: 6px; font: 500 9px 'Geist Mono'; color: rgba(0,0,0,.4); }
+  .C .keys { margin: 0 16px 10px 40px; border-top: 3px solid #1b1b1b; }
+  .C .k.w { height: 100%; background: #faf9f5; border-right: 1px solid #1b1b1b; border-radius: 0 0 3px 3px; }
+  .C .k.b { height: 58%; background: #1b1b1b; z-index: 2; border-radius: 0 0 2px 2px; }
+  .C .k.pR { background: #e8702a !important; } .C .k.pL { background: #2a4db5 !important; }
+  .C .note-card { position: absolute; right: 14px; top: 12px; width: 200px; background: #1b1b1b; color: #faf9f5; border-radius: 4px; padding: 10px 12px; font: 400 12px/1.35 'Sentient'; }
+  .C .note-card b { font: 700 11px 'Barlow Condensed'; letter-spacing: .16em; text-transform: uppercase; color: #f2c230; display: block; margin-bottom: 3px; }
+</style>
+</head>
+<body>
+
+<section class="dir">
+  <header><b>A · Sorteio</b><h2>Painel de Instrumento</h2><p>A app como um aparelho em cima do piano (Braun, Teenage Engineering): alumínio claro, botões redondos coloridos com LED, ecrã preto só onde caem as notas. Fontes: Supreme (Fontshare / Indian Type Foundry) + Geist Mono (Vercel).</p></header>
+  <div class="frames">
+    <div><div class="shot"><div class="frame A" id="A-lib"></div></div><p class="cap">Biblioteca: cartuchos numerados com foto e carimbos de velocidade conseguida.</p></div>
+    <div><div class="shot"><div class="frame A" id="A-ply"></div></div><p class="cap">A tocar: teclas-botão para velocidade e Wait, visor LCD da entrada, notas no ecrã preto.</p></div>
+  </div>
+</section>
+
+<section class="dir">
+  <header><b>B · Escolha do Impeccable</b><h2>Poster Musica Viva</h2><p>Cartazes de concerto suíços (Müller-Brockmann, Tonhalle Zürich): papel branco, cores planas, grelha rigorosa, tipografia grande. Fonte: Switzer (Fontshare / Indian Type Foundry).</p></header>
+  <div class="frames">
+    <div><div class="shot"><div class="frame B" id="B-lib"></div></div><p class="cap">Biblioteca: uma parede de cartazes, cada música com a sua cor e figura.</p></div>
+    <div><div class="shot"><div class="frame B" id="B-ply"></div></div><p class="cap">A tocar: grelha branca, compasso gigante ao fundo, dica do modo Wait em bloco preto.</p></div>
+  </div>
+</section>
+
+<section class="dir">
+  <header><b>C · Alternativa</b><h2>Manual de Método</h2><p>Um manual de piano com separadores coloridos: cada música é um separador, as dicas são as páginas, as notas caem numa folha de acetato. Fontes: Barlow Condensed (Google) + Sentient (Fontshare).</p></header>
+  <div class="frames">
+    <div><div class="shot"><div class="frame C" id="C-lib"></div></div><p class="cap">Biblioteca: separadores à direita, página aberta da música com dicas e botão para praticar.</p></div>
+    <div><div class="shot"><div class="frame C" id="C-ply"></div></div><p class="cap">A tocar: separadores de velocidade no topo, notas na folha, nota lateral da dica.</p></div>
+  </div>
+</section>
+
+<script>
+const U = id => `https://images.unsplash.com/${id}?w=560&h=440&fit=crop&crop=entropy&q=70&auto=format`;
+const SONGS = [
+  { t: "Cornfield Chase", f: "Interstellar", y: 2014, len: "3:02", img: U('photo-1530797670390-7b7118ec3f3a'), done: 2 },
+  { t: "He's a Pirate", f: "Pirates of the Caribbean", y: 2003, len: "2:48", img: U('photo-1625509972901-9c6c8e8d1069'), done: 1 },
+  { t: "Time", f: "Inception", y: 2010, len: "—", img: U('photo-1594848421556-19ee3f85d417'), missing: true },
+  { t: "Interstellar Main Theme", f: "Interstellar", y: 2014, len: "—", img: U('photo-1670884307458-4977f638a933'), missing: true },
+  { t: "Now We Are Free", f: "Gladiator", y: 2000, len: "—", img: U('photo-1764138747893-a05666926e62'), missing: true },
+  { t: "A Way of Life", f: "The Last Samurai", y: 2003, len: "—", img: U('photo-1615790469537-7c9d8e95c047'), missing: true },
+  { t: "Maestro", f: "The Holiday", y: 2006, len: "—", img: U('photo-1510798831971-661eb04b3739'), missing: true },
+];
+const NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const isB = m => [1,3,6,8,10].includes(m % 12);
+function layout(lo, hi) {
+  const whites = []; for (let m = lo; m <= hi; m++) if (!isB(m)) whites.push(m);
+  const ww = 1 / whites.length, bw = ww * .62, map = {};
+  whites.forEach((m, i) => map[m] = { x: i * ww, w: ww, b: false });
+  for (let m = lo; m <= hi; m++) if (isB(m) && map[m - 1]) map[m] = { x: map[m - 1].x + ww - bw / 2, w: bw, b: true };
+  return map;
+}
+function keyboard(el, lo, hi, pressed = {}, names = false) {
+  const L = layout(lo, hi), kb = document.createElement('div'); kb.className = 'kb';
+  for (let m = lo; m <= hi; m++) {
+    const g = L[m]; if (!g) continue;
+    const k = document.createElement('div');
+    k.className = `k ${g.b ? 'b' : 'w'} ${pressed[m] ? 'p' + pressed[m] : ''}`;
+    k.style.left = g.x * 100 + '%'; k.style.width = g.w * 100 + '%';
+    if (pressed[m] && names) k.innerHTML = `<span class="nm">${NAMES[m % 12]}</span>`;
+    kb.appendChild(k);
+  }
+  el.appendChild(kb);
+  return L;
+}
+// A short falling-notes snapshot (He's a Pirate-like texture): [midi, top%, height%, hand]
+const FALL = [[57,70,18,'R'],[60,48,12,'R'],[62,30,12,'R'],[62,10,14,'R'],[64,-8,14,'R'],[65,52,8,'R'],[45,40,56,'L'],[52,40,56,'L'],[50,-10,44,'L'],[57,-10,44,'L'],[69,4,10,'R'],[67,18,8,'R']];
+function notes(el, L, colors, labels = true) {
+  for (const [m, top, h, hand] of FALL) {
+    const g = L[m]; if (!g) continue;
+    const n = document.createElement('div'); n.className = 'nb';
+    Object.assign(n.style, { left: `calc(${g.x * 100}% + 2px)`, width: `calc(${g.w * 100}% - 4px)`, top: top + '%', height: h + '%', background: colors[hand] });
+    if (labels) n.textContent = NAMES[m % 12];
+    el.appendChild(n);
+  }
+}
+const $ = (id) => document.getElementById(id);
+const icon = { back: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4 6 10l6 6"/></svg>', mic: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2.5" width="6" height="10" rx="3"/><path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v3"/></svg>', bt: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 8 8-4 3V3l4 3-8 8"/></svg>', usb: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="14" height="8" rx="1.5"/><path d="M6 7V4h8v3M7 11h1M12 11h1"/></svg>' };
+
+/* ---------- A ---------- */
+$('A-lib').innerHTML = `<div class="grain"></div><div class="lib">
+  <aside class="side">
+    <div class="brand">Hugo’s<br>Piano<small>HP-1 · practice instrument</small></div>
+    <div><div class="legend" style="margin-bottom:9px">Input</div>
+      <div class="caps">
+        <div class="cap-k"><i class="led"></i><div class="keycap">${icon.mic}</div><span class="legend">Mic</span></div>
+        <div class="cap-k"><i class="led"></i><div class="keycap">${icon.bt}</div><span class="legend">BT</span></div>
+        <div class="cap-k"><i class="led on"></i><div class="keycap dark">${icon.usb}</div><span class="legend">USB</span></div>
+      </div></div>
+    <div class="check">Check input · Roland FP-30X</div>
+    <div class="import">＋ Import .mid</div>
+  </aside>
+  <main class="rack">${SONGS.slice(0, 4).map((s, i) => `
+    <article class="cart ${s.missing ? 'missing' : ''}"><div class="grip"></div><img src="${s.img}" alt="">
+      <div class="label"><span class="num">${String(i + 1).padStart(2, '0')} · ${s.len}</span><h3>${s.t}</h3><p>${s.f} · ${s.y}</p>
+      <div class="stamps">${['0.6','0.8','1','1.2'].map((v, j) => `<span class="${j < (s.done || 0) ? 'done' : ''}">${v}</span>`).join('')}</div></div>
+    </article>`).join('')}</main></div>`;
+
+$('A-ply').innerHTML = `<div class="grain"></div><div class="ply">
+  <div class="top">
+    <div class="keycap">${icon.back}</div>
+    <div class="title"><h1>He’s a Pirate</h1><p>BAR 22/86 · 0:41 / 2:48</p></div>
+    <div class="grow"></div>
+    <div class="slider"><span class="on">Notes</span><span>Sheet</span></div>
+    <div class="grp"><div class="row"><div class="keycap">.6</div><div class="keycap orange">.8</div><div class="keycap">1</div><div class="keycap">1.2</div></div><span class="legend">Speed</span></div>
+    <div class="grp"><i class="led amber"></i><div class="keycap dark" style="width:34px;height:34px;font-size:9.5px">WAIT</div></div>
+    <div class="lcd"><small>USB · HEARD</small>A3 + E4</div>
+  </div>
+  <div class="display" id="A-disp"></div>
+  <div class="keys" id="A-keys"></div></div>`;
+{
+  const L = keyboard($('A-keys'), 43, 74, { 57: 'R', 45: 'L', 52: 'L' }, true);
+  const d = $('A-disp');
+  [22, 58, 94].forEach((p, i) => { d.insertAdjacentHTML('beforeend', `<div class="bar" style="top:${p}%"></div><div class="barno" style="top:calc(${p}% + 3px)">${23 - i}</div>`); });
+  const inner = document.createElement('div'); inner.style.cssText = 'position:absolute;inset:0 0 0 0'; d.appendChild(inner);
+  notes(inner, L, { R: '#ff6a13', L: '#2f5bff' });
+  d.insertAdjacentHTML('beforeend', '<div class="gate"></div>');
+}
+
+/* ---------- B ---------- */
+const BCOL = [['#e3371e', '#fff'], ['#1d4ed8', '#fff'], ['#f6c700', '#111'], ['#111', '#f4f4f0'], ['#f4f4f0', '#111']];
+const FIG = [
+  (fg) => `<svg viewBox="0 0 196 390" preserveAspectRatio="none">${[0,1,2,3,4,5].map(i => `<circle cx="196" cy="120" r="${30 + i * 26}" fill="none" stroke="${fg}" stroke-width="9" opacity="${.95 - i * .12}"/>`).join('')}</svg>`,
+  (fg) => `<svg viewBox="0 0 196 390">${[0,1,2,3,4,5,6,7].map(i => `<rect x="${14 + i * 21}" y="${60 + (i % 3) * 22}" width="11" height="${150 - (i % 4) * 26}" fill="${fg}" opacity=".9"/>`).join('')}</svg>`,
+  (fg) => `<svg viewBox="0 0 196 390"><g transform="rotate(-30 98 150)">${[0,1,2,3,4].map(i => `<rect x="-40" y="${70 + i * 30}" width="${260 - i * 40}" height="14" fill="${fg}"/>`).join('')}</g></svg>`,
+  (fg) => `<svg viewBox="0 0 196 390"><circle cx="98" cy="140" r="70" fill="none" stroke="${fg}" stroke-width="2"/><circle cx="98" cy="140" r="46" fill="${fg}"/><rect x="0" y="136" width="196" height="8" fill="${fg}"/></svg>`,
+  (fg) => `<svg viewBox="0 0 196 390">${[0,1,2,3,4,5,6,7,8].map(i => `<line x1="0" y1="${40 + i * 20}" x2="196" y2="${40 + i * 20}" stroke="${fg}" stroke-width="${1 + i}"/>`).join('')}</svg>`,
+];
+$('B-lib').innerHTML = `<div class="lib">
+  <aside class="side"><div class="brand">hugo’s<br>piano</div>
+    <div class="rows"><div>microphone <i></i></div><div>bluetooth midi <i></i></div><div class="sel">usb keyboard <i class="on"></i></div><div style="font-weight:500;font-size:11.5px;color:#555">Roland FP-30X connected</div></div>
+    <div class="import"><span>import .mid</span><span>+</span></div></aside>
+  <main class="wall">${SONGS.slice(0, 4).map((s, i) => { const [bg, fg] = BCOL[i]; return `
+    <article class="poster" style="background:${bg};color:${fg};--bg:${bg}">${FIG[i](fg)}
+      <div class="meta"><span>hans zimmer</span><span>${s.y}</span><span>${s.f.toLowerCase()}</span><span>${s.len}</span></div>
+      <span class="n" style="margin-top:auto">${String(i + 1).padStart(2, '0')}</span>
+      <h3 style="margin-top:0">${s.t.toLowerCase()}</h3>
+      <div class="prog">${s.missing ? '<span>import .mid</span>' : ['.6','.8','1','1.2'].map((v, j) => `<span class="${j < (s.done || 0) ? 'done' : ''}"><b>${v}</b></span>`).join('')}</div>
+    </article>`; }).join('')}</main></div>`;
+$('B-ply').innerHTML = `<div class="ply">
+  <div class="top"><div class="back">←</div><div class="t"><h1>he’s a pirate</h1><p>bar 22 of 86</p></div>
+    <div class="opts"><span class="on">notes</span><span class="off">sheet</span></div>
+    <div class="opts"><span class="off">0.6</span><span class="on">0.8</span><span class="off">1</span><span class="off">1.2</span></div>
+    <div class="wait">wait</div><div class="inp">usb <b>A3</b></div></div>
+  <div class="stage" id="B-stage"><div class="big">22</div></div>
+  <div class="keys" id="B-keys"></div></div>`;
+{
+  const L = keyboard($('B-keys'), 43, 74, { 45: 'L', 52: 'L' });
+  const st = $('B-stage');
+  for (let m = 43; m <= 74; m++) if (m % 12 === 0) st.insertAdjacentHTML('beforeend', `<div class="vline" style="left:${L[m].x * 100}%"></div>`);
+  [22, 58].forEach(p => st.insertAdjacentHTML('beforeend', `<div class="hbar" style="top:${p}%"></div>`));
+  notes(st, L, { R: '#e3371e', L: '#1d4ed8' });
+  st.insertAdjacentHTML('beforeend', '<div class="hline" style="bottom:0"></div><div class="hint">play<b>A3 + E4</b>you played F3 · right hand</div>');
+}
+
+/* ---------- C ---------- */
+const HUES = ['#e8702a', '#f2c230', '#4c9a3f', '#1a9c9a', '#2a4db5', '#7650c8', '#9b5a34'];
+const rail = (cur) => `<nav class="rail">${SONGS.map((s, i) => `<span class="${i === cur ? 'cur' : ''}" style="background:${HUES[i]}">${String(i + 1).padStart(2, '0')} ${s.t.split(' ')[0].toUpperCase()}</span>`).join('')}</nav>`;
+$('C-lib').innerHTML = `${rail(1)}<div class="lib">
+  <div class="head"><small>Hugo’s Piano · Method · Division 02</small><h2>He’s a<br>Pirate</h2><p>Pirates of the Caribbean, 2003. Klaus Badelt and Hans Zimmer. Left hand keeps one shape for most of the piece.</p>
+    <div class="inputs"><span>Mic</span><span>Bluetooth</span><span class="on">USB · FP-30X</span></div></div>
+  <div class="leaf"><img src="${SONGS[1].img}" alt="">
+    <div class="facts"><span>Length<b>2:48</b></span><span>Bars<b>86</b></span><span>Best<b>0.8×</b></span><span>Accuracy<b>91%</b></span></div>
+    <p class="tipline"><b>Pattern</b>Left hand repeats one shape in 88% of the bars.</p>
+    <p class="tipline"><b>Tricky</b>Bars 46–47 are the busiest. Loop them at 0.6×.</p>
+    <span class="go">Practise bars 46–47 →</span></div></div>`;
+$('C-ply').innerHTML = `${rail(1)}<div class="ply">
+  <div class="top"><h1>He’s a Pirate</h1><p>bar 22 of 86</p><div style="flex:1"></div>
+    <div class="tabs"><span class="on">Notes</span><span>Sheet</span></div>
+    <div class="tabs"><span>0.6</span><span class="on">0.8</span><span>1</span><span>1.2</span></div>
+    <div class="tabs"><span class="on">Wait</span></div></div>
+  <div class="stage" id="C-stage"></div>
+  <div class="keys" id="C-keys"></div></div>`;
+{
+  const L = keyboard($('C-keys'), 43, 74, { 57: 'R', 45: 'L', 52: 'L' });
+  const st = $('C-stage');
+  [22, 58, 94].forEach((p, i) => st.insertAdjacentHTML('beforeend', `<div class="hbar" style="top:${p}%"></div><div class="barno" style="top:calc(${p}% + 3px)">${23 - i}</div>`));
+  notes(st, L, { R: '#e8702a', L: '#2a4db5' });
+  st.insertAdjacentHTML('beforeend', '<div class="note-card"><b>Pattern</b>Same left-hand shape as bar 8: root and octave, starting on A.</div>');
+}
+// Fit each 844×390 phone frame to its column.
+const fit = () => document.querySelectorAll('.shot').forEach(sh => { sh.firstElementChild.style.transform = `scale(${sh.clientWidth / 844})`; });
+addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>

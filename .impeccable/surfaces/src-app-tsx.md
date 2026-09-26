@@ -7,20 +7,20 @@ related_targets: []
 
 # Surface brief: Player + Library (app shell)
 
-Scope: the whole app (library, player in two views: falling notes and sheet). Visitor mode: Operate.
-Audience/job: Hugo, phone landscape on the piano music stand, both hands on keys; picks a song, practises slowly with wait mode, speeds up.
-Constraints: iPhone Chrome (WebKit: mic only; BLE-MIDI via Bluefy), Android/desktop Chrome (Web MIDI + Web Bluetooth). Portuguese UI.
+Scope: the whole app (library, player in falling-notes and sheet views, wait hint, study panel, input check, settings). Visitor mode: Operate.
+Audience/job: Hugo, phone landscape on a digital piano's music stand, both hands on the keys; picks a song, practises slowly with Wait, loops hard bars, speeds up.
+Constraints: iPhone app (Capacitor, CoreMIDI cable + Bluetooth, mic) and web (Chrome). English UI. Replaces the 35mm film world; the user found it generic, too dark and hard to read, and the library unappealing.
 
 ## Direction contract
 
-THESIS: Each song is a reel of 35mm film running through the projector; the keyboard is the projection gate. Refuses the Synthesia/Simply Piano default of neon glowing bars on navy with gamified stars.
+THESIS: The app is a practice instrument, a piece of hardware on the music stand: a light bead-blasted aluminium panel with printed legends, round keycaps with LEDs and one black display where the notes fall. Refuses the neon-bars-on-navy piano trainer and the dark cinema costume it replaces.
 
-OWN-WORLD: projection-booth black #0f0d0b, film-base amber #d9822b (right hand, primary action), silver-halide cyan #6fb7c4 (left hand), title-card white #f2eee6, frame edge #3a3632, leader grey #77736c for the countdown. Archivo only (one family): wdth 125 heavy tracked caps for title cards, wdth 62 for edge codes and labels. 1px frame lines; sprocket perforations run with the music; bar numbers printed as edge codes. Sheet view is the score printed as a film negative (cream ink on black) with an amber gate cursor.
+OWN-WORLD: aluminium #d9d8d3 panel (lit, never dark), display black #111214 only inside the display window, signal orange #ff6a13 (right hand, primary keycap, active state), cobalt #2f5bff (left hand), LED green #3dbe6b (live input), fault red #e0301e (wrong), legend ink #1a1a1a. Supreme (Fontshare) for legends and titles, Geist Mono for readouts, numerals and note names on LCDs. Round keycaps with a 2px travel shadow, recessed LCD windows, a two-position slider, cartridges with photo labels and speed stamps.
 
-STORY: He sees the reel labels (film cans) of his songs, picks one, the Academy-leader countdown rolls 3-2-1, notes fall to the gate; in wait mode the gate holds until he plays; the reel ends on a title card with his precision.
+STORY: He sees a rack of song cartridges, each with its photo and the speeds he has passed stamped in orange, presses one; the display counts in, notes fall to an orange gate; when he stalls in Wait, a panel under the display shows the keys to press; the cartridge earns a new stamp at the end.
 
-FIRST VIEWPORT: Landscape. 46px top bar: back, title in wide caps with film + reel number, NOTAS/PAUTA toggle, speed 0.6/0.8/1/1.2 segmented, ESPERA chip. Film strip lanes fill the middle with sprocket margins; keyboard 104px at the bottom under a cream gate line. Tap the strip to pause: control overlay (continue, restart, back 5s, hands, listen).
+FIRST VIEWPORT: Landscape. Library: left panel with the wordmark and model legend, three input keycaps (Mic, BT, USB) with LEDs, the Check input line, an orange Import keycap at the bottom; a rack of 186px cartridges to the right. Player: 64px legend strip (back keycap, title + bar readout, Notes/Sheet slider, four speed keycaps with the active one orange, Wait keycap with LED, input LCD), the black display filling the middle, keys below in the panel.
 
-FORM: grounded candidate 6 of 7 (35mm film leader and projection), seed key 31c8a130 (printed by the first concept-seed run; a second run, key 5a077ed9, was triggered by accident while re-reading output and was not used). The user then asked for live previews of three cards (A film, B design annual, C alphabet storm) and chose A. Raises: state restyles notes in place (split-flap); one type family + 1px lines (design annual); fixed label grid on each can (sneaker boxes); monumental countdown numerals (alphabet storm).
+FORM: grounded candidate 6 of 7 (Braun / Teenage Engineering instrument panel), seed key 7500be31, chosen by the user from HTML previews. Raises: one truth per readout with damped mic needle (six-pack); distinct treatment for every note state (tensegrity); speed stamps on each song (ticket wallet); every module one press away (HyperCard).
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { filmName, useI18n } from '../lib/i18n';
 import { support, type LinkState, type Source } from '../lib/input';
 import { GENERIC_COVER, getProgress, importMidi, listSongs, loadSong, removeSong } from '../lib/library';
-import { formatSpeed, formatTime } from '../lib/names';
+import { formatTime } from '../lib/names';
 import type { Progress, Settings, Song, SongEntry } from '../lib/types';
 import { IconBluetooth, IconClose, IconGear, IconImport, IconKeys, IconMic, IconTrash } from './Icons';
 import { InputCheck } from './InputCheck';
@@ -17,15 +17,8 @@ interface Props {
   onPick: () => void;
 }
 
-/** The reel's picture: a still that stands for the song, framed like a film frame. */
-function Cover({ entry }: { entry: SongEntry }) {
-  const img = entry.image ?? GENERIC_COVER;
-  return (
-    <figure className="frame">
-      <img src={img.src} alt={img.alt} loading="lazy" decoding="async" draggable={false} />
-    </figure>
-  );
-}
+const SPEEDS = [0.6, 0.8, 1, 1.2];
+const SHORT: Record<Source, string> = { mic: 'Mic', ble: 'Bluetooth', midi: 'USB' };
 
 export function Library({ settings, update, links, connectInput, onOpen, onPick }: Props) {
   const { t, lang } = useI18n();
@@ -79,119 +72,139 @@ export function Library({ settings, update, links, connectInput, onOpen, onPick 
     finally { setOpening(null); }
   };
 
-  const inputs: { kind: Source; label: string; icon: ReactNode; supported: boolean }[] = [
-    { kind: 'mic', label: t('inMic'), icon: <IconMic />, supported: support.mic },
-    { kind: 'ble', label: t('inBle'), icon: <IconBluetooth />, supported: support.bluetooth },
-    { kind: 'midi', label: t('inMidi'), icon: <IconKeys />, supported: support.webMidi },
+  const inputs: { kind: Source; icon: ReactNode; supported: boolean }[] = [
+    { kind: 'mic', icon: <IconMic />, supported: support.mic },
+    { kind: 'ble', icon: <IconBluetooth />, supported: support.bluetooth },
+    { kind: 'midi', icon: <IconKeys />, supported: support.webMidi },
   ];
-  const active = settings.input !== 'none' ? links[settings.input as Source] : undefined;
+  const selected = settings.input !== 'none' ? settings.input as Source : null;
+  const active = selected ? links[selected] : undefined;
+  const status = !selected || !active ? t('tapToConnect')
+    : active.status === 'on' ? `${SHORT[selected]} · ${active.label ?? (selected === 'mic' ? 'listening' : t('on'))}`
+    : active.status === 'connecting' ? `${SHORT[selected]} · ${t('connecting')}`
+    : active.status === 'error' ? `${SHORT[selected]} · not connected`
+    : `${SHORT[selected]} · ${t('tapToConnect').toLowerCase()}`;
 
   return (
     <div className="library">
-      <aside className="lib-side">
-        <div className="brand-row">
-          <h1 className="brand">Hugo's<br />Piano<small>{t('brandSub')}</small></h1>
-          <button className="icon-btn" onClick={() => setShowSettings(true)} aria-label={t('settings')}><IconGear /></button>
+      <aside className="panel-side">
+        <div className="brand">
+          <div className="brand-row">
+            <h1>Hugo’s<br />Piano</h1>
+            <button className="keycap" onClick={() => setShowSettings(true)} aria-label={t('settings')}><IconGear /></button>
+          </div>
+          <p>{t('brandSub')}</p>
         </div>
-        <section>
-          <h2 className="lab">{t('input')}</h2>
+
+        <section className="input-group" aria-label={t('input')}>
+          <span className="legend">{t('input')}</span>
           <div className="inputs">
-            {inputs.map(({ kind, label, icon, supported }) => {
+            {inputs.map(({ kind, icon, supported }) => {
               const st = links[kind];
-              const selected = settings.input === kind;
+              const sel = settings.input === kind;
+              const led = st.status === 'on' ? 'green' : st.status === 'connecting' ? 'blink' : st.status === 'error' && sel ? 'red' : '';
               return (
-                <button
-                  key={kind}
-                  className={`input-btn ${selected ? 'sel' : ''} ${st.status}`}
-                  aria-pressed={selected}
-                  onClick={() => { update({ input: kind }); connectInput(kind); }}
-                  data-unsupported={!supported || undefined}
-                >
-                  {icon}
-                  <span className="input-name">{label}</span>
-                  <span className="input-state">{st.status === 'on' ? (st.label ?? t('on')) : st.status === 'connecting' ? t('connecting') : selected ? t('tapToConnect') : ''}</span>
-                  <i className="dot" />
-                </button>
+                <div className="cap" key={kind} data-unsupported={!supported || undefined}>
+                  <i className={`led ${led}`} />
+                  <button
+                    className={`keycap ${sel ? 'dark' : ''}`}
+                    aria-pressed={sel}
+                    aria-label={t(kind === 'mic' ? 'inMic' : kind === 'ble' ? 'inBle' : 'inMidi')}
+                    onClick={() => { update({ input: kind }); connectInput(kind); }}
+                  >
+                    {icon}
+                  </button>
+                  <span className="legend">{SHORT[kind]}</span>
+                </div>
               );
             })}
           </div>
-          {active?.status === 'error' && active.error && <p className="note warn">{t(active.error)}</p>}
-          {settings.input === 'mic' && active?.status === 'on' && <p className="note">{t('micHint')}</p>}
-          <button className="check-open" onClick={() => setShowCheck(true)}>Check input: play a key and see it here</button>
+          <p className={`lcd input-status ${active?.status === 'on' ? '' : 'off'}`} role="status">{status}</p>
+          {active?.status === 'error' && active.error && <p className="note warn" style={{ marginTop: 10 }}>{t(active.error)}</p>}
+          {settings.input === 'mic' && active?.status === 'on' && <p className="note" style={{ marginTop: 10 }}>{t('micHint')}</p>}
         </section>
-        <button className="import" onClick={() => pickFile()}><IconImport size={16} />{t('import')}</button>
+
+        <button className="check-open" onClick={() => setShowCheck(true)}>Check input</button>
+        <button className="pill go" onClick={() => pickFile()}><IconImport size={16} />{t('import')}</button>
         <input ref={fileRef} type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden onChange={e => onFile(e.target.files?.[0])} />
       </aside>
 
-      <main className="reel" aria-label={t('library')}>
+      <main className="rack" aria-label={t('library')}>
         {entries.map((e, i) => {
           const s = songs[e.id];
           const p = progress[e.id];
           const film = filmName(e, lang);
+          const img = e.image ?? GENERIC_COVER;
+          const best = p?.bestSpeed ?? 0;
           return (
-            <article key={e.id} className={`can ${opening === e.id ? 'opening' : ''} ${e.missing ? 'missing' : ''}`}>
-              <button className="can-hit" onClick={() => open(e)} aria-label={e.missing ? `${e.title}: ${t('missingSong')}` : e.title} />
-              <span className="edge">{t('reel')} {String(i + 1).padStart(2, '0')} ▸ {e.composer ?? t('imported')}</span>
-              <h3>{e.title}</h3>
-              <p className="can-sub">{film ? `${film}${e.year ? ' · ' + e.year : ''}` : t('imported')}</p>
-              <Cover entry={e} />
-              {e.missing && <p className="missing-note"><IconImport size={16} />{t('missingSong')}</p>}
-              <dl>
-                <div><dt>{t('length')}</dt><dd>{s ? formatTime(s.duration) : '—'}</dd></div>
-                <div><dt>{t('hands')}</dt><dd>{s ? (s.hands.length === 2 ? '2' : t(s.hands[0] === 'R' ? 'handsR' : 'handsL')) : '—'}</dd></div>
-                <div><dt>{t('best')}</dt><dd>{p?.bestSpeed ? formatSpeed(p.bestSpeed) : '—'}</dd></div>
-                <div><dt>{t('accuracy')}</dt><dd>{p?.plays ? Math.round(p.bestAccuracy * 100) + '%' : '—'}</dd></div>
-              </dl>
+            <article key={e.id} className={`cart ${opening === e.id ? 'opening' : ''} ${e.missing ? 'missing' : ''}`}>
+              <button className="cart-hit" onClick={() => open(e)} aria-label={e.missing ? `${e.title}: ${t('missingSong')}` : e.title} />
+              <div className="grip" />
+              <figure className="photo"><img src={img.src} alt={img.alt} loading="lazy" decoding="async" draggable={false} /></figure>
+              <div className="label">
+                <span className="cart-id">{String(i + 1).padStart(2, '0')} · {s ? formatTime(s.duration) : e.missing ? 'no file' : '—'}</span>
+                <h3>{e.title}</h3>
+                <p className="cart-sub">{film ? `${film}${e.year ? ' · ' + e.year : ''}` : t('imported')}</p>
+                {e.missing
+                  ? <p className="missing-note"><IconImport size={16} />{t('missingSong')}</p>
+                  : (
+                    <div className="stamps" aria-label={best ? `Passed up to ${best}×` : 'No speeds passed yet'}>
+                      {SPEEDS.map(v => <span key={v} className={best >= v ? 'done' : ''}>{v}</span>)}
+                    </div>
+                  )}
+              </div>
               {!e.builtIn && (
                 confirmId === e.id ? (
                   <div className="confirm">
                     <span>{t('confirmDelete')}</span>
-                    <button onClick={async () => { await removeSong(e); setConfirmId(null); refresh(); }}>{t('delete')}</button>
-                    <button onClick={() => setConfirmId(null)}>{t('cancel')}</button>
+                    <button className="pill danger" onClick={async () => { await removeSong(e); setConfirmId(null); refresh(); }}>{t('delete')}</button>
+                    <button className="pill" onClick={() => setConfirmId(null)}>{t('cancel')}</button>
                   </div>
                 ) : (
-                  <button className="can-del" onClick={() => setConfirmId(e.id)} aria-label={t('delete')}><IconTrash size={16} /></button>
+                  <button className="cart-del" onClick={() => setConfirmId(e.id)} aria-label={t('delete')}><IconTrash size={16} /></button>
                 )
               )}
             </article>
           );
         })}
-        <button className="can can-add" onClick={() => pickFile()}>
-          <IconImport size={22} />
+        <button className="cart-add" onClick={() => pickFile()}>
+          <span className="keycap"><IconImport /></span>
           <span>{t('emptyImports')}</span>
         </button>
       </main>
 
       {showSettings && (
-        <div className="drawer-scrim" onClick={() => setShowSettings(false)}>
-          <div className="drawer" role="dialog" aria-label={t('settings')} onClick={e => e.stopPropagation()}>
-            <div className="drawer-head">
+        <div className="scrim" onClick={() => setShowSettings(false)}>
+          <div className="sheet-panel" role="dialog" aria-label={t('settings')} onClick={e => e.stopPropagation()}>
+            <div className="sheet-head">
               <h2>{t('settings')}</h2>
-              <button className="icon-btn" onClick={() => setShowSettings(false)} aria-label={t('close')}><IconClose /></button>
+              <button className="keycap" onClick={() => setShowSettings(false)} aria-label={t('close')}><IconClose /></button>
             </div>
             <div className="row">
-              <span className="lab">{t('naming')}</span>
-              <div className="seg">
-                <button className={settings.naming === 'solfege' ? 'on' : ''} onClick={() => update({ naming: 'solfege' })}>Dó Ré Mi</button>
+              <strong className="row-title">{t('naming')}</strong>
+              <div className="slider">
                 <button className={settings.naming === 'letters' ? 'on' : ''} onClick={() => update({ naming: 'letters' })}>C D E</button>
+                <button className={settings.naming === 'solfege' ? 'on' : ''} onClick={() => update({ naming: 'solfege' })}>Do Re Mi</button>
               </div>
             </div>
+            <div className="rule" />
             <label className="row toggle">
-              <span><span className="lab">{t('accompaniment')}</span><small>{t('accompanimentHint')}</small></span>
-              <input type="checkbox" checked={settings.accompaniment} onChange={e => update({ accompaniment: e.target.checked })} />
+              <span><strong className="row-title">{t('localSound')}</strong><small>{t('localSoundHint')}</small></span>
+              <input className="switch" type="checkbox" checked={settings.localSound} onChange={e => update({ localSound: e.target.checked })} />
             </label>
+            <div className="rule" />
             <label className="row toggle">
-              <span><span className="lab">{t('localSound')}</span><small>{t('localSoundHint')}</small></span>
-              <input type="checkbox" checked={settings.localSound} onChange={e => update({ localSound: e.target.checked })} />
+              <span><strong className="row-title">{t('accompaniment')}</strong><small>{t('accompanimentHint')}</small></span>
+              <input className="switch" type="checkbox" checked={settings.accompaniment} onChange={e => update({ accompaniment: e.target.checked })} />
             </label>
-            <p className="credits">{t('photoCredits')} {entries.filter(e => e.image).map(e => e.image!.by).filter((v, i, a) => a.indexOf(v) === i).join(', ')}, {GENERIC_COVER.by}.</p>
+            <p className="credits">{t('photoCredits')} {entries.filter(e => e.image).map(e => e.image!.by).filter((v, i, a) => a.indexOf(v) === i).join(', ')}, {GENERIC_COVER.by}. Type: Supreme by Indian Type Foundry (Fontshare), Martian Mono by Evil Martians.</p>
           </div>
         </div>
       )}
 
       {showCheck && <InputCheck links={links} naming={settings.naming} onClose={() => setShowCheck(false)} />}
 
-      {toast && <div className={`toast ${toast.error ? 'error' : ''}`} role="status">{toast.text}</div>}
+      {toast && <div className={`toast lcd ${toast.error ? 'error' : ''}`} role="status">{toast.text}</div>}
     </div>
   );
 }

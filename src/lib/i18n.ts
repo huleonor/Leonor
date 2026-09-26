@@ -3,7 +3,7 @@ import type { Lang, SongEntry } from './types';
 
 // The app is English-only; this is its one dictionary.
 const en = {
-  brandSub: 'Private screening',
+  brandSub: 'HP-1 · practice instrument',
   input: 'Input',
   inMic: 'Microphone',
   inBle: 'Bluetooth MIDI',
@@ -30,7 +30,7 @@ const en = {
   accompaniment: 'Accompaniment',
   accompanimentHint: "The app plays the hand you're not playing.",
   localSound: 'Key sound in the app',
-  localSoundHint: 'For MIDI keyboards without speakers.',
+  localSoundHint: 'Hear the app’s grand piano when you play a MIDI or Bluetooth keyboard.',
   close: 'Close',
   back: 'Back',
   viewNotes: 'Notes',
@@ -61,10 +61,10 @@ const en = {
   library: 'Library',
   rotate: 'Turn your phone sideways to see more keys.',
   pause: 'Pause',
-  emptyImports: 'Import a .mid to add it to your reel.',
+  emptyImports: 'Add a song from a .mid file',
   sheetLoading: 'Setting the score…',
-  missingSong: 'File missing. Tap to import the .mid.',
-  tapToConnect: 'Tap to connect',
+  missingSong: 'No file yet. Tap to add the .mid.',
+  tapToConnect: 'Press to connect',
   noInputShort: 'No input',
   photoCredits: 'Cover photos from Unsplash by',
   midiConnected: 'Keyboard connected: {name}',
