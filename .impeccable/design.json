@@ -1,167 +1,818 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-24T12:00:00Z",
+  "generatedAt": "2026-09-26T12:00:00Z",
   "title": "Design System: Hugo's Piano",
   "extensions": {
     "colorMeta": {
-      "booth-black": { "role": "neutral", "displayName": "Booth Black", "canonical": "#0f0d0b", "tonalRamp": ["#0f0d0b", "#14110e", "#17130f", "#1d1712", "#2a2520", "#3a3632", "#5c574f", "#8a847a"] },
-      "strip-base": { "role": "neutral", "displayName": "Strip Base", "canonical": "#14110e", "tonalRamp": ["#0a0907", "#14110e", "#221d18", "#342d26", "#4d453b", "#6d6457", "#a1978a", "#e0d8cc"] },
-      "can-stock": { "role": "neutral", "displayName": "Can Stock", "canonical": "#17130f", "tonalRamp": ["#0c0a08", "#17130f", "#1d1712", "#2a231c", "#3e352b", "#5c5145", "#958a7c", "#ddd4c7"] },
-      "can-stock-lit": { "role": "neutral", "displayName": "Can Stock Lit", "canonical": "#1d1712", "tonalRamp": ["#0c0a08", "#17130f", "#1d1712", "#2a231c", "#3e352b", "#5c5145", "#958a7c", "#ddd4c7"] },
-      "frame-edge": { "role": "neutral", "displayName": "Frame Edge", "canonical": "#3a3632", "tonalRamp": ["#141210", "#221f1c", "#2a2520", "#3a3632", "#55504a", "#77726b", "#a8a39b", "#e2ded7"] },
-      "frame-edge-soft": { "role": "neutral", "displayName": "Frame Edge Soft", "canonical": "#2a2520", "tonalRamp": ["#141210", "#1e1a16", "#2a2520", "#3a3632", "#55504a", "#77726b", "#a8a39b", "#e2ded7"] },
-      "title-card-white": { "role": "neutral", "displayName": "Title-Card White", "canonical": "#f2eee6", "tonalRamp": ["#2b2925", "#4a4741", "#6d6a63", "#97938b", "#c1bcb3", "#dcd7ce", "#ece6da", "#f2eee6"] },
-      "ivory-key": { "role": "neutral", "displayName": "Ivory Key", "canonical": "#ece6da", "tonalRamp": ["#2b2822", "#4a453c", "#6d675c", "#979083", "#c0b8aa", "#cfc6b6", "#d8cdbd", "#ece6da"] },
-      "halide-dim": { "role": "neutral", "displayName": "Halide Dim", "canonical": "#a39d93", "tonalRamp": ["#221f1c", "#3b3833", "#5c5850", "#77736c", "#8a847a", "#a39d93", "#c9c4bb", "#ece8e1"] },
-      "halide-faint": { "role": "neutral", "displayName": "Halide Faint", "canonical": "#8a847a", "tonalRamp": ["#221f1c", "#3b3833", "#5c5850", "#77736c", "#8a847a", "#a39d93", "#c9c4bb", "#ece8e1"] },
-      "film-base-amber": { "role": "primary", "displayName": "Film-Base Amber", "canonical": "#d9822b", "tonalRamp": ["#2e1a07", "#6b3f12", "#a85f1b", "#c2721f", "#d9822b", "#f3ab62", "#f2d2ac", "#fbeede"] },
-      "amber-lit": { "role": "primary", "displayName": "Amber Lit", "canonical": "#f3ab62", "tonalRamp": ["#2e1a07", "#6b3f12", "#a85f1b", "#c2721f", "#d9822b", "#f3ab62", "#f2d2ac", "#fbeede"] },
-      "amber-deep": { "role": "primary", "displayName": "Amber Deep", "canonical": "#a85f1b", "tonalRamp": ["#2e1a07", "#6b3f12", "#a85f1b", "#c2721f", "#d9822b", "#f3ab62", "#f2d2ac", "#fbeede"] },
-      "silver-halide-cyan": { "role": "secondary", "displayName": "Silver-Halide Cyan", "canonical": "#6fb7c4", "tonalRamp": ["#0f2629", "#245e69", "#2e5b64", "#3f8391", "#6fb7c4", "#a4dbe4", "#cde5ea", "#eaf6f8"] },
-      "cyan-lit": { "role": "secondary", "displayName": "Cyan Lit", "canonical": "#a4dbe4", "tonalRamp": ["#0f2629", "#245e69", "#2e5b64", "#3f8391", "#6fb7c4", "#a4dbe4", "#cde5ea", "#eaf6f8"] },
-      "cyan-deep": { "role": "secondary", "displayName": "Cyan Deep", "canonical": "#3f8391", "tonalRamp": ["#0f2629", "#245e69", "#2e5b64", "#3f8391", "#6fb7c4", "#a4dbe4", "#cde5ea", "#eaf6f8"] },
-      "splice-rust": { "role": "tertiary", "displayName": "Splice Rust", "canonical": "#c4533a", "tonalRamp": ["#2a100a", "#5a2317", "#8e3524", "#aa452f", "#c4533a", "#d9806b", "#ebb3a5", "#f8e3de"] },
-      "leader-grey": { "role": "neutral", "displayName": "Leader Grey", "canonical": "#77736c", "tonalRamp": ["#1a1714", "#34312d", "#4a4742", "#5f5b55", "#77736c", "#96928b", "#bbb8b2", "#e4e2de"] },
-      "leader-grey-dark": { "role": "neutral", "displayName": "Leader Grey Dark", "canonical": "#5f5b55", "tonalRamp": ["#1a1714", "#34312d", "#4a4742", "#5f5b55", "#77736c", "#96928b", "#bbb8b2", "#e4e2de"] },
-      "signal-green": { "role": "tertiary", "displayName": "Signal Green", "canonical": "#8fc98a", "tonalRamp": ["#122511", "#23461f", "#386a33", "#548f4e", "#72ad6c", "#8fc98a", "#bde0b9", "#e6f4e4"] }
+      "aluminium": {
+        "role": "neutral",
+        "displayName": "Aluminium",
+        "canonical": "#dcdbd6",
+        "tonalRamp": [
+          "#0c0b08",
+          "#262521",
+          "#43423e",
+          "#62615d",
+          "#83827e",
+          "#a6a5a0",
+          "#cac9c4",
+          "#f0efe9"
+        ]
+      },
+      "aluminium-hi": {
+        "role": "neutral",
+        "displayName": "Aluminium Hi",
+        "canonical": "#e8e7e2",
+        "tonalRamp": [
+          "#0c0b08",
+          "#262521",
+          "#43423e",
+          "#62615d",
+          "#83827e",
+          "#a6a5a0",
+          "#cac9c4",
+          "#f0eee9"
+        ]
+      },
+      "aluminium-lo": {
+        "role": "neutral",
+        "displayName": "Aluminium Lo",
+        "canonical": "#cdccc6",
+        "tonalRamp": [
+          "#0c0b07",
+          "#262521",
+          "#43423d",
+          "#62615c",
+          "#83827d",
+          "#a6a59f",
+          "#cac9c3",
+          "#f0efe8"
+        ]
+      },
+      "groove": {
+        "role": "neutral",
+        "displayName": "Groove",
+        "canonical": "#bdbcb5",
+        "tonalRamp": [
+          "#0c0b07",
+          "#262520",
+          "#43423c",
+          "#62615b",
+          "#83837c",
+          "#a6a59e",
+          "#cac9c2",
+          "#f0efe7"
+        ]
+      },
+      "label-white": {
+        "role": "neutral",
+        "displayName": "Label White",
+        "canonical": "#f6f5f1",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262522",
+          "#43423f",
+          "#62615e",
+          "#83827f",
+          "#a6a5a1",
+          "#cac9c5",
+          "#efeeea"
+        ]
+      },
+      "label-white-2": {
+        "role": "neutral",
+        "displayName": "Label White 2",
+        "canonical": "#eceae4",
+        "tonalRamp": [
+          "#0c0b07",
+          "#262521",
+          "#43423d",
+          "#63615c",
+          "#84827d",
+          "#a7a59f",
+          "#cbc9c3",
+          "#f0eee8"
+        ]
+      },
+      "legend-ink": {
+        "role": "neutral",
+        "displayName": "Legend Ink",
+        "canonical": "#1a1a1a",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "legend-ink-2": {
+        "role": "neutral",
+        "displayName": "Legend Ink 2",
+        "canonical": "#4d4c47",
+        "tonalRamp": [
+          "#0c0b07",
+          "#262521",
+          "#43423d",
+          "#62615c",
+          "#83827d",
+          "#a6a59f",
+          "#cac9c3",
+          "#f0efe8"
+        ]
+      },
+      "legend-ink-3": {
+        "role": "neutral",
+        "displayName": "Legend Ink 3",
+        "canonical": "#62615b",
+        "tonalRamp": [
+          "#0c0b07",
+          "#262520",
+          "#43423c",
+          "#62615b",
+          "#84827c",
+          "#a6a59f",
+          "#cac9c2",
+          "#f0efe8"
+        ]
+      },
+      "display-black": {
+        "role": "neutral",
+        "displayName": "Display Black",
+        "canonical": "#111214",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#a4a5a8",
+          "#c8c9cc",
+          "#edeef1"
+        ]
+      },
+      "display-lane": {
+        "role": "neutral",
+        "displayName": "Display Lane",
+        "canonical": "#16171a",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#242528",
+          "#414245",
+          "#606165",
+          "#818286",
+          "#a3a5a9",
+          "#c7c9cd",
+          "#edeef3"
+        ]
+      },
+      "lcd-black": {
+        "role": "neutral",
+        "displayName": "LCD Black",
+        "canonical": "#121314",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#242526",
+          "#414243",
+          "#606163",
+          "#818284",
+          "#a4a5a6",
+          "#c8c9cb",
+          "#edeff0"
+        ]
+      },
+      "lcd-green": {
+        "role": "tertiary",
+        "displayName": "LCD Green",
+        "canonical": "#86f0a8",
+        "tonalRamp": [
+          "#001103",
+          "#042e15",
+          "#1a4e2d",
+          "#317047",
+          "#499563",
+          "#63bb80",
+          "#7de39e",
+          "#a7ffc4"
+        ]
+      },
+      "lcd-green-dim": {
+        "role": "tertiary",
+        "displayName": "LCD Green Dim",
+        "canonical": "#5a9b70",
+        "tonalRamp": [
+          "#001102",
+          "#042e16",
+          "#1e4d30",
+          "#386f4b",
+          "#539269",
+          "#79b58c",
+          "#a3d8b3",
+          "#cdfcda"
+        ]
+      },
+      "lcd-off": {
+        "role": "neutral",
+        "displayName": "LCD Off",
+        "canonical": "#9a9b96",
+        "tonalRamp": [
+          "#0b0c08",
+          "#252522",
+          "#42423e",
+          "#61625d",
+          "#82837e",
+          "#a5a6a1",
+          "#c9cac4",
+          "#eeefea"
+        ]
+      },
+      "lcd-neutral": {
+        "role": "neutral",
+        "displayName": "LCD Neutral",
+        "canonical": "#ecebe6",
+        "tonalRamp": [
+          "#0c0b08",
+          "#262521",
+          "#43423e",
+          "#62615d",
+          "#83827e",
+          "#a6a5a0",
+          "#cac9c4",
+          "#f0eee9"
+        ]
+      },
+      "lcd-fault": {
+        "role": "tertiary",
+        "displayName": "LCD Fault",
+        "canonical": "#ff9b8c",
+        "tonalRamp": [
+          "#1c0201",
+          "#3f1712",
+          "#653029",
+          "#8d4c43",
+          "#b8695e",
+          "#e4887b",
+          "#ffab9d",
+          "#ffd4c6"
+        ]
+      },
+      "signal-orange": {
+        "role": "primary",
+        "displayName": "Signal Orange",
+        "canonical": "#ff6a13",
+        "tonalRamp": [
+          "#280000",
+          "#4f0000",
+          "#7a1a00",
+          "#a73600",
+          "#d75200",
+          "#ff7225",
+          "#ff9f63",
+          "#ffcb97"
+        ]
+      },
+      "signal-orange-deep": {
+        "role": "primary",
+        "displayName": "Signal Orange Deep",
+        "canonical": "#f25c08",
+        "tonalRamp": [
+          "#2a0000",
+          "#520000",
+          "#7d1400",
+          "#aa3100",
+          "#da4e00",
+          "#ff7436",
+          "#ffa06d",
+          "#ffcc9f"
+        ]
+      },
+      "signal-orange-ink": {
+        "role": "primary",
+        "displayName": "Signal Orange Ink",
+        "canonical": "#b8430a",
+        "tonalRamp": [
+          "#290000",
+          "#500000",
+          "#7a1a00",
+          "#a63700",
+          "#cb5c31",
+          "#ec8560",
+          "#ffae8d",
+          "#ffd8ba"
+        ]
+      },
+      "signal-orange-soft": {
+        "role": "primary",
+        "displayName": "Signal Orange Soft",
+        "canonical": "#ffd9c2",
+        "tonalRamp": [
+          "#110905",
+          "#2e221b",
+          "#4e3e35",
+          "#715c50",
+          "#957d6d",
+          "#bc9e8c",
+          "#e4c1ac",
+          "#ffe6d0"
+        ]
+      },
+      "signal-orange-lit": {
+        "role": "primary",
+        "displayName": "Signal Orange Lit",
+        "canonical": "#ffb07a",
+        "tonalRamp": [
+          "#190500",
+          "#3a1c05",
+          "#5e371b",
+          "#855431",
+          "#ae734a",
+          "#d89363",
+          "#ffb580",
+          "#ffddac"
+        ]
+      },
+      "cobalt": {
+        "role": "secondary",
+        "displayName": "Cobalt",
+        "canonical": "#2f5bff",
+        "tonalRamp": [
+          "#07004c",
+          "#07007c",
+          "#1128ae",
+          "#244ae3",
+          "#4071ff",
+          "#679aff",
+          "#91c3ff",
+          "#bdebff"
+        ]
+      },
+      "cobalt-ink": {
+        "role": "secondary",
+        "displayName": "Cobalt Ink",
+        "canonical": "#1d3bb3",
+        "tonalRamp": [
+          "#050047",
+          "#060a73",
+          "#162fa2",
+          "#3255c5",
+          "#567ce1",
+          "#7ca1fd",
+          "#a5c7ff",
+          "#cfeeff"
+        ]
+      },
+      "cobalt-soft": {
+        "role": "secondary",
+        "displayName": "Cobalt Soft",
+        "canonical": "#cdd8ff",
+        "tonalRamp": [
+          "#090b13",
+          "#212431",
+          "#3c4152",
+          "#5a6076",
+          "#7a819c",
+          "#9ba4c3",
+          "#bdc8ec",
+          "#e2edff"
+        ]
+      },
+      "cobalt-lit": {
+        "role": "secondary",
+        "displayName": "Cobalt Lit",
+        "canonical": "#8aa2ff",
+        "tonalRamp": [
+          "#040626",
+          "#18204b",
+          "#313d73",
+          "#4c5c9e",
+          "#697ccb",
+          "#879ffa",
+          "#acc4ff",
+          "#d4ebff"
+        ]
+      },
+      "led-green": {
+        "role": "tertiary",
+        "displayName": "LED Green",
+        "canonical": "#3dbe6b",
+        "tonalRamp": [
+          "#001300",
+          "#003107",
+          "#00521f",
+          "#007538",
+          "#249a52",
+          "#43c16f",
+          "#7ae498",
+          "#abffc3"
+        ]
+      },
+      "fault-red": {
+        "role": "tertiary",
+        "displayName": "Fault Red",
+        "canonical": "#e0301e",
+        "tonalRamp": [
+          "#2f0000",
+          "#5a0000",
+          "#870000",
+          "#b61102",
+          "#e53a27",
+          "#ff6e59",
+          "#ff9c86",
+          "#ffc9b4"
+        ]
+      },
+      "fault-red-ink": {
+        "role": "tertiary",
+        "displayName": "Fault Red Ink",
+        "canonical": "#b3200f",
+        "tonalRamp": [
+          "#2f0000",
+          "#580000",
+          "#840000",
+          "#b21f0e",
+          "#d35340",
+          "#f37e6b",
+          "#ffa996",
+          "#ffd3c3"
+        ]
+      },
+      "key-top": {
+        "role": "neutral",
+        "displayName": "Key Top",
+        "canonical": "#fbfaf7",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262523",
+          "#434240",
+          "#62615f",
+          "#838280",
+          "#a6a5a2",
+          "#cac9c6",
+          "#efeeeb"
+        ]
+      },
+      "key-bottom": {
+        "role": "neutral",
+        "displayName": "Key Bottom",
+        "canonical": "#eeede8",
+        "tonalRamp": [
+          "#0c0b08",
+          "#262521",
+          "#43423e",
+          "#62615d",
+          "#83827e",
+          "#a6a5a0",
+          "#cac9c4",
+          "#efeee9"
+        ]
+      },
+      "key-seam": {
+        "role": "neutral",
+        "displayName": "Key Seam",
+        "canonical": "#c3c2bb",
+        "tonalRamp": [
+          "#0c0b07",
+          "#262520",
+          "#43423c",
+          "#62615b",
+          "#83837c",
+          "#a6a59e",
+          "#cac9c2",
+          "#f0efe7"
+        ]
+      },
+      "key-black": {
+        "role": "neutral",
+        "displayName": "Key Black",
+        "canonical": "#1b1c1f",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#242528",
+          "#414245",
+          "#606165",
+          "#818286",
+          "#a3a5a9",
+          "#c7c9cd",
+          "#edeef3"
+        ]
+      },
+      "score-paper": {
+        "role": "neutral",
+        "displayName": "Score Paper",
+        "canonical": "#f4f3ee",
+        "tonalRamp": [
+          "#0c0b08",
+          "#262521",
+          "#43423e",
+          "#62615d",
+          "#83827e",
+          "#a6a5a0",
+          "#cac9c4",
+          "#efeeea"
+        ]
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Leader Numeral", "purpose": "Academy-leader countdown numerals only." },
-      "headline": { "displayName": "Title Card", "purpose": "Setup, pause and end title cards; the library wordmark at 22px." },
-      "title": { "displayName": "Can Title", "purpose": "Song names on reel cans." },
-      "title-bar": { "displayName": "Bar Title", "purpose": "Song name in the player top bar, single line with ellipsis." },
-      "body": { "displayName": "Sentence", "purpose": "Hints, warnings, the missing-file line and toasts; sentence case, read from the music stand." },
-      "control": { "displayName": "Control", "purpose": "Segmented controls, chips and buttons; uppercase, tabular figures." },
-      "label": { "displayName": "Edge Code", "purpose": "Section labels, edge codes, subtitles, table headings, input state; uppercase." },
-      "numeral": { "displayName": "Stat Numeral", "purpose": "End-card stats and can stat values." }
+      "display": {
+        "displayName": "Count-in",
+        "purpose": "Count-in numerals on the display only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Module plate and side sheet titles."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The library wordmark."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Song names on cartridge labels; study tips at 16px."
+      },
+      "title-bar": {
+        "displayName": "Bar Title",
+        "purpose": "Song title in the top bar, one line."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Notes, sub-lines and hints."
+      },
+      "body-long": {
+        "displayName": "Body Long",
+        "purpose": "Study text, max 62ch."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Pill labels, tracked caps."
+      },
+      "legend": {
+        "displayName": "Legend",
+        "purpose": "Printed legends under controls; never an eyebrow."
+      },
+      "readout": {
+        "displayName": "Readout",
+        "purpose": "Bar/time and input LCD values, hint note names."
+      },
+      "readout-small": {
+        "displayName": "Small Readout",
+        "purpose": "Cartridge meta, speed keycaps, stamps, display bar numbers."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "End-of-song stats in the LCD readout."
+      }
     },
     "shadows": [
-      { "name": "title-card", "value": "0 18px 40px rgba(0, 0, 0, .5)", "purpose": "Setup, pause and end cards floating over the strip." },
-      { "name": "toast", "value": "0 8px 24px rgba(0, 0, 0, .45)", "purpose": "Transient confirmations." },
-      { "name": "film-gate-vignette", "value": "inset 0 0 0 1px rgba(242, 238, 230, .08), inset 0 -40px 40px -24px rgba(15, 13, 11, .75)", "purpose": "Inside the photo frame on a reel can, so the photo sits in the reel." }
+      {
+        "name": "rest",
+        "value": "0 2px 0 #a9a8a2, 0 3px 7px rgba(0,0,0,.16), inset 0 -1px 0 rgba(0,0,0,.06)",
+        "purpose": "Keycaps and pills at rest (--rest)."
+      },
+      {
+        "name": "press",
+        "value": "0 1px 0 #a4a39c, 0 1px 2px rgba(0,0,0,.18), inset 0 1px 2px rgba(0,0,0,.12)",
+        "purpose": "Keycaps and pills held down, with a 1.5px drop (--press)."
+      },
+      {
+        "name": "orange-travel",
+        "value": "0 2px 0 #b94000, 0 3px 7px rgba(0,0,0,.16)",
+        "purpose": "The go pill; the lit keycap sits at 1px of it."
+      },
+      {
+        "name": "recessed-window",
+        "value": "inset 0 2px 4px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.6)",
+        "purpose": "LCD windows."
+      },
+      {
+        "name": "display-window",
+        "value": "inset 0 0 0 1px #000, inset 0 4px 14px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.6)",
+        "purpose": "The black display window."
+      },
+      {
+        "name": "groove",
+        "value": "inset 0 1px 3px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.6)",
+        "purpose": "Slider and switch tracks."
+      },
+      {
+        "name": "cartridge",
+        "value": "inset 0 1px 0 rgba(255,255,255,.6), 0 1px 0 rgba(0,0,0,.08), 0 10px 22px rgba(0,0,0,.12)",
+        "purpose": "Cartridges in the rack."
+      },
+      {
+        "name": "plate",
+        "value": "inset 0 1px 0 rgba(255,255,255,.7), 0 20px 44px rgba(0,0,0,.45)",
+        "purpose": "Module plates over the display."
+      },
+      {
+        "name": "side-sheet",
+        "value": "-1px 0 0 rgba(0,0,0,.13), -18px 0 40px rgba(0,0,0,.18)",
+        "purpose": "Sheets sliding in from the right."
+      },
+      {
+        "name": "led-glow",
+        "value": "0 0 7px <led colour>, inset 0 -1px 1px rgba(0,0,0,.2)",
+        "purpose": "Lit LEDs only."
+      }
     ],
     "motion": [
-      { "name": "ease-out-expo", "value": "cubic-bezier(.16, 1, .3, 1)", "purpose": "Drawer slide-in (.28s), toast rise (.3s), photo scale on press (.5s)." },
-      { "name": "ease-snap", "value": "cubic-bezier(.2, .8, .2, 1)", "purpose": "Can press lift (.2s) and toggle thumb (.2s)." },
-      { "name": "state-quick", "value": ".12s to .15s", "purpose": "Border, background and colour changes on controls." },
-      { "name": "key-strike", "value": ".06s", "purpose": "Key fill on strike; near-instant so it tracks the playing hand." },
-      { "name": "wait-pulse", "value": "pulse .7s ease-in-out infinite alternate", "purpose": "Sheet gate cursor while waiting for a note." },
-      { "name": "reduced-motion", "value": "animation and transition durations .01ms", "purpose": "Respect prefers-reduced-motion for all UI animation." }
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Plates rising, sheets sliding, switch thumb, cartridge press."
+      },
+      {
+        "name": "key-travel",
+        "value": "transform .08s, box-shadow .08s",
+        "purpose": "Keycap and pill press."
+      },
+      {
+        "name": "rise",
+        "value": "rise .22s to .3s ease-out (translate 10px, fade)",
+        "purpose": "Plates, wait hint, toasts."
+      },
+      {
+        "name": "slide-in",
+        "value": "slide-in .32s ease-out (translate 40px, fade)",
+        "purpose": "Side sheets."
+      },
+      {
+        "name": "blink",
+        "value": "1s steps(2) infinite",
+        "purpose": "Connecting LED."
+      },
+      {
+        "name": "pulse",
+        "value": ".7s ease-in-out infinite alternate",
+        "purpose": "Sheet cursor while waiting."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "durations .01ms",
+        "purpose": "prefers-reduced-motion collapses all motion."
+      }
     ],
     "breakpoints": [
-      { "name": "landscape-narrow", "value": "max-width: 940px and landscape" },
-      { "name": "landscape-small", "value": "max-width: 760px and landscape" },
-      { "name": "landscape-short", "value": "max-height: 480px and landscape" },
-      { "name": "landscape-tiny", "value": "max-height: 360px and landscape" },
-      { "name": "portrait", "value": "orientation: portrait" },
-      { "name": "large", "value": "min-width: 1100px and min-height: 700px" }
+      {
+        "name": "phone-landscape",
+        "value": "max-width: 940px and landscape"
+      },
+      {
+        "name": "small-landscape",
+        "value": "max-width: 760px and landscape"
+      },
+      {
+        "name": "short",
+        "value": "max-height: 430px and landscape"
+      },
+      {
+        "name": "very-short",
+        "value": "max-height: 360px and landscape"
+      },
+      {
+        "name": "portrait",
+        "value": "orientation: portrait"
+      },
+      {
+        "name": "large",
+        "value": "min-width: 1100px and min-height: 700px"
+      }
     ]
   },
   "components": [
     {
-      "name": "Primary Button",
+      "name": "Keycap",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "The one amber-filled action on a title card (Start, Continue).",
-      "html": "<button class=\"ds-primary\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M8 5v14l11-7z\"/></svg>Start</button>",
-      "css": ".ds-primary { height: 46px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 6px; background: var(--amber, #d9822b); color: var(--black, #0f0d0b); font-family: Archivo, system-ui, sans-serif; font-stretch: 87.5%; font-weight: 800; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; } .ds-primary:hover, .ds-primary:active { background: var(--amber-lit, #f3ab62); } .ds-primary:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: 2px; }"
+      "refersTo": "keycap",
+      "description": "Every control is a round key with travel; lit is the active state, dark a selected mode.",
+      "html": "<div class=\"ds-caps\"><span class=\"ds-cap\"><i class=\"ds-led\"></i><button class=\"ds-keycap\" aria-label=\"Back\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12.5 4 6.5 10l6 6\"/></svg></button><span class=\"ds-legend\">Back</span></span><span class=\"ds-cap\"><i class=\"ds-led\"></i><button class=\"ds-keycap ds-lit\">.8</button><span class=\"ds-legend\">Speed</span></span><span class=\"ds-cap\"><i class=\"ds-led ds-led-orange\"></i><button class=\"ds-keycap ds-dark\">WAIT</button><span class=\"ds-legend\">Wait</span></span></div>",
+      "css": ".ds-caps{display:flex;gap:18px;padding:16px;background:linear-gradient(180deg,#e8e7e2,#dcdbd6 45%,#cdccc6)}.ds-cap{display:flex;flex-direction:column;align-items:center;gap:6px}.ds-keycap{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:50%;background:radial-gradient(circle at 50% 32%,#fdfdfb,#e2e1dc 72%);box-shadow:0 2px 0 #a9a8a2, 0 3px 7px rgba(0,0,0,.16), inset 0 -1px 0 rgba(0,0,0,.06);color:#1a1a1a;font-family:'Martian Mono',ui-monospace,monospace;font-weight:700;font-size:11.5px;cursor:pointer;transition:transform .08s,box-shadow .08s}.ds-keycap:active{transform:translateY(1.5px);box-shadow:0 1px 0 #a4a39c, 0 1px 2px rgba(0,0,0,.18), inset 0 1px 2px rgba(0,0,0,.12)}.ds-keycap:focus-visible{outline:2px solid #f25c08;outline-offset:3px}.ds-lit{background:#f25c08;box-shadow:0 1px 0 #b94000,0 1px 3px rgba(0,0,0,.18),inset 0 1px 2px rgba(0,0,0,.12);transform:translateY(1px)}.ds-dark{background:radial-gradient(circle at 50% 32%,#3d3e42,#1b1c1f 72%);color:#f2f2ee;box-shadow:0 2px 0 #000,0 3px 7px rgba(0,0,0,.3);font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-size:9.5px;letter-spacing:.06em}.ds-legend{font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#4d4c47}.ds-led{width:7px;height:7px;border-radius:50%;background:#a4a39c;box-shadow:inset 0 1px 1px rgba(0,0,0,.35)}.ds-led-orange{background:#ff6a13;box-shadow:0 0 7px #ff6a13}"
     },
     {
-      "name": "Ghost Button",
+      "name": "Go Pill",
       "kind": "button",
-      "refersTo": "button-ghost",
-      "description": "Secondary actions on title cards, outlined in frame edge.",
-      "html": "<button class=\"ds-ghost\">Restart</button>",
-      "css": ".ds-ghost { height: 46px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--edge, #3a3632); border-radius: 6px; color: var(--white, #f2eee6); font-family: Archivo, system-ui, sans-serif; font-stretch: 87.5%; font-weight: 800; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; transition: background-color .15s; } .ds-ghost:hover, .ds-ghost:active { background: var(--can-lit, #1d1712); } .ds-ghost:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: 2px; }"
+      "refersTo": "pill-go",
+      "description": "The primary action: flat orange capsule with a neutral travel shadow.",
+      "html": "<button class=\"ds-pill ds-go\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 3v9.5M6 8.5l4 4 4-4M3.5 13.5v3h13v-3\"/></svg>Import .mid</button>",
+      "css": ".ds-pill{height:46px;padding:0 20px;display:inline-flex;align-items:center;gap:9px;border:0;border-radius:23px;font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#1a1a1a;cursor:pointer;transition:transform .08s,box-shadow .08s}.ds-go{background:#f25c08;box-shadow:0 2px 0 #b94000,0 3px 7px rgba(0,0,0,.16)}.ds-go:active{transform:translateY(1.5px);box-shadow:0 1px 0 #b94000,inset 0 1px 2px rgba(0,0,0,.15)}.ds-pill:focus-visible{outline:2px solid #f25c08;outline-offset:3px}"
     },
     {
-      "name": "Import Button",
+      "name": "Plain Pill",
       "kind": "button",
-      "refersTo": "button-import",
-      "description": "The library's first-class action: white fill, pinned to the side panel.",
-      "html": "<button class=\"ds-import\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 4v11m-5-5 5 5 5-5M5 20h14\"/></svg>Import .mid</button>",
-      "css": ".ds-import { width: 240px; height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 6px; background: var(--white, #f2eee6); color: var(--black, #0f0d0b); font-family: Archivo, system-ui, sans-serif; font-stretch: 87.5%; font-weight: 800; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; } .ds-import:hover, .ds-import:active { background: var(--key, #ece6da); } .ds-import:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: 2px; }"
+      "refersTo": "pill",
+      "description": "Secondary action: a raised light capsule.",
+      "html": "<button class=\"ds-pill2\">Restart</button>",
+      "css": ".ds-pill2{height:46px;padding:0 20px;border:0;border-radius:23px;font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#1a1a1a;background:radial-gradient(ellipse at 50% 30%,#fdfdfb,#e2e1dc 75%);box-shadow:0 2px 0 #a9a8a2, 0 3px 7px rgba(0,0,0,.16), inset 0 -1px 0 rgba(0,0,0,.06);cursor:pointer;transition:transform .08s,box-shadow .08s}.ds-pill2:active{transform:translateY(1.5px);box-shadow:0 1px 0 #a4a39c, 0 1px 2px rgba(0,0,0,.18), inset 0 1px 2px rgba(0,0,0,.12)}.ds-pill2:focus-visible{outline:2px solid #f25c08;outline-offset:3px}"
     },
     {
-      "name": "Segmented Control",
+      "name": "Slider",
       "kind": "nav",
-      "refersTo": "segmented",
-      "description": "Speed presets and the notes/sheet view toggle; the active cell fills amber.",
-      "html": "<div class=\"ds-seg\"><button>0.6×</button><button class=\"on\">0.8×</button><button>1×</button><button>1.2×</button></div>",
-      "css": ".ds-seg { display: inline-flex; border: 1px solid var(--edge, #3a3632); border-radius: 6px; overflow: hidden; background: var(--black, #0f0d0b); } .ds-seg button { min-width: 48px; height: 44px; padding: 0 6px; background: none; border: 0; color: var(--dim, #a39d93); font-family: Archivo, system-ui, sans-serif; font-stretch: 75%; font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color .12s, color .12s; } .ds-seg button + button { border-left: 1px solid var(--edge, #3a3632); } .ds-seg button.on { background: var(--amber, #d9822b); color: var(--black, #0f0d0b); } .ds-seg button:not(.on):hover { background: var(--can-lit, #1d1712); } .ds-seg button:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: -2px; }"
+      "refersTo": "slider",
+      "description": "Two-position Notes / Sheet switch in a recessed groove.",
+      "html": "<div class=\"ds-slider\"><button class=\"ds-on\">Notes</button><button>Sheet</button></div>",
+      "css": ".ds-slider{display:inline-flex;padding:3px;gap:2px;background:#bdbcb5;border-radius:22px;box-shadow:inset 0 1px 3px rgba(0,0,0,.28),0 1px 0 rgba(255,255,255,.6)}.ds-slider button{height:34px;padding:0 12px;border:0;border-radius:17px;background:none;font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#4d4c47;cursor:pointer;transition:background .15s,color .15s}.ds-slider button:hover{color:#1a1a1a}.ds-slider button:focus-visible{outline:2px solid #f25c08;outline-offset:3px}.ds-slider .ds-on{background:#f6f5f1;color:#1a1a1a;box-shadow:0 1px 2px rgba(0,0,0,.28),inset 0 1px 0 #fff}"
     },
     {
-      "name": "Wait Chip",
-      "kind": "chip",
-      "refersTo": "chip-on",
-      "description": "Toggle chip with a ring dot; on turns border, text and dot amber.",
-      "html": "<button class=\"ds-chip on\"><i></i>Wait</button>",
-      "css": ".ds-chip { height: 44px; padding: 0 12px; display: inline-flex; align-items: center; gap: 8px; background: var(--black, #0f0d0b); border: 1px solid var(--edge, #3a3632); border-radius: 6px; color: var(--dim, #a39d93); font-family: Archivo, system-ui, sans-serif; font-stretch: 75%; font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; } .ds-chip i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid currentColor; } .ds-chip.on { border-color: var(--amber, #d9822b); color: var(--amber, #d9822b); } .ds-chip.on i { background: var(--amber, #d9822b); } .ds-chip:hover { border-color: var(--faint, #8a847a); } .ds-chip:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: 2px; }"
-    },
-    {
-      "name": "Input Tag",
-      "kind": "custom",
-      "refersTo": "input-tag",
-      "description": "Live input edge code in the top bar: status dot, source, last note heard.",
-      "html": "<div class=\"ds-input-tag on\"><i></i><span>MIDI</span><b>A4</b></div>",
-      "css": ".ds-input-tag { height: 44px; padding: 0 10px; display: inline-flex; align-items: center; gap: 7px; background: var(--black, #0f0d0b); border: 1px solid var(--edge, #3a3632); border-radius: 6px; color: var(--dim, #a39d93); font-family: Archivo, system-ui, sans-serif; font-stretch: 62%; font-weight: 700; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-variant-numeric: tabular-nums; } .ds-input-tag i { width: 8px; height: 8px; border-radius: 50%; background: var(--rust, #c4533a); } .ds-input-tag.on i { background: var(--good, #8fc98a); } .ds-input-tag b { min-width: 3.2em; font-stretch: 87.5%; font-weight: 800; font-size: 15px; letter-spacing: .02em; color: var(--white, #f2eee6); text-transform: none; }"
-    },
-    {
-      "name": "Reel Can",
-      "kind": "card",
-      "refersTo": "reel-can",
-      "description": "A song in the library: vertical amber edge code, wide-caps title, graded photo in a film frame, stat grid.",
-      "html": "<article class=\"ds-can\"><span class=\"ds-can-edge\">Reel 01 · H. Zimmer</span><h3>Cornfield Chase</h3><p class=\"ds-can-sub\">Interstellar · 2014</p><div class=\"ds-frame\"></div><dl><div><dt>Length</dt><dd>2:06</dd></div><div><dt>Best</dt><dd>—</dd></div></dl></article>",
-      "css": ".ds-can { position: relative; width: 204px; height: 320px; display: flex; flex-direction: column; padding: 16px 14px 14px 30px; background: var(--can, #17130f); border: 1px solid var(--edge, #3a3632); border-radius: 8px; color: var(--white, #f2eee6); font-family: Archivo, system-ui, sans-serif; transition: border-color .2s, background-color .2s, transform .2s cubic-bezier(.2, .8, .2, 1); cursor: pointer; } .ds-can:hover { border-color: var(--faint, #8a847a); } .ds-can:active { border-color: var(--amber, #d9822b); background: var(--can-lit, #1d1712); transform: translateY(-2px); } .ds-can-edge { position: absolute; left: 7px; top: 14px; bottom: 14px; writing-mode: vertical-rl; transform: rotate(180deg); font-stretch: 62%; font-weight: 600; font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: var(--amber, #d9822b); white-space: nowrap; overflow: hidden; } .ds-can h3 { margin: 0; font-stretch: 125%; font-weight: 800; font-size: 19px; line-height: 1.12; letter-spacing: .14em; text-transform: uppercase; } .ds-can-sub { margin: 6px 0 0; font-stretch: 75%; font-weight: 500; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim, #a39d93); } .ds-frame { flex: 1; margin: 12px 0; border-radius: 3px; background: linear-gradient(160deg, #3a3129, #0f0d0b); box-shadow: inset 0 0 0 1px rgba(242, 238, 230, .08), inset 0 -40px 40px -24px rgba(15, 13, 11, .75); } .ds-can dl { display: grid; grid-template-columns: 1fr 1fr; margin: 0; border-top: 1px solid var(--edge, #3a3632); } .ds-can dl div { padding-top: 8px; } .ds-can dt { font-stretch: 62%; font-weight: 600; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--faint, #8a847a); } .ds-can dd { margin: 2px 0 0; font-stretch: 87.5%; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }"
-    },
-    {
-      "name": "Title Card",
-      "kind": "card",
-      "refersTo": "title-card",
-      "description": "Setup, pause and end cards over the strip; the only resting surface with a shadow.",
-      "html": "<div class=\"ds-card\"><h2>Cornfield Chase</h2><p class=\"ds-card-sub\">Reel complete</p><dl class=\"ds-stats\"><div><dt>Precision</dt><dd>92%</dd></div><div><dt>Hits</dt><dd>184</dd></div><div><dt>Time</dt><dd>2:06</dd></div></dl></div>",
-      "css": ".ds-card { width: min(560px, 100%); padding: 20px 22px; background: var(--can, #17130f); border: 1px solid var(--edge, #3a3632); border-radius: 10px; box-shadow: 0 18px 40px rgba(0, 0, 0, .5); color: var(--white, #f2eee6); font-family: Archivo, system-ui, sans-serif; } .ds-card h2 { margin: 0; font-stretch: 125%; font-weight: 800; font-size: 26px; line-height: 1.1; letter-spacing: .2em; text-transform: uppercase; } .ds-card-sub { margin: 6px 0 0; font-stretch: 62%; font-weight: 600; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--dim, #a39d93); } .ds-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 16px 0 0; border-top: 1px solid var(--edge, #3a3632); } .ds-stats div { padding-top: 10px; } .ds-stats dt { font-stretch: 62%; font-weight: 600; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint, #8a847a); } .ds-stats dd { margin: 2px 0 0; font-weight: 800; font-size: 28px; font-variant-numeric: tabular-nums; } .ds-stats div:first-child dd { color: var(--amber, #d9822b); }"
-    },
-    {
-      "name": "Toggle",
+      "name": "Switch",
       "kind": "input",
-      "refersTo": "",
-      "description": "Settings switch in the drawer and setup card; checked fills amber.",
-      "html": "<label class=\"ds-row\"><span>Accompaniment</span><input type=\"checkbox\" class=\"ds-toggle\" checked></label>",
-      "css": ".ds-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 300px; color: var(--dim, #a39d93); font-family: Archivo, system-ui, sans-serif; font-stretch: 62%; font-weight: 600; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; cursor: pointer; } .ds-toggle { appearance: none; flex: none; width: 46px; height: 26px; margin: 0; border-radius: 13px; border: 1px solid var(--edge, #3a3632); background: var(--black, #0f0d0b); position: relative; cursor: pointer; transition: background-color .15s, border-color .15s; } .ds-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--faint, #8a847a); transition: transform .2s cubic-bezier(.2, .8, .2, 1), background-color .15s; } .ds-toggle:checked { background: var(--amber, #d9822b); border-color: var(--amber, #d9822b); } .ds-toggle:checked::after { transform: translateX(20px); background: var(--black, #0f0d0b); } .ds-toggle:focus-visible { outline: 2px solid var(--amber, #d9822b); outline-offset: 2px; }"
+      "refersTo": "switch",
+      "description": "Hardware toggle; orange when on.",
+      "html": "<input type=\"checkbox\" class=\"ds-switch\" checked aria-label=\"Key sound\">",
+      "css": ".ds-switch{appearance:none;width:50px;height:28px;border-radius:14px;position:relative;cursor:pointer;background:#bdbcb5;box-shadow:inset 0 1px 3px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.6);transition:background .15s}.ds-switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 50% 30%,#fff,#e2e1dc);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s cubic-bezier(.16,1,.3,1)}.ds-switch:checked{background:#f25c08}.ds-switch:checked::after{transform:translateX(22px)}.ds-switch:focus-visible{outline:2px solid #f25c08;outline-offset:3px}"
+    },
+    {
+      "name": "LCD Readouts",
+      "kind": "custom",
+      "refersTo": "lcd",
+      "description": "Recessed black windows: green only for live input, neutral for bar/time, red text for faults.",
+      "html": "<div class=\"ds-lcds\"><p class=\"ds-lcd ds-neutral\">BAR 12/35 0:48</p><div class=\"ds-lcd ds-input\"><small><i></i>USB · heard</small><b>A2</b></div><p class=\"ds-lcd ds-fault\">Mic · not connected</p></div>",
+      "css": ".ds-lcds{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.ds-lcd{margin:0;background:#121314;color:#86f0a8;border-radius:8px;box-shadow:inset 0 2px 4px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.6);font-family:'Martian Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;padding:6px 10px 7px}.ds-neutral{color:#ecebe6;font-size:16px;font-weight:700}.ds-input{display:flex;flex-direction:column;gap:2px;min-width:96px}.ds-input small{font-size:9px;letter-spacing:.14em;color:#5a9b70;display:flex;align-items:center;gap:5px}.ds-input small i{width:7px;height:7px;border-radius:50%;background:#3dbe6b;box-shadow:0 0 7px #3dbe6b}.ds-input b{font-size:15px;line-height:1}.ds-fault{color:#ff9b8c;font-size:11.5px}"
+    },
+    {
+      "name": "Cartridge",
+      "kind": "card",
+      "refersTo": "cartridge",
+      "description": "A song cartridge: grip, photo window, paper label and speed stamps.",
+      "html": "<article class=\"ds-cart\"><div class=\"ds-grip\"></div><div class=\"ds-photo\"></div><div class=\"ds-label\"><h3>Cornfield Chase</h3><p class=\"ds-sub\">Interstellar</p><p class=\"ds-meta\">2014 · 2:06</p><div class=\"ds-stamps\"><span class=\"ds-done\">0.6</span><span class=\"ds-done\">0.8</span><span>1</span><span>1.2</span></div></div></article>",
+      "css": ".ds-cart{width:190px;height:360px;display:flex;flex-direction:column;gap:10px;padding:10px 10px 11px;border-radius:18px;background:linear-gradient(180deg,#d2d1cb,#c1c0b9);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 1px 0 rgba(0,0,0,.08),0 10px 22px rgba(0,0,0,.12);cursor:pointer;transition:transform .18s cubic-bezier(.16,1,.3,1),box-shadow .18s}.ds-cart:active{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 4px 10px rgba(0,0,0,.14)}.ds-grip{height:6px;margin:0 44px;border-radius:3px;background:repeating-linear-gradient(90deg,#a3a29b 0 2px,transparent 2px 5px)}.ds-photo{flex:1;border-radius:9px;background:linear-gradient(160deg,#f7a24a,#b8430a 60%,#2a1a10)}.ds-label{background:#f6f5f1;border-radius:9px;padding:10px 11px 11px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);font-family:Supreme,'Helvetica Neue',Arial,sans-serif;color:#1a1a1a}.ds-label h3{margin:0 0 4px;font-weight:800;font-size:19px;line-height:1.02;letter-spacing:-.01em}.ds-sub{margin:0;font-weight:500;font-size:12.5px;color:#4d4c47}.ds-meta{margin:3px 0 0;font-family:'Martian Mono',monospace;font-size:11.5px;color:#4d4c47}.ds-stamps{display:flex;gap:5px;margin-top:11px}.ds-stamps span{flex:1;height:24px;border-radius:4px;border:1.5px dashed #bdbcb5;display:grid;place-items:center;font-family:'Martian Mono',monospace;font-size:10.5px;color:#4d4c47}.ds-stamps .ds-done{border:2px solid #b8430a;color:#b8430a;font-weight:700;rotate:-5deg;background:rgba(255,106,19,.1)}"
+    },
+    {
+      "name": "Wait Hint",
+      "kind": "custom",
+      "refersTo": "wait-hint",
+      "description": "The single waiting message, a panel in its own row between display and keys.",
+      "html": "<div class=\"ds-wh\"><div><p class=\"ds-wh-t\">Play <b>A2</b></p><p class=\"ds-wh-s\"><em>You played A#2</em></p></div><div class=\"ds-wh-keys\"><span class=\"ds-hk\"></span><span class=\"ds-hk ds-tl\">A2</span><span class=\"ds-hk\"></span><span class=\"ds-hkb ds-x\" style=\"left:38%\">A#2</span></div></div>",
+      "css": ".ds-wh{display:flex;align-items:center;gap:16px;padding:8px 12px 8px 16px;border-radius:12px;background:#f6f5f1;box-shadow:inset 0 0 0 1px rgba(0,0,0,.07),0 1px 0 rgba(255,255,255,.6);font-family:Supreme,'Helvetica Neue',Arial,sans-serif;max-width:560px}.ds-wh p{margin:0}.ds-wh-t{font-weight:500;font-size:13px;color:#4d4c47}.ds-wh-t b{font-family:'Martian Mono',monospace;font-weight:700;font-size:18px;color:#1a1a1a;margin-left:4px}.ds-wh-s{margin-top:2px;font-weight:700;font-size:12.5px}.ds-wh-s em{font-style:normal;color:#b3200f}.ds-wh-keys{position:relative;display:flex;flex:1;height:48px;margin-left:auto}.ds-hk{flex:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;background:linear-gradient(#fff,#eeede8);border:1px solid #c3c2bb;border-radius:0 0 5px 5px;font-family:'Martian Mono',monospace;font-weight:700;font-size:10px}.ds-tl{background:#2f5bff;border-color:#1d3bb3;color:#fff}.ds-hkb{position:absolute;top:0;width:18%;height:58%;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;border-radius:0 0 3px 3px;font-family:'Martian Mono',monospace;font-weight:700;font-size:8.5px;color:#fff}.ds-x{background:#e0301e}"
     }
   ],
   "narrative": {
-    "northStar": "The Projection Booth",
-    "overview": "Every song is a reel of 35mm film, and the keyboard is the projection gate. The library is a shelf of film cans with edge codes printed down their spine; the player is the strip itself, perforations travelling with the music, frame lines at every bar, notes falling onto a cream gate line where they meet the keys. The countdown is an Academy leader; a finished reel ends on a title card. The world rejects the neon-bars-on-navy, gamified-stars look of mainstream piano trainers.\n\nThe room is dark and warm: projection-booth black carries everything, and colour is reserved for meaning. Film-base amber is the right hand and the primary action; silver-halide cyan is the left hand; splice rust is a wrong or missing note. One family, Archivo, speaks in three widths: wide heavy tracked caps for titles, a narrow condensed voice for edge codes and labels, and a mid width for the sentences Hugo must read from the music stand.\n\nDensity follows the phone on a music stand in landscape: a thin top bar, a strip that owns the middle, a keyboard at the bottom, 44px targets throughout.",
+    "northStar": "The Practice Instrument",
+    "overview": "The app is a piece of hardware standing on the music stand, in the line of Braun and Teenage Engineering panels: a light, bead-blasted aluminium panel with printed legends, round keycaps with small LEDs, recessed LCD windows, a two-position slider, and one black display window where the notes fall onto an orange gate. The library is a rack of song cartridges, each with a photo, a white paper label and the speeds already passed stamped in orange ink. Setup, pause and end are module plates that sit over the display. The world rejects the neon-bars-on-navy piano trainer and the dark cinema costume of the 35mm film world it replaced.\n\nThe panel is lit, never dark. Black lives only inside the display window, the LCDs and the black keys. Colour is signal and each colour owns one job: orange is the right hand, the primary control and the active state; cobalt is the left hand; green is live input; red is a fault. Two families split the work cleanly: Supreme speaks every title, legend and sentence; Martian Mono is the machine voice of readouts, numerals, note names and stamps.\n\nDensity follows a phone in landscape on a music stand: a 64px legend strip on top, the display filling the middle, keys along the bottom, 44px keycaps throughout. Surfaces are matte; depth is physical (key travel, recessed windows, a plate lifted over the display) rather than decorative.",
     "keyCharacteristics": [
-      "Warm near-black film base with 1px frame lines, never cool navy.",
-      "Two hand colours (amber right, cyan left) that also colour the keys they strike.",
-      "One type family, width as the voice: wdth 125 titles, 87.5 sentences, 75 controls, 62 edge codes.",
-      "Film furniture as real UI: sprocket perforations, edge codes, gate brackets, Academy leader.",
-      "Photography graded toward the print and held inside a film frame."
+      "Matte aluminium field with a soft top light; no stripes, no brushed texture, no gloss.",
+      "Every control is a physical key: round keycaps, pills and a slider that travel 1.5px when pressed.",
+      "One black display window per screen; LCDs are small recessed black readouts.",
+      "Signal colours with one job each: orange right hand and action, cobalt left hand, green live input, red fault.",
+      "Supreme for words, Martian Mono for machine readouts.",
+      "Cartridges with photo, paper label and orange speed stamps."
     ],
     "rules": [
-      { "name": "The Two Hands Rule", "body": "Amber belongs to the right hand and cyan to the left, everywhere: falling notes, struck keys, sheet noteheads. A note the app plays for the other hand keeps its hue at 28% opacity rather than switching colour.", "section": "colors" },
-      { "name": "The Amber Carries Action Rule", "body": "Amber is the only fill on an interactive control. Secondary actions are outlined in frame edge; the exceptions are the white import button, the library's first-class action, and the rust fill on a destructive confirm.", "section": "colors" },
-      { "name": "The Width Is the Voice Rule", "body": "Hierarchy comes from width and tracking, not from new families or sizes: wide caps title, narrow caps label, mid-width sentence case for anything read as a sentence.", "section": "typography" },
-      { "name": "The Sentences Stay Sentences Rule", "body": "Anything longer than a label (hints, warnings, the missing-file line, toasts) is sentence case at wdth 87.5 so it reads at a glance from the music stand.", "section": "typography" },
-      { "name": "The Tonal Step Rule", "body": "A surface that sits above another is one tonal step lighter and edged in 1px frame edge; shadows are reserved for things that genuinely float over the strip.", "section": "elevation" }
+      {
+        "name": "The One Job Rule",
+        "body": "Each signal colour owns one meaning. Orange is right hand, primary action and active state; cobalt is left hand and never chrome; green is live input; red is a fault. A readout that is not reporting live input is never green.",
+        "section": "colors"
+      },
+      {
+        "name": "The Lit Panel Rule",
+        "body": "The panel is light aluminium. Black appears only inside the display window, LCDs, dark keycaps and black keys.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Hands Rule",
+        "body": "Orange belongs to the right hand and cobalt to the left in every view: falling notes, keys, hint keys, sheet noteheads. A note the app plays for the other hand keeps its hue at 28% opacity.",
+        "section": "colors"
+      },
+      {
+        "name": "The Machine Voice Rule",
+        "body": "Martian Mono is only for readouts, numerals, note names and stamps. Titles, legends, buttons and sentences are Supreme.",
+        "section": "typography"
+      },
+      {
+        "name": "The Printed Legend Rule",
+        "body": "Legends are 10px tracked caps printed under or beside the control they name. They label controls; they never sit above a heading as an eyebrow.",
+        "section": "typography"
+      },
+      {
+        "name": "The Matte Finish Rule",
+        "body": "The aluminium is an even matte field under a soft top light; orange controls are flat signal-orange-deep with a neutral travel shadow. No gloss highlights, no stripes, no glow on controls. Light is emitted only by LEDs, the gate line and count-in LEDs.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Key Travel Rule",
+        "body": "Anything pressable has travel: a 2px hard shadow at rest, 1px when pressed, and a 1.5px drop.",
+        "section": "elevation"
+      }
     ],
     "dos": [
-      "Do colour right-hand material amber and left-hand material cyan in every view, and dim the app-played hand to 28% rather than recolouring it.",
-      "Do draw structure with 1px frame-edge lines and tonal steps from booth black up to can stock lit.",
-      "Do set titles in Archivo wdth 125, 800, tracked caps; labels and edge codes in wdth 62 caps; sentences in wdth 87.5 sentence case.",
-      "Do keep every control that matters mid-song at 44px or larger.",
-      "Do grade photography toward the print (warm, slightly desaturated, deeper blacks) and hold it inside a 3px-cornered film frame.",
-      "Do use dashed borders for \"not yet there\" states and rust for wrong or missing."
+      "Do keep the panel light aluminium with a soft top light, and put black only inside the display, LCDs, dark keycaps and black keys.",
+      "Do make every control a physical key with travel: 2px rest shadow, 1px pressed, 1.5px drop.",
+      "Do fill primary controls with flat signal-orange-deep and ink text.",
+      "Do colour right-hand material orange and left-hand material cobalt in every view, and dim the app-played hand to 28%.",
+      "Do use green only for live input, neutral lcd-neutral for other readouts, and red for faults.",
+      "Do set readouts, numerals, note names and stamps in Martian Mono with tabular figures; everything else in Supreme.",
+      "Do print legends as 10px tracked caps next to the control they name.",
+      "Do keep controls that matter mid-song at 36px or larger, 44px where space allows."
     ],
     "donts": [
-      "Don't use neon glowing bars on navy, gamified stars, or cool blue-black grounds.",
-      "Don't introduce a second type family; change width instead.",
-      "Don't fill a control with any colour other than amber (exceptions: the white import button, and rust for a destructive confirm).",
-      "Don't use cyan for chrome, links or actions; it belongs to the left hand.",
-      "Don't add shadows to resting surfaces; only title cards and toasts float."
+      "Don't add gloss, stripes or brushed texture to the aluminium, or gloss and glow to orange controls; only LEDs and the gate emit light.",
+      "Don't make the panel dark or use neon bars on navy.",
+      "Don't use green on an LCD for anything but live input.",
+      "Don't use cobalt for chrome, links or actions; it belongs to the left hand.",
+      "Don't set titles, legends or sentences in Martian Mono.",
+      "Don't put eyebrow labels above headings.",
+      "Don't float the wait hint over the display; it is a panel in its own row between display and keys."
     ]
   }
 }

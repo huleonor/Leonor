@@ -15,7 +15,7 @@ Constraints: iPhone app (Capacitor, CoreMIDI cable + Bluetooth, mic) and web (Ch
 
 THESIS: The app is a practice instrument, a piece of hardware on the music stand: a light bead-blasted aluminium panel with printed legends, round keycaps with LEDs and one black display where the notes fall. Refuses the neon-bars-on-navy piano trainer and the dark cinema costume it replaces.
 
-OWN-WORLD: aluminium #d9d8d3 panel (lit, never dark), display black #111214 only inside the display window, signal orange #ff6a13 (right hand, primary keycap, active state), cobalt #2f5bff (left hand), LED green #3dbe6b (live input), fault red #e0301e (wrong), legend ink #1a1a1a. Supreme (Fontshare) for legends and titles, Geist Mono for readouts, numerals and note names on LCDs. Round keycaps with a 2px travel shadow, recessed LCD windows, a two-position slider, cartridges with photo labels and speed stamps.
+OWN-WORLD: aluminium #dcdbd6 panel (lit, never dark), display black #111214 only inside the display window, signal orange #ff6a13 (right hand, primary keycap, active state), cobalt #2f5bff (left hand), LED green #3dbe6b (live input), fault red #e0301e (wrong), legend ink #1a1a1a. Supreme (Fontshare) for legends and titles, Martian Mono (Evil Martians) for readouts, numerals and note names on LCDs. Round keycaps with a 2px travel shadow, recessed LCD windows, a two-position slider, cartridges with photo labels and speed stamps.
 
 STORY: He sees a rack of song cartridges, each with its photo and the speeds he has passed stamped in orange, presses one; the display counts in, notes fall to an orange gate; when he stalls in Wait, a panel under the display shows the keys to press; the cartridge earns a new stamp at the end.
 
