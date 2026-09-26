@@ -1,4 +1,5 @@
 import { Midi } from '@tonejs/midi';
+import { assignFingering } from './fingering';
 import type { Hand, Song, SongEntry, SongNote } from './types';
 
 type Track = Midi['tracks'][number];
@@ -74,6 +75,8 @@ export function parseSong(buf: ArrayBuffer, entry: SongEntry): Song {
       velocity: n.velocity, ticks: n.ticks, durationTicks: Math.max(n.durationTicks, 1),
     });
   }
+
+  assignFingering(notes);
 
   const ks = midi.header.keySignatures[0];
   const fifths = ks && KEY_NAMES.includes(ks.key) ? KEY_NAMES.indexOf(ks.key) - 7 : estimateFifths(notes);

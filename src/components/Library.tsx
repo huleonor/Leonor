@@ -289,6 +289,15 @@ export function Library({ settings, update, links, connectInput, onOpen, onConti
               </div>
             </div>
             <div className="rule" />
+            <div className="row">
+              <span><strong className="row-title">Finger numbers</strong><small>1 thumb … 5 little finger. Some: only where the hand moves.</small></span>
+              <div className="slider">
+                {(['off', 'some', 'all'] as const).map(f => (
+                  <button key={f} className={settings.fingers === f ? 'on' : ''} onClick={() => update({ fingers: f })}>{f === 'off' ? 'Off' : f === 'some' ? 'Some' : 'All'}</button>
+                ))}
+              </div>
+            </div>
+            <div className="rule" />
             <label className="row toggle">
               <span><strong className="row-title">{t('localSound')}</strong><small>{t('localSoundHint')}</small></span>
               <input className="switch" type="checkbox" checked={settings.localSound} onChange={e => update({ localSound: e.target.checked })} />

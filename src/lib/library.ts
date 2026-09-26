@@ -129,7 +129,7 @@ export async function recordRun(id: string, accuracy: number, speed: number): Pr
 
 const SETTINGS_KEY = 'hugos-piano:settings';
 export const DEFAULT_SETTINGS: Settings = {
-  input: 'mic', lang: 'en', naming: 'letters', view: 'notes', speed: 0.8, wait: true, hands: 'both', accompaniment: true, localSound: true, v: 3,
+  input: 'mic', lang: 'en', naming: 'letters', view: 'notes', speed: 0.8, wait: true, hands: 'both', accompaniment: true, localSound: true, fingers: 'some', v: 3,
 };
 
 export function loadSettings(): Settings {

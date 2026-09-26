@@ -3,9 +3,9 @@ import type { Engine } from '../lib/engine';
 import { useI18n } from '../lib/i18n';
 import { keyLayout } from '../lib/keys';
 import { noteName } from '../lib/names';
-import { AUTO, HIT, MISS, type NoteNaming } from '../lib/types';
+import { AUTO, HIT, MISS, type FingerMode, type NoteNaming } from '../lib/types';
 
-interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; inset: number; onTap: () => void; }
+interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; fingers: FingerMode; inset: number; onTap: () => void; }
 
 const C = {
   display: '#111214', lane: '#16171a', bar: 'rgba(255,255,255,.1)', barText: 'rgba(255,255,255,.62)', white: '#f6f5f1', ink: '#1a1a1a',
@@ -15,7 +15,7 @@ const SANS = 'Supreme, "Helvetica Neue", Arial, sans-serif';
 const MONO = '"Martian Mono", ui-monospace, monospace';
 const VISIBLE_SECONDS = 3.2;
 
-export function FallingNotes({ engine, lo, hi, naming, inset, onTap }: Props) {
+export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const layout = useMemo(() => keyLayout(lo, hi), [lo, hi]);
   const { t } = useI18n();
@@ -126,9 +126,23 @@ export function FallingNotes({ engine, lo, hi, naming, inset, onTap }: Props) {
           }
           ctx.globalAlpha = 1;
         }
+        const showFinger = !!n.finger && mine && st !== MISS && (fingers === 'all' || (fingers === 'some' && n.fingerCue));
+        if (showFinger && h > 40 && w > 12) {
+          // Finger number: a white disc near the bottom of the bar, above the note name.
+          const r = Math.min(10, w / 2 - 1.5);
+          const cy = bot - 30 - r;
+          ctx.fillStyle = C.white;
+          ctx.beginPath(); ctx.arc(x + w / 2, cy, r, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = C.ink;
+          ctx.font = `700 ${Math.round(r * 1.25)}px ${MONO}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String(n.finger), x + w / 2, cy + 0.5);
+          ctx.textBaseline = 'alphabetic';
+        }
         if (h > 22 && w > 12) {
-          // Sized to the lane so it reads from the music stand.
-          const label = noteName(n.midi, naming);
+          // Sized to the lane so it reads from the music stand. A short bar shows the finger instead.
+          const label = showFinger && h <= 40 ? String(n.finger) : noteName(n.midi, naming);
           let size = Math.max(11, Math.min(16, w * 0.6));
           ctx.font = `800 ${size}px ${SANS}`;
           while (size > 9 && ctx.measureText(label).width > w - 3) { size -= 1; ctx.font = `800 ${size}px ${SANS}`; }
@@ -178,7 +192,7 @@ export function FallingNotes({ engine, lo, hi, naming, inset, onTap }: Props) {
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [engine, lo, hi, layout, naming, inset, t]);
+  }, [engine, lo, hi, layout, naming, fingers, inset, t]);
 
   return (
     <canvas

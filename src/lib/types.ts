@@ -3,6 +3,7 @@ export type HandsChoice = 'R' | 'L' | 'both';
 export type InputKind = 'mic' | 'ble' | 'midi' | 'none';
 export type ViewMode = 'notes' | 'sheet';
 export type NoteNaming = 'solfege' | 'letters';
+export type FingerMode = 'off' | 'some' | 'all';
 
 export interface SongNote {
   id: number;
@@ -13,6 +14,10 @@ export interface SongNote {
   velocity: number;
   ticks: number;
   durationTicks: number;
+  /** Suggested finger, 1 (thumb) to 5 (little finger). */
+  finger?: number;
+  /** Hand changes position here: label it even when only some fingers are shown. */
+  fingerCue?: boolean;
 }
 
 export interface SongEntry {
@@ -73,6 +78,8 @@ export interface Settings {
   accompaniment: boolean;
   /** The app sounds the keys played on a MIDI / Bluetooth keyboard. */
   localSound: boolean;
+  /** Finger numbers on the notes: none, only where the hand moves, or every note. */
+  fingers: FingerMode;
   /** Settings format, for one-off migrations. */
   v?: number;
 }

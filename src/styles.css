@@ -407,6 +407,13 @@ button:disabled { opacity: .45; cursor: default; }
 .kname { display: none; font-weight: 800; font-size: 13px; }
 .key.b .kname { font-size: 10px; color: #fff; }
 .key.next .kname { display: block; }
+/* Finger for the next key: a small disc above its name. */
+.kfinger { display: none; }
+.key.next .kfinger:not(:empty) {
+  display: grid; place-items: center; width: 18px; height: 18px; margin-bottom: 3px; border-radius: 50%;
+  background: var(--ink); color: #fff; font-family: 'Martian Mono', monospace; font-weight: 700; font-size: 10.5px;
+}
+.key.b.next .kfinger:not(:empty) { width: 15px; height: 15px; font-size: 9px; background: #fff; color: var(--ink); }
 .key.next .klabel { display: none; }
 .key.w.next { background: var(--orange-soft); }
 .key.w.nextL { background: var(--cobalt-soft); }
@@ -513,7 +520,8 @@ button:disabled { opacity: .45; cursor: default; }
 .hk { position: absolute; top: 0; display: flex; align-items: flex-end; justify-content: center; }
 .hk.w { height: 100%; background: linear-gradient(#fff, var(--key-bot)); border: 1px solid #c3c2bb; border-radius: 0 0 5px 5px; padding-bottom: 4px; }
 .hk.b { height: 58%; background: #1b1c1f; border-radius: 0 0 3px 3px; z-index: 2; padding-bottom: 3px; }
-.hk span { font-family: 'Martian Mono', monospace; font-weight: 700; font-size: 10px; }
+.hk span { display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: 'Martian Mono', monospace; font-weight: 700; font-size: 10px; }
+.hk-finger { display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: #fff; color: var(--ink); font-size: 9.5px; }
 .hk.b span { color: #fff; font-size: 8.5px; }
 .hk.tR { background: var(--orange); border-color: var(--orange-deep); }
 .hk.tL { background: var(--cobalt); border-color: #1d3bb3; }

@@ -36,7 +36,7 @@ export function WaitHint({ engine, naming }: { engine: Engine; naming: NoteNamin
     const cls = target ? `t t${target.hand}` : m === wrong ? 'x' : '';
     keys.push(
       <div key={m} className={`hk ${g.black ? 'b' : 'w'} ${cls}`} style={{ left: `${g.x * 100}%`, width: `${g.w * 100}%` }}>
-        {(target || m === wrong) && <span>{noteName(m, naming, true)}</span>}
+        {(target || m === wrong) && <span>{target?.finger ? <b className="hk-finger">{target.finger}</b> : null}{noteName(m, naming, true)}</span>}
       </div>,
     );
   }

@@ -190,10 +190,10 @@ export class Engine {
   }
 
   /** The group the player is stuck on, with the hand of each note (for the hint keyboard). */
-  waitingFor(): { midi: number; hand: 'R' | 'L' }[] {
+  waitingFor(): { midi: number; hand: 'R' | 'L'; finger?: number }[] {
     const g = this.groups[this.gi];
     if (!g) return [];
-    return g.ids.map(id => ({ midi: this.song.notes[id].midi, hand: this.song.notes[id].hand }));
+    return g.ids.map(id => ({ midi: this.song.notes[id].midi, hand: this.song.notes[id].hand, finger: this.song.notes[id].finger }));
   }
 
   private tolerance() { return 0.2 * this.opts.speed + 0.06; }

@@ -66,7 +66,7 @@ function spell(midi: number, fifths: number, keyAcc: Record<string, number>, bar
 
 interface Event { qs: number; dur: number; notes: SongNote[]; }
 
-export function buildScore(song: Song, measuresPerLine: number): AbcScore {
+export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' | 'some' | 'all' = 'off'): AbcScore {
   const [num, den] = song.timeSig;
   const grid = song.ppq / 4; // one 16th note in ticks
   const measureUnits = Math.max(1, Math.round((num * 16) / den));
@@ -120,7 +120,10 @@ export function buildScore(song: Song, measuresPerLine: number): AbcScore {
           let text: string;
           if (ev) {
             const pitches = ev.notes.map(n => spell(n.midi, song.fifths, keyAcc, bars[m]));
-            text = (pitches.length > 1 ? `[${pitches.join('')}]` : pitches[0]) + durStr + (last ? '' : '-');
+            // Fingering over a single note's first written segment (abcjs prints !1!…!5! above it).
+            const fn = ev.notes.length === 1 && first ? ev.notes[0] : null;
+            const fingerMark = fn?.finger && (fingers === 'all' || (fingers === 'some' && fn.fingerCue)) ? `!${fn.finger}!` : '';
+            text = fingerMark + (pitches.length > 1 ? `[${pitches.join('')}]` : pitches[0]) + durStr + (last ? '' : '-');
           } else {
             text = 'z' + durStr;
           }

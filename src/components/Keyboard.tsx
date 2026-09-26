@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { Engine } from '../lib/engine';
 import { keyLayout } from '../lib/keys';
 import { noteName } from '../lib/names';
-import { AUTO, HIT, type NoteNaming } from '../lib/types';
+import { AUTO, HIT, type FingerMode, type NoteNaming } from '../lib/types';
 
-interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; }
+interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; fingers: FingerMode; }
 
-export function Keyboard({ engine, lo, hi, naming }: Props) {
+export function Keyboard({ engine, lo, hi, naming, fingers }: Props) {
   const layout = useMemo(() => keyLayout(lo, hi), [lo, hi]);
   const refs = useRef<Record<number, HTMLDivElement | null>>({});
 
@@ -33,7 +33,12 @@ export function Keyboard({ engine, lo, hi, naming }: Props) {
         const el = refs.current[m];
         if (!el) continue;
         let cls = '';
-        const expHand = expected.has(m) ? notes.find(n => n.midi === m && Math.abs(n.time - t) < 1.3)?.hand ?? 'R' : null;
+        const expNote = expected.has(m) ? notes.find(n => n.midi === m && Math.abs(n.time - t) < 1.3) : undefined;
+        const expHand = expected.has(m) ? expNote?.hand ?? 'R' : null;
+        // The finger for the next key, printed on the key (every next key when fingers are on).
+        const fg = expNote?.finger && fingers !== 'off' ? String(expNote.finger) : '';
+        const fEl = el.querySelector('.kfinger');
+        if (fEl && fEl.textContent !== fg) fEl.textContent = fg;
         const held = engine.held.has(m);
         const wrong = engine.lastWrong.midi === m && (now - engine.lastWrong.at < 380 || (held && engine.lastWrong.at > now - 4000));
         if (wrong) cls = 'wrong';
@@ -48,7 +53,7 @@ export function Keyboard({ engine, lo, hi, naming }: Props) {
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [engine, lo, hi, layout]);
+  }, [engine, lo, hi, layout, fingers]);
 
   const keys = [];
   for (let m = lo; m <= hi; m++) {
@@ -63,6 +68,7 @@ export function Keyboard({ engine, lo, hi, naming }: Props) {
         style={{ left: `${g.x * 100}%`, width: `${g.w * 100}%` }}
       >
         {!g.black && <span className="klabel">{m % 12 === 0 ? noteName(m, naming, true) : ''}</span>}
+        <span className="kfinger" />
         <span className="kname">{noteName(m, naming)}</span>
         <span className="kbubble">{noteName(m, naming, true)}</span>
       </div>,

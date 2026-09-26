@@ -206,8 +206,8 @@ export function Player({ song, settings: global, update: updateGlobal, links, on
 
       <main className="display">
         {settings.view === 'notes'
-          ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} inset={INSET} onTap={togglePlay} />
-          : <Suspense fallback={<p className="score-loading">{t('sheetLoading')}</p>}><SheetView key={song.entry.id} engine={engine} onTap={togglePlay} /></Suspense>}
+          ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={INSET} onTap={togglePlay} />
+          : <Suspense fallback={<p className="score-loading">{t('sheetLoading')}</p>}><SheetView key={`${song.entry.id}-${settings.fingers}`} engine={engine} fingers={settings.fingers} onTap={togglePlay} /></Suspense>}
         <div className="progress" onPointerDown={seekFromBar} role="slider" aria-label="Position in the song" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(engine.progress() * 100)}>
           <div ref={progressRef} className="progress-fill" />
         </div>
@@ -228,6 +228,16 @@ export function Player({ song, settings: global, update: updateGlobal, links, on
                   <button className={listen ? 'on' : ''} onClick={() => setListen(true)}>{step ? 'Listen first' : t('listen')}</button>
                 </div>
               </div>
+              {!listen && (
+                <div className="row">
+                  <span className="legend">Fingers</span>
+                  <div className="slider">
+                    {(['off', 'some', 'all'] as const).map(f => (
+                      <button key={f} className={settings.fingers === f ? 'on' : ''} onClick={() => update({ fingers: f })}>{f === 'off' ? 'Off' : f === 'some' ? 'Some' : 'All'}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {!oneHand && !listen && !step && (
                 <div className="row">
                   <span className="legend">{t('handsLabel')}</span>
@@ -312,7 +322,7 @@ export function Player({ song, settings: global, update: updateGlobal, links, on
       )}
 
       <footer className="keys" style={{ paddingInline: INSET }}>
-        <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} />
+        <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} />
       </footer>
     </div>
   );

@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import { buildScore, density, type AbcToken } from '../lib/abc';
 import type { Engine } from '../lib/engine';
 import { useI18n } from '../lib/i18n';
-import { AUTO, HIT, MISS } from '../lib/types';
+import { AUTO, HIT, MISS, type FingerMode } from '../lib/types';
 
-interface Props { engine: Engine; onTap: () => void; }
+interface Props { engine: Engine; fingers: FingerMode; onTap: () => void; }
 
 interface Stop { time: number; x: number; line: number; }
 interface Box { top: number; bottom: number; }
@@ -18,7 +18,7 @@ function rectIn(el: Element, host: HTMLElement) {
   return { left: r.left - h.left + host.scrollLeft, top: r.top - h.top + host.scrollTop, width: r.width, height: r.height };
 }
 
-export function SheetView({ engine, onTap }: Props) {
+export function SheetView({ engine, fingers, onTap }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -39,7 +39,7 @@ export function SheetView({ engine, onTap }: Props) {
     const song = engine.song;
     const perBar = Math.max(110, density(song) * 24 + 36);
     const mpl = Math.max(1, Math.min(6, Math.floor((width - 40) / perBar)));
-    const score = buildScore(song, mpl);
+    const score = buildScore(song, mpl, fingers);
     const scale = width < 560 ? 0.82 : width < 760 ? 0.92 : 1;
 
     const [tune] = abcjs.renderAbc(paper, score.abc, {
