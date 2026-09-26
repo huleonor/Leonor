@@ -6,4 +6,4 @@ dist
 node_modules
 ios
 build
-*.ipa
+/HugosPiano.ipa

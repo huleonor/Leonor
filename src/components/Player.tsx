@@ -3,16 +3,17 @@ import { loadPiano, unlockAudio } from '../lib/audio';
 import { Engine } from '../lib/engine';
 import { filmName, useI18n } from '../lib/i18n';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
-import { barsToTime, type Tip } from '../lib/analysis';
+import { barsToTime } from '../lib/analysis';
+import { nextStep, recordStep, starsFor, type Course, type CourseProgress, type CourseStep } from '../lib/course';
 import { pickRange } from '../lib/keys';
 import { recordRun } from '../lib/library';
 import { formatSpeed, formatTime, noteName } from '../lib/names';
 import type { HandsChoice, NoteNaming, Settings, Song } from '../lib/types';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
-import { IconBack, IconBack5, IconClose, IconFalling, IconPlay, IconRestart, IconSheet } from './Icons';
+import { stepLabel } from './CourseView';
+import { IconBack, IconBack5, IconFalling, IconPlay, IconRestart, IconSheet } from './Icons';
 import { Keyboard } from './Keyboard';
-import { StudyPanel } from './StudyPanel';
 import { WaitHint } from './WaitHint';
 
 // The score engraver is heavy; load it only when the sheet view is opened.
@@ -42,9 +43,25 @@ interface Props {
   update: (patch: Partial<Settings>) => void;
   links: Record<Source, LinkState>;
   onExit: () => void;
+  /** A course step: only its bars, with its own hands, speed and Wait. */
+  step?: CourseStep;
+  course?: Course;
+  onStep?: (step: CourseStep) => void;
 }
 
-export function Player({ song, settings, update, links, onExit }: Props) {
+type Practice = Pick<Settings, 'speed' | 'wait' | 'hands'>;
+
+export function Player({ song, settings: global, update: updateGlobal, links, onExit, step, course, onStep }: Props) {
+  // A course step sets speed, hands and Wait for this run only; free play uses (and saves) the settings.
+  const [local, setLocal] = useState<Practice | null>(step ? { speed: step.speed, wait: step.wait, hands: step.hands } : null);
+  const settings: Settings = local ? { ...global, ...local } : global;
+  const update = (patch: Partial<Settings>) => {
+    const { speed, wait, hands, ...rest } = patch;
+    const practice = Object.fromEntries(Object.entries({ speed, wait, hands }).filter(([, v]) => v !== undefined)) as Partial<Practice>;
+    if (local) setLocal({ ...local, ...practice }); else Object.keys(practice).length && updateGlobal(practice);
+    if (Object.keys(rest).length) updateGlobal(rest);
+  };
+  const [stepProg, setStepProg] = useState<{ stars: number; next?: CourseStep } | null>(null);
   const { t, lang } = useI18n();
   const [listen, setListen] = useState(false);
   const [pianoPct, setPianoPct] = useState<number | null>(0);
@@ -52,8 +69,6 @@ export function Player({ song, settings, update, links, onExit }: Props) {
   const progressRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLParagraphElement>(null);
   const [result, setResult] = useState<ReturnType<Engine['stats']> | null>(null);
-  const [study, setStudy] = useState(false);
-  const [loopBars, setLoopBars] = useState<{ from: number; to: number } | null>(null);
 
   const oneHand = song.hands.length === 1;
   const hands: HandsChoice = oneHand ? song.hands[0] : settings.hands;
@@ -64,6 +79,11 @@ export function Player({ song, settings, update, links, onExit }: Props) {
   }), [song]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { setMicRange(song.range[0], song.range[1]); }, [song]);
+
+  // A step plays its own bars and stops at their end.
+  useEffect(() => {
+    if (step) engine.setSegment(barsToTime(engine.measureTimes, step.from, step.to));
+  }, [engine, step]);
 
   useEffect(() => {
     if (import.meta.env.DEV) (window as unknown as { __engine: Engine }).__engine = engine;
@@ -83,14 +103,20 @@ export function Player({ song, settings, update, links, onExit }: Props) {
         const s = engine.stats();
         if (!engine.opts.listen) {
           setResult(s);
-          recordRun(song.entry.id, s.accuracy, engine.opts.speed);
+          if (step && course) {
+            recordStep(song.entry.id, step.id, s.accuracy).then((prog: CourseProgress) => {
+              setStepProg({ stars: starsFor(s.accuracy), next: nextStep(course, prog) });
+            });
+          } else {
+            recordRun(song.entry.id, s.accuracy, engine.opts.speed);
+          }
         }
         bump();
       }
     });
     const offNote = onNote(e => engine.input(e));
     return () => { off(); offNote(); engine.destroy(); };
-  }, [engine, song]);
+  }, [engine, song, step, course]);
 
   useEffect(() => {
     let alive = true;
@@ -128,30 +154,17 @@ export function Player({ song, settings, update, links, onExit }: Props) {
   const togglePlay = () => { unlockAudio(); setResult(null); engine.toggle(); };
   const inputOn = settings.input !== 'none' && links[settings.input as Source]?.status === 'on';
   const film = filmName(song.entry, lang);
-  const sub = [film, song.entry.year, formatTime(song.duration)].filter(Boolean).join(' · ');
+  const sub = step
+    ? `Bars ${step.from}–${step.to} · ${formatSpeed(settings.speed)}${settings.wait ? ' · Wait' : ''}`
+    : [film, song.entry.year, formatTime(song.duration)].filter(Boolean).join(' · ');
+  const title = step && course ? stepLabel(course, step) : song.entry.title;
 
   const seekFromBar = (e: React.PointerEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     const f = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-    engine.seek(engine.startTime + f * (song.duration - engine.startTime));
+    const [a, b] = engine.segment ? [engine.segment.from - 1.6, engine.segment.to] : [engine.startTime, song.duration];
+    engine.seek(a + f * (b - a));
   };
-
-  // A tip's "Practise" button: loop those bars with the hands and speed that suit them.
-  const practise = (p: NonNullable<Tip['practice']>) => {
-    const patch: Partial<Settings> = { wait: true };
-    if (p.speed) patch.speed = p.speed;
-    if (p.hands && !oneHand) patch.hands = p.hands;
-    update(patch);
-    engine.setOptions({ wait: true, speed: p.speed ?? settings.speed, hands: p.hands && !oneHand ? p.hands : hands });
-    engine.setLoop(barsToTime(engine.measureTimes, p.from, p.to));
-    setLoopBars({ from: p.from, to: p.to });
-    setStudy(false);
-    setListen(false);
-    setResult(null);
-    unlockAudio();
-    engine.play();
-  };
-  const clearLoop = () => { engine.setLoop(null); setLoopBars(null); bump(); };
 
   const showResult = engine.finished && !!result;
   const showSetup = !engine.playing && !showResult;
@@ -161,7 +174,7 @@ export function Player({ song, settings, update, links, onExit }: Props) {
       <header className="bar">
         <button className="keycap" onClick={onExit} aria-label={t('back')}><IconBack /></button>
         <div className="bar-title">
-          <h1>{song.entry.title}</h1>
+          <h1>{step ? `${song.entry.title} · ${title}` : song.entry.title}</h1>
           <p className="lcd readout-lcd" ref={readoutRef} aria-label="Bar and time">{sub}</p>
         </div>
         <div className="slider" role="group" aria-label={t('viewNotes') + ' / ' + t('viewSheet')}>
@@ -188,11 +201,6 @@ export function Player({ song, settings, update, links, onExit }: Props) {
             {t('wait').toUpperCase()}
           </button>
         </div>
-        {loopBars && (
-          <button className="loop-key" onClick={clearLoop} aria-label="Stop looping">
-            {loopBars.from === loopBars.to ? `BAR ${loopBars.from}` : `BARS ${loopBars.from}–${loopBars.to}`}<IconClose size={14} />
-          </button>
-        )}
         {!listen && <InputLcd kind={settings.input} link={settings.input !== 'none' ? links[settings.input as Source] : undefined} naming={settings.naming} />}
       </header>
 
@@ -210,17 +218,17 @@ export function Player({ song, settings, update, links, onExit }: Props) {
       {showSetup && (
         <div className="overlay">
           <div className="plate">
-            <h2>{song.entry.title}</h2>
-            <p className="plate-sub">{sub}</p>
+            <h2>{title}</h2>
+            <p className="plate-sub">{step ? `${song.entry.title} · ${sub}` : sub}</p>
             <div className="plate-rows">
               <div className="row">
                 <span className="legend">{t('mode')}</span>
                 <div className="slider">
                   <button className={!listen ? 'on' : ''} onClick={() => setListen(false)}>{t('play')}</button>
-                  <button className={listen ? 'on' : ''} onClick={() => setListen(true)}>{t('listen')}</button>
+                  <button className={listen ? 'on' : ''} onClick={() => setListen(true)}>{step ? 'Listen first' : t('listen')}</button>
                 </div>
               </div>
-              {!oneHand && !listen && (
+              {!oneHand && !listen && !step && (
                 <div className="row">
                   <span className="legend">{t('handsLabel')}</span>
                   <div className="slider">
@@ -240,11 +248,12 @@ export function Player({ song, settings, update, links, onExit }: Props) {
               {engine.started && (
                 <>
                   <button className="pill" onClick={() => { engine.restart(); bump(); }}><IconRestart size={16} />{t('restart')}</button>
-                  <button className="pill" onClick={() => engine.seek(engine.time - 5)}><IconBack5 size={16} />{t('back5')}</button>
+                  {!step && <button className="pill" onClick={() => engine.seek(engine.time - 5)}><IconBack5 size={16} />{t('back5')}</button>}
                 </>
               )}
-              <button className="pill study-open" onClick={() => setStudy(true)}><i className="led orange" />Learn it faster</button>
+              <button className="pill" onClick={onExit}>{step ? 'Course' : 'Back'}</button>
             </div>
+            {step && !listen && <p className="note">{step.wait ? 'The music waits for you. ' : 'In tempo: the music keeps going. '}One star from 70% right, three from 95%.</p>}
             {!listen && !inputOn && <p className="note warn">{t('noInput')}</p>}
             {pianoPct !== null && <p className="note">{pianoPct > 0 ? t('loadingPiano', { pct: pianoPct }) : t('loadingPianoPlain')}</p>}
             <p className="note rotate-hint">{t('rotate')}</p>
@@ -255,29 +264,52 @@ export function Player({ song, settings, update, links, onExit }: Props) {
       {showResult && result && (
         <div className="overlay">
           <div className="plate">
-            <h2>{t('theEnd')}</h2>
-            <p className="plate-sub">{song.entry.title} · {formatSpeed(engine.opts.speed)}</p>
+            {step ? (
+              <>
+                <div className="result-head">
+                  <h2>{(stepProg?.stars ?? 0) > 0 ? 'Passed' : 'Not yet'}</h2>
+                  <span className="stars big" aria-label={`${stepProg?.stars ?? 0} of 3 stars`}>
+                    {[0, 1, 2].map(i => <i key={i} className={`led ${i < (stepProg?.stars ?? 0) ? 'orange' : ''}`} />)}
+                  </span>
+                </div>
+                <p className="plate-sub">{title} · {song.entry.title}</p>
+              </>
+            ) : (
+              <>
+                <h2>{t('theEnd')}</h2>
+                <p className="plate-sub">{song.entry.title} · {formatSpeed(engine.opts.speed)}</p>
+              </>
+            )}
             <dl className="lcd readout">
               <div><dt>{t('accuracy')}</dt><dd>{Math.round(result.accuracy * 100)}%</dd></div>
               <div><dt>{t('notesHit')}</dt><dd>{result.hit}/{result.total}</dd></div>
               <div><dt>{t('wrongNotes')}</dt><dd>{result.wrong}</dd></div>
             </dl>
-            <div className="plate-actions">
-              <button className="pill go" onClick={() => { setResult(null); engine.restart(); engine.play(); }}><IconRestart size={16} />{t('again')}</button>
-              {settings.speed < 1.2 && (
-                <button className="pill" onClick={() => {
-                  const next = SPEEDS[SPEEDS.indexOf(settings.speed) + 1] ?? 1.2;
-                  update({ speed: next });
-                  setResult(null); engine.setOptions({ speed: next }); engine.restart(); engine.play();
-                }}>{t('faster')}</button>
-              )}
-              <button className="pill" onClick={onExit}>{t('library')}</button>
-            </div>
+            {step ? (
+              <div className="plate-actions">
+                {stepProg && stepProg.stars > 0 && stepProg.next && stepProg.next.id !== step.id && onStep
+                  ? <button className="pill go" onClick={() => onStep(stepProg.next!)}><IconPlay size={15} />Next: {course ? stepLabel(course, stepProg.next) : stepProg.next.title}</button>
+                  : null}
+                <button className={`pill ${stepProg && stepProg.stars > 0 ? '' : 'go'}`} onClick={() => { setResult(null); setStepProg(null); engine.restart(); engine.play(); }}><IconRestart size={16} />{t('again')}</button>
+                <button className="pill" onClick={onExit}>Course</button>
+              </div>
+            ) : (
+              <div className="plate-actions">
+                <button className="pill go" onClick={() => { setResult(null); engine.restart(); engine.play(); }}><IconRestart size={16} />{t('again')}</button>
+                {settings.speed < 1.2 && (
+                  <button className="pill" onClick={() => {
+                    const next = SPEEDS[SPEEDS.indexOf(settings.speed) + 1] ?? 1.2;
+                    update({ speed: next });
+                    setResult(null); engine.setOptions({ speed: next }); engine.restart(); engine.play();
+                  }}>{t('faster')}</button>
+                )}
+                <button className="pill" onClick={onExit}>Course</button>
+              </div>
+            )}
+            {step && stepProg && stepProg.stars === 0 && <p className="note">You need 70% to pass. Try it again; switch on Wait or slow down if it helps.</p>}
           </div>
         </div>
       )}
-
-      {study && <StudyPanel song={song} onPractice={practise} onClose={() => setStudy(false)} />}
 
       <footer className="keys" style={{ paddingInline: INSET }}>
         <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} />

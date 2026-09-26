@@ -33,7 +33,7 @@ export const linkState = () => ({ ...state });
 /** Running inside the iPhone app (Capacitor): MIDI comes from CoreMIDI, not the browser. */
 export const isNative = Capacitor.isNativePlatform();
 
-export interface NativeMidiStatus { devices: string[]; client: number; port: number; events: number; }
+export interface NativeMidiStatus { devices: string[]; client: number; port: number; events: number; appVersion?: string; appBuild?: number; }
 interface NativeMidiPlugin {
   start(): Promise<NativeMidiStatus>;
   status(): Promise<NativeMidiStatus>;

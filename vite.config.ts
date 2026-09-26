@@ -1,8 +1,19 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+// The deploy uploads files without git history, so the build date identifies the build.
+const built = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
 export default defineConfig({
+  // Shown in Settings, and used to tell an iPhone app that is older than this site needs.
+  define: {
+    __APP_VERSION__: JSON.stringify(`${pkg.version} · ${built} UTC`),
+    __NATIVE_BUILD__: JSON.stringify(pkg.ios.build),
+    __NATIVE_VERSION__: JSON.stringify(pkg.ios.version),
+  },
   plugins: [
     react(),
     VitePWA({

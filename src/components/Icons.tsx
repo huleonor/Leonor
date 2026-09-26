@@ -46,3 +46,5 @@ export const IconSheet = (p: P) => (
   </svg>
 );
 export const IconHeadphones = (p: P) => <svg {...base(p)}><path d="M3.5 13v-2.5a6.5 6.5 0 0 1 13 0V13" /><rect x="3" y="12" width="3.5" height="5" rx="1.2" /><rect x="13.5" y="12" width="3.5" height="5" rx="1.2" /></svg>;
+export const IconLock = (p: P) => <svg {...base(p)}><rect x="4.5" y="9" width="11" height="8" rx="1.8" /><path d="M7 9V6.5a3 3 0 0 1 6 0V9" /></svg>;
+export const IconStar = (p: P) => <svg {...base(p)}><path d="m10 2.8 2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" fill="currentColor" /></svg>;

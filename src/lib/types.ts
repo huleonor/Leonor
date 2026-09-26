@@ -26,6 +26,10 @@ export interface SongEntry {
   /** Cover photo (Unsplash) and its credit. */
   image?: { src: string; by: string; alt: string };
   builtIn: boolean;
+  /** Library shelf: film scores, modern piano, classical (imports go to "My songs"). */
+  collection?: 'film' | 'modern' | 'classical';
+  /** Overrides a time signature the MIDI file gets wrong (bars drive the course parts). */
+  timeSig?: [number, number];
   /** Built-in slot whose MIDI is not shipped yet: the can asks for the file. */
   missing?: boolean;
   /** For an import that fills a built-in slot. */

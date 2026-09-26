@@ -8,16 +8,29 @@ const cover = (id: string, by: string, alt: string) => ({ src: unsplash(id), by,
 /** Shown on imported songs, which have no cover of their own. */
 export const GENERIC_COVER = cover('photo-1689506422730-6a8e09038b1b', 'Bogdan Arhipov', 'Close-up of piano keys in low light');
 
-/** Songs shipped with the app, served from /songs. */
+/** Songs shipped with the app, served from /songs. Missing ones are slots that ask for the .mid. */
 export const BUILT_IN: SongEntry[] = [
-  { id: 'cornfield-chase', image: cover('photo-1530797670390-7b7118ec3f3a', 'Quaritsch Photography', 'Corn stalks against a low sun'), title: 'Cornfield Chase', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, file: '/songs/cornfield-chase.mid' },
-  { id: 'hes-a-pirate', image: cover('photo-1625509972901-9c6c8e8d1069', 'Raimond Klavins', 'A tall ship in silhouette at sunset'), title: "He's a Pirate", film: 'Pirates of the Caribbean', filmPt: 'Piratas das Caraíbas', year: 2003, composer: 'K. Badelt · H. Zimmer', builtIn: true, file: '/songs/hes-a-pirate.mid' },
-  // Wanted, but no usable free MIDI yet: each can asks for the file and keeps its credits.
-  { id: 'time', image: cover('photo-1594848421556-19ee3f85d417', 'Ash Amplifies', 'A metal spinning top on a table'), title: 'Time', film: 'Inception', filmPt: 'A Origem', year: 2010, composer: 'H. Zimmer', builtIn: true, missing: true },
-  { id: 'interstellar-main-theme', image: cover('photo-1670884307458-4977f638a933', 'BoliviaInteligente', 'A black hole ringed with light'), title: 'Interstellar Main Theme', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, missing: true },
-  { id: 'now-we-are-free', image: cover('photo-1764138747893-a05666926e62', 'Alina Chernovolova', 'A hand brushing through wheat at sunset'), title: 'Now We Are Free', film: 'Gladiator', filmPt: 'Gladiador', year: 2000, composer: 'H. Zimmer · L. Gerrard', builtIn: true, missing: true },
-  { id: 'a-way-of-life', image: cover('photo-1615790469537-7c9d8e95c047', 'Susann Schuster', 'A gold and red samurai helmet'), title: 'A Way of Life', film: 'The Last Samurai', filmPt: 'O Último Samurai', year: 2003, composer: 'H. Zimmer', builtIn: true, missing: true },
-  { id: 'maestro', image: cover('photo-1510798831971-661eb04b3739', 'Ian Keefe', 'A wooden cottage in the snow at dusk'), title: 'Maestro', film: 'The Holiday', filmPt: 'O Amor Não Tira Férias', year: 2006, composer: 'H. Zimmer', builtIn: true, missing: true },
+  // Film scores
+  { id: 'cornfield-chase', collection: 'film', image: cover('photo-1530797670390-7b7118ec3f3a', 'Quaritsch Photography', 'Corn stalks against a low sun'), title: 'Cornfield Chase', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, file: '/songs/cornfield-chase.mid' },
+  { id: 'hes-a-pirate', collection: 'film', image: cover('photo-1625509972901-9c6c8e8d1069', 'Raimond Klavins', 'A tall ship in silhouette at sunset'), title: "He's a Pirate", film: 'Pirates of the Caribbean', filmPt: 'Piratas das Caraíbas', year: 2003, composer: 'K. Badelt · H. Zimmer', builtIn: true, file: '/songs/hes-a-pirate.mid' },
+  { id: 'comptine', collection: 'film', image: cover('photo-1623009070764-45002990256e', 'Bastien Nvs', 'A Paris street in the morning'), title: "Comptine d'un autre été", film: 'Amélie', year: 2001, composer: 'Y. Tiersen', builtIn: true, file: '/songs/comptine-dun-autre-ete.mid' },
+  { id: 'time', collection: 'film', image: cover('photo-1594848421556-19ee3f85d417', 'Ash Amplifies', 'A metal spinning top on a table'), title: 'Time', film: 'Inception', filmPt: 'A Origem', year: 2010, composer: 'H. Zimmer', builtIn: true, missing: true },
+  { id: 'interstellar-main-theme', collection: 'film', image: cover('photo-1670884307458-4977f638a933', 'BoliviaInteligente', 'A black hole ringed with light'), title: 'Interstellar Main Theme', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, missing: true },
+  { id: 'now-we-are-free', collection: 'film', image: cover('photo-1764138747893-a05666926e62', 'Alina Chernovolova', 'A hand brushing through wheat at sunset'), title: 'Now We Are Free', film: 'Gladiator', filmPt: 'Gladiador', year: 2000, composer: 'H. Zimmer · L. Gerrard', builtIn: true, missing: true },
+  { id: 'a-way-of-life', collection: 'film', image: cover('photo-1615790469537-7c9d8e95c047', 'Susann Schuster', 'A gold and red samurai helmet'), title: 'A Way of Life', film: 'The Last Samurai', filmPt: 'O Último Samurai', year: 2003, composer: 'H. Zimmer', builtIn: true, missing: true },
+  { id: 'maestro', collection: 'film', image: cover('photo-1510798831971-661eb04b3739', 'Ian Keefe', 'A wooden cottage in the snow at dusk'), title: 'Maestro', film: 'The Holiday', filmPt: 'O Amor Não Tira Férias', year: 2006, composer: 'H. Zimmer', builtIn: true, missing: true },
+  // Modern piano
+  { id: 'nuvole-bianche', collection: 'modern', image: cover('photo-1657598339759-fd1432d833f0', 'Nick Fewings', 'White clouds in a pale sky'), title: 'Nuvole Bianche', film: 'Una Mattina', year: 2004, composer: 'L. Einaudi', builtIn: true, file: '/songs/nuvole-bianche.mid' },
+  { id: 'una-mattina', collection: 'modern', image: cover('photo-1662038271111-5b1c0b4157e8', 'Aimee Giles', 'A steaming mug by a sunlit window'), title: 'Una Mattina', film: 'Una Mattina', year: 2004, composer: 'L. Einaudi', builtIn: true, missing: true },
+  { id: 'experience', collection: 'modern', image: cover('photo-1559827260-dc66d52bef19', 'Silas Baisch', 'A wave rolling in'), title: 'Experience', film: 'In a Time Lapse', year: 2013, composer: 'L. Einaudi', builtIn: true, missing: true },
+  { id: 'van-gogh', collection: 'modern', image: cover('photo-1628498188904-036f5e25e93e', 'Olena Bohovyk', 'A sky full of stars'), title: 'Van Gogh', composer: 'V. Aiello', builtIn: true, missing: true },
+  { id: 'idea-10', collection: 'modern', image: cover('photo-1509635022432-0220ac12960b', 'Suhyeon Choi', 'Rain drops on a window'), title: 'Idea 10', composer: 'G. Alcocer', builtIn: true, missing: true },
+  { id: 'idea-12', collection: 'modern', image: cover('photo-1516900557549-41557d405adf', 'Filip Mroz', 'A tram stop at night'), title: 'Idea 12', composer: 'G. Alcocer', builtIn: true, missing: true },
+  // Classical
+  { id: 'gymnopedie-1', collection: 'classical', image: cover('photo-1550188225-af2e1c2529b2', 'Fernando Jorge', 'A calm grey sea'), title: 'Gymnopédie No. 1', film: 'Trois Gymnopédies', year: 1888, composer: 'E. Satie', builtIn: true, file: '/songs/gymnopedie-1.mid', timeSig: [3, 4] },
+  { id: 'sarabande', collection: 'classical', image: cover('photo-1529684991332-3e055de04091', 'Denny Müller', 'Six white candles'), title: 'Sarabande', film: 'Suite in D minor, HWV 437', year: 1733, composer: 'G. F. Handel', builtIn: true, file: '/songs/sarabande.mid' },
+  { id: 'passacaglia', collection: 'classical', image: cover('photo-1778568284518-68de9b1fbc06', 'Bernd Dittrich', 'Rows of lit candles in a church'), title: 'Passacaglia', film: 'Suite in G minor, HWV 432', year: 1720, composer: 'G. F. Handel', builtIn: true, file: '/songs/passacaglia.mid' },
+  { id: 'clair-de-lune', collection: 'classical', image: cover('photo-1535332371349-a5d229f49cb5', 'Guzmán Barquín', 'A full moon over the sea'), title: 'Clair de Lune', film: 'Suite bergamasque', year: 1905, composer: 'C. Debussy', builtIn: true, file: '/songs/clair-de-lune.mid' },
 ];
 
 const songStore = createStore('hugos-piano', 'songs');
@@ -70,6 +83,7 @@ export async function importMidi(file: File, slot?: SongEntry): Promise<SongEntr
     id: 'imp-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     title: slot?.title ?? titleFromFile(file.name),
     film: slot?.film, filmPt: slot?.filmPt, year: slot?.year, composer: slot?.composer, image: slot?.image,
+    collection: slot?.collection, timeSig: slot?.timeSig,
     slot: slot?.id,
     builtIn: false,
     addedAt: Date.now(),

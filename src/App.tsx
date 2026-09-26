@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { CourseView } from './components/CourseView';
 import { Library } from './components/Library';
 import { Player } from './components/Player';
 import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { I18nContext, makeT } from './lib/i18n';
 import { connect, disconnectBle, disconnectMic, onLinkState, onNote, linkState, watchForMidi, type LinkState, type Source } from './lib/input';
 import { loadSettings, saveSettings } from './lib/library';
+import type { Course, CourseStep } from './lib/course';
 import type { Settings, Song } from './lib/types';
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [song, setSong] = useState<Song | null>(null);
+  // Picking a song opens its course; playing is either a course step or the whole song.
+  const [play, setPlay] = useState<{ step?: CourseStep; course?: Course; n: number } | null>(null);
   const [links, setLinks] = useState<Record<Source, LinkState>>(linkState);
   const [notice, setNotice] = useState<string | null>(null);
   const prevMidi = useRef(links.midi.status);
@@ -68,9 +72,22 @@ export default function App() {
 
   return (
     <I18nContext.Provider value={i18n}>
-      {song
-        ? <Player song={song} settings={settings} update={update} links={links} onExit={() => setSong(null)} />
-        : <Library settings={settings} update={update} links={links} connectInput={connectInput} onOpen={s => setSong(s)} onPick={() => { unlockAudio(); ensureInput(); }} />}
+      {song && play
+        ? <Player
+            key={`${play.step?.id ?? 'free'}-${play.n}`}
+            song={song} settings={settings} update={update} links={links}
+            step={play.step} course={play.course}
+            onStep={step => setPlay(p => ({ step, course: p?.course, n: (p?.n ?? 0) + 1 }))}
+            onExit={() => setPlay(null)}
+          />
+        : song
+          ? <CourseView
+              song={song}
+              onBack={() => setSong(null)}
+              onStep={(step, course) => { unlockAudio(); ensureInput(); setPlay({ step, course, n: 0 }); }}
+              onFree={() => { unlockAudio(); ensureInput(); setPlay({ n: 0 }); }}
+            />
+          : <Library settings={settings} update={update} links={links} connectInput={connectInput} onOpen={s => { setSong(s); setPlay(null); }} onContinue={(s, step, course) => { setSong(s); setPlay({ step, course, n: 0 }); }} onPick={() => { unlockAudio(); ensureInput(); }} />}
       {notice && <div className="toast lcd" role="status">{notice}</div>}
     </I18nContext.Provider>
   );

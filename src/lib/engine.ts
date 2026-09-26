@@ -46,8 +46,9 @@ export class Engine {
   /** When the current wait began, and wrong notes played during it (for the hint). */
   waitSince = 0;
   wrongInWait = 0;
-  /** Practice loop, in song seconds. */
-  loop: { from: number; to: number } | null = null;
+  /** The stretch being practised (a course part), in song seconds; null plays the whole song. */
+  segment: { from: number; to: number } | null = null;
+  private segmentLoop = false;
 
   private presses: Press[] = [];
   private lastGroupAt = 0;
@@ -80,7 +81,7 @@ export class Engine {
   configure() {
     const { hands, listen } = this.opts;
     const notes = this.song.notes;
-    for (const n of notes) this.user[n.id] = !listen && (hands === 'both' || hands === n.hand) ? 1 : 0;
+    for (const n of notes) this.user[n.id] = !listen && (hands === 'both' || hands === n.hand) && this.inSegment(n.time) ? 1 : 0;
     this.groups = [];
     for (const n of notes) {
       if (!this.user[n.id]) continue;
@@ -116,18 +117,29 @@ export class Engine {
 
   restart() {
     this.wrong = 0;
-    this.seek(this.loop ? this.loopStart() : this.startTime);
+    this.seek(this.segmentStart());
   }
 
-  /** A little run-up before the loop's first note. */
-  private loopStart() { return this.loop ? Math.max(this.startTime, this.loop.from - 1.2) : this.startTime; }
+  /** A little run-up before the segment's first note (the app plays it). */
+  private segmentStart() { return this.segment ? Math.max(this.startTime, this.segment.from - 1.6) : this.startTime; }
 
-  /** Practise one stretch over and over (null plays the whole song again). */
-  setLoop(loop: { from: number; to: number } | null) {
-    this.loop = loop;
+  /** Notes inside the segment (or all of them). */
+  inSegment(time: number) {
+    return !this.segment || (time >= this.segment.from - 1e-3 && time < this.segment.to - 1e-3);
+  }
+
+  /**
+   * Practise one stretch. It ends at its last bar (or starts over, with `loop`), only its notes
+   * are Hugo's and count; the run-up before it is played by the app.
+   */
+  setSegment(segment: { from: number; to: number } | null, loop = false) {
+    this.segment = segment;
+    this.segmentLoop = loop;
     this.wrong = 0;
-    this.seek(loop ? this.loopStart() : this.startTime);
+    this.configure();
+    this.seek(this.segmentStart());
   }
+
 
   play(countdown = 3) {
     if (this.finished) this.restart();
@@ -236,18 +248,21 @@ export class Engine {
 
     this.time = next;
     if (changed.length) this.emit({ type: 'status', ids: changed });
-    if (this.loop && this.time >= this.loop.to) {
-      this.seek(this.loopStart());
-      this.countdown = 1;
+    if (this.segment && this.time >= this.segment.to) {
+      if (this.segmentLoop) { this.seek(this.segmentStart()); this.countdown = 1; return; }
+      this.finish();
       return;
     }
-    if (this.time >= this.song.duration + 0.8) {
-      this.playing = false;
-      this.finished = true;
-      this.waiting = false;
-      this.emit({ type: 'state' });
-      this.emit({ type: 'end' });
-    }
+    if (this.time >= this.song.duration + 0.8) this.finish();
+  }
+
+  private finish() {
+    this.playing = false;
+    this.finished = true;
+    this.waiting = false;
+    stopAll();
+    this.emit({ type: 'state' });
+    this.emit({ type: 'end' });
   }
 
   private matches(a: number, b: number) {
@@ -343,7 +358,7 @@ export class Engine {
   }
 
   progress() {
-    const span = this.song.duration - this.startTime;
-    return Math.max(0, Math.min(1, (this.time - this.startTime) / span));
+    const [a, b] = this.segment ? [this.segment.from - 1.6, this.segment.to] : [this.startTime, this.song.duration];
+    return Math.max(0, Math.min(1, (this.time - a) / (b - a)));
   }
 }

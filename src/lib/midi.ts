@@ -86,7 +86,7 @@ export function parseSong(buf: ArrayBuffer, entry: SongEntry): Song {
     duration: Math.max(...notes.map(n => n.time + n.duration)),
     firstNoteTime: notes[0].time,
     ppq: midi.header.ppq,
-    timeSig: ts && ts.length >= 2 ? [ts[0], ts[1]] : [4, 4],
+    timeSig: entry.timeSig ?? (ts && ts.length >= 2 ? [ts[0], ts[1]] : [4, 4]),
     fifths,
     ticksToSeconds: t => midi.header.ticksToSeconds(t),
     hands: (['R', 'L'] as Hand[]).filter(h => notes.some(n => n.hand === h)),

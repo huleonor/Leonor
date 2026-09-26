@@ -39,7 +39,7 @@ const range = (a: number, b: number) => (a === b ? `bar ${a}` : `bars ${a}–${b
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const plural = (n: number, one: string, many = one + 's') => `${n} ${n === 1 ? one : many}`;
 
-interface Bar {
+export interface Bar {
   index: number;
   notes: SongNote[];
   /** Class of bars that sound (almost) the same; -1 when the bar is silent. */
@@ -80,7 +80,7 @@ function classify(items: (Tokens | null)[]): number[] {
   });
 }
 
-function splitBars(song: Song): { bars: Bar[]; measureTicks: number } {
+export function splitBars(song: Song): { bars: Bar[]; measureTicks: number } {
   const [num, den] = song.timeSig;
   const measureTicks = song.ppq * 4 * (num / den);
   const q = song.ppq / 4;
@@ -97,7 +97,7 @@ function splitBars(song: Song): { bars: Bar[]; measureTicks: number } {
 }
 
 /** Longest stretches of bars that come back unchanged, most useful first. */
-function findRepeats(sigs: string[]): { len: number; starts: number[] }[] {
+export function findRepeats(sigs: string[]): { len: number; starts: number[] }[] {
   const covered = new Array(sigs.length).fill(false);
   const found: { len: number; starts: number[] }[] = [];
   for (let round = 0; round < 3; round++) {
@@ -161,7 +161,7 @@ function positions(notes: SongNote[], barOf: (n: SongNote) => number) {
   return out;
 }
 
-function keyName(song: Song): { name: string; tonic: number; minor: boolean; flats: boolean } {
+export function keyName(song: Song): { name: string; tonic: number; minor: boolean; flats: boolean } {
   const fifths = Math.max(-7, Math.min(7, song.fifths));
   const major = MAJOR_BY_FIFTHS[fifths];
   const minorTonic = (major + 9) % 12;
@@ -176,6 +176,33 @@ function keyName(song: Song): { name: string; tonic: number; minor: boolean; fla
   const flats = fifths < 0;
   const tonic = minor ? minorTonic : major;
   return { name: `${pcName(tonic, flats)} ${minor ? 'minor' : 'major'}`, tonic, minor, flats };
+}
+
+/** How demanding a bar is: onsets per second, the widest leap and the thickest chord, per hand. */
+export function scoreBar(b: Bar) {
+  if (!b.notes.length) return 0;
+  let worst = 0;
+  for (const h of ['R', 'L'] as Hand[]) {
+    const ns = b.notes.filter(n => n.hand === h);
+    if (!ns.length) continue;
+    const onsets = [...new Set(ns.map(n => n.ticks))].length;
+    const span = Math.max(0.5, ns[ns.length - 1].time - ns[0].time);
+    const nps = onsets / span;
+    let leap = 0;
+    for (let i = 1; i < ns.length; i++) leap = Math.max(leap, Math.abs(ns[i].midi - ns[i - 1].midi));
+    const thick = Math.max(...[...new Set(ns.map(n => n.ticks))].map(t => ns.filter(n => n.ticks === t).length));
+    worst = Math.max(worst, nps + leap / 5 + thick * 0.6);
+  }
+  return worst;
+}
+
+/** Overall level, 1 (first pieces) to 3 (advanced), from the busiest bars of the song. */
+export function songLevel(song: Song): 1 | 2 | 3 {
+  const { bars } = splitBars(song);
+  const scores = bars.filter(b => b.notes.length).map(scoreBar).sort((a, b) => a - b);
+  if (!scores.length) return 1;
+  const p80 = scores[Math.floor(scores.length * 0.8)];
+  return p80 < 5.5 ? 1 : p80 < 9 ? 2 : 3;
 }
 
 export function analyseSong(song: Song): Analysis {
@@ -285,22 +312,6 @@ export function analyseSong(song: Song): Analysis {
   }
 
   // Tricky bars: fast runs, big leaps, thick chords.
-  const scoreBar = (b: Bar) => {
-    if (!b.notes.length) return 0;
-    let worst = 0;
-    for (const h of ['R', 'L'] as Hand[]) {
-      const ns = b.notes.filter(n => n.hand === h);
-      if (!ns.length) continue;
-      const onsets = [...new Set(ns.map(n => n.ticks))].length;
-      const span = Math.max(0.5, ns[ns.length - 1].time - ns[0].time);
-      const nps = onsets / span;
-      let leap = 0;
-      for (let i = 1; i < ns.length; i++) leap = Math.max(leap, Math.abs(ns[i].midi - ns[i - 1].midi));
-      const thick = Math.max(...[...new Set(ns.map(n => n.ticks))].map(t => ns.filter(n => n.ticks === t).length));
-      worst = Math.max(worst, nps + leap / 5 + thick * 0.6);
-    }
-    return worst;
-  };
   const scored = playing.map(b => ({ bar: b.index + 1, s: scoreBar(b) }));
   const mean = scored.reduce((a, b) => a + b.s, 0) / Math.max(1, scored.length);
   const hard = scored.filter(x => x.s > mean * 1.45).sort((a, b) => b.s - a.s).slice(0, 4).map(x => x.bar).sort((a, b) => a - b);

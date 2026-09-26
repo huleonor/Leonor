@@ -153,7 +153,11 @@ public class MidiPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     private func statusData() -> [String: Any] {
-        ["devices": deviceNames(), "client": Int(clientStatus), "port": Int(portStatus), "events": events]
+        [
+            "devices": deviceNames(), "client": Int(clientStatus), "port": Int(portStatus), "events": events,
+            "appVersion": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?",
+            "appBuild": Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0") ?? 0,
+        ]
     }
 
     /// Universal MIDI Packets: only MIDI 1.0 channel voice (type 2) note on/off matter here.
