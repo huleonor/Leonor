@@ -9,3 +9,4 @@ dist
 HugosPiano.ipa
 ios/App/build
 ios/App/build-sim
+public/ipa/
