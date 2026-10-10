@@ -20,7 +20,7 @@ interface Props {
 
 const C = {
   paper: '#fbfaff', line: '#c9c4e6', ink: '#1b1640', ink2: '#5b5590', clefPanel: '#f3f1fd',
-  go: '#1fb85f', goSoft: 'rgba(63,208,122,.16)', miss: '#e5384f', right: '#1782d6', left: '#c97800',
+  go: '#178a48', goSoft: 'rgba(63,208,122,.16)', miss: '#e5384f', right: '#1782d6', left: '#c97800',
   auto: '#b9b4d8',
 };
 const FONT = '"Nunito Variable", Nunito, ui-rounded, system-ui, sans-serif';

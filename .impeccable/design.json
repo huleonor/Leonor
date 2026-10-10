@@ -1,818 +1,863 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-26T12:00:00Z",
+  "generatedAt": "2026-10-10T17:42:23Z",
   "title": "Design System: Hugo's Piano",
   "extensions": {
     "colorMeta": {
-      "aluminium": {
+      "night": {
         "role": "neutral",
-        "displayName": "Aluminium",
-        "canonical": "#dcdbd6",
+        "displayName": "Night",
+        "canonical": "#14112b",
         "tonalRamp": [
-          "#0c0b08",
-          "#262521",
-          "#43423e",
-          "#62615d",
-          "#83827e",
-          "#a6a5a0",
-          "#cac9c4",
-          "#f0efe9"
+          "#0a071f",
+          "#23213c",
+          "#403e5c",
+          "#5e5d7d",
+          "#7f7ea0",
+          "#a2a1c4",
+          "#c6c5ea",
+          "#edecff"
         ]
       },
-      "aluminium-hi": {
+      "night-deep": {
         "role": "neutral",
-        "displayName": "Aluminium Hi",
-        "canonical": "#e8e7e2",
+        "displayName": "Night Deep",
+        "canonical": "#0f0c22",
         "tonalRamp": [
-          "#0c0b08",
-          "#262521",
-          "#43423e",
-          "#62615d",
-          "#83827e",
-          "#a6a5a0",
-          "#cac9c4",
-          "#f0eee9"
+          "#0a071d",
+          "#24213a",
+          "#403e59",
+          "#5f5e7a",
+          "#807f9c",
+          "#a3a1c0",
+          "#c7c5e5",
+          "#edecfe"
         ]
       },
-      "aluminium-lo": {
+      "surface": {
         "role": "neutral",
-        "displayName": "Aluminium Lo",
-        "canonical": "#cdccc6",
+        "displayName": "Surface",
+        "canonical": "#1d1940",
         "tonalRamp": [
-          "#0c0b07",
-          "#262521",
-          "#43423d",
-          "#62615c",
-          "#83827d",
-          "#a6a59f",
-          "#cac9c3",
-          "#f0efe8"
+          "#0a0327",
+          "#221e46",
+          "#3e3c67",
+          "#5c5b89",
+          "#7d7dac",
+          "#9f9fd1",
+          "#c3c3f7",
+          "#ecedff"
         ]
       },
-      "groove": {
+      "surface-2": {
         "role": "neutral",
-        "displayName": "Groove",
-        "canonical": "#bdbcb5",
+        "displayName": "Surface 2",
+        "canonical": "#262150",
         "tonalRamp": [
-          "#0c0b07",
-          "#262520",
-          "#43423c",
-          "#62615b",
-          "#83837c",
-          "#a6a59e",
-          "#cac9c2",
-          "#f0efe7"
+          "#0b012c",
+          "#221c4b",
+          "#3e3b6c",
+          "#5c5a8f",
+          "#7d7bb3",
+          "#9f9ed8",
+          "#c2c2fe",
+          "#ecedff"
         ]
       },
-      "label-white": {
+      "raised": {
         "role": "neutral",
-        "displayName": "Label White",
-        "canonical": "#f6f5f1",
+        "displayName": "Raised",
+        "canonical": "#302a63",
         "tonalRamp": [
-          "#0c0b09",
-          "#262522",
-          "#43423f",
-          "#62615e",
-          "#83827f",
-          "#a6a5a1",
-          "#cac9c5",
-          "#efeeea"
+          "#0b002d",
+          "#221a51",
+          "#3d3973",
+          "#5b5896",
+          "#7c7aba",
+          "#9e9de0",
+          "#c2c2fe",
+          "#ecedff"
         ]
       },
-      "label-white-2": {
+      "raised-hover": {
         "role": "neutral",
-        "displayName": "Label White 2",
-        "canonical": "#eceae4",
+        "displayName": "Raised Hover",
+        "canonical": "#38317a",
         "tonalRamp": [
-          "#0c0b07",
-          "#262521",
-          "#43423d",
-          "#63615c",
-          "#84827d",
-          "#a7a59f",
-          "#cbc9c3",
-          "#f0eee8"
+          "#0a002e",
+          "#21145c",
+          "#3b357e",
+          "#5956a2",
+          "#7978c8",
+          "#9b9bee",
+          "#c1c3ff",
+          "#ecedff"
         ]
       },
-      "legend-ink": {
+      "raised-edge": {
         "role": "neutral",
-        "displayName": "Legend Ink",
-        "canonical": "#1a1a1a",
+        "displayName": "Raised Edge",
+        "canonical": "#1f1a45",
         "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
+          "#0a022a",
+          "#221d49",
+          "#3e3b6a",
+          "#5c5b8c",
+          "#7d7cb0",
+          "#9f9fd5",
+          "#c3c3fb",
+          "#ecedff"
         ]
       },
-      "legend-ink-2": {
+      "line": {
         "role": "neutral",
-        "displayName": "Legend Ink 2",
-        "canonical": "#4d4c47",
+        "displayName": "Line",
+        "canonical": "#3a3470",
         "tonalRamp": [
-          "#0c0b07",
-          "#262521",
-          "#43423d",
-          "#62615c",
-          "#83827d",
-          "#a6a59f",
-          "#cac9c3",
-          "#f0efe8"
+          "#0b002d",
+          "#221952",
+          "#3e3874",
+          "#5c5898",
+          "#7c79bc",
+          "#9e9ce2",
+          "#c3c2fd",
+          "#ecedfe"
         ]
       },
-      "legend-ink-3": {
+      "line-2": {
         "role": "neutral",
-        "displayName": "Legend Ink 3",
-        "canonical": "#62615b",
+        "displayName": "Line 2",
+        "canonical": "#4c4590",
         "tonalRamp": [
-          "#0c0b07",
-          "#262520",
-          "#43423c",
-          "#62615b",
-          "#84827c",
-          "#a6a59f",
-          "#cac9c2",
-          "#f0efe8"
+          "#0b002e",
+          "#23135b",
+          "#3d347e",
+          "#5b55a2",
+          "#7b77c7",
+          "#9d9aed",
+          "#c2c2fe",
+          "#ecedff"
         ]
       },
-      "display-black": {
+      "ink": {
         "role": "neutral",
-        "displayName": "Display Black",
-        "canonical": "#111214",
+        "displayName": "Ink",
+        "canonical": "#f5f3ff",
         "tonalRamp": [
-          "#0a0b0d",
-          "#242527",
-          "#414244",
-          "#606164",
-          "#818285",
-          "#a4a5a8",
-          "#c8c9cc",
-          "#edeef1"
+          "#0b0a11",
+          "#25242c",
+          "#42404a",
+          "#61606a",
+          "#82818b",
+          "#a5a3ae",
+          "#c9c7d3",
+          "#efedf9"
         ]
       },
-      "display-lane": {
+      "ink-2": {
         "role": "neutral",
-        "displayName": "Display Lane",
-        "canonical": "#16171a",
+        "displayName": "Ink 2",
+        "canonical": "#c0b9ec",
         "tonalRamp": [
-          "#0a0b0e",
-          "#242528",
-          "#414245",
-          "#606165",
-          "#818286",
-          "#a3a5a9",
-          "#c7c9cd",
-          "#edeef3"
+          "#0d0326",
+          "#261d45",
+          "#423b65",
+          "#615a87",
+          "#827baa",
+          "#a59ecf",
+          "#c9c2f5",
+          "#eeecfe"
         ]
       },
-      "lcd-black": {
+      "ink-3": {
         "role": "neutral",
-        "displayName": "LCD Black",
-        "canonical": "#121314",
+        "displayName": "Ink 3",
+        "canonical": "#9790cc",
         "tonalRamp": [
-          "#0a0b0c",
-          "#242526",
-          "#414243",
-          "#606163",
-          "#818284",
-          "#a4a5a6",
-          "#c8c9cb",
-          "#edeff0"
+          "#0d002b",
+          "#251a4c",
+          "#41396d",
+          "#605890",
+          "#8179b4",
+          "#a39cd9",
+          "#c7c1fd",
+          "#edecfe"
         ]
       },
-      "lcd-green": {
-        "role": "tertiary",
-        "displayName": "LCD Green",
-        "canonical": "#86f0a8",
-        "tonalRamp": [
-          "#001103",
-          "#042e15",
-          "#1a4e2d",
-          "#317047",
-          "#499563",
-          "#63bb80",
-          "#7de39e",
-          "#a7ffc4"
-        ]
-      },
-      "lcd-green-dim": {
-        "role": "tertiary",
-        "displayName": "LCD Green Dim",
-        "canonical": "#5a9b70",
-        "tonalRamp": [
-          "#001102",
-          "#042e16",
-          "#1e4d30",
-          "#386f4b",
-          "#539269",
-          "#79b58c",
-          "#a3d8b3",
-          "#cdfcda"
-        ]
-      },
-      "lcd-off": {
-        "role": "neutral",
-        "displayName": "LCD Off",
-        "canonical": "#9a9b96",
-        "tonalRamp": [
-          "#0b0c08",
-          "#252522",
-          "#42423e",
-          "#61625d",
-          "#82837e",
-          "#a5a6a1",
-          "#c9cac4",
-          "#eeefea"
-        ]
-      },
-      "lcd-neutral": {
-        "role": "neutral",
-        "displayName": "LCD Neutral",
-        "canonical": "#ecebe6",
-        "tonalRamp": [
-          "#0c0b08",
-          "#262521",
-          "#43423e",
-          "#62615d",
-          "#83827e",
-          "#a6a5a0",
-          "#cac9c4",
-          "#f0eee9"
-        ]
-      },
-      "lcd-fault": {
-        "role": "tertiary",
-        "displayName": "LCD Fault",
-        "canonical": "#ff9b8c",
-        "tonalRamp": [
-          "#1c0201",
-          "#3f1712",
-          "#653029",
-          "#8d4c43",
-          "#b8695e",
-          "#e4887b",
-          "#ffab9d",
-          "#ffd4c6"
-        ]
-      },
-      "signal-orange": {
+      "go": {
         "role": "primary",
-        "displayName": "Signal Orange",
-        "canonical": "#ff6a13",
+        "displayName": "Go Green",
+        "canonical": "#3fd07a",
         "tonalRamp": [
-          "#280000",
-          "#4f0000",
-          "#7a1a00",
-          "#a73600",
-          "#d75200",
-          "#ff7225",
-          "#ff9f63",
-          "#ffcb97"
+          "#001004",
+          "#022e15",
+          "#075028",
+          "#00753c",
+          "#029c52",
+          "#2cc36e",
+          "#5de991",
+          "#c6ffd5"
         ]
       },
-      "signal-orange-deep": {
+      "go-hi": {
         "role": "primary",
-        "displayName": "Signal Orange Deep",
-        "canonical": "#f25c08",
+        "displayName": "Go Green Hover",
+        "canonical": "#5fe093",
         "tonalRamp": [
-          "#2a0000",
-          "#520000",
-          "#7d1400",
-          "#aa3100",
-          "#da4e00",
-          "#ff7436",
-          "#ffa06d",
-          "#ffcc9f"
+          "#001005",
+          "#002e16",
+          "#084f2b",
+          "#017540",
+          "#059c57",
+          "#3ac176",
+          "#67e799",
+          "#c6ffd8"
         ]
       },
-      "signal-orange-ink": {
+      "go-edge": {
         "role": "primary",
-        "displayName": "Signal Orange Ink",
-        "canonical": "#b8430a",
+        "displayName": "Go Green Edge",
+        "canonical": "#1f9a52",
         "tonalRamp": [
-          "#290000",
-          "#500000",
-          "#7a1a00",
-          "#a63700",
-          "#cb5c31",
-          "#ec8560",
-          "#ffae8d",
-          "#ffd8ba"
+          "#001004",
+          "#012e13",
+          "#025025",
+          "#06753a",
+          "#209b53",
+          "#4fbf75",
+          "#76e598",
+          "#c7ffd4"
         ]
       },
-      "signal-orange-soft": {
+      "go-ink": {
         "role": "primary",
-        "displayName": "Signal Orange Soft",
-        "canonical": "#ffd9c2",
+        "displayName": "Go Ink",
+        "canonical": "#082414",
         "tonalRamp": [
-          "#110905",
-          "#2e221b",
-          "#4e3e35",
-          "#715c50",
-          "#957d6d",
-          "#bc9e8c",
-          "#e4c1ac",
-          "#ffe6d0"
+          "#001005",
+          "#102c1b",
+          "#2d4937",
+          "#4c6956",
+          "#6d8b77",
+          "#8fae99",
+          "#b2d3bc",
+          "#d7f8e1"
         ]
       },
-      "signal-orange-lit": {
-        "role": "primary",
-        "displayName": "Signal Orange Lit",
-        "canonical": "#ffb07a",
-        "tonalRamp": [
-          "#190500",
-          "#3a1c05",
-          "#5e371b",
-          "#855431",
-          "#ae734a",
-          "#d89363",
-          "#ffb580",
-          "#ffddac"
-        ]
-      },
-      "cobalt": {
+      "star": {
         "role": "secondary",
-        "displayName": "Cobalt",
-        "canonical": "#2f5bff",
+        "displayName": "Star Gold",
+        "canonical": "#ffcf3f",
         "tonalRamp": [
-          "#07004c",
-          "#07007c",
-          "#1128ae",
-          "#244ae3",
-          "#4071ff",
-          "#679aff",
-          "#91c3ff",
-          "#bdebff"
+          "#100a00",
+          "#2f2302",
+          "#523f05",
+          "#775e0d",
+          "#a07d00",
+          "#c99f10",
+          "#f2c32d",
+          "#ffedc1"
         ]
       },
-      "cobalt-ink": {
+      "star-off": {
         "role": "secondary",
-        "displayName": "Cobalt Ink",
-        "canonical": "#1d3bb3",
+        "displayName": "Star Shadow",
+        "canonical": "#3d3775",
         "tonalRamp": [
-          "#050047",
-          "#060a73",
-          "#162fa2",
-          "#3255c5",
-          "#567ce1",
-          "#7ca1fd",
-          "#a5c7ff",
-          "#cfeeff"
+          "#0b002d",
+          "#221854",
+          "#3d3876",
+          "#5c5899",
+          "#7c79bd",
+          "#9e9ce3",
+          "#c3c2fe",
+          "#ecedff"
         ]
       },
-      "cobalt-soft": {
+      "flame": {
         "role": "secondary",
-        "displayName": "Cobalt Soft",
-        "canonical": "#cdd8ff",
+        "displayName": "Streak Flame",
+        "canonical": "#ff8a3d",
         "tonalRamp": [
-          "#090b13",
-          "#212431",
-          "#3c4152",
-          "#5a6076",
-          "#7a819c",
-          "#9ba4c3",
-          "#bdc8ec",
-          "#e2edff"
+          "#180600",
+          "#3f1900",
+          "#683006",
+          "#994601",
+          "#ca6003",
+          "#f58132",
+          "#feb68e",
+          "#ffeade"
         ]
       },
-      "cobalt-lit": {
-        "role": "secondary",
-        "displayName": "Cobalt Lit",
-        "canonical": "#8aa2ff",
-        "tonalRamp": [
-          "#040626",
-          "#18204b",
-          "#313d73",
-          "#4c5c9e",
-          "#697ccb",
-          "#879ffa",
-          "#acc4ff",
-          "#d4ebff"
-        ]
-      },
-      "led-green": {
+      "miss": {
         "role": "tertiary",
-        "displayName": "LED Green",
-        "canonical": "#3dbe6b",
+        "displayName": "Miss Red",
+        "canonical": "#ff5d73",
         "tonalRamp": [
-          "#001300",
-          "#003107",
-          "#00521f",
-          "#007538",
-          "#249a52",
-          "#43c16f",
-          "#7ae498",
-          "#abffc3"
+          "#1e0004",
+          "#4c0013",
+          "#7d0927",
+          "#b60239",
+          "#df3e59",
+          "#fc7281",
+          "#ffb1b5",
+          "#fee8e9"
         ]
       },
-      "fault-red": {
+      "right-hand": {
         "role": "tertiary",
-        "displayName": "Fault Red",
-        "canonical": "#e0301e",
+        "displayName": "Sky Right Hand",
+        "canonical": "#4fb6ff",
         "tonalRamp": [
-          "#2f0000",
-          "#5a0000",
-          "#870000",
-          "#b61102",
-          "#e53a27",
-          "#ff6e59",
-          "#ff9c86",
-          "#ffc9b4"
+          "#000c19",
+          "#012841",
+          "#03466d",
+          "#0a679d",
+          "#128ad0",
+          "#46aef6",
+          "#98d0fd",
+          "#e1f1fe"
         ]
       },
-      "fault-red-ink": {
+      "left-hand": {
         "role": "tertiary",
-        "displayName": "Fault Red Ink",
-        "canonical": "#b3200f",
+        "displayName": "Amber Left Hand",
+        "canonical": "#ffb547",
         "tonalRamp": [
-          "#2f0000",
-          "#580000",
-          "#840000",
-          "#b21f0e",
-          "#d35340",
-          "#f37e6b",
-          "#ffa996",
-          "#ffd3c3"
+          "#130900",
+          "#352000",
+          "#5b3a00",
+          "#845603",
+          "#af7407",
+          "#dc9416",
+          "#febb5d",
+          "#feebd4"
         ]
       },
-      "key-top": {
+      "paper": {
         "role": "neutral",
-        "displayName": "Key Top",
-        "canonical": "#fbfaf7",
+        "displayName": "Paper",
+        "canonical": "#fbfaff",
         "tonalRamp": [
-          "#0c0b09",
-          "#262523",
-          "#434240",
-          "#62615f",
-          "#838280",
-          "#a6a5a2",
-          "#cac9c6",
-          "#efeeeb"
+          "#0b0b0e",
+          "#252428",
+          "#424145",
+          "#616065",
+          "#828286",
+          "#a5a4a9",
+          "#c9c8cd",
+          "#efeef3"
         ]
       },
-      "key-bottom": {
+      "staff-ink": {
         "role": "neutral",
-        "displayName": "Key Bottom",
-        "canonical": "#eeede8",
+        "displayName": "Staff Ink",
+        "canonical": "#1b1640",
         "tonalRamp": [
-          "#0c0b08",
-          "#262521",
-          "#43423e",
-          "#62615d",
-          "#83827e",
-          "#a6a5a0",
-          "#cac9c4",
-          "#efeee9"
+          "#0a0229",
+          "#221e48",
+          "#3d3b69",
+          "#5c5b8b",
+          "#7d7caf",
+          "#9f9fd4",
+          "#c2c3fa",
+          "#ecedfe"
         ]
       },
-      "key-seam": {
+      "staff-ink-2": {
         "role": "neutral",
-        "displayName": "Key Seam",
-        "canonical": "#c3c2bb",
+        "displayName": "Staff Ink 2",
+        "canonical": "#5b5590",
         "tonalRamp": [
-          "#0c0b07",
-          "#262520",
-          "#43423c",
-          "#62615b",
-          "#83837c",
-          "#a6a59e",
-          "#cac9c2",
-          "#f0efe7"
+          "#0c002c",
+          "#241a4f",
+          "#403870",
+          "#5e5893",
+          "#7e79b8",
+          "#a19cdd",
+          "#c5c1fe",
+          "#edecff"
         ]
       },
-      "key-black": {
+      "staff-line": {
         "role": "neutral",
-        "displayName": "Key Black",
-        "canonical": "#1b1c1f",
+        "displayName": "Staff Line",
+        "canonical": "#c9c4e6",
         "tonalRamp": [
-          "#0a0b0e",
-          "#242528",
-          "#414245",
-          "#606165",
-          "#818286",
-          "#a3a5a9",
-          "#c7c9cd",
-          "#edeef3"
+          "#0c061d",
+          "#26203a",
+          "#423d59",
+          "#615d7a",
+          "#827e9d",
+          "#a5a0c1",
+          "#c9c4e6",
+          "#eeecff"
         ]
       },
-      "score-paper": {
+      "clef-panel": {
         "role": "neutral",
-        "displayName": "Score Paper",
-        "canonical": "#f4f3ee",
+        "displayName": "Clef Panel",
+        "canonical": "#f3f1fd",
         "tonalRamp": [
-          "#0c0b08",
-          "#262521",
-          "#43423e",
-          "#62615d",
-          "#83827e",
-          "#a6a5a0",
-          "#cac9c4",
-          "#efeeea"
+          "#0b0a11",
+          "#25242c",
+          "#42404a",
+          "#61606a",
+          "#82818b",
+          "#a5a3ae",
+          "#c9c7d3",
+          "#efedf9"
+        ]
+      },
+      "staff-go": {
+        "role": "primary",
+        "displayName": "Paper Go Green",
+        "canonical": "#178a48",
+        "tonalRamp": [
+          "#001004",
+          "#012e12",
+          "#025024",
+          "#077539",
+          "#0f9c4e",
+          "#32c369",
+          "#61e98d",
+          "#c7ffd3"
+        ]
+      },
+      "staff-miss": {
+        "role": "tertiary",
+        "displayName": "Paper Miss Red",
+        "canonical": "#e5384f",
+        "tonalRamp": [
+          "#1f0003",
+          "#4b0310",
+          "#7d0921",
+          "#b60131",
+          "#e4364e",
+          "#fd737a",
+          "#fdb3b3",
+          "#fee8e8"
+        ]
+      },
+      "staff-right": {
+        "role": "tertiary",
+        "displayName": "Paper Right Hand",
+        "canonical": "#1782d6",
+        "tonalRamp": [
+          "#000c1b",
+          "#012646",
+          "#024476",
+          "#0664a9",
+          "#1e86da",
+          "#51aafd",
+          "#9fcefe",
+          "#e2f0ff"
+        ]
+      },
+      "staff-left": {
+        "role": "tertiary",
+        "displayName": "Paper Left Hand",
+        "canonical": "#c97800",
+        "tonalRamp": [
+          "#150800",
+          "#381e01",
+          "#5f3704",
+          "#8a520a",
+          "#b76f12",
+          "#e28f2f",
+          "#feb973",
+          "#ffebd8"
+        ]
+      },
+      "notes-display": {
+        "role": "neutral",
+        "displayName": "Notes Display",
+        "canonical": "#100d24",
+        "tonalRamp": [
+          "#0a071d",
+          "#23213a",
+          "#403e5a",
+          "#5f5e7b",
+          "#807f9d",
+          "#a2a1c1",
+          "#c6c5e6",
+          "#edecff"
+        ]
+      },
+      "notes-lane": {
+        "role": "neutral",
+        "displayName": "Notes Lane",
+        "canonical": "#151231",
+        "tonalRamp": [
+          "#0a0523",
+          "#222041",
+          "#3e3d61",
+          "#5d5d82",
+          "#7e7ea5",
+          "#a0a1ca",
+          "#c4c5ef",
+          "#ecedfe"
+        ]
+      },
+      "level-1": {
+        "role": "tertiary",
+        "displayName": "Level 1 Mint",
+        "canonical": "#8ff0b5",
+        "tonalRamp": [
+          "#000f05",
+          "#002e17",
+          "#01502d",
+          "#057444",
+          "#339862",
+          "#5bbc84",
+          "#81e1a7",
+          "#c4ffd9"
+        ]
+      },
+      "level-2": {
+        "role": "tertiary",
+        "displayName": "Level 2 Sky",
+        "canonical": "#9fd8ff",
+        "tonalRamp": [
+          "#000d18",
+          "#00283e",
+          "#094767",
+          "#30678a",
+          "#5289ad",
+          "#75acd2",
+          "#98d1f8",
+          "#dff1fe"
+        ]
+      },
+      "level-3": {
+        "role": "tertiary",
+        "displayName": "Level 3 Butter",
+        "canonical": "#ffe08a",
+        "tonalRamp": [
+          "#100a00",
+          "#2f2300",
+          "#524000",
+          "#775e02",
+          "#9c7f24",
+          "#c0a24c",
+          "#e5c671",
+          "#ffeebf"
+        ]
+      },
+      "level-4": {
+        "role": "tertiary",
+        "displayName": "Level 4 Apricot",
+        "canonical": "#ffb38a",
+        "tonalRamp": [
+          "#180500",
+          "#3f1801",
+          "#6a2e02",
+          "#904d25",
+          "#b46e47",
+          "#da9169",
+          "#ffb68f",
+          "#ffeadf"
+        ]
+      },
+      "level-5": {
+        "role": "tertiary",
+        "displayName": "Level 5 Rose",
+        "canonical": "#ff9fb0",
+        "tonalRamp": [
+          "#1e0006",
+          "#4b011b",
+          "#721f36",
+          "#964154",
+          "#bc6374",
+          "#e38596",
+          "#fdb1bd",
+          "#ffe8eb"
         ]
       }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Count-in",
-        "purpose": "Count-in numerals on the display only."
+        "displayName": "Display",
+        "purpose": "Page titles and the song title on the song page; 22-23px on short landscape screens."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Module plate and side sheet titles."
-      },
-      "wordmark": {
-        "displayName": "Wordmark",
-        "purpose": "The library wordmark."
+        "purpose": "The Continue card's song name, result and intro cards, the streak count, sheet titles."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Song names on cartridge labels; study tips at 16px."
-      },
-      "title-bar": {
-        "displayName": "Bar Title",
-        "purpose": "Song title in the top bar, one line."
+        "purpose": "Section heads: Today's practice, Your songs, Part 1, card headings."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Notes, sub-lines and hints."
+        "purpose": "Default text, weight 600 with tabular figures; secondary copy at 14px in ink-2."
       },
-      "body-long": {
-        "displayName": "Body Long",
-        "purpose": "Study text, max 62ch."
+      "button": {
+        "displayName": "Button",
+        "purpose": "Every button, chip, segment and rail label; 17px on big buttons."
       },
-      "control": {
-        "displayName": "Control",
-        "purpose": "Pill labels, tracked caps."
+      "label": {
+        "displayName": "Label",
+        "purpose": "Meta under titles, facts, tags, stat captions, week-day letters."
       },
-      "legend": {
-        "displayName": "Legend",
-        "purpose": "Printed legends under controls; never an eyebrow."
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Fine print, credits and helper text in ink-3."
       },
-      "readout": {
-        "displayName": "Readout",
-        "purpose": "Bar/time and input LCD values, hint note names."
-      },
-      "readout-small": {
-        "displayName": "Small Readout",
-        "purpose": "Cartridge meta, speed keycaps, stamps, display bar numbers."
-      },
-      "numeral": {
-        "displayName": "Numeral",
-        "purpose": "End-of-song stats in the LCD readout."
+      "stat": {
+        "displayName": "Stat",
+        "purpose": "Result stats, totals, the detected-note readout; tabular figures."
       }
     },
     "shadows": [
       {
-        "name": "rest",
-        "value": "0 2px 0 #a9a8a2, 0 3px 7px rgba(0,0,0,.16), inset 0 -1px 0 rgba(0,0,0,.06)",
-        "purpose": "Keycaps and pills at rest (--rest)."
+        "name": "press-edge",
+        "value": "0 4px 0 var(--raised-edge)",
+        "purpose": "Solid bottom edge under raised buttons at rest; 3px for icon buttons and tiles, 2px for the selected segment."
       },
       {
-        "name": "press",
-        "value": "0 1px 0 #a4a39c, 0 1px 2px rgba(0,0,0,.18), inset 0 1px 2px rgba(0,0,0,.12)",
-        "purpose": "Keycaps and pills held down, with a 1.5px drop (--press)."
+        "name": "press-edge-go",
+        "value": "0 4px 0 var(--go-edge)",
+        "purpose": "Solid bottom edge under green buttons."
       },
       {
-        "name": "orange-travel",
-        "value": "0 2px 0 #b94000, 0 3px 7px rgba(0,0,0,.16)",
-        "purpose": "The go pill; the lit keycap sits at 1px of it."
+        "name": "pressed",
+        "value": "0 1px 0 <edge>; transform: translateY(3px)",
+        "purpose": "Active state of any pressable control."
       },
       {
-        "name": "recessed-window",
-        "value": "inset 0 2px 4px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.6)",
-        "purpose": "LCD windows."
+        "name": "key-lip-white",
+        "value": "inset 0 -5px 0 #e3dff4",
+        "purpose": "Bottom lip of white keys."
       },
       {
-        "name": "display-window",
-        "value": "inset 0 0 0 1px #000, inset 0 4px 14px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.6)",
-        "purpose": "The black display window."
+        "name": "key-lip-black",
+        "value": "inset 0 -4px 0 #0f0c22",
+        "purpose": "Bottom lip of black keys."
       },
       {
-        "name": "groove",
-        "value": "inset 0 1px 3px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.6)",
-        "purpose": "Slider and switch tracks."
+        "name": "sheet",
+        "value": "-18px 0 40px rgba(0, 0, 0, .35)",
+        "purpose": "Right-hand side sheets (settings, add song, input test)."
       },
       {
-        "name": "cartridge",
-        "value": "inset 0 1px 0 rgba(255,255,255,.6), 0 1px 0 rgba(0,0,0,.08), 0 10px 22px rgba(0,0,0,.12)",
-        "purpose": "Cartridges in the rack."
+        "name": "veil-card",
+        "value": "0 20px 50px rgba(0, 0, 0, .45)",
+        "purpose": "Intro, pause and result cards over the practice stage."
       },
       {
-        "name": "plate",
-        "value": "inset 0 1px 0 rgba(255,255,255,.7), 0 20px 44px rgba(0,0,0,.45)",
-        "purpose": "Module plates over the display."
+        "name": "toast",
+        "value": "0 10px 30px rgba(0, 0, 0, .4)",
+        "purpose": "Toast at the bottom of the screen."
       },
       {
-        "name": "side-sheet",
-        "value": "-1px 0 0 rgba(0,0,0,.13), -18px 0 40px rgba(0,0,0,.18)",
-        "purpose": "Sheets sliding in from the right."
-      },
-      {
-        "name": "led-glow",
-        "value": "0 0 7px <led colour>, inset 0 -1px 1px rgba(0,0,0,.2)",
-        "purpose": "Lit LEDs only."
+        "name": "stage-hint",
+        "value": "0 6px 18px rgba(20, 17, 43, .3)",
+        "purpose": "Dark hint pill over the paper stage; the count-in disc uses 0 12px 30px rgba(20, 17, 43, .35)."
       }
     ],
     "motion": [
       {
-        "name": "ease-out",
-        "value": "cubic-bezier(.16, 1, .3, 1)",
-        "purpose": "Plates rising, sheets sliding, switch thumb, cartridge press."
+        "name": "ease",
+        "value": "cubic-bezier(.22, 1, .36, 1)",
+        "purpose": "The single house easing for presses, sheets, cards, stars and meters."
       },
       {
-        "name": "key-travel",
-        "value": "transform .08s, box-shadow .08s",
-        "purpose": "Keycap and pill press."
+        "name": "press",
+        "value": "80ms",
+        "purpose": "Button and tile press-down on transform and edge."
       },
       {
-        "name": "rise",
-        "value": "rise .22s to .3s ease-out (translate 10px, fade)",
-        "purpose": "Plates, wait hint, toasts."
+        "name": "color",
+        "value": "150ms",
+        "purpose": "Hover fills and colour changes."
       },
       {
-        "name": "slide-in",
-        "value": "slide-in .32s ease-out (translate 40px, fade)",
+        "name": "sheet-in",
+        "value": "280ms slide-in from 40px right",
         "purpose": "Side sheets."
       },
       {
-        "name": "blink",
-        "value": "1s steps(2) infinite",
-        "purpose": "Connecting LED."
+        "name": "card-rise",
+        "value": "250-300ms rise from 10px below",
+        "purpose": "Veil cards and the stage hint."
       },
       {
-        "name": "pulse",
-        "value": ".7s ease-in-out infinite alternate",
-        "purpose": "Sheet cursor while waiting."
+        "name": "star-pop",
+        "value": "500ms scale .3 to 1.15 to 1 with a small rotation",
+        "purpose": "Won stars on the result card."
+      },
+      {
+        "name": "ignite",
+        "value": "900ms scale 0 to 1.5 to .9 to 1, 500ms delay",
+        "purpose": "The streak flame on the result card."
+      },
+      {
+        "name": "meter-fill",
+        "value": "600ms width",
+        "purpose": "Star and goal meters."
       },
       {
         "name": "reduced-motion",
-        "value": "durations .01ms",
-        "purpose": "prefers-reduced-motion collapses all motion."
+        "value": "all animation and transition durations to .01ms",
+        "purpose": "prefers-reduced-motion: reduce."
       }
     ],
     "breakpoints": [
       {
-        "name": "phone-landscape",
-        "value": "max-width: 940px and landscape"
+        "name": "short-landscape",
+        "value": "max-height: 430px"
       },
       {
-        "name": "small-landscape",
-        "value": "max-width: 760px and landscape"
+        "name": "narrow-practice",
+        "value": "max-width: 900px"
       },
       {
-        "name": "short",
-        "value": "max-height: 430px and landscape"
+        "name": "stack",
+        "value": "max-width: 760px"
       },
       {
-        "name": "very-short",
-        "value": "max-height: 360px and landscape"
-      },
-      {
-        "name": "portrait",
-        "value": "orientation: portrait"
-      },
-      {
-        "name": "large",
-        "value": "min-width: 1100px and min-height: 700px"
+        "name": "portrait-phone",
+        "value": "max-width: 640px and orientation: portrait"
       }
     ]
   },
   "components": [
     {
-      "name": "Keycap",
+      "name": "Primary Button",
       "kind": "button",
-      "refersTo": "keycap",
-      "description": "Every control is a round key with travel; lit is the active state, dark a selected mode.",
-      "html": "<div class=\"ds-caps\"><span class=\"ds-cap\"><i class=\"ds-led\"></i><button class=\"ds-keycap\" aria-label=\"Back\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12.5 4 6.5 10l6 6\"/></svg></button><span class=\"ds-legend\">Back</span></span><span class=\"ds-cap\"><i class=\"ds-led\"></i><button class=\"ds-keycap ds-lit\">.8</button><span class=\"ds-legend\">Speed</span></span><span class=\"ds-cap\"><i class=\"ds-led ds-led-orange\"></i><button class=\"ds-keycap ds-dark\">WAIT</button><span class=\"ds-legend\">Wait</span></span></div>",
-      "css": ".ds-caps{display:flex;gap:18px;padding:16px;background:linear-gradient(180deg,#e8e7e2,#dcdbd6 45%,#cdccc6)}.ds-cap{display:flex;flex-direction:column;align-items:center;gap:6px}.ds-keycap{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:50%;background:radial-gradient(circle at 50% 32%,#fdfdfb,#e2e1dc 72%);box-shadow:0 2px 0 #a9a8a2, 0 3px 7px rgba(0,0,0,.16), inset 0 -1px 0 rgba(0,0,0,.06);color:#1a1a1a;font-family:'Martian Mono',ui-monospace,monospace;font-weight:700;font-size:11.5px;cursor:pointer;transition:transform .08s,box-shadow .08s}.ds-keycap:active{transform:translateY(1.5px);box-shadow:0 1px 0 #a4a39c, 0 1px 2px rgba(0,0,0,.18), inset 0 1px 2px rgba(0,0,0,.12)}.ds-keycap:focus-visible{outline:2px solid #f25c08;outline-offset:3px}.ds-lit{background:#f25c08;box-shadow:0 1px 0 #b94000,0 1px 3px rgba(0,0,0,.18),inset 0 1px 2px rgba(0,0,0,.12);transform:translateY(1px)}.ds-dark{background:radial-gradient(circle at 50% 32%,#3d3e42,#1b1c1f 72%);color:#f2f2ee;box-shadow:0 2px 0 #000,0 3px 7px rgba(0,0,0,.3);font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-size:9.5px;letter-spacing:.06em}.ds-legend{font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#4d4c47}.ds-led{width:7px;height:7px;border-radius:50%;background:#a4a39c;box-shadow:inset 0 1px 1px rgba(0,0,0,.35)}.ds-led-orange{background:#ff6a13;box-shadow:0 0 7px #ff6a13}"
+      "refersTo": "button-primary",
+      "description": "The one go-green action per screen; names the next step and presses down onto its edge.",
+      "html": "<button class=\"ds-btn ds-btn-go ds-btn-big\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M6 3.8v12.4L16 10z\" fill=\"currentColor\"/></svg>Continue</button>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 20px;border-radius:14px;font:800 15px/1 var(--font);border:0;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-btn-go{background:var(--go);color:var(--go-ink);box-shadow:0 4px 0 var(--go-edge)}.ds-btn-go:hover{background:var(--go-hi)}.ds-btn-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--go-edge)}.ds-btn-big{min-height:54px;padding:0 26px;font-size:17px;border-radius:16px}"
     },
     {
-      "name": "Go Pill",
+      "name": "Secondary Button",
       "kind": "button",
-      "refersTo": "pill-go",
-      "description": "The primary action: flat orange capsule with a neutral travel shadow.",
-      "html": "<button class=\"ds-pill ds-go\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 3v9.5M6 8.5l4 4 4-4M3.5 13.5v3h13v-3\"/></svg>Import .mid</button>",
-      "css": ".ds-pill{height:46px;padding:0 20px;display:inline-flex;align-items:center;gap:9px;border:0;border-radius:23px;font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#1a1a1a;cursor:pointer;transition:transform .08s,box-shadow .08s}.ds-go{background:#f25c08;box-shadow:0 2px 0 #b94000,0 3px 7px rgba(0,0,0,.16)}.ds-go:active{transform:translateY(1.5px);box-shadow:0 1px 0 #b94000,inset 0 1px 2px rgba(0,0,0,.15)}.ds-pill:focus-visible{outline:2px solid #f25c08;outline-offset:3px}"
+      "refersTo": "button-secondary",
+      "description": "Raised indigo for the alternative action (Play freely, Try again).",
+      "html": "<button class=\"ds-btn ds-btn-raised\">Play freely</button>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 20px;border-radius:14px;font:800 15px/1 var(--font);border:0;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-btn-raised{background:var(--raised);color:var(--ink);box-shadow:0 4px 0 var(--raised-edge)}.ds-btn-raised:hover{background:#38317a}.ds-btn-raised:active{transform:translateY(3px);box-shadow:0 1px 0 var(--raised-edge)}"
     },
     {
-      "name": "Plain Pill",
+      "name": "Quiet Button",
       "kind": "button",
-      "refersTo": "pill",
-      "description": "Secondary action: a raised light capsule.",
-      "html": "<button class=\"ds-pill2\">Restart</button>",
-      "css": ".ds-pill2{height:46px;padding:0 20px;border:0;border-radius:23px;font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#1a1a1a;background:radial-gradient(ellipse at 50% 30%,#fdfdfb,#e2e1dc 75%);box-shadow:0 2px 0 #a9a8a2, 0 3px 7px rgba(0,0,0,.16), inset 0 -1px 0 rgba(0,0,0,.06);cursor:pointer;transition:transform .08s,box-shadow .08s}.ds-pill2:active{transform:translateY(1.5px);box-shadow:0 1px 0 #a4a39c, 0 1px 2px rgba(0,0,0,.18), inset 0 1px 2px rgba(0,0,0,.12)}.ds-pill2:focus-visible{outline:2px solid #f25c08;outline-offset:3px}"
+      "refersTo": "button-quiet",
+      "description": "Edge-less exit or cancel action under the main pair.",
+      "html": "<button class=\"ds-btn-quiet\">Back to song</button>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn-quiet{display:inline-flex;align-items:center;min-height:40px;padding:0 20px;border-radius:14px;background:transparent;border:0;color:var(--ink-2);font:800 15px/1 var(--font);cursor:pointer;transition:background .15s,color .15s}.ds-btn-quiet:hover{color:var(--ink);background:rgba(255,255,255,.05)}.ds-btn-quiet:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
-      "name": "Slider",
-      "kind": "nav",
-      "refersTo": "slider",
-      "description": "Two-position Notes / Sheet switch in a recessed groove.",
-      "html": "<div class=\"ds-slider\"><button class=\"ds-on\">Notes</button><button>Sheet</button></div>",
-      "css": ".ds-slider{display:inline-flex;padding:3px;gap:2px;background:#bdbcb5;border-radius:22px;box-shadow:inset 0 1px 3px rgba(0,0,0,.28),0 1px 0 rgba(255,255,255,.6)}.ds-slider button{height:34px;padding:0 12px;border:0;border-radius:17px;background:none;font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#4d4c47;cursor:pointer;transition:background .15s,color .15s}.ds-slider button:hover{color:#1a1a1a}.ds-slider button:focus-visible{outline:2px solid #f25c08;outline-offset:3px}.ds-slider .ds-on{background:#f6f5f1;color:#1a1a1a;box-shadow:0 1px 2px rgba(0,0,0,.28),inset 0 1px 0 #fff}"
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "42px raised square, used for pause in the practice bar; ghost variant for close and back.",
+      "html": "<div class=\"ds-row\"><button class=\"ds-icon\" aria-label=\"Pause\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6.5 4v12M13.5 4v12\" stroke-width=\"2.6\"/></svg></button><button class=\"ds-icon ds-icon-ghost\" aria-label=\"Back\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12.5 4 6.5 10l6 6\"/></svg></button></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-row{display:flex;gap:10px}.ds-icon{width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:12px;background:var(--raised);color:var(--ink);box-shadow:0 3px 0 var(--raised-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease)}.ds-icon:active{transform:translateY(2px);box-shadow:0 1px 0 var(--raised-edge)}.ds-icon-ghost{background:transparent;box-shadow:none;color:var(--ink-2)}.ds-icon-ghost:hover{color:var(--ink);background:rgba(255,255,255,.06)}.ds-icon:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
-      "name": "Switch",
+      "name": "Chips and Segmented Control",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Practice-bar chips with a status dot, and the segmented well used in settings and filters.",
+      "html": "<div class=\"ds-row\"><button class=\"ds-chip ds-on\"><i></i>Wait</button><button class=\"ds-chip\">0.6×</button><div class=\"ds-seg\" role=\"radiogroup\"><button class=\"ds-on\">All</button><button>Mine</button></div></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ds-chip{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 13px;border:0;border-radius:12px;background:var(--surface-2);color:var(--ink-2);font:800 14px/1 var(--font);cursor:pointer}.ds-chip i{width:9px;height:9px;border-radius:50%;background:var(--line-2)}.ds-chip.ds-on{color:var(--ink)}.ds-chip.ds-on i{background:var(--go)}.ds-chip:focus-visible,.ds-seg button:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-seg{display:inline-flex;padding:4px;gap:2px;border-radius:14px;background:var(--bg-deep)}.ds-seg button{min-height:36px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--ink-2);font:800 14px/1 var(--font);cursor:pointer;transition:background .15s,color .15s}.ds-seg button:hover{color:var(--ink)}.ds-seg button.ds-on{background:var(--raised);color:var(--ink);box-shadow:0 2px 0 var(--raised-edge)}"
+    },
+    {
+      "name": "Text Field",
       "kind": "input",
-      "refersTo": "switch",
-      "description": "Hardware toggle; orange when on.",
-      "html": "<input type=\"checkbox\" class=\"ds-switch\" checked aria-label=\"Key sound\">",
-      "css": ".ds-switch{appearance:none;width:50px;height:28px;border-radius:14px;position:relative;cursor:pointer;background:#bdbcb5;box-shadow:inset 0 1px 3px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.6);transition:background .15s}.ds-switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 50% 30%,#fff,#e2e1dc);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s cubic-bezier(.16,1,.3,1)}.ds-switch:checked{background:#f25c08}.ds-switch:checked::after{transform:translateX(22px)}.ds-switch:focus-visible{outline:2px solid #f25c08;outline-offset:3px}"
+      "refersTo": "text-field",
+      "description": "Night-deep field with a 2px line stroke that turns green on focus.",
+      "html": "<label class=\"ds-field\">Song title<input placeholder=\"Cornfield Chase\"></label>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-field{display:grid;gap:5px;font:800 13px/1.3 var(--font);color:var(--ink-2)}.ds-field input{min-height:44px;padding:0 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg-deep);color:var(--ink);font:700 16px var(--font)}.ds-field input::placeholder{color:var(--ink-3)}.ds-field input:focus{outline:none;border-color:var(--go)}"
     },
     {
-      "name": "LCD Readouts",
-      "kind": "custom",
-      "refersTo": "lcd",
-      "description": "Recessed black windows: green only for live input, neutral for bar/time, red text for faults.",
-      "html": "<div class=\"ds-lcds\"><p class=\"ds-lcd ds-neutral\">BAR 12/35 0:48</p><div class=\"ds-lcd ds-input\"><small><i></i>USB · heard</small><b>A2</b></div><p class=\"ds-lcd ds-fault\">Mic · not connected</p></div>",
-      "css": ".ds-lcds{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.ds-lcd{margin:0;background:#121314;color:#86f0a8;border-radius:8px;box-shadow:inset 0 2px 4px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.6);font-family:'Martian Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;padding:6px 10px 7px}.ds-neutral{color:#ecebe6;font-size:16px;font-weight:700}.ds-input{display:flex;flex-direction:column;gap:2px;min-width:96px}.ds-input small{font-size:9px;letter-spacing:.14em;color:#5a9b70;display:flex;align-items:center;gap:5px}.ds-input small i{width:7px;height:7px;border-radius:50%;background:#3dbe6b;box-shadow:0 0 7px #3dbe6b}.ds-input b{font-size:15px;line-height:1}.ds-fault{color:#ff9b8c;font-size:11.5px}"
+      "name": "Navigation Rail",
+      "kind": "nav",
+      "refersTo": "rail-item",
+      "description": "Left rail of icon-over-label items; the active item is green on a soft green wash.",
+      "html": "<nav class=\"ds-rail\"><button class=\"ds-rail-btn ds-on\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3.5 9 10 3.5 16.5 9v7.5h-4.5v-5h-4v5H3.5z\"/></svg>Home</button><button class=\"ds-rail-btn\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7.5 15V4.5l8-1.5V13\"/><circle cx=\"5.5\" cy=\"15\" r=\"2\"/><circle cx=\"13.5\" cy=\"13\" r=\"2\"/></svg>Songs</button></nav>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-rail{display:flex;flex-direction:column;align-items:center;gap:6px;width:84px;padding:14px 6px;background:var(--bg-deep)}.ds-rail-btn{width:70px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;border-radius:14px;background:none;color:var(--ink-3);font:800 11.5px/1 var(--font);cursor:pointer;transition:color .15s,background .15s}.ds-rail-btn:hover{color:var(--ink)}.ds-rail-btn.ds-on{color:var(--go);background:rgba(63,208,122,.12)}.ds-rail-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
-      "name": "Cartridge",
+      "name": "Continue Card",
       "kind": "card",
-      "refersTo": "cartridge",
-      "description": "A song cartridge: grip, photo window, paper label and speed stamps.",
-      "html": "<article class=\"ds-cart\"><div class=\"ds-grip\"></div><div class=\"ds-photo\"></div><div class=\"ds-label\"><h3>Cornfield Chase</h3><p class=\"ds-sub\">Interstellar</p><p class=\"ds-meta\">2014 · 2:06</p><div class=\"ds-stamps\"><span class=\"ds-done\">0.6</span><span class=\"ds-done\">0.8</span><span>1</span><span>1.2</span></div></div></article>",
-      "css": ".ds-cart{width:190px;height:360px;display:flex;flex-direction:column;gap:10px;padding:10px 10px 11px;border-radius:18px;background:linear-gradient(180deg,#d2d1cb,#c1c0b9);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 1px 0 rgba(0,0,0,.08),0 10px 22px rgba(0,0,0,.12);cursor:pointer;transition:transform .18s cubic-bezier(.16,1,.3,1),box-shadow .18s}.ds-cart:active{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 4px 10px rgba(0,0,0,.14)}.ds-grip{height:6px;margin:0 44px;border-radius:3px;background:repeating-linear-gradient(90deg,#a3a29b 0 2px,transparent 2px 5px)}.ds-photo{flex:1;border-radius:9px;background:linear-gradient(160deg,#f7a24a,#b8430a 60%,#2a1a10)}.ds-label{background:#f6f5f1;border-radius:9px;padding:10px 11px 11px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);font-family:Supreme,'Helvetica Neue',Arial,sans-serif;color:#1a1a1a}.ds-label h3{margin:0 0 4px;font-weight:800;font-size:19px;line-height:1.02;letter-spacing:-.01em}.ds-sub{margin:0;font-weight:500;font-size:12.5px;color:#4d4c47}.ds-meta{margin:3px 0 0;font-family:'Martian Mono',monospace;font-size:11.5px;color:#4d4c47}.ds-stamps{display:flex;gap:5px;margin-top:11px}.ds-stamps span{flex:1;height:24px;border-radius:4px;border:1.5px dashed #bdbcb5;display:grid;place-items:center;font-family:'Martian Mono',monospace;font-size:10.5px;color:#4d4c47}.ds-stamps .ds-done{border:2px solid #b8430a;color:#b8430a;font-weight:700;rotate:-5deg;background:rgba(255,106,19,.1)}"
+      "refersTo": "card",
+      "description": "Surface card at 22px corners; the Home lead naming the exact next step with a star meter and the green button.",
+      "html": "<article class=\"ds-card\"><h2>Sarabande</h2><p class=\"ds-sub\">G. F. Handel</p><p class=\"ds-next\"><span>Next</span>Part 1 · Right hand</p><div class=\"ds-meter-row\"><span class=\"ds-meter\"><i style=\"width:30%\"></i></span><b><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg>12 of 144</b></div><button class=\"ds-go\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M6 3.8v12.4L16 10z\" fill=\"currentColor\"/></svg>Continue</button></article>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-card{display:grid;gap:8px;max-width:380px;padding:18px;border-radius:22px;background:var(--surface);color:var(--ink);font:600 15px/1.4 var(--font);font-variant-numeric:tabular-nums}.ds-card h2{margin:0;font:900 25px/1.08 var(--font);letter-spacing:-.01em}.ds-sub{margin:0;color:var(--ink-2);font-size:14px}.ds-next{margin:4px 0 0;display:flex;align-items:center;gap:8px;font-weight:800}.ds-next span{padding:2px 8px;border-radius:7px;background:rgba(63,208,122,.16);color:var(--go);font-size:12.5px;font-weight:900}.ds-meter-row{display:flex;align-items:center;gap:8px}.ds-meter{position:relative;flex:1;height:8px;border-radius:8px;background:var(--line);overflow:hidden}.ds-meter i{position:absolute;inset:0 auto 0 0;background:var(--star);border-radius:8px}.ds-meter-row b{display:inline-flex;align-items:center;gap:4px;color:var(--star);font-weight:900;font-size:13px}.ds-go{justify-self:start;margin-top:6px;display:inline-flex;align-items:center;gap:8px;min-height:54px;padding:0 26px;border:0;border-radius:16px;background:var(--go);color:var(--go-ink);font:800 17px/1 var(--font);box-shadow:0 4px 0 var(--go-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-go:hover{background:var(--go-hi)}.ds-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--go-edge)}.ds-go:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
-      "name": "Wait Hint",
+      "name": "Step Tiles",
       "kind": "custom",
-      "refersTo": "wait-hint",
-      "description": "The single waiting message, a panel in its own row between display and keys.",
-      "html": "<div class=\"ds-wh\"><div><p class=\"ds-wh-t\">Play <b>A2</b></p><p class=\"ds-wh-s\"><em>You played A#2</em></p></div><div class=\"ds-wh-keys\"><span class=\"ds-hk\"></span><span class=\"ds-hk ds-tl\">A2</span><span class=\"ds-hk\"></span><span class=\"ds-hkb ds-x\" style=\"left:38%\">A#2</span></div></div>",
-      "css": ".ds-wh{display:flex;align-items:center;gap:16px;padding:8px 12px 8px 16px;border-radius:12px;background:#f6f5f1;box-shadow:inset 0 0 0 1px rgba(0,0,0,.07),0 1px 0 rgba(255,255,255,.6);font-family:Supreme,'Helvetica Neue',Arial,sans-serif;max-width:560px}.ds-wh p{margin:0}.ds-wh-t{font-weight:500;font-size:13px;color:#4d4c47}.ds-wh-t b{font-family:'Martian Mono',monospace;font-weight:700;font-size:18px;color:#1a1a1a;margin-left:4px}.ds-wh-s{margin-top:2px;font-weight:700;font-size:12.5px}.ds-wh-s em{font-style:normal;color:#b3200f}.ds-wh-keys{position:relative;display:flex;flex:1;height:48px;margin-left:auto}.ds-hk{flex:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;background:linear-gradient(#fff,#eeede8);border:1px solid #c3c2bb;border-radius:0 0 5px 5px;font-family:'Martian Mono',monospace;font-weight:700;font-size:10px}.ds-tl{background:#2f5bff;border-color:#1d3bb3;color:#fff}.ds-hkb{position:absolute;top:0;width:18%;height:58%;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;border-radius:0 0 3px 3px;font-family:'Martian Mono',monospace;font-weight:700;font-size:8.5px;color:#fff}.ds-x{background:#e0301e}"
+      "refersTo": "step-tile",
+      "description": "The course unit: a done right-hand step, the next left-hand step, and a locked step.",
+      "html": "<div class=\"ds-tiles\"><button class=\"ds-tile\"><span class=\"ds-badge ds-R\">R</span><span class=\"ds-name\">Right hand</span><span class=\"ds-stars\"><b><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg></b><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg></span></button><button class=\"ds-tile ds-next\"><span class=\"ds-badge ds-L\">L</span><em>Next</em><span class=\"ds-name\">Left hand</span><span class=\"ds-stars\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg></span></button><button class=\"ds-tile\" disabled><span class=\"ds-badge\">3</span><span class=\"ds-name\">Hands together</span><span class=\"ds-stars\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg></span></button></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-tiles{display:grid;grid-template-columns:repeat(3,minmax(128px,1fr));gap:10px;padding:14px;background:var(--surface);border-radius:22px}.ds-tile{position:relative;display:grid;justify-items:start;gap:6px;padding:12px;border:0;border-radius:14px;text-align:left;background:var(--surface-2);color:var(--ink);box-shadow:0 3px 0 var(--raised-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s;font-family:var(--font)}.ds-tile:hover:not(:disabled){background:var(--raised)}.ds-tile:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 var(--raised-edge)}.ds-tile:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-tile:disabled{opacity:.5;box-shadow:none;background:transparent;outline:2px dashed var(--line);outline-offset:-2px;cursor:default}.ds-badge{min-width:34px;height:30px;padding:0 8px;border-radius:9px;display:grid;place-items:center;background:var(--bg-deep);color:var(--ink-2);font-weight:900;font-size:13.5px}.ds-R{color:var(--right)}.ds-L{color:var(--left)}.ds-name{font-weight:900;font-size:14px;line-height:1.2}.ds-stars{display:inline-flex;gap:2px;color:var(--star-off)}.ds-stars b{color:var(--star);display:inline-flex}.ds-next{background:rgba(63,208,122,.14);box-shadow:0 3px 0 rgba(31,154,82,.7)}.ds-next .ds-badge{box-shadow:inset 0 0 0 2px var(--go)}.ds-next em{position:absolute;top:10px;right:10px;font-style:normal;color:var(--go);font-size:12px;font-weight:900}"
+    },
+    {
+      "name": "Practice Keyboard",
+      "kind": "custom",
+      "refersTo": "stage",
+      "description": "Paper keys with a bottom lip; next keys in sky (right) and amber (left), a correct key in green, a wrong key in red.",
+      "html": "<div class=\"ds-kb\"><div class=\"ds-k ds-w\" style=\"left:0\"></div><div class=\"ds-k ds-w ds-nR\" style=\"left:14.28%\"><span>D</span></div><div class=\"ds-k ds-w ds-hit\" style=\"left:28.57%\"></div><div class=\"ds-k ds-w\" style=\"left:42.85%\"></div><div class=\"ds-k ds-w ds-nL\" style=\"left:57.14%\"><span>G</span></div><div class=\"ds-k ds-w ds-wrong\" style=\"left:71.42%\"></div><div class=\"ds-k ds-w\" style=\"left:85.71%\"></div><div class=\"ds-k ds-b\" style=\"left:9.5%\"></div><div class=\"ds-k ds-b\" style=\"left:23.8%\"></div><div class=\"ds-k ds-b\" style=\"left:52.4%\"></div><div class=\"ds-k ds-b\" style=\"left:66.6%\"></div><div class=\"ds-k ds-b\" style=\"left:80.9%\"></div></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-kb{position:relative;height:110px;max-width:420px;padding:0 10px;font-family:var(--font)}.ds-k{position:absolute;top:0}.ds-w{width:14.28%;height:100%;background:var(--paper);border-radius:0 0 8px 8px;border-right:1px solid #d6d1ee;border-left:1px solid #fff;box-shadow:inset 0 -5px 0 #e3dff4}.ds-b{width:9%;height:60%;background:#221d4a;border-radius:0 0 6px 6px;z-index:2;box-shadow:inset 0 -4px 0 #0f0c22}.ds-w span{position:absolute;left:0;right:0;bottom:22px;text-align:center;font-weight:900;font-size:13px;color:var(--bg)}.ds-nR{background:var(--right);box-shadow:inset 0 -5px 0 #2f8fd6}.ds-nL{background:var(--left);box-shadow:inset 0 -5px 0 #d68f1f}.ds-hit{background:var(--go);box-shadow:none}.ds-wrong{background:var(--miss);box-shadow:none}"
     }
   ],
   "narrative": {
-    "northStar": "The Practice Instrument",
-    "overview": "The app is a piece of hardware standing on the music stand, in the line of Braun and Teenage Engineering panels: a light, bead-blasted aluminium panel with printed legends, round keycaps with small LEDs, recessed LCD windows, a two-position slider, and one black display window where the notes fall onto an orange gate. The library is a rack of song cartridges, each with a photo, a white paper label and the speeds already passed stamped in orange ink. Setup, pause and end are module plates that sit over the display. The world rejects the neon-bars-on-navy piano trainer and the dark cinema costume of the 35mm film world it replaced.\n\nThe panel is lit, never dark. Black lives only inside the display window, the LCDs and the black keys. Colour is signal and each colour owns one job: orange is the right hand, the primary control and the active state; cobalt is the left hand; green is live input; red is a fault. Two families split the work cleanly: Supreme speaks every title, legend and sentence; Martian Mono is the machine voice of readouts, numerals, note names and stamps.\n\nDensity follows a phone in landscape on a music stand: a 64px legend strip on top, the display filling the middle, keys along the bottom, 44px keycaps throughout. Surfaces are matte; depth is physical (key travel, recessed windows, a plate lifted over the display) rather than decorative.",
+    "northStar": "The Green Light",
+    "overview": "**Creative North Star: \"The Green Light\"**\n\nHugo's Piano is the category standard for learning songs, played straight: a night indigo app in the Simply Piano and Duolingo family, where one saturated green means \"go\" everywhere it appears. The next action is green, the right note is green, the now-line on the staff is green, the met goal is green. Everything else stays in quiet indigo so that green is always the answer to \"what do I do now?\". Gold is the reward (stars), orange is the streak, red is reserved for the wrong note.\n\nThe world has two grounds. The app itself sits on deep indigo with raised indigo surfaces, a single rounded face (Nunito, heavy weights) and chunky buttons that physically press down on a solid bottom edge. The practice stage is a light lavender-white paper where the staff scrolls and the keyboard lights the next keys, bright enough to read from the music stand under evening room light. Density is moderate and landscape-first: an 84px left rail, cards on a 16px grid gap, and nothing that slows the next step.\n\nThis replaces the earlier aluminium \"practice instrument\" world entirely. There are no printed legends, no hardware costume, no LCD greens; the only skeuomorphism left is the pressable button edge, which belongs to the category itself.",
     "keyCharacteristics": [
-      "Matte aluminium field with a soft top light; no stripes, no brushed texture, no gloss.",
-      "Every control is a physical key: round keycaps, pills and a slider that travel 1.5px when pressed.",
-      "One black display window per screen; LCDs are small recessed black readouts.",
-      "Signal colours with one job each: orange right hand and action, cobalt left hand, green live input, red fault.",
-      "Supreme for words, Martian Mono for machine readouts.",
-      "Cartridges with photo, paper label and orange speed stamps."
+      "Night indigo ground with three raised surface steps; no pure black, no grey.",
+      "One go-green for every primary action, correct note, active nav item and met goal.",
+      "Gold stars, orange flame, red only for wrong notes; sky blue right hand and amber left hand on keys and step badges.",
+      "Nunito Variable for everything, weights 600 to 900, tabular figures throughout.",
+      "Chunky rounded controls with a solid 3-4px bottom edge that collapses on press.",
+      "A light paper stage for the staff and keyboard inside the dark app."
     ],
     "rules": [
       {
-        "name": "The One Job Rule",
-        "body": "Each signal colour owns one meaning. Orange is right hand, primary action and active state; cobalt is left hand and never chrome; green is live input; red is a fault. A readout that is not reporting live input is never green.",
+        "name": "The Green Light Rule",
+        "body": "Green means \"go\" or \"right\": the next action, a correct note, the current place, a met goal. It is never decoration, never a heading colour, never a second-tier accent.",
         "section": "colors"
       },
       {
-        "name": "The Lit Panel Rule",
-        "body": "The panel is light aluminium. Black appears only inside the display window, LCDs, dark keycaps and black keys.",
+        "name": "The One Red Rule",
+        "body": "Miss red is spent only on a wrong note or a real error. Locked, idle and unavailable states are indigo, never red.",
         "section": "colors"
       },
       {
-        "name": "The Two Hands Rule",
-        "body": "Orange belongs to the right hand and cobalt to the left in every view: falling notes, keys, hint keys, sheet noteheads. A note the app plays for the other hand keeps its hue at 28% opacity.",
+        "name": "The Paper Variant Rule",
+        "body": "On the paper stage, signals use the `staff-*` deep set; on indigo, the bright set. Never put a bright signal colour on paper or a deep one on indigo.",
         "section": "colors"
       },
       {
-        "name": "The Machine Voice Rule",
-        "body": "Martian Mono is only for readouts, numerals, note names and stamps. Titles, legends, buttons and sentences are Supreme.",
+        "name": "The Weight Not Face Rule",
+        "body": "Hierarchy comes from Nunito's weight and size alone. No second family, no italics, no uppercase tracking, no kicker lines above headings.",
         "section": "typography"
       },
       {
-        "name": "The Printed Legend Rule",
-        "body": "Legends are 10px tracked caps printed under or beside the control they name. They label controls; they never sit above a heading as an eyebrow.",
-        "section": "typography"
-      },
-      {
-        "name": "The Matte Finish Rule",
-        "body": "The aluminium is an even matte field under a soft top light; orange controls are flat signal-orange-deep with a neutral travel shadow. No gloss highlights, no stripes, no glow on controls. Light is emitted only by LEDs, the gate line and count-in LEDs.",
-        "section": "elevation"
-      },
-      {
-        "name": "The Key Travel Rule",
-        "body": "Anything pressable has travel: a 2px hard shadow at rest, 1px when pressed, and a 1.5px drop.",
+        "name": "The Press Edge Rule",
+        "body": "Anything tappable that matters gets a solid bottom edge in its own darker tone, and pressing moves it down onto that edge. Non-interactive cards never carry one.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do keep the panel light aluminium with a soft top light, and put black only inside the display, LCDs, dark keycaps and black keys.",
-      "Do make every control a physical key with travel: 2px rest shadow, 1px pressed, 1.5px drop.",
-      "Do fill primary controls with flat signal-orange-deep and ink text.",
-      "Do colour right-hand material orange and left-hand material cobalt in every view, and dim the app-played hand to 28%.",
-      "Do use green only for live input, neutral lcd-neutral for other readouts, and red for faults.",
-      "Do set readouts, numerals, note names and stamps in Martian Mono with tabular figures; everything else in Supreme.",
-      "Do print legends as 10px tracked caps next to the control they name.",
-      "Do keep controls that matter mid-song at 36px or larger, 44px where space allows."
+      "Do give each screen exactly one go-green button, and make it name the next step.",
+      "Do keep green for go and right, gold for stars, flame for the streak, miss red for wrong notes, sky for the right hand and amber for the left hand.",
+      "Do give every important tappable control a solid bottom edge in its own darker tone (`raised-edge`, `go-edge`) that collapses on press.",
+      "Do build depth by stepping indigo fills (night, surface, surface-2, raised), not with borders or blurred card shadows.",
+      "Do set everything in Nunito Variable with tabular figures, 900 for headings and numbers, 800 for controls.",
+      "Do use the deep `staff-*` signals on the paper stage and the bright set on indigo.",
+      "Do keep touch targets at 44px or more (buttons 46px, icon buttons 42px inside a padded bar, rail items 58px)."
     ],
     "donts": [
-      "Don't add gloss, stripes or brushed texture to the aluminium, or gloss and glow to orange controls; only LEDs and the gate emit light.",
-      "Don't make the panel dark or use neon bars on navy.",
-      "Don't use green on an LCD for anything but live input.",
-      "Don't use cobalt for chrome, links or actions; it belongs to the left hand.",
-      "Don't set titles, legends or sentences in Martian Mono.",
-      "Don't put eyebrow labels above headings.",
-      "Don't float the wait hint over the display; it is a panel in its own row between display and keys."
+      "Don't bring back the aluminium instrument-panel world: no metal textures, printed legends, LCD greens or keycap LEDs.",
+      "Don't use green as decoration, a heading colour or a background wash beyond the 12-16% tints on the active rail item, next tile and tags.",
+      "Don't use miss red for locked, idle or disabled states.",
+      "Don't add a second typeface, uppercase tracked labels or eyebrow lines above headings.",
+      "Don't put pure black or neutral grey anywhere; every dark is indigo.",
+      "Don't give static cards a press edge or a drop shadow; shadows belong to pressable controls and floating overlays."
     ]
   }
 }

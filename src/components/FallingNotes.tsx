@@ -10,10 +10,9 @@ interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; fi
 // Right hand sky, left hand amber; the gate is the go-green of a correct note.
 const C = {
   display: '#100d24', lane: '#151231', bar: 'rgba(255,255,255,.1)', barText: 'rgba(214,209,255,.6)', white: '#ffffff', ink: '#14112b',
-  orange: '#4fb6ff', orangeLit: '#a9dcff', cobalt: '#ffb547', cobaltLit: '#ffd99a', red: '#ff5d73', gate: '#3fd07a',
+  right: '#4fb6ff', rightLit: '#a9dcff', left: '#ffb547', leftLit: '#ffd99a', red: '#ff5d73', gate: '#3fd07a',
 };
 const SANS = '"Nunito Variable", Nunito, ui-rounded, system-ui, sans-serif';
-const MONO = SANS;
 const VISIBLE_SECONDS = 3.2;
 
 export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: Props) {
@@ -51,7 +50,7 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
       }
 
       // Bar lines with their numbers.
-      ctx.font = `700 12px ${MONO}`;
+      ctx.font = `700 12px ${SANS}`;
       ctx.textAlign = 'left';
       engine.measureTimes.forEach((mt, i) => {
         const y = Y(mt);
@@ -92,8 +91,8 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
         if (h < 1) continue;
         const st = engine.status[n.id];
         const R = n.hand === 'R';
-        const base = R ? C.orange : C.cobalt;
-        const lit = R ? C.orangeLit : C.cobaltLit;
+        const base = R ? C.right : C.left;
+        const lit = R ? C.rightLit : C.leftLit;
         const mine = engine.user[n.id] === 1 || listen;
         const sounding = now >= n.time && now < n.time + n.duration;
 
@@ -135,7 +134,7 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
           ctx.fillStyle = C.white;
           ctx.beginPath(); ctx.arc(x + w / 2, cy, r, 0, Math.PI * 2); ctx.fill();
           ctx.fillStyle = C.ink;
-          ctx.font = `700 ${Math.round(r * 1.25)}px ${MONO}`;
+          ctx.font = `700 ${Math.round(r * 1.25)}px ${SANS}`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(String(n.finger), x + w / 2, cy + 0.5);
@@ -171,7 +170,7 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
         if (g) {
           const names = [...new Set(g.midis.map(m => noteName(m, naming)))].join(' + ');
           const text = t('waitingFor', { notes: names });
-          ctx.font = `700 15px ${MONO}`;
+          ctx.font = `700 15px ${SANS}`;
           const tw = ctx.measureText(text).width;
           const bx = W / 2 - tw / 2 - 16, by = H - 54;
           ctx.fillStyle = 'rgba(20,17,43,.92)';
