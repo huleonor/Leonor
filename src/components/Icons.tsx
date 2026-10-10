@@ -48,3 +48,17 @@ export const IconSheet = (p: P) => (
 export const IconHeadphones = (p: P) => <svg {...base(p)}><path d="M3.5 13v-2.5a6.5 6.5 0 0 1 13 0V13" /><rect x="3" y="12" width="3.5" height="5" rx="1.2" /><rect x="13.5" y="12" width="3.5" height="5" rx="1.2" /></svg>;
 export const IconLock = (p: P) => <svg {...base(p)}><rect x="4.5" y="9" width="11" height="8" rx="1.8" /><path d="M7 9V6.5a3 3 0 0 1 6 0V9" /></svg>;
 export const IconStar = (p: P) => <svg {...base(p)}><path d="m10 2.8 2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" fill="currentColor" /></svg>;
+export const IconHome = (p: P) => <svg {...base(p)}><path d="M3.5 9 10 3.5 16.5 9v7.5h-4.3v-4.5H7.8v4.5H3.5z" /></svg>;
+export const IconMusic = (p: P) => <svg {...base(p)}><path d="M7.5 15V4.5l9-1.8V13" /><circle cx="5.5" cy="15" r="2" /><circle cx="14.5" cy="13" r="2" /></svg>;
+export const IconChart = (p: P) => <svg {...base(p)}><path d="M3.5 16.5h13M5.5 13.5v-3M9 13.5V6M12.5 13.5V9M16 13.5V4" strokeWidth={2} /></svg>;
+export const IconFlame = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M10 2.5c.6 2.7 4.8 4.5 4.8 9a4.8 4.8 0 0 1-9.6 0c0-2.2 1.2-3.6 2.3-4.6.3 1.3 1 2.1 1.9 2.4C8.7 7 9.2 4.6 10 2.5z" fill="currentColor" stroke="none" />
+  </svg>
+);
+export const IconPlus = (p: P) => <svg {...base(p)}><path d="M10 4v12M4 10h12" strokeWidth={2.2} /></svg>;
+export const IconCheck = (p: P) => <svg {...base(p)}><path d="m4.5 10.5 3.5 3.5 7.5-8" strokeWidth={2.2} /></svg>;
+export const IconMore = (p: P) => <svg {...base(p)}><circle cx="4.5" cy="10" r="1.4" fill="currentColor" stroke="none" /><circle cx="10" cy="10" r="1.4" fill="currentColor" stroke="none" /><circle cx="15.5" cy="10" r="1.4" fill="currentColor" stroke="none" /></svg>;
+export const IconEdit = (p: P) => <svg {...base(p)}><path d="M12.8 3.8 16.2 7.2 7.5 15.9H4.1v-3.4z" /></svg>;
+export const IconHand = (p: P) => <svg {...base(p)}><path d="M6.5 10.5V5.2a1.2 1.2 0 0 1 2.4 0v4.3M8.9 9V3.8a1.2 1.2 0 0 1 2.4 0V9M11.3 9V4.6a1.2 1.2 0 0 1 2.4 0v6.6M13.7 9.5a1.2 1.2 0 0 1 2.4 0v1.8a5.7 5.7 0 0 1-5.7 5.7H9.6a5 5 0 0 1-4-2l-2-2.8a1.2 1.2 0 0 1 1.9-1.4l1 1.3" /></svg>;
+export const IconSpeed = (p: P) => <svg {...base(p)}><path d="M3.5 14a6.5 6.5 0 1 1 13 0" /><path d="m10 14 3.2-4.2" strokeWidth={2} /></svg>;

@@ -24,13 +24,13 @@ export default defineConfig({
       manifest: {
         name: "Hugo's Piano",
         short_name: "Hugo's Piano",
-        description: 'Learn your songs with falling notes or the score, at your own pace.',
+        description: 'Learn your songs part by part, hand by hand, with stars and a daily streak.',
         lang: 'en',
         start_url: '/',
         display: 'fullscreen',
         orientation: 'landscape',
-        background_color: '#dcdbd6',
-        theme_color: '#dcdbd6',
+        background_color: '#14112b',
+        theme_color: '#14112b',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },

@@ -31,17 +31,19 @@ A personal Simply Piano built around Hugo's own library: any MIDI file he import
 ## Capabilities and Constraints
 
 - Input: CoreMIDI in the iPhone app (cable and Bluetooth, rescanned automatically), Web MIDI and Web Bluetooth in desktop/Android Chrome, and the microphone everywhere. The mic detector is polyphonic (onsets plus harmonic analysis, with a targeted check of the notes the song expects), so chords count by mic. Keys played on a MIDI keyboard sound through the app's piano by default.
-- Learning aids: a wait-mode hint showing the keys to press after a wrong note or a long stall, and a study panel that analyses each song (repeats, accompaniment patterns, chord loop, hand positions, tricky bars, key, rhythm) with bar loops to practise.
+- Learning loop (Simply Piano): every song, bundled or imported, becomes a course of short parts; each part is learnt right hand, left hand, hands together (the music waits), then in tempo; parts join, then the whole song and a final performance. Each step earns 1 to 3 stars and opens the next. A daily streak and a daily minutes goal count real practice time.
+- Practice view: a scrolling staff (one staff per hand in play, grand staff for both) with a now-line, note names in the heads and the keyboard below lighting the next keys; falling notes remain as an alternative view. Wait-mode hints show the keys after a wrong note or a stall; song tips come from an analysis of the notes (repeats, hand positions, tricky bars).
+- No beginner curriculum: the user chose songs only.
 - Song library: bundled songs plus MIDI (.mid) import, stored on the device. Each reel shows a cover photo that evokes the song (free Unsplash photos; film posters are not used).
 - Playback speed presets: 0.6x, 0.8x, 1x, 1.2x.
 - Wait mode: the song only advances when the correct note(s) are played.
-- Falling-notes view (Synthesia-style) above a piano keyboard.
+- Falling-notes view (Synthesia-style) above a piano keyboard, as the alternative to the staff.
 - Bundled songs are fan MIDI transcriptions (no official MIDI exists): Cornfield Chase (midisfree.com) and He's a Pirate (bitmidi.com, Badelt/Zimmer). Time, Interstellar Main Theme, Now We Are Free, A Way of Life and Maestro are reels waiting for a file: tapping one imports a .mid into that slot. Personal use; the deployed link is not to be shared publicly.
 
 ## Brand Commitments
 
 - Name: "Hugo's Piano".
-- Reference the user named: Simply Piano (as a functional reference for the learning loop, not a look to copy).
+- Reference the user named: Simply Piano, for the learning loop and, by the user's choice in the 2026-10 redesign, for the look too: the category standard played straight (dark indigo app, go-green actions, gold stars, streak flame, scrolling staff). Craft bar: Simply Piano and Duolingo.
 - Language: English-only UI (the user first asked for Portuguese plus English, then for English only). Note names default to C D E, with Dó Ré Mi as an option.
 
 ## Evidence on Hand

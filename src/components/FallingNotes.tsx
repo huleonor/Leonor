@@ -7,12 +7,13 @@ import { AUTO, HIT, MISS, type FingerMode, type NoteNaming } from '../lib/types'
 
 interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; fingers: FingerMode; inset: number; onTap: () => void; }
 
+// Right hand sky, left hand amber; the gate is the go-green of a correct note.
 const C = {
-  display: '#111214', lane: '#16171a', bar: 'rgba(255,255,255,.1)', barText: 'rgba(255,255,255,.62)', white: '#f6f5f1', ink: '#1a1a1a',
-  orange: '#ff6a13', orangeLit: '#ffb07a', cobalt: '#2f5bff', cobaltLit: '#8aa2ff', red: '#e0301e',
+  display: '#100d24', lane: '#151231', bar: 'rgba(255,255,255,.1)', barText: 'rgba(214,209,255,.6)', white: '#ffffff', ink: '#14112b',
+  orange: '#4fb6ff', orangeLit: '#a9dcff', cobalt: '#ffb547', cobaltLit: '#ffd99a', red: '#ff5d73', gate: '#3fd07a',
 };
-const SANS = 'Supreme, "Helvetica Neue", Arial, sans-serif';
-const MONO = '"Martian Mono", ui-monospace, monospace';
+const SANS = '"Nunito Variable", Nunito, ui-rounded, system-ui, sans-serif';
+const MONO = SANS;
 const VISIBLE_SECONDS = 3.2;
 
 export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: Props) {
@@ -146,19 +147,15 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
           let size = Math.max(11, Math.min(16, w * 0.6));
           ctx.font = `800 ${size}px ${SANS}`;
           while (size > 9 && ctx.measureText(label).width > w - 3) { size -= 1; ctx.font = `800 ${size}px ${SANS}`; }
-          ctx.fillStyle = st === MISS ? C.red : R ? C.ink : C.white;
+          ctx.fillStyle = st === MISS ? C.red : C.ink;
           ctx.textAlign = 'center';
           ctx.fillText(label, x + w / 2, bot - 7);
         }
       }
 
-      // The gate: an orange line, lit, where the notes meet the keys.
-      ctx.save();
-      ctx.shadowColor = C.orange;
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = C.orange;
-      ctx.fillRect(inset, H - 2, kw, 2);
-      ctx.restore();
+      // The gate: a green line where the notes meet the keys.
+      ctx.fillStyle = C.gate;
+      ctx.fillRect(inset, H - 3, kw, 3);
 
       // A wrong note: a red block in that key's lane, at the gate.
       if (wrongFresh && layout[engine.lastWrong.midi]) {
@@ -177,13 +174,13 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
           ctx.font = `700 15px ${MONO}`;
           const tw = ctx.measureText(text).width;
           const bx = W / 2 - tw / 2 - 16, by = H - 54;
-          ctx.fillStyle = 'rgba(17,18,20,.9)';
+          ctx.fillStyle = 'rgba(20,17,43,.92)';
           ctx.beginPath(); ctx.roundRect(bx, by, tw + 32, 32, 16); ctx.fill();
-          ctx.strokeStyle = wrongFresh ? C.red : 'rgba(255,106,19,.7)';
+          ctx.strokeStyle = wrongFresh ? C.red : 'rgba(63,208,122,.7)';
           ctx.lineWidth = 1.5;
           ctx.stroke();
           const alpha = 0.78 + 0.22 * Math.sin(performance.now() / 160);
-          ctx.fillStyle = wrongFresh ? '#ff8a7a' : `rgba(255,176,122,${alpha})`;
+          ctx.fillStyle = wrongFresh ? '#ff8a9a' : `rgba(140,236,178,${alpha})`;
           ctx.textAlign = 'center';
           ctx.fillText(text, W / 2, by + 21);
         }
@@ -197,7 +194,7 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
   return (
     <canvas
       ref={canvasRef}
-      className="lanes"
+      className="stage-canvas"
       role="button"
       aria-label={t('pause')}
       onClick={onTap}

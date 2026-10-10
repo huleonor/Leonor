@@ -20,7 +20,9 @@ export type EngineEvent =
   | { type: 'status'; ids: number[] | 'all' }
   | { type: 'state' }
   | { type: 'end' }
-  | { type: 'wrong'; midi: number };
+  | { type: 'wrong'; midi: number }
+  /** A note hit in tempo: how early (negative) or late it was, in real seconds. */
+  | { type: 'judge'; offset: number };
 
 const CHORD_WINDOW = 0.045; // seconds: notes closer than this form one chord
 const LEAD_IN = 2.2; // seconds of song time before the first note
@@ -341,6 +343,7 @@ export class Engine {
       if (best < 0) { if (!strikeOk) this.registerWrong(e.midi); return; }
       this.status[best] = HIT;
       changed.push(best);
+      this.emit({ type: 'judge', offset: (t - this.song.notes[best].time) / this.opts.speed });
     }
     if (changed.length) this.emit({ type: 'status', ids: changed });
   }

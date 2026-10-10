@@ -196,13 +196,13 @@ export function scoreBar(b: Bar) {
   return worst;
 }
 
-/** Overall level, 1 (first pieces) to 3 (advanced), from the busiest bars of the song. */
-export function songLevel(song: Song): 1 | 2 | 3 {
+/** Level 1 to 5 for the song list, from the same busiest-bars score. */
+export function songGrade(song: Song): 1 | 2 | 3 | 4 | 5 {
   const { bars } = splitBars(song);
   const scores = bars.filter(b => b.notes.length).map(scoreBar).sort((a, b) => a - b);
   if (!scores.length) return 1;
   const p80 = scores[Math.floor(scores.length * 0.8)];
-  return p80 < 5.5 ? 1 : p80 < 9 ? 2 : 3;
+  return p80 < 4.5 ? 1 : p80 < 6.5 ? 2 : p80 < 9 ? 3 : p80 < 12 ? 4 : 5;
 }
 
 export function analyseSong(song: Song): Analysis {

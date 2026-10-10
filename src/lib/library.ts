@@ -1,4 +1,5 @@
 import { createStore, del, get, keys, set } from 'idb-keyval';
+import { clearCourseProgress } from './course';
 import { parseSong } from './midi';
 import type { Progress, Settings, Song, SongEntry } from './types';
 
@@ -74,8 +75,37 @@ export async function loadSong(entry: SongEntry): Promise<Song> {
 }
 
 function titleFromFile(name: string): string {
-  const base = name.replace(/\.(mid|midi|kar)$/i, '').replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
-  return base.charAt(0).toUpperCase() + base.slice(1);
+  const base = name.replace(/\.(mid|midi|kar)$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  // "now-we-are-free" reads as "Now We Are Free"; titles already in mixed case keep theirs.
+  return base === base.toLowerCase() ? base.replace(/(^|\s)\p{L}/gu, c => c.toUpperCase()) : base.charAt(0).toUpperCase() + base.slice(1);
+}
+
+/** Reads a MIDI file without storing it, for the Add song preview. Throws a readable error. */
+export async function readMidi(file: File, slot?: SongEntry): Promise<{ song: Song; data: ArrayBuffer }> {
+  const data = await file.arrayBuffer();
+  const entry: SongEntry = {
+    id: 'preview', title: slot?.title ?? titleFromFile(file.name), composer: slot?.composer, builtIn: false,
+    timeSig: slot?.timeSig,
+  };
+  return { song: parseSong(data, entry), data };
+}
+
+/** Stores a song read by readMidi under its own id, with the title and composer he typed. */
+export async function saveImported(data: ArrayBuffer, meta: { title: string; composer?: string }, slot?: SongEntry): Promise<SongEntry> {
+  const entry: SongEntry = {
+    id: 'imp-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    title: meta.title.trim() || slot?.title || 'Untitled',
+    composer: meta.composer?.trim() || slot?.composer,
+    film: slot?.film, filmPt: slot?.filmPt, year: slot?.year, image: slot?.image,
+    collection: slot?.collection, timeSig: slot?.timeSig,
+    slot: slot?.id,
+    builtIn: false,
+    addedAt: Date.now(),
+  };
+  const song = parseSong(data, entry);
+  await set(entry.id, { entry, data } satisfies StoredSong, songStore);
+  cache.set(entry.id, song);
+  return entry;
 }
 
 export async function importMidi(file: File, slot?: SongEntry): Promise<SongEntry> {
@@ -95,10 +125,10 @@ export async function importMidi(file: File, slot?: SongEntry): Promise<SongEntr
   return entry;
 }
 
-export async function renameSong(entry: SongEntry, title: string, film?: string): Promise<SongEntry> {
+export async function renameSong(entry: SongEntry, title: string, composer?: string): Promise<SongEntry> {
   const row = await get<StoredSong>(entry.id, songStore);
   if (!row) return entry;
-  const next = { ...row.entry, title, film };
+  const next = { ...row.entry, title: title.trim() || row.entry.title, composer: composer?.trim() || undefined };
   await set(entry.id, { ...row, entry: next }, songStore);
   cache.delete(entry.id);
   return next;
@@ -107,6 +137,7 @@ export async function renameSong(entry: SongEntry, title: string, film?: string)
 export async function removeSong(entry: SongEntry): Promise<void> {
   await del(entry.id, songStore);
   await del(entry.id, progressStore).catch(() => {});
+  await clearCourseProgress(entry.id);
   cache.delete(entry.id);
 }
 
@@ -129,7 +160,7 @@ export async function recordRun(id: string, accuracy: number, speed: number): Pr
 
 const SETTINGS_KEY = 'hugos-piano:settings';
 export const DEFAULT_SETTINGS: Settings = {
-  input: 'mic', lang: 'en', naming: 'letters', view: 'notes', speed: 0.8, wait: true, hands: 'both', accompaniment: true, localSound: true, fingers: 'some', v: 3,
+  input: 'mic', lang: 'en', naming: 'letters', view: 'sheet', speed: 0.8, wait: true, hands: 'both', accompaniment: true, localSound: true, fingers: 'some', dailyGoal: 10, setupDone: false, v: 4,
 };
 
 export function loadSettings(): Settings {
@@ -143,6 +174,8 @@ export function loadSettings(): Settings {
       // v3: keys played on a MIDI keyboard sound in the app by default (read the stored version,
       // not the default's).
       if ((stored.v ?? 1) < 3) Object.assign(saved, { localSound: true, v: 3 });
+      // v4: the Simply Piano redesign leads with the scrolling staff; an existing player has set up an input.
+      if ((stored.v ?? 1) < 4) Object.assign(saved, { view: 'sheet', setupDone: true, v: 4 });
       return saved;
     }
   } catch { /* ignore */ }
