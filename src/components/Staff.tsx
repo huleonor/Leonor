@@ -164,7 +164,8 @@ export function Staff({ engine, staves, naming, fingers, judgements, onTap }: Pr
       let a = 0, b = notes.length;
       while (a < b) { const m = (a + b) >> 1; if (notes[m].time < tFrom) a = m + 1; else b = m; }
       const nextGroup = engine.groups[engine.gi];
-      const nextIds = new Set(nextGroup && nextGroup.time - now < 2.5 ? nextGroup.ids : []);
+      // Same window as engine.expected(), so a note turns blue on the staff and on its key together.
+      const nextIds = new Set(nextGroup && nextGroup.time - now <= 1.2 ? nextGroup.ids : []);
       const headRx = sp * 0.66, headRy = sp * 0.5;
       const listen = engine.opts.listen;
 

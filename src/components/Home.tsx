@@ -69,7 +69,9 @@ export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSe
     const s = info.course!.steps.find(st => { const n = info.prog[st.id]?.stars ?? 0; return n > 0 && n < 3; });
     if (s) review.push({ info, step: s, stars: info.prog[s.id].stars });
   }
-  const fresh = all.filter(i => i.stars === 0 && i.entry.id !== target?.entry.id).sort((a, b) => (a.level ?? 9) - (b.level ?? 9))[0];
+  const freshList = all.filter(i => i.stars === 0 && i.entry.id !== target?.entry.id).sort((a, b) => (a.level ?? 9) - (b.level ?? 9));
+  const reviews = review.slice(0, 3);
+  const fresh = freshList.slice(0, Math.max(0, 3 - reviews.length));
   const recent = all.filter(i => i.stars > 0).slice(0, 8);
 
   return (
@@ -129,7 +131,7 @@ export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSe
         <section className="card today" aria-labelledby="today-title">
           <h2 id="today-title">Today’s practice</h2>
           <ul className="today-list">
-            {review.slice(0, fresh ? 2 : 3).map(r => (
+            {reviews.map(r => (
               <li key={r.info.entry.id + r.step.id}>
                 <button onClick={() => onPlay(r.info, r.step)}>
                   <Cover entry={r.info.entry} className="thumb" />
@@ -141,19 +143,19 @@ export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSe
                 </button>
               </li>
             ))}
-            {fresh && fresh.next && (
-              <li>
-                <button onClick={() => onOpen(fresh)}>
-                  <Cover entry={fresh.entry} className="thumb" />
+            {fresh.map(f => (
+              <li key={f.entry.id}>
+                <button onClick={() => onOpen(f)}>
+                  <Cover entry={f.entry} className="thumb" />
                   <span className="today-text">
-                    <b>New: {fresh.entry.title}</b>
-                    <small>Level {fresh.level} · {fresh.course!.parts.length} parts</small>
+                    <b>New: {f.entry.title}</b>
+                    <small>Level {f.level} · {f.course!.parts.length} parts</small>
                   </span>
                   <span className="go-dot"><IconPlay size={14} /></span>
                 </button>
               </li>
-            )}
-            {!review.length && !fresh && <li className="fine">Every song has its stars. Add a new one in Songs.</li>}
+            ))}
+            {!reviews.length && !fresh.length && <li className="fine">Every song has its stars. Add a new one in Songs.</li>}
           </ul>
         </section>
       </div>

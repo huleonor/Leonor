@@ -30,7 +30,7 @@ function StepTile({ info, step, isNext, onStep, label }: { info: SongInfo; step:
       onClick={() => onStep(step)}
       aria-label={`${stepName(step)}${open ? '' : ', locked'}, ${stars} of 3 stars`}
     >
-      <span className="tile-badge">{!open ? <IconLock size={14} /> : step.part !== undefined && STEP_HAND[step.short] ? STEP_HAND[step.short] : step.speed >= 1 && !step.wait ? <IconSpeed size={16} /> : <IconPlay size={14} />}</span>
+      <span className={`tile-badge ${open && (step.short === 'R' || step.short === 'L') ? `hand-${step.short}` : ''}`}>{!open ? <IconLock size={14} /> : step.part !== undefined && STEP_HAND[step.short] ? STEP_HAND[step.short] : step.speed >= 1 && !step.wait ? <IconSpeed size={16} /> : <IconPlay size={14} />}</span>
       <span className="tile-name">{text}</span>
       <Stars n={stars} />
       {isNext && <span className="tile-next">Next</span>}
@@ -79,7 +79,6 @@ export function SongPage({ info, onBack, onStep, onFree, onRename, onDelete }: P
           <li>{formatTime(song.duration)}</li>
           <li>{key.name}</li>
           <li>{song.hands.length === 2 ? 'Two hands' : 'One hand'}</li>
-          <li>{course.parts.length} parts</li>
         </ul>
         <div className="song-meter wide">
           <span className="meter"><i style={{ width: `${pct * 100}%` }} /></span>
@@ -100,7 +99,7 @@ export function SongPage({ info, onBack, onStep, onFree, onRename, onDelete }: P
       </aside>
 
       <div className="course">
-        {next && <p className="course-next">Next up: <b>{stepName(next)}</b></p>}
+        <p className="course-next">{course.parts.length} parts{next && <> · Next up: <b>{stepName(next)}</b></>}</p>
         {course.parts.map(p => {
           const steps = course.steps.filter(s => s.part === p.n);
           const learnt = partLearnt(course, info.prog, p.n);

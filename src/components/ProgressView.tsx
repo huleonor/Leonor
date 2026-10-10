@@ -53,6 +53,7 @@ export function ProgressView({ settings, update, entries, infos }: Props) {
             ))}
           </ol>
           <p className="fine">Best streak: {Math.max(all.best, daily.streak.days)} {Math.max(all.best, daily.streak.days) === 1 ? 'day' : 'days'}</p>
+          <Segmented label="Daily goal, minutes" value={settings.dailyGoal} onChange={v => update({ dailyGoal: v })} options={[5, 10, 15, 20, 30].map(v => [v, String(v)] as [number, string])} />
         </section>
 
         <section className="card minutes-card" aria-labelledby="minutes-title">
@@ -70,7 +71,6 @@ export function ProgressView({ settings, update, entries, infos }: Props) {
               );
             })}
           </div>
-          <Segmented label="Daily goal, minutes" value={settings.dailyGoal} onChange={v => update({ dailyGoal: v })} options={[5, 10, 15, 20, 30].map(v => [v, String(v)] as [number, string])} />
         </section>
 
         <section className="card totals" aria-label="All time">

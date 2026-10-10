@@ -29,7 +29,7 @@ export function SongCard({ info, onOpen }: { info: SongInfo; onOpen: () => void 
       <span className="song-cover">
         <Cover entry={e} />
         {info.level && <span className={`level l${info.level}`}>Level {info.level}</span>}
-        {e.missing && <span className="add-file"><IconPlus size={18} />Add MIDI file</span>}
+        {e.missing && <span className="add-file"><IconPlus size={14} />Needs a MIDI file</span>}
       </span>
       <span className="song-text">
         <b>{e.title}</b>
@@ -58,7 +58,9 @@ export function Songs({ infos, entries, ready, onOpen, onAdd }: Props) {
     try { return (localStorage.getItem('hugos-piano:shelf2') as Shelf) || 'all'; } catch { return 'all'; }
   });
   useEffect(() => { try { localStorage.setItem('hugos-piano:shelf2', shelf); } catch { /* ignore */ } }, [shelf]);
-  const list = entries.filter(e => shelf === 'all' || shelfOf(e) === shelf).map(e => infos[e.id]).filter(Boolean);
+  // Songs waiting for their file come after the ones he can play.
+  const list = entries.filter(e => shelf === 'all' || shelfOf(e) === shelf).map(e => infos[e.id]).filter(Boolean)
+    .sort((a, b) => Number(!!a.entry.missing) - Number(!!b.entry.missing));
 
   return (
     <div className="page songs">

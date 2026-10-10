@@ -237,7 +237,6 @@ export function Practice({ song, settings, update, links, step, course, onExit, 
         {showIntro && (
           <div className="veil">
             <section className="card intro" aria-labelledby="intro-title">
-              <p className="intro-song">{song.entry.title}</p>
               <h2 id="intro-title">{title}</h2>
               <p className="intro-text">{instruction(step, hands, local.wait)}</p>
               {step && (
@@ -256,7 +255,7 @@ export function Practice({ song, settings, update, links, step, course, onExit, 
                 <button className="btn" onClick={listenFirst} disabled={pianoPct !== null}><IconHeadphones size={18} />Listen first</button>
               </div>
               {!inputOn && (
-                <p className="warn">No piano connected yet. <button className="link" onClick={onSettings}>Connect your piano</button></p>
+                <p className="no-piano"><b>No piano connected yet.</b> <button className="link" onClick={onSettings}>Connect your piano</button></p>
               )}
               {pianoPct !== null && <p className="fine">Loading the piano sound{pianoPct > 0 ? ` · ${pianoPct}%` : '…'}</p>}
             </section>
@@ -308,7 +307,7 @@ export function Practice({ song, settings, update, links, step, course, onExit, 
                   ? <button className="btn go big" onClick={() => onStep(result.next!)}><IconPlay size={18} />Next: {stepName(result.next)}</button>
                   : null}
                 <button className={`btn ${step && result.stars > 0 && result.next && result.next.id !== step.id ? '' : 'go big'}`} onClick={again}><IconRestart size={18} />Try again</button>
-                <button className="btn quiet" onClick={onExit}>{step ? 'Song' : 'Exit'}</button>
+                <button className="btn quiet" onClick={onExit}>{step ? 'Back to song' : 'Exit'}</button>
               </div>
             </section>
           </div>
