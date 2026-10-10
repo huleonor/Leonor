@@ -148,8 +148,8 @@ export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSe
                 <button onClick={() => onOpen(f)}>
                   <Cover entry={f.entry} className="thumb" />
                   <span className="today-text">
-                    <b>New: {f.entry.title}</b>
-                    <small>Level {f.level} · {f.course!.parts.length} parts</small>
+                    <b>{f.entry.title}</b>
+                    <small><span className="new-tag">New</span> · Level {f.level} · {f.course!.parts.length} parts</small>
                   </span>
                   <span className="go-dot"><IconPlay size={14} /></span>
                 </button>
