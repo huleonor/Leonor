@@ -73,7 +73,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
         cursor.style.height = `${box.bottom - box.top + 24}px`;
         if (c.line !== lastLine) {
           lastLine = c.line;
-          if (followRef.current) host.scrollTo({ top: Math.max(0, box.top - 70), behavior: 'smooth' });
+          if (followRef.current) host.scrollTo({ top: c.line === 0 ? 0 : Math.max(0, box.top - 70), behavior: 'smooth' });
         }
       }
       raf = requestAnimationFrame(frame);

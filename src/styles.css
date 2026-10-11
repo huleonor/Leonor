@@ -491,8 +491,8 @@ p { margin: 0; }
 .key.b { height: 60%; background: #221d4a; border-radius: 0 0 6px 6px; z-index: 2; box-shadow: inset 0 -4px 0 #0f0c22; }
 .klabel { position: absolute; bottom: 9px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 800; color: #5f5896; }
 .kname, .kfinger, .kbubble { display: none; }
-.key.nextR { background: var(--right); box-shadow: inset 0 -5px 0 #2f8fd6; }
-.key.nextL { background: var(--left); box-shadow: inset 0 -5px 0 #d68f1f; }
+.key.nextR { background: var(--right); box-shadow: none; }
+.key.nextL { background: var(--left); box-shadow: none; }
 .key.b.nextR { background: var(--right); box-shadow: none; }
 .key.b.nextL { background: var(--left); box-shadow: none; }
 .key.w.next .klabel { color: var(--bg); }
