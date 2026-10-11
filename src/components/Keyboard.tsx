@@ -17,7 +17,8 @@ export function Keyboard({ engine, lo, hi, naming, fingers }: Props) {
     const frame = () => {
       const now = performance.now();
       const t = engine.time;
-      const expected = new Set(engine.expected());
+      // The keys to press show only as a hint, and go away once he plays them.
+      const expected = new Set(engine.hintVisible() ? engine.expected() : []);
       const groupNotes = (engine.groups[engine.gi]?.ids ?? []).map(id => notes[id]);
       const sounding: Record<number, string> = {};
       // Binary search the first note that could still be sounding.

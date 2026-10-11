@@ -443,7 +443,7 @@ p { margin: 0; }
 .key.b { height: 60%; background: #221d4a; border-radius: 0 0 6px 6px; z-index: 2; box-shadow: inset 0 -4px 0 #0f0c22; }
 .klabel { position: absolute; bottom: 9px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 800; color: #5f5896; }
 .kname, .kfinger, .kbubble { display: none; }
-.key.w.next .klabel { color: var(--bg); }
+.key.w.next .klabel { color: #0b5d63; }
 .key.next .kname {
   display: block; position: absolute; left: 0; right: 0; bottom: 22px; text-align: center;
   font-weight: 900; font-size: 13px; color: var(--bg);
@@ -555,8 +555,12 @@ p { margin: 0; }
 .sheet-keys { flex: none; height: clamp(80px, 24vh, 190px); position: relative; border-radius: 10px; overflow: hidden; }
 .sheet-keys .keyboard { height: 100%; }
 .sheet-keys .key.w { border-radius: 0 0 6px 6px; }
-.sheet-keys .key.next, .sheet-keys .key.b.next { background: var(--teal); box-shadow: none; }
-.sheet-keys .key.next .kname { color: #04363b; }
+/* The hint: a soft teal wash with a bar along the key's front edge, fading in. */
+.key { transition: background-color .35s var(--ease), box-shadow .35s var(--ease); }
+.sheet-keys .key.w.next, .lesson .key.w.next { background: #dff6f7; box-shadow: inset 0 -6px 0 var(--teal); }
+.sheet-keys .key.b.next, .lesson .key.b.next { background: #2c6f78; box-shadow: inset 0 -5px 0 var(--teal); }
+.sheet-keys .key.next .kname, .lesson .key.next .kname { color: #0b5d63; }
+.sheet-keys .key.b.next .kname, .lesson .key.b.next .kname { color: #dff6f7; }
 .sections {
   flex: none; display: flex; gap: 12px; overflow-x: auto; padding: 14px 16px;
   background: var(--violet); scroll-snap-type: x proximity;
@@ -584,6 +588,16 @@ p { margin: 0; }
   position: absolute; top: 0; left: 0; width: 6px; border-radius: 3px; background: var(--teal); opacity: .9;
   pointer-events: none; will-change: transform;
 }
+/* The key he just pressed, as a soft dot on the staff at its pitch. */
+.press-dots { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.press-dot {
+  position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none;
+  animation: dot-in .14s var(--ease); transition: opacity .3s var(--ease);
+}
+.press-dot.ok { background: rgba(23, 138, 72, .5); box-shadow: 0 0 0 3px rgba(23, 138, 72, .16); }
+.press-dot.bad { background: rgba(217, 45, 69, .42); box-shadow: 0 0 0 3px rgba(217, 45, 69, .14); }
+.press-dot.out { opacity: 0; }
+@keyframes dot-in { from { opacity: 0; scale: .5; } }
 .seg.small button { min-height: 38px; padding: 0 12px; font-size: 13px; }
 .sheet-result {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 3;
@@ -641,8 +655,7 @@ p { margin: 0; }
 .lesson-say .lesson-noinput { font-size: 13.5px; font-weight: 700; color: #6b6585; }
 .lesson-noinput .link { font-size: 13.5px; min-height: 0; color: var(--violet); text-decoration-color: rgba(143, 77, 255, .4); }
 .lesson-keys { position: relative; padding: 0 10px 6px; min-height: 0; }
-.lesson .key.next, .lesson .key.b.next { background: var(--teal); box-shadow: none; }
-.lesson .key.next .kname { color: #04363b; }
+
 .lesson .countin-num { background: #fff; color: var(--violet); }
 
 /* The danger button */

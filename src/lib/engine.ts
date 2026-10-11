@@ -23,6 +23,8 @@ export type EngineEvent =
   | { type: 'state' }
   | { type: 'end' }
   | { type: 'wrong'; midi: number }
+  /** A key went down while playing: right or wrong, and the written note it matched, if known. */
+  | { type: 'press'; midi: number; ok: boolean; id?: number }
   /** A note hit in tempo: how early (negative) or late it was, in real seconds. */
   | { type: 'judge'; offset: number };
 
@@ -193,7 +195,8 @@ export class Engine {
   /** Wait mode: stuck for a while, or after a wrong note, the app shows which keys to press. */
   hintVisible() {
     return this.playing && this.waiting && this.countdown === 0 && (this.opts.wait || !!this.opts.follow) && !this.opts.listen
-      && (this.wrongInWait > 0 || performance.now() - this.waitSince > 3500);
+      // Like Simply Piano: help only after two wrong notes, or a long stall.
+      && (this.wrongInWait >= 2 || performance.now() - this.waitSince > 5000);
   }
 
   /** The group the player is stuck on, with the hand of each note (for the hint keyboard). */
@@ -325,10 +328,23 @@ export class Engine {
   }
 
   input(e: NoteEvent) {
-    const now = performance.now();
     if (e.type === 'off') { this.held.delete(e.midi); return; }
     this.held.add(e.midi);
     if (!this.playing || this.countdown > 0 || this.opts.listen) return;
+    // The note it matches, judged before the press can move the cursor on.
+    const g = this.groups[this.gi];
+    const wrongBefore = this.wrong;
+    const id = this.judgeInput(e);
+    const ok = this.wrong === wrongBefore;
+    const match = ok ? id ?? g?.ids.find(i => this.matches(e.midi, this.song.notes[i].midi)) : undefined;
+    // A stray overtone the mic heard in a strike is neither right nor wrong: leave it off the staff.
+    if (ok && match === undefined && e.chord) return;
+    this.emit({ type: 'press', midi: e.midi, ok, id: match });
+  }
+
+  /** Scores one key press; returns the note id it hit in tempo mode. */
+  private judgeInput(e: NoteEvent): number | undefined {
+    const now = performance.now();
     // The mic reports a strike ~0.1 s after it happened: judge it at the moment it was played.
     const lag = e.at !== undefined && !this.waiting ? Math.max(0, now - e.at) / 1000 : 0;
     const at = e.at ?? now;
@@ -343,7 +359,7 @@ export class Engine {
     // In a strike the mic heard several notes: a stray overtone next to a right note is not a mistake.
     const strikeOk = e.chord ? e.chord.some(relevantNote) : false;
     if (this.opts.wait || this.opts.follow) {
-      if (!relevantNote(e.midi)) { if (!strikeOk) this.registerWrong(e.midi); return; }
+      if (!relevantNote(e.midi)) { if (!strikeOk) this.registerWrong(e.midi); return undefined; }
       if (g && this.waiting && this.trySatisfy(g, now)) {
         this.markHit(g, changed);
         this.waiting = false;
@@ -360,12 +376,13 @@ export class Engine {
           if (this.status[id] === PENDING && d <= tol && d < bestDt && this.matches(e.midi, n.midi)) { best = id; bestDt = d; }
         }
       }
-      if (best < 0) { if (!strikeOk) this.registerWrong(e.midi); return; }
+      if (best < 0) { if (!strikeOk) this.registerWrong(e.midi); return undefined; }
       this.status[best] = HIT;
       changed.push(best);
       this.emit({ type: 'judge', offset: (t - this.song.notes[best].time) / this.opts.speed });
     }
     if (changed.length) this.emit({ type: 'status', ids: changed });
+    return this.opts.wait || this.opts.follow ? undefined : changed[0];
   }
 
   stats() {

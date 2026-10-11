@@ -22,7 +22,17 @@ export interface Engraved {
   paintTies: (now: number) => void;
   /** The token under a click, for "start from here". */
   tokenAt: (startChar: number | undefined) => AbcToken | undefined;
+  /** Where a note would sit on line `line`: the y of its notehead and the spacing of the staff lines. */
+  pitchY: (line: number, midi: number, hand?: 'R' | 'L') => { y: number; gap: number } | null;
+  /** The stop holding this written note. */
+  stopOf: (id: number) => Stop | undefined;
 }
+
+// Steps up the staff from C for each pitch class, spelled with sharps or with flats.
+const SHARP_STEP = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
+const FLAT_STEP = [0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6];
+// The bottom line of each clef: E4 on the treble staff, G2 on the bass staff.
+const BOTTOM = { treble: 4 * 7 + 2, bass: 2 * 7 + 4 };
 
 function rectIn(el: Element, host: HTMLElement) {
   const r = el.getBoundingClientRect(), h = host.getBoundingClientRect();
@@ -36,8 +46,8 @@ interface Options {
   fit?: boolean;
   /** Colour played notes green and missed ones red. */
   feedback: () => boolean;
-  /** Colour the notes he has to play next. */
-  highlightNext?: boolean;
+  /** Colour the notes he has to play next, while this says so. */
+  highlightNext?: () => boolean;
   onClickNote?: (startChar: number | undefined) => void;
 }
 
@@ -89,7 +99,7 @@ export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, s
       if (st.some(s => s === MISS)) color = INK.miss;
       else if (st.every(s => s === HIT || s === AUTO) && mine) color = INK.hit;
     }
-    if (o.highlightNext && mine && color === INK.ink && engine.groups[engine.gi]?.ids.some(id => tk.ids.includes(id))) color = INK.next;
+    if (o.highlightNext?.() && mine && color === INK.ink && engine.groups[engine.gi]?.ids.some(id => tk.ids.includes(id))) color = INK.next;
     for (const el of elsOf(tk)) {
       el.style.fill = color;
       el.querySelectorAll?.('path').forEach(p => ((p as SVGElement).style.fill = color));
@@ -128,8 +138,30 @@ export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, s
     stops.push({ time: tk.time, x, line: tk.line, ids: [...tk.ids] });
   }
 
+  // Each staff's top and bottom line, per line of music, to place a played note at its pitch.
+  const staves = new Map<string, { top: number; bottom: number }>();
+  paper.querySelectorAll('.abcjs-staff').forEach(el => {
+    const m = /abcjs-l(\d+).*abcjs-v(\d+)|abcjs-v(\d+).*abcjs-l(\d+)/.exec(el.getAttribute('class') ?? '');
+    if (!m) return;
+    const r = rectIn(el, host);
+    staves.set(`${m[1] ?? m[4]}:${m[2] ?? m[3]}`, { top: r.top, bottom: r.top + r.height });
+  });
+  const stepOf = engine.song.fifths < 0 ? FLAT_STEP : SHARP_STEP;
+  const stopById = new Map<number, Stop>();
+  for (const s of stops) for (const id of s.ids) stopById.set(id, s);
+
   return {
     tokens, stops, lines, paintAll,
+    pitchY: (line, midi, hand) => {
+      const v = score.voices.length > 1 ? score.voices.findIndex(x => x.hand === (hand ?? (midi >= 60 ? 'R' : 'L'))) : 0;
+      const st = staves.get(`${line}:${Math.max(0, v)}`);
+      const voice = score.voices[Math.max(0, v)];
+      if (!st || !voice) return null;
+      const gap = (st.bottom - st.top) / 4;
+      const step = Math.floor(midi / 12) * 7 + stepOf[midi % 12] - 7 - BOTTOM[voice.clef];
+      return { y: st.bottom - step * gap / 2, gap };
+    },
+    stopOf: id => stopById.get(id),
     paintIds: ids => {
       const seen = new Set<AbcToken>();
       for (const id of ids) for (const tk of byNote.get(id) ?? []) if (!seen.has(tk)) { seen.add(tk); paint(tk); }
