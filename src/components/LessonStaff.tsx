@@ -75,12 +75,14 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
         // The finger bubble over the notes he has to play next.
         const g = engine.groups[engine.gi];
         const stop = g && eg.stops.find(s => s.ids.some(id => g.ids.includes(id)));
+        const fingers = g ? [...new Set(g.ids.map(id => engine.song.notes[id].finger).filter((f): f is number => !!f))] : [];
         const n = g && engine.song.notes[g.ids[0]];
-        if (stop && n?.finger && !engine.opts.listen) {
+        if (stop && n && fingers.length && !engine.opts.listen) {
           bubble.style.display = 'flex';
           bubble.style.transform = `translate(${stop.x - offset - 22}px, ${Math.max(0, (eg.lines[0]?.top ?? 40) + parseFloat(line.style.top) - 66)}px)`;
           const num = bubble.querySelector('b')!;
-          if (num.textContent !== String(n.finger)) num.textContent = String(n.finger);
+          const label = fingers.join(' ');
+          if (num.textContent !== label) num.textContent = label;
           bubble.classList.toggle('left', n.hand === 'L');
         } else bubble.style.display = 'none';
       }

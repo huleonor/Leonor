@@ -23,6 +23,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
   const hostRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
+  const pillsRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const feedbackRef = useRef(feedback);
   const followRef = useRef(follow);
@@ -47,7 +48,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
     const scale = pageW < 640 ? 0.9 : 1.05;
     const perBar = Math.max(150, density(song) * 26 + 50) * scale;
     const mpl = Math.max(1, Math.min(5, Math.floor(pageW / perBar)));
-    const score = buildScore(song, mpl, fingers, { title, composer, sections });
+    const score = buildScore(song, mpl, fingers, { sections });
     const eg = engrave(host, paper, engine, score, {
       staffwidth: pageW / scale - 16,
       scale,
@@ -59,6 +60,21 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
       },
     });
     repaint.current = eg.paintAll;
+    // Section labels: abcjs boxes them square; draw them as padded pills like Simply Piano's "Intro".
+    const pills = pillsRef.current!;
+    pills.replaceChildren();
+    const hostBox = host.getBoundingClientRect();
+    paper.querySelectorAll<SVGGElement>('.abcjs-part').forEach(g => {
+      const t = g.querySelector('text');
+      if (!t) return;
+      const r = t.getBoundingClientRect();
+      const pill = document.createElement('span');
+      pill.className = 'part-pill';
+      pill.textContent = t.textContent ?? '';
+      pill.style.transform = `translate(${r.left - hostBox.left + host.scrollLeft - 6}px, ${r.top - hostBox.top + host.scrollTop - 6}px)`;
+      pills.appendChild(pill);
+      g.style.visibility = 'hidden';
+    });
     eg.paintAll();
     const off = engine.on(e => {
       if (e.type !== 'status') return;
@@ -86,7 +102,11 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
 
   return (
     <div className="score" ref={hostRef}>
-      <div className="score-page"><div ref={paperRef} /></div>
+      <div className="score-page">
+        <header className="score-head"><h1>{title}</h1>{composer && <p>{composer}</p>}</header>
+        <div ref={paperRef} />
+      </div>
+      <div ref={pillsRef} aria-hidden="true" />
       <div ref={cursorRef} className="score-cursor" aria-hidden="true" />
     </div>
   );

@@ -11,7 +11,7 @@ import { usePracticeClock } from '../lib/practiceClock';
 import type { Settings } from '../lib/types';
 import {
   IconAutoScroll, IconCap, IconCheck, IconChevronDown, IconChevronUp, IconExit, IconFeedback, IconMagic, IconNotes,
-  IconPlay, IconRestart, IconSpeaker, IconStop,
+  IconKeys, IconPlay, IconRestart, IconSpeaker, IconStop,
 } from './Icons';
 import { Keyboard } from './Keyboard';
 import { ScoreView } from './ScoreView';
@@ -139,6 +139,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
           {tool(feedback, 'Feedback', <IconFeedback size={24} />, () => setFeedback(f => !f), feedback)}
           {tool(scroll === 'magic', 'Magic scroll', <IconMagic size={24} />, () => setScroll('magic'), scroll === 'magic')}
           {tool(scroll === 'auto', 'Auto scroll', <IconAutoScroll size={24} />, () => setScroll('auto'), scroll === 'auto')}
+          {!inputOn && tool(false, 'Connect', <span className="tool-alert"><IconKeys size={24} /></span>, onSettings)}
           {tool(false, 'Exit', <IconExit size={24} />, onExit)}
         </header>
       )}
@@ -164,28 +165,15 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
       <main className="sheet">
         <ScoreView engine={engine} fingers={settings.fingers} feedback={feedback} follow title={song.entry.title} composer={byLine(song.entry) || undefined} sections={labels} onSeek={seek} />
 
-        {!result && (mode === 'listen' || tempoMode || atStart || !inputOn) && (
-          <div className="sheet-status" role="status">
-            {mode === 'listen' ? (
-              <button className="btn" onClick={() => setMode('play')}><IconStop size={16} />Stop listening</button>
-            ) : tempoMode ? (
-              <>
-                <button className="btn go" onClick={startTempo}>{engine.playing ? <><IconStop size={16} />Stop</> : <><IconPlay size={16} />{engine.started ? 'Continue' : 'Start'}</>}</button>
-                <div className="seg small" role="radiogroup" aria-label="Speed">
-                  {SPEEDS.map(v => <button key={v} role="radio" aria-checked={speed === v} className={speed === v ? 'on' : ''} onClick={() => setSpeed(v)}>{formatSpeed(v)}</button>)}
-                </div>
-              </>
-            ) : (
-              <p className="status-text">
-                {!inputOn
-                  ? <>Connect your piano to play along. <button className="link" onClick={onSettings}>Connect</button></>
-                  : atStart ? 'Start playing when you’re ready. The notes turn green as you play them.' : 'Keep going: the score waits for you.'}
-              </p>
-            )}
-            {mode === 'play' && !atStart && <button className="icon-btn ghost" onClick={restart} aria-label="From the start"><IconRestart /></button>}
+        {!result && tempoMode && (
+          <div className="sheet-status" role="group" aria-label="Tempo">
+            <button className="btn go" onClick={startTempo}>{engine.playing ? <><IconStop size={16} />Stop</> : <><IconPlay size={16} />{engine.started ? 'Go on' : 'Start'}</>}</button>
+            <div className="seg small" role="radiogroup" aria-label="Speed">
+              {SPEEDS.map(v => <button key={v} role="radio" aria-checked={speed === v} className={speed === v ? 'on' : ''} onClick={() => setSpeed(v)}>{formatSpeed(v)}</button>)}
+            </div>
           </div>
         )}
-        {!result && mode === 'play' && !tempoMode && !atStart && inputOn && (
+        {!result && mode === 'play' && !tempoMode && !atStart && (
           <button className="sheet-restart" onClick={restart} aria-label="From the start"><IconRestart size={20} /></button>
         )}
 

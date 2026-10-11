@@ -626,7 +626,10 @@ p { margin: 0; }
   width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;
   background: rgba(20, 17, 43, .9); color: var(--ink);
 }
-.score-page { max-width: 1120px; margin: 0 auto; padding: 44px 12px 120px; }
+.score-page { max-width: 1120px; margin: 0 auto; padding: 12px 12px 120px; }
+.score-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 0 10px 2px; font-family: Georgia, 'Times New Roman', serif; color: var(--lesson-ink); }
+.score-head h1 { font-size: 20px; font-weight: 700; letter-spacing: 0; }
+.score-head p { font-style: italic; font-size: 15px; color: #4a4566; }
 .score-page svg { display: block; }
 .score .abcjs-title { font-weight: 700; }
 .score-cursor {
@@ -640,7 +643,8 @@ p { margin: 0; }
   max-width: min(520px, calc(100% - 24px));
 }
 .sheet-status .btn { min-height: 42px; }
-.status-text { font-weight: 700; font-size: 14px; color: var(--ink-2); padding-right: 6px; }
+.tool-alert { position: relative; display: grid; }
+.tool-alert::after { content: ''; position: absolute; top: -2px; right: -4px; width: 9px; height: 9px; border-radius: 50%; background: var(--flame); }
 .seg.small button { min-height: 32px; padding: 0 10px; font-size: 13px; }
 .sheet-result {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 3;
@@ -724,7 +728,10 @@ p { margin: 0; }
 }
 
 /* Section labels set into the score, like Simply Piano's boxed "Intro" */
-.score .abcjs-part text { fill: var(--violet) !important; font-family: var(--font) !important; font-weight: 800 !important; font-size: 17px; }
-.score .abcjs-part rect, .score .abcjs-part path { fill: none !important; stroke: var(--violet) !important; stroke-width: 2px; rx: 7px; ry: 7px; }
+.part-pill {
+  position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;
+  padding: 3px 12px; border: 2px solid var(--violet); border-radius: 10px; background: #fff;
+  color: var(--violet); font-weight: 800; font-size: 15px; line-height: 1.2;
+}
 .section.next { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--go); }
 .result-line { color: var(--ink-2); font-weight: 700; font-size: 14.5px; }
