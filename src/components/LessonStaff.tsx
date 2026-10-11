@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { buildScore, density } from '../lib/abc';
 import type { Engine } from '../lib/engine';
 import { cursorAt, engrave } from '../lib/engrave';
+import { pressDots } from '../lib/pressDots';
 import { IconHand } from './Icons';
 
 interface Props {
@@ -44,7 +45,8 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
       staffwidth: bars * perBar,
       scale,
       feedback: () => feedbackRef.current,
-      highlightNext: true,
+      // The notes to play turn teal only as a hint, so he reads the staff first.
+      highlightNext: () => engine.hintVisible(),
     });
     eg.paintAll();
     let nextIds: number[] = [];
@@ -58,15 +60,20 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
       if (e.type === 'state') repaintNext();
     });
     repaintNext();
+    const dots = document.createElement('div');
+    dots.className = 'press-dots';
+    line.appendChild(dots);
+    const offDots = pressDots(engine, eg, dots);
 
     // Centre the line in the stage, but keep it close under the header on tall screens.
     const svgH = paper.getBoundingClientRect().height;
     line.style.top = `${Math.max(0, Math.min((size.h - svgH) / 2, 80)) + 14}px`;
 
-    let raf = 0, offset = -1;
+    let raf = 0, offset = -1, hint = false;
     const anchor = size.w * 0.3;
     const frame = () => {
       eg.paintTies(engine.time);
+      if (engine.hintVisible() !== hint) { hint = !hint; repaintNext(); }
       const c = cursorAt(eg.stops, engine.time);
       if (c) {
         const target = c.x - anchor;
@@ -89,7 +96,7 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    return () => { cancelAnimationFrame(raf); off(); };
+    return () => { cancelAnimationFrame(raf); off(); offDots(); dots.remove(); };
   }, [engine, from, to, size.w, size.h]);
 
   return (

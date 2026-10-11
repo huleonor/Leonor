@@ -19,6 +19,8 @@ export interface AbcScore {
   measuresPerLine: number;
   firstMeasure: number;
   lineCount: number;
+  /** The staves top to bottom, as abcjs numbers its voices (abcjs-v0, abcjs-v1). */
+  voices: { hand: Hand; clef: 'treble' | 'bass' }[];
 }
 
 const DURATIONS = [24, 16, 12, 8, 6, 4, 3, 2, 1]; // in 16ths, all writable as one symbol
@@ -197,7 +199,8 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
   }
 
   tokens.sort((a, b) => a.time - b.time || a.start - b.start);
-  return { abc, tokens, measuresPerLine, firstMeasure, lineCount };
+  const voices = (['R', 'L'] as const).filter(h => hands.includes(h)).map(hand => ({ hand, clef: (hand === 'R' ? rClef : lClef) as 'treble' | 'bass' }));
+  return { abc, tokens, measuresPerLine, firstMeasure, lineCount, voices };
 }
 
 /** How many symbols per bar, on average, for the busier hand. */

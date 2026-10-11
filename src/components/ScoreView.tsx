@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { buildScore, density } from '../lib/abc';
 import type { Engine } from '../lib/engine';
 import { cursorAt, engrave } from '../lib/engrave';
+import { pressDots } from '../lib/pressDots';
 import type { FingerMode } from '../lib/types';
 
 interface Props {
@@ -24,6 +25,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
   const paperRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const pillsRef = useRef<HTMLDivElement>(null);
+  const dotsRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const width = size.w;
   const feedbackRef = useRef(feedback);
@@ -46,10 +48,11 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
     const host = hostRef.current!, paper = paperRef.current!, cursor = cursorRef.current!;
     const song = engine.song;
     const pageW = Math.min(width - 24, 1100);
-    // A grand-staff system is about 210 units tall: at least one whole system fits in the card.
-    const scale = Math.max(0.62, Math.min(1.05, (size.h - 70) / 210));
-    const perBar = Math.max(150, density(song) * 26 + 50) * scale;
-    const mpl = Math.max(1, Math.min(5, Math.floor(pageW / perBar)));
+    // Read from the music stand: a grand-staff system (about 190 units) fills most of the card's
+    // height, and a line holds only as many bars as stay roomy at that size.
+    const scale = Math.max(0.9, Math.min(1.45, (size.h - 40) / 190));
+    const perBar = Math.max(240, density(song) * 34 + 80) * scale;
+    const mpl = Math.max(1, Math.min(4, Math.floor(pageW / perBar)));
     const score = buildScore(song, mpl, fingers, { sections });
     const eg = engrave(host, paper, engine, score, {
       staffwidth: (pageW - 30) / scale,
@@ -79,6 +82,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
       g.style.visibility = 'hidden';
     });
     eg.paintAll();
+    const offDots = pressDots(engine, eg, dotsRef.current!);
     const off = engine.on(e => {
       if (e.type !== 'status') return;
       if (e.ids === 'all') eg.paintAll(); else eg.paintIds(e.ids);
@@ -100,7 +104,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    return () => { cancelAnimationFrame(raf); off(); repaint.current = () => {}; };
+    return () => { cancelAnimationFrame(raf); off(); offDots(); repaint.current = () => {}; };
   }, [engine, width, size.h, fingers, title, composer, sections]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -111,6 +115,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
       </div>
       <div ref={pillsRef} aria-hidden="true" />
       <div ref={cursorRef} className="score-cursor" aria-hidden="true" />
+      <div ref={dotsRef} className="press-dots" aria-hidden="true" />
     </div>
   );
 }
