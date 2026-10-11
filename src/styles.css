@@ -637,55 +637,69 @@ p { margin: 0; }
 }
 .sheet-result h2 { font-size: 22px; }
 
-/* ---------- Lesson (Teach me) ---------- */
+/* ---------- Lesson (Teach me): Simply Piano's lesson page ---------- */
+/* Grey page, a pale band where the staff sits, a quiet bar of grey tiles, a cream keyboard. */
 .lesson {
-  height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) clamp(70px, 23vh, 112px);
-  background: var(--lesson-bg); color: var(--lesson-ink); padding: 0 var(--safe-r) var(--safe-b) var(--safe-l);
+  height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) clamp(62px, 19vh, 96px);
+  background: linear-gradient(180deg, #8e8b88 0%, #b9b6b1 22%, #ecebe7 40%, #f1f0ec 60%, #b9b6b1 84%, #8e8b88 100%);
+  color: #1d1b1e; padding: 0 var(--safe-r) var(--safe-b) var(--safe-l);
 }
-.lesson-bar { display: flex; align-items: center; gap: 16px; padding: 12px 18px 4px; min-width: 0; }
-.lesson-pause {
-  width: 56px; height: 56px; flex: none; border-radius: 16px; display: grid; place-items: center;
-  background: var(--lesson-chip); color: #fff; box-shadow: 0 3px 0 #8d85a3;
+.lesson.view-notes { background: #100d24; }
+.lesson-bar { display: flex; align-items: center; gap: 14px; padding: 12px 20px 0; min-width: 0; position: relative; z-index: 3; }
+.lesson-pause, .lesson-arrow {
+  flex: none; display: grid; place-items: center; border-radius: 10px;
+  background: rgba(110, 102, 122, .62); color: #f3f1f6; transition: background .15s;
 }
-.lesson-pause:active { transform: translateY(2px); box-shadow: 0 1px 0 #8d85a3; }
+.lesson-pause { width: 50px; height: 50px; border-radius: 12px; }
+.lesson-pause:active, .lesson-arrow:active { background: rgba(80, 72, 94, .75); }
 .lesson-say { flex: 1; min-width: 0; }
-.lesson-say small { display: block; color: #6b6585; font-size: 13px; font-weight: 800; }
-.lesson-say p { font-size: 20px; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lesson-say em { font-style: normal; color: var(--miss-paper); }
-.lesson-nav { display: flex; align-items: center; gap: 10px; flex: none; }
-.lesson-arrow {
-  width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
-  background: var(--lesson-chip); color: #fff;
+.lesson-noinput {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border-radius: 10px;
+  background: rgba(110, 102, 122, .35); color: #fff; font-size: 13.5px; font-weight: 700;
 }
-.lesson-arrow:disabled { opacity: .4; }
+.lesson-noinput i { width: 8px; height: 8px; border-radius: 50%; background: var(--flame); }
+.lesson-nav { display: flex; align-items: center; gap: 12px; flex: none; }
+.lesson-arrow { width: 36px; height: 36px; }
+.lesson-arrow:disabled { background: rgba(110, 102, 122, .3); color: rgba(243, 241, 246, .55); }
 .lesson-count {
-  position: relative; width: 250px; height: 46px; border-radius: 12px; overflow: hidden;
-  background: #6b6182; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 14px;
-  font-size: 19px; font-weight: 900;
+  position: relative; width: 136px; height: 36px; border-radius: 9px; overflow: hidden;
+  background: #4a3f61; color: #fff; display: flex; align-items: center; justify-content: flex-end; padding: 0 12px;
+  font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .02em;
 }
-.lesson-count small { position: relative; font-size: 13px; font-weight: 800; color: #ece6ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lesson-count i { position: absolute; inset: 0 auto 0 0; background: var(--violet); transition: width .3s var(--ease); }
+.lesson-count i { position: absolute; inset: 0 auto 0 0; background: #8a5cf0; transition: width .4s var(--ease); }
 .lesson-count span { position: relative; }
 .lesson-stage { position: relative; min-height: 0; overflow: hidden; }
 .lesson.view-notes .lesson-stage { background: #100d24; margin: 0 10px; border-radius: 16px 16px 0 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .lesson-staff { position: absolute; inset: 0; overflow: hidden; }
-.lesson-line { position: absolute; left: 0; top: 0; will-change: transform; }
+.lesson-line { position: absolute; left: 0; top: 0; z-index: 2; will-change: transform; }
 .lesson-line svg { display: block; overflow: visible; }
-.finger-bubble {
-  position: absolute; left: 0; top: 0; z-index: 2; display: none; flex-direction: column; align-items: center; justify-content: center;
-  width: 46px; height: 54px; border-radius: 10px; background: #5b2a86; color: #e7d6ff; pointer-events: none;
-}
-.finger-bubble b { color: #fff; font-size: 14px; font-weight: 900; margin-top: -4px; }
-.finger-bubble::after { content: ''; position: absolute; bottom: -7px; left: 50%; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: #5b2a86; }
-.finger-bubble.left { background: #7a4b12; color: #ffe2b8; }
-.finger-bubble.left::after { border-top-color: #7a4b12; }
 .lesson-start {
   position: absolute; inset: 0 10px 6px; z-index: 3; border-radius: 0 0 8px 8px;
   display: flex; align-items: center; gap: 10px; justify-content: center; background: rgba(240, 238, 233, .82);
 }
-.lesson-say .lesson-noinput { font-size: 13.5px; font-weight: 700; color: #6b6585; }
-.lesson-noinput .link { font-size: 13.5px; min-height: 0; color: var(--violet); text-decoration-color: rgba(143, 77, 255, .4); }
-.lesson-keys { position: relative; padding: 0 10px 6px; min-height: 0; }
+.lesson-keys { position: relative; min-height: 0; background: #1a1719; padding-top: 4px; }
+.lesson .keyboard { height: 100%; }
+.lesson .key.w { background: #f3efe0; border: 0; border-right: 2px solid #1a1719; border-radius: 0 0 3px 3px; box-shadow: none; }
+.lesson .key.b { height: 58%; background: #1d1b1e; border-radius: 0 0 3px 3px; box-shadow: inset 0 -3px 0 #000; }
+.lesson .klabel { display: none; }
+.lesson .key.down, .lesson .key.hitR, .lesson .key.hitL { background: #b16dff; box-shadow: none; }
+.lesson .key.wrong { background: #ff6b6b; }
+.lesson .key.held .kbubble {
+  top: auto; bottom: 6px; padding: 0; background: none; color: #fff; font-size: 14px; font-weight: 800;
+}
+.lesson .key.b.held .kbubble { font-size: 10px; bottom: 4px; }
+.lesson .key.w.next, .lesson .key.b.next { background: #ffbd3a; box-shadow: none; }
+.lesson .key.next .kname, .lesson .key.next .kfinger { display: none; }
+
+/* The beam of light where the music is: always there, softly; brighter and breathing when stuck. */
+.now-beam {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 80px; pointer-events: none; z-index: 1;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .55) 50%, rgba(255, 255, 255, 0));
+  transition: opacity .5s var(--ease);
+}
+.now-beam.on { animation: beam-breathe 1.6s ease-in-out infinite; background: linear-gradient(90deg, rgba(255, 246, 214, 0), rgba(255, 246, 214, .95) 50%, rgba(255, 246, 214, 0)); }
+@keyframes beam-breathe { 50% { opacity: .55; } }
 
 .lesson .countin-num { background: #fff; color: var(--violet); }
 
@@ -695,12 +709,10 @@ p { margin: 0; }
 
 @media (max-width: 760px) {
   .sheet-meta span { display: none; }
-  .lesson-count { width: 120px; }
-  .lesson-say p { font-size: 17px; }
 }
 @media (max-height: 430px) {
   .lesson-bar { padding-top: 8px; }
-  .lesson-pause { width: 48px; height: 48px; }
+  .lesson-pause { width: 44px; height: 44px; }
 }
 
 /* Section labels set into the score, like Simply Piano's boxed "Intro" */

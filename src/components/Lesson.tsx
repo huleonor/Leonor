@@ -181,15 +181,15 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
     <div className={`lesson view-${settings.view}`}>
       <header className="lesson-bar">
         <button className="lesson-pause" onClick={engine.playing ? pause : () => setPaused(true)} aria-label="Pause"><IconPause size={26} /></button>
+        {/* Nothing to read but the music: the instruction is for screen readers only. */}
         <div className="lesson-say" role="status" aria-live="polite">
-          <p>{say.wrong ? <><em>{say.wrong}.</em> {say.text}</> : say.text}</p>
-          {!inputOn && <p className="lesson-noinput">No piano connected. <button className="link" onClick={onSettings}>Connect</button></p>}
+          <p className="sr-only">{say.wrong ? `${say.wrong}. ${say.text}` : say.text}</p>
+          {!inputOn && <button className="lesson-noinput" onClick={onSettings}><i />Connect your piano</button>}
         </div>
         <div className="lesson-nav">
           <button className="lesson-arrow" onClick={onPrev} disabled={!onPrev} aria-label="Previous step"><IconArrowLeft size={24} /></button>
           <div className="lesson-count" aria-label={`${section.title}, step ${index + 1} of ${section.steps.length}: ${stepLabel(step)}`}>
             <i style={{ width: `${((index + (flash?.good ? 1 : stats.total ? stats.hit / stats.total : 0)) / section.steps.length) * 100}%` }} />
-            <small>{stepLabel(step)}{!step.wait ? ` ${formatSpeed(speed)}` : ''}</small>
             <span>{index + (flash?.good ? 1 : 0)}/{section.steps.length}</span>
           </div>
           <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label="Next step"><IconArrowRight size={24} /></button>
@@ -199,7 +199,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
       <main className="lesson-stage">
         {settings.view === 'notes'
           ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={0} onTap={pause} />
-          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback />}
+          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
         <Countdown engine={engine} />
         {flash && <p className={`lesson-flash ${flash.good ? 'good' : ''}`} role="status">{flash.text}</p>}
       </main>
