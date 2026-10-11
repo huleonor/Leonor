@@ -1,3 +1,4 @@
+import type { FingerMode } from '../lib/types';
 import { useEffect, useRef, useState } from 'react';
 import { buildScore, density } from '../lib/abc';
 import type { Engine } from '../lib/engine';
@@ -9,6 +10,8 @@ interface Props {
   from: number;
   to: number;
   feedback: boolean;
+  /** Finger numbers over the notes: every note, only where the hand moves, or none (set by the coach). */
+  fingers?: FingerMode;
   /** One-hand step: only that hand's notes are printed. */
   only?: 'R' | 'L';
 }
@@ -17,7 +20,7 @@ interface Props {
  * One section as a single engraved line that slides left as he plays, Simply Piano style: the notes
  * to play next sit under a soft beam of light at a third of the width, fingers printed over them.
  */
-export function LessonStaff({ engine, from, to, feedback, only }: Props) {
+export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
@@ -43,7 +46,7 @@ export function LessonStaff({ engine, from, to, feedback, only }: Props) {
     // bass's bottom line) fills the stage, a few notes to the screen.
     const scale = Math.max(1, Math.min(2.4, (size.h - 70) / 125));
     const perBar = Math.max(170, density(song) * 34 + 60);
-    const score = buildScore(song, bars, 'all', { from, to, only });
+    const score = buildScore(song, bars, fingers, { from, to, only });
     const eg = engrave(line, paper, engine, score, {
       staffwidth: bars * perBar,
       scale,
@@ -94,7 +97,7 @@ export function LessonStaff({ engine, from, to, feedback, only }: Props) {
     };
     raf = requestAnimationFrame(frame);
     return () => { cancelAnimationFrame(raf); off(); offDots(); dots.remove(); };
-  }, [engine, from, to, only, size.w, size.h]);
+  }, [engine, from, to, only, fingers, size.w, size.h]);
 
   return (
     <div className="lesson-staff" ref={hostRef}>

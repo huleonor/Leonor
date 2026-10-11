@@ -7,6 +7,8 @@ import type { Settings, SongEntry } from '../lib/types';
 import { IconBluetooth, IconFlame, IconKeys, IconMic, IconPlay, IconStar } from './Icons';
 import { stepName, Stars } from './ui';
 import { SheetThumb } from './SheetThumb';
+import { DailyCard, useSession } from './Learn';
+import type { Playable } from '../lib/path';
 import { byLine, SongCard } from './Songs';
 
 export function useDaily() {
@@ -50,6 +52,7 @@ interface Props {
   onOpen: (info: SongInfo) => void;
   onPlay: (info: SongInfo, step: CourseStep) => void;
   onBrowse: () => void;
+  onSession: (items: Playable[], from: number) => void;
 }
 
 const SETUP: [Source, string, string, (p: { size?: number }) => React.ReactElement][] = [
@@ -58,8 +61,9 @@ const SETUP: [Source, string, string, (p: { size?: number }) => React.ReactEleme
   ['mic', 'Microphone', 'Any piano, the phone listens', IconMic],
 ];
 
-export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSetup, onOpen, onPlay, onBrowse }: Props) {
+export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSetup, onOpen, onPlay, onBrowse, onSession }: Props) {
   const daily = useDaily();
+  const session = useSession();
   const target = ready ? continueTarget() : undefined;
 
   // Today's practice: polish a step that has one or two stars, then something new.
@@ -103,6 +107,8 @@ export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSe
           <button className="link" onClick={onSkipSetup}>Later</button>
         </section>
       )}
+
+      <DailyCard items={session} onStart={onSession} />
 
       <div className="home-grid">
         {target && target.next ? (

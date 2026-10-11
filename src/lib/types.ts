@@ -56,6 +56,8 @@ export interface Song {
   ticksToSeconds: (ticks: number) => number;
   hands: Hand[];
   range: [number, number];
+  /** Highest mastery playing this piece well can prove (0–1); set on course pieces and exercises. */
+  ceiling?: number;
 }
 
 export interface Progress {

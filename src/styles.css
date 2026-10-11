@@ -585,13 +585,22 @@ p { margin: 0; }
 @keyframes glow-breathe { 50% { opacity: .55; } }
 
 /* A short step done: one word, then the next step. */
-.lesson-flash {
+.lesson-flash-wrap {
   position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 4;
-  padding: 12px 26px; border-radius: 999px; background: var(--lesson-ink); color: #fff;
-  font-size: 22px; font-weight: 900; animation: flash-in .3s var(--ease);
+  display: grid; justify-items: center; gap: 10px; width: min(520px, calc(100% - 32px)); animation: flash-in .3s var(--ease);
 }
+.lesson-flash {
+  padding: 12px 26px; border-radius: 999px; background: var(--lesson-ink); color: #fff;
+  font-size: 22px; font-weight: 900;
+}
+/* The coach says what it changed and why, in one line. */
+.coach-note {
+  padding: 8px 14px; border-radius: 10px; background: rgba(74, 63, 97, .9); color: #fff;
+  font-size: 14.5px; font-weight: 700; text-align: center; line-height: 1.35;
+}
+.coach-note.inline { background: rgba(134, 68, 247, .16); color: var(--ink); }
 .lesson-flash.good { background: var(--hit-paper); }
-@keyframes flash-in { from { opacity: 0; transform: translate(-50%, -30%) scale(.9); } }
+@keyframes flash-in { from { opacity: 0; transform: translate(-50%, -40%) scale(.94); } }
 .sections {
   flex: none; display: flex; gap: 12px; overflow-x: auto; padding: 14px 16px;
   background: var(--violet); scroll-snap-type: x proximity;
@@ -777,3 +786,78 @@ p { margin: 0; }
   .score-head p { font-size: 13px; }
   .score-page { padding-top: 6px; }
 }
+
+/* ---------- Today's session ---------- */
+.card.daily { margin-bottom: 16px; display: grid; gap: 14px; }
+.daily-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.daily-head h2 { font-size: 21px; }
+.daily-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.daily-list li { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: var(--r); background: var(--surface-2); }
+.daily-list li.now { box-shadow: inset 0 0 0 2px var(--go); }
+.daily-list li.done { opacity: .62; }
+.daily-dot {
+  flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--raised); color: var(--ink); font-weight: 900; font-size: 14px;
+}
+.daily-list li.now .daily-dot { background: var(--go); color: var(--go-ink); }
+.daily-list li.done .daily-dot { background: var(--go-edge); color: #fff; }
+.daily-text { display: grid; gap: 2px; min-width: 0; }
+.daily-text small { color: var(--ink-3); font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.daily-text b { font-size: 15.5px; font-weight: 900; }
+.daily-text em { font-style: normal; color: var(--ink-2); font-size: 13.5px; line-height: 1.35; }
+
+/* ---------- Learn: the path ---------- */
+.unit { margin-top: 26px; }
+.unit-head { display: grid; grid-template-columns: 1fr auto; column-gap: 16px; align-items: end; padding: 0 2px 12px; border-bottom: 2px solid var(--line); }
+.unit-n { grid-column: 1 / -1; color: var(--go); font-weight: 900; font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; }
+.unit-head h2 { font-size: 22px; }
+.unit-head .sub { grid-column: 1; }
+.unit-meter { grid-column: 2; grid-row: 2 / span 2; display: inline-flex; align-items: center; gap: 8px; width: 150px; color: var(--ink-2); font-weight: 900; font-size: 13px; }
+.path { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 14px; justify-items: center; }
+.path-node { transform: translateX(calc(var(--sway, 0) * 56px)); }
+.path-node button { display: flex; align-items: center; gap: 14px; min-height: 64px; text-align: left; border-radius: 40px; padding: 0 18px 0 0; }
+.node-disc {
+  flex: none; display: grid; place-items: center; width: 64px; height: 60px; border-radius: 50%;
+  background: var(--raised); color: var(--ink-2); box-shadow: 0 5px 0 var(--raised-edge);
+  transition: transform .12s var(--ease), box-shadow .12s var(--ease);
+}
+.path-node button:active .node-disc { transform: translateY(4px); box-shadow: 0 1px 0 var(--raised-edge); }
+.path-node.done .node-disc { background: var(--star); color: #4a3300; box-shadow: 0 5px 0 #c99a12; }
+.path-node.next .node-disc { background: var(--go); color: var(--go-ink); box-shadow: 0 5px 0 var(--go-edge); animation: node-pulse 2.2s ease-in-out infinite; }
+.path-node.locked .node-disc { background: var(--surface-2); color: var(--ink-3); box-shadow: 0 5px 0 var(--bg-deep); }
+.path-node.locked .node-text { opacity: .55; }
+@keyframes node-pulse { 50% { box-shadow: 0 5px 0 var(--go-edge), 0 0 0 8px rgba(63, 208, 122, .18); } }
+.node-text { display: grid; gap: 2px; width: 220px; }
+.node-text b { font-size: 15.5px; font-weight: 900; }
+.node-text small { color: var(--ink-3); font-size: 13px; font-weight: 700; }
+.learn-more { margin: 28px 0 8px; text-align: center; }
+
+@media (max-width: 760px) {
+  .daily-list { grid-template-columns: 1fr; }
+  .path-node { transform: translateX(calc(var(--sway, 0) * 22px)); }
+  .node-text { width: 180px; }
+}
+
+/* ---------- Progress: skill map and coach ---------- */
+.card.skills-card { margin-bottom: 16px; display: grid; gap: 14px; }
+.skills-head h2 { font-size: 21px; }
+.skill-areas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.skill-area h3 { font-size: 13px; color: var(--ink-3); font-weight: 900; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; }
+.skill-area ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.skill-area li { display: grid; grid-template-columns: minmax(0, 1fr) 34px auto; grid-template-areas: 'name delta btn' 'meter meter btn'; column-gap: 10px; row-gap: 6px; align-items: center; }
+.skill-name { grid-area: name; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.skill-name b { font-size: 14.5px; font-weight: 800; white-space: nowrap; }
+.skill-name small { color: var(--ink-3); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.skill-meter { grid-area: meter; height: 7px; }
+.skill-meter i { background: var(--go); }
+.skill-delta { grid-area: delta; font-size: 12.5px; font-weight: 900; text-align: right; color: var(--ink-3); }
+.skill-delta.up { color: var(--go); }
+.skill-delta.down { color: var(--miss); }
+.skill-area li .btn { grid-area: btn; }
+.skill-area li.untried .skill-name b { color: var(--ink-2); }
+.btn.small { min-height: 36px; padding: 0 12px; font-size: 13px; box-shadow: 0 3px 0 var(--raised-edge); }
+.coach-card dl { margin: 12px 0 0; display: grid; gap: 10px; }
+.coach-card dl div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.coach-card dt { color: var(--ink-2); font-weight: 700; font-size: 14px; }
+.coach-card dd { margin: 0; font-weight: 900; font-size: 14px; text-align: right; }
+@media (max-width: 900px) { .skill-areas { grid-template-columns: 1fr; } }

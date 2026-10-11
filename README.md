@@ -15,7 +15,9 @@ The app works like Simply Piano, with your own songs.
   - **Listen**: the app plays the song while the cursor moves.
   - **Teach me**: the song is split into sections (Part 1, Part 2, …, Whole song). A section opens as a lesson: one engraved line with finger numbers, the next notes in teal, a finger bubble, the keys to press lit on the keyboard and an "n/N notes" counter. The arrows move between its steps: right hand, left hand, hands together, in tempo. Each step gives 1 star from 70% right, 2 from 85%, 3 from 95%.
   - **Feedback** switches the green/red colouring on and off. The mini keyboard under the tool bar lights the keys to play in yellow. Tap a note while stopped to start from there.
-- **Progress**: streak, the last seven days, minutes per day and the daily goal.
+- **Learn**: the main course, a path of units (Middle C right hand, Bass clef left hand, Hands together), each lesson unlocking the next and each unit ending in a song. On top, **Today's session** (also on Home): about ten minutes made fresh each day, a warm-up on your weakest skill, the next lesson on the path, and a short review.
+- **The coach** keeps every lesson at the right difficulty, aiming for about 85% right first time. It learns from every chord you play (how often it is right first time, how long you hesitate, which skill it exercises) and turns three knobs one step at a time, after two runs agree: speed, how soon the keys light up when you are stuck, and how many finger numbers show. When it changes something it says why ("A little slower for now: bass clef notes were tripping you up").
+- **Progress**: your skill map (treble and bass clef, ledger lines, sharps and flats, beat, eighths, dotted rhythms, hands together, chords, leaps), each with its level, how it moved since about a week ago, and a Practise button that writes an exercise for that skill at your level; what the coach has set; streak, the last seven days, minutes per day and the daily goal.
 - **Settings**: your piano (USB cable, Bluetooth, microphone) with a test screen, note names (C D E or Dó Ré Mi), finger numbers, hearing the keys you play, and the app playing the other hand.
 
 Inputs:

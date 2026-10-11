@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AddSong } from './components/AddSong';
 import { Home } from './components/Home';
-import { IconChart, IconGear, IconHome, IconMusic } from './components/Icons';
+import { Learn, markSession } from './components/Learn';
+import { IconCap, IconChart, IconGear, IconHome, IconMusic } from './components/Icons';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
 import { ProgressView } from './components/ProgressView';
@@ -13,13 +14,15 @@ import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
 import type { CourseStep } from './lib/course';
 import { I18nContext, makeT } from './lib/i18n';
+import { lessonAfter, lessonPlayable, pathChanged, type Playable } from './lib/path';
 import { connect, disconnectBle, disconnectMic, linkState, onLinkState, onNote, watchForMidi, type LinkState, type Source } from './lib/input';
 import { loadSettings, removeSong, renameSong, saveSettings } from './lib/library';
 import type { Settings, SongEntry } from './lib/types';
 
-type Tab = 'home' | 'songs' | 'progress';
+type Tab = 'home' | 'learn' | 'songs' | 'progress';
 const TABS: [Tab, string, (p: { size?: number }) => React.ReactElement][] = [
   ['home', 'Home', IconHome],
+  ['learn', 'Learn', IconCap],
   ['songs', 'Songs', IconMusic],
   ['progress', 'Progress', IconChart],
 ];
@@ -29,6 +32,8 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('home');
   const [openId, setOpenId] = useState<string | null>(null);
   const [lesson, setLesson] = useState<{ id: string; section: string; step?: string; n: number } | null>(null);
+  // A course lesson, a skill practice, or today's session (several pieces played one after the other).
+  const [run, setRun] = useState<{ items: Playable[]; i: number; n: number; session: boolean } | null>(null);
   const [editing, setEditing] = useState<SongEntry | null>(null);
   const [sheet, setSheet] = useState<'settings' | 'check' | null>(null);
   const [adding, setAdding] = useState<{ file: File; slot?: SongEntry } | null>(null);
@@ -106,6 +111,11 @@ export default function App() {
     if (section) setLesson({ id: info.entry.id, section: section.id, step: step.id, n: 0 });
   };
 
+  const play = (items: Playable[], from: number, session: boolean) => { unlockAudio(); ensureInput(); setRun({ items, i: from, n: 0, session }); };
+  const runItem = run?.items[run.i];
+  // A course lesson leads on to the next one on the path (a skill practice leads nowhere).
+  const afterRun = run && !run.session && runItem?.id && !runItem.id.startsWith('skill-') ? lessonAfter(runItem.id) : undefined;
+
   const open = openId ? infos[openId] : undefined;
   const lessonInfo = lesson && infos[lesson.id];
   const lessonSections = lessonInfo?.course ? sectionsOf(lessonInfo) : [];
@@ -114,7 +124,25 @@ export default function App() {
 
   return (
     <I18nContext.Provider value={i18n}>
-      {lesson && lessonInfo?.song && lessonSection ? (
+      {run && runItem ? (
+        <Lesson
+          key={`${runItem.id}-${run.i}-${run.n}`}
+          info={runItem.info} section={runItem.section}
+          settings={settings} update={update} links={links}
+          exitLabel={run.session ? 'Back to today’s session' : 'Back to the course'}
+          nextLabel={run.session ? (run.i < run.items.length - 1 ? `Next: ${run.items[run.i + 1].title}` : 'Finish today’s session') : `Next lesson: ${afterRun?.title}`}
+          onExit={() => { setRun(null); pathChanged(); }}
+          onNextSection={run.session || afterRun ? () => {
+            if (run.session) markSession(run.i + 1);
+            pathChanged();
+            if (run.session && run.i < run.items.length - 1) setRun({ ...run, i: run.i + 1, n: run.n + 1 });
+            else if (!run.session && afterRun) setRun({ items: [lessonPlayable(afterRun)], i: 0, n: run.n + 1, session: false });
+            else setRun(null);
+          } : undefined}
+          onRecorded={() => pathChanged()}
+          onSettings={() => setSheet('settings')}
+        />
+      ) : lesson && lessonInfo?.song && lessonSection ? (
         <Lesson
           key={`${lesson.id}-${lesson.section}-${lesson.n}`}
           info={lessonInfo} section={lessonSection} startAt={lesson.step}
@@ -153,11 +181,14 @@ export default function App() {
                 onOpen={openSheet}
                 onPlay={startStep}
                 onBrowse={() => setTab('songs')}
+                onSession={(items, from) => play(items, from, true)}
               />
+            ) : tab === 'learn' ? (
+              <Learn settings={settings} onPlay={play} />
             ) : tab === 'songs' ? (
               <Songs infos={infos} entries={entries} ready={ready} onOpen={openSheet} onAdd={() => pickFile()} onEdit={setEditing} />
             ) : (
-              <ProgressView settings={settings} update={update} entries={entries} infos={infos} />
+              <ProgressView settings={settings} update={update} entries={entries} infos={infos} onPractice={p => play([p], 0, false)} />
             )}
           </main>
         </div>
