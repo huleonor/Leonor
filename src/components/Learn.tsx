@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { dailySession, lessonPlayable, UNITS, usePath, type Playable } from '../lib/path';
+import { dailySession, lessonPlayable, placementTaken, placementTest, unitTest, UNITS, usePath, type Playable } from '../lib/path';
 import { dayKey } from '../lib/stats';
 import type { Settings } from '../lib/types';
 import { GoalPill, StreakPill, useDaily } from './Home';
@@ -63,10 +63,11 @@ export function DailyCard({ items, onStart }: { items: Playable[] | null; onStar
 interface Props {
   settings: Settings;
   onPlay: (items: Playable[], from: number, session: boolean) => void;
+  onTest: (items: Playable[]) => void;
 }
 
 /** The main course: today's session on top, then the path of units, each ending in a song. */
-export function Learn({ settings, onPlay }: Props) {
+export function Learn({ settings, onPlay, onTest }: Props) {
   const daily = useDaily();
   const path = usePath();
   const session = useMemo(() => (path ? dailySession(path.state, path.progs) : null), [path]);
@@ -81,6 +82,18 @@ export function Learn({ settings, onPlay }: Props) {
         </div>
       </header>
 
+      {path && !placementTaken() && !Object.values(path.state).some(st => st.passed > 0) && (
+        <section className="card placement" aria-labelledby="placement-title">
+          <div>
+            <h2 id="placement-title">Already play a little?</h2>
+            <p className="sub">Take the placement test: one short piece per unit, about 30 seconds each. Each one you pass with 2 stars skips that unit; it stops at the first one you do not.</p>
+          </div>
+          <div className="actions">
+            <button className="btn go" onClick={() => onTest(placementTest())}><IconPlay size={16} />Take the test</button>
+          </div>
+        </section>
+      )}
+
       <DailyCard items={session} onStart={(items, from) => onPlay(items, from, true)} />
 
       {UNITS.map((u, ui) => {
@@ -92,6 +105,9 @@ export function Learn({ settings, onPlay }: Props) {
               <span className="unit-n">Unit {ui + 1}</span>
               <h2 id={`${u.id}-title`}>{u.title}</h2>
               <p className="sub">{u.sub}</p>
+              {path && !states[0]?.open && (
+                <button className="btn small test-out" onClick={() => onTest([unitTest(u)])}>Test out</button>
+              )}
               <span className="unit-meter" aria-label={`${doneN} of ${u.lessons.length} lessons done`}>
                 <span className="meter"><i style={{ width: `${(doneN / u.lessons.length) * 100}%` }} /></span>
                 {doneN}/{u.lessons.length}
@@ -111,7 +127,7 @@ export function Learn({ settings, onPlay }: Props) {
                       </span>
                       <span className="node-text">
                         <b>{l.title}</b>
-                        <small>{st?.done ? <Stars n={st.stars} /> : open && st && st.passed > 0 ? `${st.passed} of ${st.steps} steps` : l.sub}</small>
+                        <small>{st?.tested ? 'Skipped by a test' : st?.done ? <Stars n={st.stars} /> : open && st && st.passed > 0 ? `${st.passed} of ${st.steps} steps` : l.sub}</small>
                       </span>
                     </button>
                   </li>

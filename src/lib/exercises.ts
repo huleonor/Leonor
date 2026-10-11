@@ -186,12 +186,18 @@ export const EXERCISE_TITLE: Record<SkillId, string> = {
 
 // ---------- Course songs, written out ----------
 
-const N: Record<string, number> = { C3: 48, D3: 50, E3: 52, F3: 53, G3: 55, A3: 57, B3: 59, C4: 60, D4: 62, E4: 64, F4: 65, G4: 67, A4: 69, B4: 71, C5: 72 };
-/** "E4 E4 F4 G4:2" → notes; `:n` is the length in beats (1 when left out). */
+const LETTER: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+/** "F#4" → 66, "Bb3" → 58. */
+const pitch = (name: string) => {
+  const m = /^([A-G])([#b]?)(-?\d)$/.exec(name);
+  if (!m) throw new Error(`Bad note ${name}`);
+  return (Number(m[3]) + 1) * 12 + LETTER[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
+};
+/** "E4 E4 F4 G4:2 C3+E3+G3:4 r" → notes; `:n` is the length in beats (1 when left out), `+` a chord, `r` a rest. */
 export function line(text: string, hand: Hand, shift = 0): W[] {
   return text.trim().split(/\s+/).map(tok => {
     const [p, b] = tok.split(':');
-    const midi = p === 'r' ? 0 : p.includes('+') ? p.split('+').map(x => N[x] + shift) : N[p] + shift;
+    const midi = p === 'r' ? 0 : p.includes('+') ? p.split('+').map(x => pitch(x) + shift) : pitch(p) + shift;
     return { midi, beats: b ? Number(b) : 1, hand } as W;
   });
 }
@@ -201,9 +207,21 @@ const ODE = 'E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 E4:1.5 D4:0.5 D4:2 E4 E4 F4 G4 
 const LUNE = 'C4 C4 C4 D4 E4:2 D4:2 C4 E4 D4 D4 C4:4 C4 C4 C4 D4 E4:2 D4:2 C4 E4 D4 D4 C4:4';
 const ODE_BASS = 'C3:2 G3:2 C3:2 G3:2 C3:2 G3:2 G3:2 C3:2 C3:2 G3:2 C3:2 G3:2 C3:2 G3:2 G3:2 C3:2';
 
+const FRERE = 'C4 D4 E4 C4 C4 D4 E4 C4 E4 F4 G4:2 E4 F4 G4:2 G4:0.5 A4:0.5 G4:0.5 F4:0.5 E4 C4 G4:0.5 A4:0.5 G4:0.5 F4:0.5 E4 C4 C4 G3 C4:2 C4 G3 C4:2';
+const TWINKLE = 'C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2 G4 G4 F4 F4 E4 E4 D4:2 G4 G4 F4 F4 E4 E4 D4:2 C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2';
+const [C, F, G] = ['C3+E3+G3', 'C3+F3+A3', 'B2+D3+G3'];
+const TWINKLE_LH = [`${C}:4`, `${F}:2 ${C}:2`, `${F}:2 ${C}:2`, `${G}:2 ${C}:2`, `${C}:2 ${G}:2`, `${C}:2 ${G}:2`, `${C}:2 ${G}:2`, `${C}:2 ${G}:2`, `${C}:4`, `${F}:2 ${C}:2`, `${F}:2 ${C}:2`, `${G}:2 ${C}:2`].join(' ');
+const MINUET = 'D5 G4:0.5 A4:0.5 B4:0.5 C5:0.5 D5 G4 G4 E5 C5:0.5 D5:0.5 E5:0.5 F#5:0.5 G5 G4 G4 C5 D5:0.5 C5:0.5 B4:0.5 A4:0.5 B4 C5:0.5 B4:0.5 A4:0.5 G4:0.5 F#4 G4:0.5 A4:0.5 B4:0.5 G4:0.5 A4:3';
+const MINUET_LH = 'G3:2 A3 B3:3 C4:3 B3:3 A3:3 G3:3 D4 B3 G3 D4:2 D3';
+const GRACE = 'r:2 G3 C4:2 E4:0.5 C4:0.5 E4:2 D4 C4:2 A3 G3:2 G3 C4:2 E4:0.5 C4:0.5 E4:2 D4:0.5 E4:0.5 G4:3 G4:2 r';
+
 export const COURSE_SONGS = {
   mary: () => writeSong('path:mary', 'Mary Had a Little Lamb', [line(MARY, 'R')], { bpm: 90, ceiling: 0.65 }),
   ode: () => writeSong('path:ode', 'Ode to Joy', [line(ODE, 'R')], { bpm: 90, ceiling: 0.7 }),
   lune: () => writeSong('path:lune', 'Au clair de la lune', [line(LUNE, 'L', -12)], { bpm: 84, ceiling: 0.65 }),
   odeBoth: () => writeSong('path:ode-both', 'Ode to Joy, both hands', [line(ODE, 'R'), line(ODE_BASS, 'L')], { bpm: 90, ceiling: 0.75 }),
+  frere: () => writeSong('path:frere', 'Frère Jacques', [line(FRERE, 'R')], { bpm: 96, ceiling: 0.75 }),
+  twinkle: () => writeSong('path:twinkle', 'Twinkle, Twinkle, Little Star', [line(TWINKLE, 'R'), line(TWINKLE_LH, 'L')], { bpm: 88, ceiling: 0.8 }),
+  minuet: () => writeSong('path:minuet', 'Minuet in G', [line(MINUET, 'R'), line(MINUET_LH, 'L')], { bpm: 92, fifths: 1, timeSig: [3, 4], ceiling: 0.88 }),
+  grace: () => writeSong('path:grace', 'Amazing Grace', [line(GRACE, 'R')], { bpm: 80, timeSig: [3, 4], ceiling: 0.8 }),
 };

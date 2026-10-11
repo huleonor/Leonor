@@ -14,7 +14,7 @@ import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
 import type { CourseStep } from './lib/course';
 import { I18nContext, makeT } from './lib/i18n';
-import { lessonAfter, lessonPlayable, pathChanged, type Playable } from './lib/path';
+import { lessonAfter, lessonPlayable, markPlacementTaken, pathChanged, placedUnits, placeUnit, UNITS, type Playable } from './lib/path';
 import { connect, disconnectBle, disconnectMic, linkState, onLinkState, onNote, watchForMidi, type LinkState, type Source } from './lib/input';
 import { loadSettings, removeSong, renameSong, saveSettings } from './lib/library';
 import type { Settings, SongEntry } from './lib/types';
@@ -33,7 +33,7 @@ export default function App() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [lesson, setLesson] = useState<{ id: string; section: string; step?: string; n: number } | null>(null);
   // A course lesson, a skill practice, or today's session (several pieces played one after the other).
-  const [run, setRun] = useState<{ items: Playable[]; i: number; n: number; session: boolean } | null>(null);
+  const [run, setRun] = useState<{ items: Playable[]; i: number; n: number; session: boolean; test?: boolean } | null>(null);
   const [editing, setEditing] = useState<SongEntry | null>(null);
   const [sheet, setSheet] = useState<'settings' | 'check' | null>(null);
   const [adding, setAdding] = useState<{ file: File; slot?: SongEntry } | null>(null);
@@ -112,9 +112,18 @@ export default function App() {
   };
 
   const play = (items: Playable[], from: number, session: boolean) => { unlockAudio(); ensureInput(); setRun({ items, i: from, n: 0, session }); };
+  // A test: the placement test (every unit in turn) or one unit's test-out. Each pass skips that unit.
+  const takeTest = (items: Playable[]) => { unlockAudio(); ensureInput(); setRun({ items, i: 0, n: 0, session: false, test: true }); };
+  const endTest = (passedThrough: number) => {
+    markPlacementTaken();
+    setRun(null);
+    const at = UNITS.findIndex(u => !placedUnits().includes(u.id));
+    setTab('learn');
+    setNotice({ text: passedThrough > 0 ? (at < 0 ? 'You passed every unit test.' : `You start at Unit ${at + 1}: ${UNITS[at].title}.`) : 'You start at the beginning: Unit 1.' });
+  };
   const runItem = run?.items[run.i];
   // A course lesson leads on to the next one on the path (a skill practice leads nowhere).
-  const afterRun = run && !run.session && runItem?.id && !runItem.id.startsWith('skill-') ? lessonAfter(runItem.id) : undefined;
+  const afterRun = run && !run.session && !run.test && runItem?.id && !runItem.id.startsWith('skill-') ? lessonAfter(runItem.id) : undefined;
 
   const open = openId ? infos[openId] : undefined;
   const lessonInfo = lesson && infos[lesson.id];
@@ -124,7 +133,26 @@ export default function App() {
 
   return (
     <I18nContext.Provider value={i18n}>
-      {run && runItem ? (
+      {run?.test && runItem ? (
+        <Lesson
+          key={`${runItem.id}-${run.i}-${run.n}`}
+          info={runItem.info} section={runItem.section}
+          settings={settings} update={update} links={links}
+          minStars={2}
+          exitLabel="Stop the test"
+          nextLabel={run.i < run.items.length - 1 ? `Passed! Next: ${run.items[run.i + 1].title}` : 'Passed! Finish the test'}
+          stopLabel="Finish the test here"
+          onExit={() => endTest(run.i)}
+          onStop={() => endTest(run.i)}
+          onNextSection={() => {
+            placeUnit(runItem.id.replace('test-', ''));
+            if (run.i < run.items.length - 1) setRun({ ...run, i: run.i + 1, n: run.n + 1 });
+            else endTest(run.i + 1);
+          }}
+          onRecorded={() => pathChanged()}
+          onSettings={() => setSheet('settings')}
+        />
+      ) : run && runItem ? (
         <Lesson
           key={`${runItem.id}-${run.i}-${run.n}`}
           info={runItem.info} section={runItem.section}
@@ -184,7 +212,7 @@ export default function App() {
                 onSession={(items, from) => play(items, from, true)}
               />
             ) : tab === 'learn' ? (
-              <Learn settings={settings} onPlay={play} />
+              <Learn settings={settings} onPlay={play} onTest={takeTest} />
             ) : tab === 'songs' ? (
               <Songs infos={infos} entries={entries} ready={ready} onOpen={openSheet} onAdd={() => pickFile()} onEdit={setEditing} />
             ) : (

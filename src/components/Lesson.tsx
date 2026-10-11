@@ -46,6 +46,10 @@ interface Props {
   /** Words for the last step's "next" button and the way out (a song's lesson, or the daily session). */
   nextLabel?: string;
   exitLabel?: string;
+  /** Stars the last step needs before "next" shows (a test needs 2). Below it, `onStop` ends the run. */
+  minStars?: number;
+  onStop?: () => void;
+  stopLabel?: string;
   onSettings: () => void;
   onRecorded: () => void;
 }
@@ -78,7 +82,7 @@ interface RunProps extends Props {
   onAgain: () => void;
 }
 
-function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', onSettings, onRecorded, onPrev, onNext, onAgain }: RunProps) {
+function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onSettings, onRecorded, onPrev, onNext, onAgain }: RunProps) {
   const song = info.song!;
   // The coach sets this step's speed, how soon help comes and how many finger numbers show.
   const coach = useMemo(() => settingsFor(step.speed, step.wait), [step.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -189,7 +193,8 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const resume = () => { unlockAudio(); setPaused(false); engine.play(1); bump(); };
   const listenFirst = () => { unlockAudio(); setPaused(false); setListen(true); engine.setOptions({ listen: true }); engine.restart(); engine.play(1); };
   const inputOn = settings.input !== 'none' && links[settings.input as Source]?.status === 'on';
-  const next = result && result.stars > 0 ? (onNext ? { label: `Next: ${stepLabel(section.steps[index + 1])}`, go: onNext } : onNextSection ? { label: nextLabel, go: onNextSection } : null) : null;
+  const next = result && result.stars >= minStars ? (onNext ? { label: `Next: ${stepLabel(section.steps[index + 1])}`, go: onNext } : onNextSection ? { label: nextLabel, go: onNextSection } : null)
+    : result && onStop && !onNext ? { label: stopLabel, go: onStop } : null;
 
   return (
     <div className={`lesson view-${settings.view}`}>
