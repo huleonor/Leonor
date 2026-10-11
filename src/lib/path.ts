@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import type { SongInfo } from './catalog';
 import { getCourseProgress, type CourseProgress, type CourseStep } from './course';
 import { COURSE_SONGS, EXERCISE_TITLE, LEVEL_NAME, levelFor, line, makeExercise, writeSong } from './exercises';
-import { loadProfile, SKILLS, weakest, type SkillId } from './skills';
+import { dueSkills, loadProfile, SKILLS, weakest, type SkillId } from './skills';
 import { dayKey } from './stats';
 import type { Song } from './types';
 
@@ -227,9 +227,12 @@ export function dailySession(state: PathState, progs: Record<string, CourseProgr
     makeExercise(first, lv, seedOfDay(1)), 'warmup'));
   const next = nextLesson(state);
   if (next) out.push({ ...lessonPlayable(next, progs[next.id]), why: `Next on your path: ${next.sub}` });
-  const second: SkillId = weak[1] ?? (first === 'rhythm' ? 'treble' : 'rhythm');
+  // The review is spaced: a skill whose gap has run out, else the next weakest.
+  const due = dueSkills(profile).find(d => d.id !== first);
+  const second: SkillId = due?.id ?? weak.find(id => id !== first) ?? (first === 'rhythm' ? 'treble' : 'rhythm');
   const lv2 = levelFor(profile[second].m);
-  out.push(playable(`review-${second}`, EXERCISE_TITLE[second], `To keep it fresh: ${name(second)} (${LEVEL_NAME[lv2]})`,
+  out.push(playable(`review-${second}`, EXERCISE_TITLE[second],
+    due ? `Due for review: last practised ${due.days === 0 ? 'today' : due.days === 1 ? 'yesterday' : `${due.days} days ago`}` : `To keep it fresh: ${name(second)} (${LEVEL_NAME[lv2]})`,
     makeExercise(second, lv2, seedOfDay(2)), 'warmup'));
   return out;
 }

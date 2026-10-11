@@ -30,7 +30,7 @@ export const SKILLS: { id: SkillId; name: string; area: 'Reading' | 'Rhythm' | '
   { id: 'leaps', name: 'Leaps', area: 'Technique' },
 ];
 
-export interface SkillState { m: number; n: number; }
+export interface SkillState { m: number; n: number; /** Last practised (ms since epoch). */ at?: number; }
 export type Profile = Record<SkillId, SkillState>;
 
 const KEY = 'hugos-piano:skills';
@@ -161,6 +161,7 @@ export function listenForSkills(engine: Engine): { stop: () => RunSummary; summa
       const s = profile[id];
       s.m = s.m + ALPHA * (q - s.m);
       s.n++;
+      s.at = Date.now();
       const r = runScore[id] ?? { sum: 0, n: 0 };
       r.sum += q; r.n++;
       runScore[id] = r;
@@ -203,4 +204,19 @@ export function listenForSkills(engine: Engine): { stop: () => RunSummary; summa
       return summary();
     },
   };
+}
+
+/**
+ * Spaced review: a practised skill comes due again after a gap that grows with its level (1, 2, 4,
+ * then 7 days), so what he knows well returns less often and what is shaky returns soon.
+ * Most overdue first.
+ */
+export function dueSkills(p = loadProfile(), now = Date.now()): { id: SkillId; days: number }[] {
+  const gap = (m: number) => [1, 2, 4, 7][m < 0.45 ? 0 : m < 0.65 ? 1 : m < 0.8 ? 2 : 3];
+  return SKILLS.map(s => s.id)
+    .filter(id => p[id].n >= 4 && p[id].at)
+    .map(id => ({ id, days: (now - p[id].at!) / 86400000, over: (now - p[id].at!) / 86400000 - gap(p[id].m) }))
+    .filter(x => x.over >= 0)
+    .sort((a, b) => b.over - a.over)
+    .map(({ id, days }) => ({ id, days: Math.floor(days) }));
 }

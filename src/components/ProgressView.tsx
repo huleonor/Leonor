@@ -4,10 +4,10 @@ import type { SongInfo } from '../lib/catalog';
 import { LEVEL_NAME, levelFor } from '../lib/exercises';
 import { skillPractice, type Playable } from '../lib/path';
 import { loadProfile, onSkills, SKILLS, snapshotAgo } from '../lib/skills';
-import { lastDays, totals } from '../lib/stats';
+import { freezes, lastDays, totals } from '../lib/stats';
 import type { Settings, SongEntry } from '../lib/types';
-import { GoalPill, StreakPill, useDaily } from './Home';
-import { IconFlame } from './Icons';
+import { GoalPill, StreakPill, useDaily, XpPill } from './Home';
+import { IconFlame, IconSnow } from './Icons';
 import { Segmented } from './ui';
 
 const DAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -63,6 +63,36 @@ function SkillMap({ onPractice }: { onPractice: (p: Playable) => void }) {
   );
 }
 
+/** This week against last week: time, XP, and the skills that grew most, so progress is felt. */
+function WeekCard() {
+  const days = lastDays(14);
+  const sum = (ds: typeof days, f: (d: (typeof days)[number]) => number) => ds.reduce((t, d) => t + f(d), 0);
+  const [prev, cur] = [days.slice(0, 7), days.slice(7)];
+  const min = Math.round(sum(cur, d => d.day.sec) / 60), minPrev = Math.round(sum(prev, d => d.day.sec) / 60);
+  const xp = sum(cur, d => d.day.xp ?? 0), steps = sum(cur, d => d.day.steps);
+  const p = loadProfile();
+  const then = snapshotAgo(7);
+  const gains = then ? SKILLS.map(sk => ({ sk, from: then.skills[sk.id] ?? 0.3, to: p[sk.id].m }))
+    .filter(g => p[g.sk.id].n > 0 && g.to - g.from >= 0.02).sort((a, b) => (b.to - b.from) - (a.to - a.from)).slice(0, 3) : [];
+  return (
+    <section className="card week-card" aria-labelledby="week-title">
+      <h2 id="week-title">This week</h2>
+      <dl className="week-stats">
+        <div><dt>At the piano</dt><dd>{min} min{minPrev > 0 && <small className={min >= minPrev ? 'up' : 'down'}>{min >= minPrev ? '+' : ''}{min - minPrev} vs last week</small>}</dd></div>
+        <div><dt>XP</dt><dd>{xp}</dd></div>
+        <div><dt>Steps passed</dt><dd>{steps}</dd></div>
+      </dl>
+      {gains.length > 0 ? (
+        <ul className="gains">
+          {gains.map(g => (
+            <li key={g.sk.id}><b>{g.sk.name}</b><span>{LEVEL_NAME[levelFor(g.from)]} → {LEVEL_NAME[levelFor(g.to)]}</span><em>+{Math.round((g.to - g.from) * 100)}</em></li>
+          ))}
+        </ul>
+      ) : <p className="fine">{then ? 'Play a few lessons this week and your biggest gains show up here.' : 'Next week this card compares your skills with today.'}</p>}
+    </section>
+  );
+}
+
 /** What the coach has set, so changes are never a mystery. */
 function CoachCard() {
   const c = describeCoach();
@@ -95,10 +125,13 @@ export function ProgressView({ settings, update, entries, infos, onPractice }: P
       <header className="page-head">
         <h1>Progress</h1>
         <div className="head-stats">
+          <XpPill />
           <StreakPill days={daily.streak.days} lit={daily.streak.today} />
           <GoalPill sec={daily.today.sec} goal={settings.dailyGoal} />
         </div>
       </header>
+
+      <WeekCard />
 
       <SkillMap onPractice={onPractice} />
 
@@ -113,13 +146,13 @@ export function ProgressView({ settings, update, entries, infos, onPractice }: P
           </div>
           <ol className="week" aria-label="The last seven days">
             {week.map((d, i) => (
-              <li key={d.key} className={`${d.done ? 'done' : ''} ${i === 6 ? 'today' : ''}`}>
-                <span className="week-dot">{d.done && <IconFlame size={14} />}</span>
+              <li key={d.key} className={`${d.done ? 'done' : ''} ${d.frozen ? 'frozen' : ''} ${i === 6 ? 'today' : ''}`}>
+                <span className="week-dot">{d.done ? <IconFlame size={14} /> : d.frozen ? <IconSnow size={13} /> : null}</span>
                 <span className="week-day">{DAY[d.date.getDay()]}</span>
               </li>
             ))}
           </ol>
-          <p className="fine">Best streak: {Math.max(all.best, daily.streak.days)} {Math.max(all.best, daily.streak.days) === 1 ? 'day' : 'days'}</p>
+          <p className="fine">{freezes() ? `${freezes()} streak ${freezes() === 1 ? 'freeze' : 'freezes'} ready: a missed day will not break your streak. ` : 'Seven days in a row earn a streak freeze (two at most). '}Best streak: {Math.max(all.best, daily.streak.days)} {Math.max(all.best, daily.streak.days) === 1 ? 'day' : 'days'}</p>
           <Segmented label="Daily goal, minutes" value={settings.dailyGoal} onChange={v => update({ dailyGoal: v })} options={[5, 10, 15, 20, 30].map(v => [v, String(v)] as [number, string])} />
         </section>
 

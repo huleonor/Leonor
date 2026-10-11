@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { dailySession, lessonPlayable, placementTaken, placementTest, unitTest, UNITS, usePath, type Playable } from '../lib/path';
 import { dayKey } from '../lib/stats';
 import type { Settings } from '../lib/types';
-import { GoalPill, StreakPill, useDaily } from './Home';
+import { GoalPill, StreakPill, useDaily, XpPill } from './Home';
 import { IconCap, IconCheck, IconLock, IconMusic, IconPlay, IconStar } from './Icons';
 import { Stars } from './ui';
 
@@ -77,6 +77,7 @@ export function Learn({ settings, onPlay, onTest }: Props) {
       <header className="page-head">
         <h1>Learn</h1>
         <div className="head-stats">
+          <XpPill />
           <StreakPill days={daily.streak.days} lit={daily.streak.today} />
           <GoalPill sec={daily.today.sec} goal={settings.dailyGoal} />
         </div>

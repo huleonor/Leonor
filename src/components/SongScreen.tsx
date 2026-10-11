@@ -8,6 +8,7 @@ import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
 import { pickRange } from '../lib/keys';
 import { recordRun } from '../lib/library';
 import { listenForSkills } from '../lib/skills';
+import { addPractice } from '../lib/stats';
 import { formatSpeed, formatTime } from '../lib/names';
 import { usePracticeClock } from '../lib/practiceClock';
 import type { HandsChoice, Settings } from '../lib/types';
@@ -100,6 +101,8 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
         if (engine.opts.listen) { engine.restart(); setMode('play'); bump(); return; }
         const s = engine.stats();
         recordRun(song.entry.id, s.accuracy, engine.opts.follow ? 1 : engine.opts.speed);
+        // Playing a song through earns XP by how well it went, and counts for the streak.
+        if (s.accuracy >= 0.5) addPractice(0, 1, Math.round(s.accuracy * 20));
         setResult(s);
       }
     });

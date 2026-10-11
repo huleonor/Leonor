@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AddSong } from './components/AddSong';
+import { Celebrate } from './components/Celebrate';
+import { applyFreezes, onStats, sessionComplete, setGoalMinutes } from './lib/stats';
+import { scheduleReminders, startWebReminders } from './lib/reminders';
 import { Home } from './components/Home';
 import { Learn, markSession } from './components/Learn';
 import { IconCap, IconChart, IconGear, IconHome, IconMusic } from './components/Icons';
@@ -46,7 +49,18 @@ export default function App() {
 
   useEffect(() => onLinkState(setLinks), []);
   useEffect(() => { watchForMidi(); }, []);
-  useEffect(() => { saveSettings(settings); }, [settings]);
+  useEffect(() => { saveSettings(settings); setGoalMinutes(settings.dailyGoal); }, [settings]);
+  // A day missed since last time is covered by a streak freeze, if he has one.
+  useEffect(() => { applyFreezes(); }, []);
+  // Practice reminders: rewritten when the setting changes and after practice (today's is skipped once the goal is met).
+  useEffect(() => startWebReminders(), []);
+  useEffect(() => {
+    const go = () => scheduleReminders(settings.reminder ?? null, settings.dailyGoal);
+    go();
+    let t = 0;
+    const off = onStats(() => { window.clearTimeout(t); t = window.setTimeout(go, 20_000); });
+    return () => { off(); window.clearTimeout(t); };
+  }, [settings.reminder, settings.dailyGoal]);
 
   // Keys played on a MIDI or Bluetooth keyboard sound through the app's piano, on every screen.
   useEffect(() => {
@@ -162,6 +176,7 @@ export default function App() {
           onExit={() => { setRun(null); pathChanged(); }}
           onNextSection={run.session || afterRun ? () => {
             if (run.session) markSession(run.i + 1);
+            if (run.session && run.i === run.items.length - 1) sessionComplete();
             pathChanged();
             if (run.session && run.i < run.items.length - 1) setRun({ ...run, i: run.i + 1, n: run.n + 1 });
             else if (!run.session && afterRun) setRun({ items: [lessonPlayable(afterRun)], i: 0, n: run.n + 1, session: false });
@@ -245,6 +260,7 @@ export default function App() {
         <SettingsSheet settings={settings} update={update} links={links} connectInput={connectInput} onCheck={() => setSheet('check')} onClose={() => setSheet(null)} />
       )}
       {sheet === 'check' && <InputCheck links={links} naming={settings.naming} onClose={() => setSheet('settings')} />}
+      <Celebrate />
       {notice && <div className={`toast ${notice.error ? 'error' : ''}`} role="status">{notice.text}</div>}
     </I18nContext.Provider>
   );

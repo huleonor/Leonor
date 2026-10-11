@@ -10,7 +10,7 @@ import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
 import { pickRange } from '../lib/keys';
 import { formatSpeed, noteName } from '../lib/names';
 import { usePracticeClock } from '../lib/practiceClock';
-import { streak } from '../lib/stats';
+import { addPractice, streak, xpForStars } from '../lib/stats';
 import type { FingerMode, Settings } from '../lib/types';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
@@ -91,10 +91,10 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const [change, setChange] = useState<Change | null>(null);
   const [listen, setListen] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; stars: number; streakUp?: number } | null>(null);
+  const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; stars: number; xp: number; streakUp?: number } | null>(null);
   const [say, setSay] = useState<{ text: string; wrong?: string }>({ text: intro(step) });
   // A short step that went well moves on by itself, like Simply Piano; one that did not, starts again.
-  const [flash, setFlash] = useState<{ text: string; good: boolean } | null>(null);
+  const [flash, setFlash] = useState<{ text: string; good: boolean; xp?: number } | null>(null);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   usePracticeClock();
 
@@ -135,14 +135,17 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
           return;
         }
         recordStep(song.entry.id, step.id, s.accuracy).then(() => {
+          // A finished step earns XP and counts for the streak.
+          const xp = xpForStars(stars);
+          if (stars > 0) addPractice(0, 1, xp);
           const after = streak();
           onRecorded();
           if (quick) {
-            setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true });
+            setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true, xp });
             window.setTimeout(onNext!, made ? 2600 : 1100);
             return;
           }
-          setResult({ ...s, stars, streakUp: !before.today && after.today ? after.days : undefined });
+          setResult({ ...s, stars, xp, streakUp: !before.today && after.today ? after.days : undefined });
         });
       }
     });
@@ -222,7 +225,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         <Countdown engine={engine} />
         {flash && (
           <div className="lesson-flash-wrap" role="status">
-            <p className={`lesson-flash ${flash.good ? 'good' : ''}`}>{flash.text}</p>
+            <p className={`lesson-flash ${flash.good ? 'good' : ''}`}>{flash.text}{flash.xp ? <small className="xp-gain">+{flash.xp} XP</small> : null}</p>
             {change && <p className="coach-note">{change.why}</p>}
           </div>
         )}
@@ -266,6 +269,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
               ))}
             </div>
             <h2 id="lesson-result-title">{HEADLINE[result.stars]}</h2>
+            {result.xp > 0 && <p className="xp-badge">+{result.xp} XP</p>}
             <p className="result-line">{section.title} · {stepLabel(step)}: {result.hit} of {result.total} notes · {result.wrong} wrong · {Math.round(result.accuracy * 100)}%</p>
             {result.streakUp !== undefined && <p className="streak-up"><IconFlame size={18} />{result.streakUp === 1 ? 'Streak started' : `${result.streakUp}-day streak`}</p>}
             {change && <p className="coach-note inline">{change.why}</p>}

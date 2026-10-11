@@ -865,3 +865,39 @@ p { margin: 0; }
 .card.placement h2 { font-size: 19px; }
 .card.placement .sub { max-width: 62ch; }
 .unit-head .test-out { grid-column: 2; grid-row: 1; justify-self: end; margin-bottom: 6px; }
+
+/* ---------- Phase 2: XP, freezes, celebrations ---------- */
+.pill-stat.xp { color: var(--star); gap: 4px; }
+.pill-stat.xp small { font-size: 11px; font-weight: 900; color: var(--ink-3); margin-left: 1px; }
+.freeze-chip { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: rgba(120, 200, 255, .16); color: #9ad8ff; font-size: 12px; font-weight: 900; }
+.xp-gain { display: block; text-align: center; font-size: 14px; font-weight: 900; color: #fff3c4; margin-top: 2px; }
+.xp-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: rgba(255, 207, 63, .16); color: var(--star); font-weight: 900; font-size: 15px; }
+.celebrate {
+  position: fixed; z-index: 60; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
+  display: flex; align-items: center; gap: 14px; padding: 12px 20px 12px 14px; border-radius: 18px;
+  background: var(--raised); color: var(--ink); box-shadow: 0 16px 40px rgba(0, 0, 0, .4), inset 0 0 0 2px var(--go);
+  animation: celebrate-in .5s var(--ease); cursor: pointer; max-width: calc(100vw - 32px);
+}
+.celebrate-icon { display: grid; place-items: center; width: 50px; height: 50px; border-radius: 50%; background: var(--go); color: var(--go-ink); flex: none; animation: celebrate-pop .7s var(--ease) .15s both; }
+.celebrate.goal .celebrate-icon { background: var(--flame); color: #3a1300; }
+.celebrate.session .celebrate-icon { background: var(--star); color: #4a3300; }
+.celebrate.freeze-earned .celebrate-icon, .celebrate.freeze-used .celebrate-icon { background: #9ad8ff; color: #0b2a40; }
+.celebrate-text { display: grid; gap: 2px; }
+.celebrate-text b { font-size: 17px; font-weight: 900; }
+.celebrate-text small { color: var(--ink-2); font-size: 13.5px; font-weight: 700; }
+.celebrate-bolt { color: var(--star); }
+@keyframes celebrate-in { from { opacity: 0; transform: translate(-50%, -24px) scale(.92); } }
+@keyframes celebrate-pop { 0% { transform: scale(.4); } 60% { transform: scale(1.15); } }
+.week li.frozen .week-dot { background: rgba(120, 200, 255, .2); color: #9ad8ff; }
+.card.week-card { margin-bottom: 16px; display: grid; gap: 14px; }
+.week-card h2 { font-size: 21px; }
+.week-stats { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.week-stats dt { color: var(--ink-3); font-size: 13px; font-weight: 800; }
+.week-stats dd { margin: 2px 0 0; font-size: 24px; font-weight: 900; }
+.week-stats small { display: block; font-size: 12.5px; font-weight: 800; color: var(--ink-3); }
+.week-stats small.up { color: var(--go); }
+.gains { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.gains li { display: flex; align-items: baseline; gap: 12px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--surface-2); }
+.gains b { font-weight: 900; }
+.gains span { color: var(--ink-2); font-weight: 700; font-size: 14px; margin-right: auto; }
+.gains em { font-style: normal; color: var(--go); font-weight: 900; }

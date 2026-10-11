@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { continueTarget, type SongInfo } from '../lib/catalog';
 import type { CourseStep } from '../lib/course';
 import type { LinkState, Source } from '../lib/input';
-import { onStats, streak, today } from '../lib/stats';
+import { freezes, onStats, streak, today, totalXp } from '../lib/stats';
 import type { Settings, SongEntry } from '../lib/types';
-import { IconBluetooth, IconFlame, IconKeys, IconMic, IconPlay, IconStar } from './Icons';
+import { IconBluetooth, IconBolt, IconFlame, IconKeys, IconMic, IconPlay, IconSnow, IconStar } from './Icons';
 import { stepName, Stars } from './ui';
 import { SheetThumb } from './SheetThumb';
 import { DailyCard, useSession } from './Learn';
@@ -18,9 +18,21 @@ export function useDaily() {
 }
 
 export function StreakPill({ days, lit }: { days: number; lit: boolean }) {
+  const f = freezes();
   return (
-    <span className={`pill-stat streak ${lit ? 'lit' : ''}`} aria-label={`${days}-day streak${lit ? '' : ', not yet practised today'}`}>
+    <span className={`pill-stat streak ${lit ? 'lit' : ''}`} aria-label={`${days}-day streak${lit ? '' : ', not yet practised today'}${f ? `, ${f} streak ${f === 1 ? 'freeze' : 'freezes'}` : ''}`}>
       <IconFlame size={18} />{days}
+      {f > 0 && <span className="freeze-chip" title={`${f} streak ${f === 1 ? 'freeze' : 'freezes'}`}><IconSnow size={13} />{f}</span>}
+    </span>
+  );
+}
+
+/** XP earned today (and in all, for screen readers). */
+export function XpPill() {
+  const xp = today().xp ?? 0;
+  return (
+    <span className="pill-stat xp" aria-label={`${xp} XP today, ${totalXp()} in all`}>
+      <IconBolt size={16} />{xp}<small>XP</small>
     </span>
   );
 }
@@ -84,6 +96,7 @@ export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSe
       <header className="page-head">
         <h1>{greeting()}</h1>
         <div className="head-stats">
+          <XpPill />
           <StreakPill days={daily.streak.days} lit={daily.streak.today} />
           <GoalPill sec={daily.today.sec} goal={settings.dailyGoal} />
         </div>

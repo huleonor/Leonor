@@ -84,6 +84,8 @@ export interface Settings {
   fingers: FingerMode;
   /** Minutes of practice a day that fill the daily goal. */
   dailyGoal: number;
+  /** A daily practice reminder at this time ("19:00"), or none. */
+  reminder?: string | null;
   /** The first-run "connect your piano" card has been answered. */
   setupDone: boolean;
   /** Settings format, for one-off migrations. */
