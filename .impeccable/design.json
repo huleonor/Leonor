@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-11T11:09:11Z",
+  "generatedAt": "2026-10-11T12:25:49Z",
   "title": "Design System: Hugo's Piano",
   "extensions": {
     "colorMeta": {
@@ -306,8 +306,8 @@
       },
       "violet": {
         "role": "secondary",
-        "displayName": "Teaching Violet",
-        "canonical": "#8f4dff",
+        "displayName": "Practice Violet",
+        "canonical": "#8644f7",
         "tonalRamp": [
           "#100029",
           "#2c035e",
@@ -317,6 +317,21 @@
           "#a687f8",
           "#c8b8fe",
           "#efebff"
+        ]
+      },
+      "violet-mist": {
+        "role": "secondary",
+        "displayName": "Violet Mist",
+        "canonical": "#d9c8ff",
+        "tonalRamp": [
+          "#1f1338",
+          "#33225c",
+          "#4a3784",
+          "#6450ab",
+          "#8070cc",
+          "#a195e3",
+          "#c3b8f4",
+          "#e7e0ff"
         ]
       },
       "teal": {
@@ -347,51 +362,6 @@
           "#7aa8ad",
           "#9fced4",
           "#c9f9ff"
-        ]
-      },
-      "tool-cream": {
-        "role": "neutral",
-        "displayName": "Tool Cream",
-        "canonical": "#f4f0e8",
-        "tonalRamp": [
-          "#0d0b06",
-          "#27241e",
-          "#433f39",
-          "#615d56",
-          "#807d76",
-          "#a29e97",
-          "#c7c4bc",
-          "#f2eee6"
-        ]
-      },
-      "key-yellow": {
-        "role": "tertiary",
-        "displayName": "Key Yellow",
-        "canonical": "#ffd84d",
-        "tonalRamp": [
-          "#0f0b00",
-          "#2d2300",
-          "#4d3e03",
-          "#705c08",
-          "#947b1a",
-          "#bb9b25",
-          "#e7c02d",
-          "#feeebb"
-        ]
-      },
-      "mini-case": {
-        "role": "neutral",
-        "displayName": "Mini Case",
-        "canonical": "#2a2833",
-        "tonalRamp": [
-          "#0b0a13",
-          "#24222d",
-          "#403e4a",
-          "#5e5c68",
-          "#7d7b88",
-          "#9f9caa",
-          "#c4c2d0",
-          "#efecfb"
         ]
       },
       "right-hand": {
@@ -664,94 +634,34 @@
           "#ecedfe"
         ]
       },
-      "level-1": {
+      "difficulty-medium": {
         "role": "tertiary",
-        "displayName": "Level 1 Mint",
-        "canonical": "#8ff0b5",
+        "displayName": "Medium Amber",
+        "canonical": "#ffc94a",
         "tonalRamp": [
-          "#000f05",
-          "#002e17",
-          "#01502d",
-          "#057444",
-          "#339862",
-          "#5bbc84",
-          "#81e1a7",
-          "#c4ffd9"
-        ]
-      },
-      "level-2": {
-        "role": "tertiary",
-        "displayName": "Level 2 Sky",
-        "canonical": "#9fd8ff",
-        "tonalRamp": [
-          "#000d18",
-          "#00283e",
-          "#094767",
-          "#30678a",
-          "#5289ad",
-          "#75acd2",
-          "#98d1f8",
-          "#dff1fe"
-        ]
-      },
-      "level-3": {
-        "role": "tertiary",
-        "displayName": "Level 3 Butter",
-        "canonical": "#ffe08a",
-        "tonalRamp": [
-          "#100a00",
-          "#2f2300",
-          "#524000",
-          "#775e02",
-          "#9c7f24",
-          "#c0a24c",
-          "#e5c671",
-          "#ffeebf"
-        ]
-      },
-      "level-4": {
-        "role": "tertiary",
-        "displayName": "Level 4 Apricot",
-        "canonical": "#ffb38a",
-        "tonalRamp": [
-          "#180500",
-          "#3f1801",
-          "#6a2e02",
-          "#904d25",
-          "#b46e47",
-          "#da9169",
-          "#ffb68f",
-          "#ffeadf"
-        ]
-      },
-      "level-5": {
-        "role": "tertiary",
-        "displayName": "Level 5 Rose",
-        "canonical": "#ff9fb0",
-        "tonalRamp": [
-          "#1e0006",
-          "#4b011b",
-          "#721f36",
-          "#964154",
-          "#bc6374",
-          "#e38596",
-          "#fdb1bd",
-          "#ffe8eb"
+          "#2b1d00",
+          "#4a3400",
+          "#6c4d00",
+          "#906800",
+          "#b58500",
+          "#dba400",
+          "#ffc94a",
+          "#ffe7ad"
         ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Page titles (Good afternoon, Songs, Progress); 22px on short landscape screens."
+        "purpose": "Page titles (Good afternoon, Choose a song, Progress); 22px on short landscape screens."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "The Continue card's song name, result and pause cards, the streak count, sheet titles."
+        "purpose": "The Continue card's song name, result and pause cards, the streak count, sheet and upload page titles."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Section heads: Today's practice, card headings; section card titles at 16px."
+        "purpose": "Collection headings on Songs (21px), section heads such as Today's practice (18px), card headings; section card titles at 16px."
       },
       "instruction": {
         "displayName": "Instruction",
@@ -765,13 +675,13 @@
         "displayName": "Button",
         "purpose": "Every button, chip, segment and rail label; 17px on big buttons."
       },
-      "tool": {
-        "displayName": "Tool",
-        "purpose": "Labels under the tool bar icons on the song sheet."
+      "mode": {
+        "displayName": "Mode",
+        "purpose": "Mode buttons on the song bar (14.5px); 14px on the floating score buttons, 13.5px on Connect piano."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Meta under titles, facts, tags, stat captions, week-day letters."
+        "purpose": "Meta under titles, facts, tags, stat captions, field labels, the difficulty word, week-day letters."
       },
       "caption": {
         "displayName": "Caption",
@@ -783,11 +693,11 @@
       },
       "score-title": {
         "displayName": "Score Title",
-        "purpose": "Georgia title of the printed score, compact on one row with the composer; the only serif, and only on the score."
+        "purpose": "Georgia title on the score card, compact on one row with the composer; the only serif, and only on printed sheet music."
       },
       "score-composer": {
         "displayName": "Score Composer",
-        "purpose": "Georgia italic composer line, right-aligned on the score title row."
+        "purpose": "Georgia italic composer line, right-aligned on the score card's title row."
       }
     },
     "shadows": [
@@ -822,6 +732,31 @@
         "purpose": "The next section card to learn in the Teach me strip."
       },
       {
+        "name": "paper-page",
+        "value": "0 1px 0 rgba(255, 255, 255, .06), 0 10px 24px rgba(0, 0, 0, .35)",
+        "purpose": "White song pages and the Continue cover lying on indigo."
+      },
+      {
+        "name": "paper-page-lift",
+        "value": "0 16px 30px rgba(0, 0, 0, .45); transform: translateY(-3px)",
+        "purpose": "A song page on hover."
+      },
+      {
+        "name": "score-card",
+        "value": "0 10px 30px rgba(0, 0, 0, .25)",
+        "purpose": "The white card holding the score on the song screen."
+      },
+      {
+        "name": "violet-float",
+        "value": "0 4px 14px rgba(60, 20, 140, .3)",
+        "purpose": "Floating Restart, Loop and Hide keys buttons on the score card."
+      },
+      {
+        "name": "violet-float-on",
+        "value": "inset 0 0 0 2px var(--violet), 0 4px 14px rgba(60, 20, 140, .2)",
+        "purpose": "Loop while looping: white with a violet ring."
+      },
+      {
         "name": "key-lip-white",
         "value": "inset 0 -5px 0 #e3dff4",
         "purpose": "Bottom lip of the large keyboard's white keys."
@@ -840,11 +775,6 @@
         "name": "floating-card",
         "value": "0 20px 50px rgba(0, 0, 0, .45)",
         "purpose": "The lesson's pause and result cards; the sheet result card uses 0 20px 50px rgba(20, 17, 43, .45)."
-      },
-      {
-        "name": "tempo-pill",
-        "value": "0 10px 30px rgba(20, 17, 43, .3)",
-        "purpose": "The tempo pill floating over the score in Auto scroll."
       },
       {
         "name": "toast",
@@ -871,12 +801,22 @@
       {
         "name": "color",
         "value": "150ms",
-        "purpose": "Hover fills, tool state and colour changes."
+        "purpose": "Hover fills, mode state and colour changes."
       },
       {
         "name": "sheet-in",
         "value": "280ms slide-in from 40px right",
-        "purpose": "Side sheets."
+        "purpose": "Side sheets (Settings, Edit song, input check)."
+      },
+      {
+        "name": "page-lift",
+        "value": "180ms transform and shadow",
+        "purpose": "A song page lifts 3px on hover and scales to 98% on press."
+      },
+      {
+        "name": "page-fade",
+        "value": "200ms fade",
+        "purpose": "The full-screen upload page and scrims."
       },
       {
         "name": "card-rise",
@@ -920,6 +860,10 @@
         "value": "max-height: 430px"
       },
       {
+        "name": "bar-compact",
+        "value": "max-width: 960px"
+      },
+      {
         "name": "stack",
         "value": "max-width: 760px"
       },
@@ -936,15 +880,15 @@
       "refersTo": "button-primary",
       "description": "The one go-green action per screen; names the next step and presses down onto its edge.",
       "html": "<button class=\"ds-btn ds-btn-go ds-btn-big\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M6 3.8v12.4L16 10z\" fill=\"currentColor\"/></svg>Continue</button>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 20px;border-radius:14px;font:800 15px/1 var(--font);border:0;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-btn-go{background:var(--go);color:var(--go-ink);box-shadow:0 4px 0 var(--go-edge)}.ds-btn-go:hover{background:var(--go-hi)}.ds-btn-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--go-edge)}.ds-btn-big{min-height:54px;padding:0 26px;font-size:17px;border-radius:16px}"
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 20px;border-radius:14px;font:800 15px/1 var(--font);border:0;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-btn-go{background:var(--go);color:var(--go-ink);box-shadow:0 4px 0 var(--go-edge)}.ds-btn-go:hover{background:var(--go-hi)}.ds-btn-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--go-edge)}.ds-btn-big{min-height:54px;padding:0 26px;font-size:17px;border-radius:16px}"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Raised indigo for the alternative action (Try again, Teach me, Restart).",
+      "description": "Raised indigo for the alternative action (Try again, Teach me on the result card).",
       "html": "<button class=\"ds-btn ds-btn-raised\">Play freely</button>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 20px;border-radius:14px;font:800 15px/1 var(--font);border:0;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-btn-raised{background:var(--raised);color:var(--ink);box-shadow:0 4px 0 var(--raised-edge)}.ds-btn-raised:hover{background:#38317a}.ds-btn-raised:active{transform:translateY(3px);box-shadow:0 1px 0 var(--raised-edge)}"
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 20px;border-radius:14px;font:800 15px/1 var(--font);border:0;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-btn-raised{background:var(--raised);color:var(--ink);box-shadow:0 4px 0 var(--raised-edge)}.ds-btn-raised:hover{background:#38317a}.ds-btn-raised:active{transform:translateY(3px);box-shadow:0 1px 0 var(--raised-edge)}"
     },
     {
       "name": "Quiet Button",
@@ -952,31 +896,39 @@
       "refersTo": "button-quiet",
       "description": "Edge-less exit or cancel action under the main pair.",
       "html": "<button class=\"ds-btn-quiet\">Back to song</button>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn-quiet{display:inline-flex;align-items:center;min-height:40px;padding:0 20px;border-radius:14px;background:transparent;border:0;color:var(--ink-2);font:800 15px/1 var(--font);cursor:pointer;transition:background .15s,color .15s}.ds-btn-quiet:hover{color:var(--ink);background:rgba(255,255,255,.05)}.ds-btn-quiet:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn-quiet{display:inline-flex;align-items:center;min-height:40px;padding:0 20px;border-radius:14px;background:transparent;border:0;color:var(--ink-2);font:800 15px/1 var(--font);cursor:pointer;transition:background .15s,color .15s}.ds-btn-quiet:hover{color:var(--ink);background:rgba(255,255,255,.05)}.ds-btn-quiet:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Transparent with a 2px line-2 inner ring and no edge; Cancel beside the green button on the upload page.",
+      "html": "<button class=\"ds-btn-outline\">Cancel</button>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn-outline{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:0 26px;border:0;border-radius:16px;background:transparent;color:var(--ink);font:800 17px/1 var(--font);box-shadow:inset 0 0 0 2px var(--line-2);cursor:pointer;transition:background .15s}.ds-btn-outline:hover{background:rgba(255,255,255,.05)}.ds-btn-outline:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
       "name": "Icon Button",
       "kind": "button",
       "refersTo": "icon-button",
-      "description": "42px raised square, used for pause in the practice bar; ghost variant for close and back.",
+      "description": "42px raised square with a 3px edge; the ghost variant is back on the song bar and close on sheets and the upload page.",
       "html": "<div class=\"ds-row\"><button class=\"ds-icon\" aria-label=\"Pause\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6.5 4v12M13.5 4v12\" stroke-width=\"2.6\"/></svg></button><button class=\"ds-icon ds-icon-ghost\" aria-label=\"Back\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12.5 4 6.5 10l6 6\"/></svg></button></div>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-row{display:flex;gap:10px}.ds-icon{width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:12px;background:var(--raised);color:var(--ink);box-shadow:0 3px 0 var(--raised-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease)}.ds-icon:active{transform:translateY(2px);box-shadow:0 1px 0 var(--raised-edge)}.ds-icon-ghost{background:transparent;box-shadow:none;color:var(--ink-2)}.ds-icon-ghost:hover{color:var(--ink);background:rgba(255,255,255,.06)}.ds-icon:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-row{display:flex;gap:10px}.ds-icon{width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:12px;background:var(--raised);color:var(--ink);box-shadow:0 3px 0 var(--raised-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease)}.ds-icon:active{transform:translateY(2px);box-shadow:0 1px 0 var(--raised-edge)}.ds-icon-ghost{background:transparent;box-shadow:none;color:var(--ink-2)}.ds-icon-ghost:hover{color:var(--ink);background:rgba(255,255,255,.06)}.ds-icon:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
       "name": "Chips and Segmented Control",
       "kind": "chip",
       "refersTo": "chip",
-      "description": "Practice-bar chips with a status dot, and the segmented well used in settings and filters.",
-      "html": "<div class=\"ds-row\"><button class=\"ds-chip ds-on\"><i></i>Wait</button><button class=\"ds-chip\">0.6×</button><div class=\"ds-seg\" role=\"radiogroup\"><button class=\"ds-on\">All</button><button>Mine</button></div></div>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ds-chip{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 13px;border:0;border-radius:12px;background:var(--surface-2);color:var(--ink-2);font:800 14px/1 var(--font);cursor:pointer}.ds-chip i{width:9px;height:9px;border-radius:50%;background:var(--line-2)}.ds-chip.ds-on{color:var(--ink)}.ds-chip.ds-on i{background:var(--go)}.ds-chip:focus-visible,.ds-seg button:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-seg{display:inline-flex;padding:4px;gap:2px;border-radius:14px;background:var(--bg-deep)}.ds-seg button{min-height:36px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--ink-2);font:800 14px/1 var(--font);cursor:pointer;transition:background .15s,color .15s}.ds-seg button:hover{color:var(--ink)}.ds-seg button.ds-on{background:var(--raised);color:var(--ink);box-shadow:0 2px 0 var(--raised-edge)}"
+      "description": "The Feedback chip with its status dot, and the segmented well; the small variant carries Waits for you / In tempo and the speed control.",
+      "html": "<div class=\"ds-row\"><button class=\"ds-chip ds-on\"><i></i>Feedback</button><div class=\"ds-seg\" role=\"radiogroup\"><button class=\"ds-on\">Waits for you</button><button>In tempo</button></div></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ds-chip{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 13px;border:0;border-radius:12px;background:var(--surface-2);color:var(--ink-2);font:800 14px/1 var(--font);cursor:pointer}.ds-chip i{width:9px;height:9px;border-radius:50%;background:var(--line-2)}.ds-chip.ds-on{color:var(--ink)}.ds-chip.ds-on i{background:var(--go)}.ds-chip:focus-visible,.ds-seg button:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-seg{display:inline-flex;padding:4px;gap:2px;border-radius:14px;background:var(--bg-deep)}.ds-seg button{min-height:36px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--ink-2);font:800 14px/1 var(--font);cursor:pointer;transition:background .15s,color .15s}.ds-seg button:hover{color:var(--ink)}.ds-seg button.ds-on{background:var(--raised);color:var(--ink);box-shadow:0 2px 0 var(--raised-edge)}"
     },
     {
       "name": "Text Field",
       "kind": "input",
       "refersTo": "text-field",
-      "description": "Night-deep field with a 2px line stroke that turns green on focus.",
-      "html": "<label class=\"ds-field\">Song title<input placeholder=\"Cornfield Chase\"></label>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-field{display:grid;gap:5px;font:800 13px/1.3 var(--font);color:var(--ink-2)}.ds-field input{min-height:44px;padding:0 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg-deep);color:var(--ink);font:700 16px var(--font)}.ds-field input::placeholder{color:var(--ink-3)}.ds-field input:focus{outline:none;border-color:var(--go)}"
+      "description": "Labelled night-deep field, 48px, with a 2px line stroke that turns green on focus; the read-only variant holds the difficulty dots.",
+      "html": "<div class=\"ds-form\"><label class=\"ds-field\">Title<input value=\"Cornfield Chase\"></label><div class=\"ds-field\">Difficulty<div class=\"ds-static\"><span class=\"ds-diff\"><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i></i><i></i><span>Medium</span></span><small>Worked out from the notes</small></div></div></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-form{display:grid;gap:16px;max-width:380px}.ds-field{display:grid;gap:6px;font:800 13px/1.3 var(--font);color:var(--ink-2)}.ds-field input{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg-deep);color:var(--ink);font:700 16px var(--font)}.ds-field input::placeholder{color:var(--ink-3)}.ds-field input:focus{outline:none;border-color:var(--go)}.ds-static{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:48px;padding:0 14px;border-radius:12px;background:var(--bg-deep);border:2px solid var(--line)}.ds-static small{color:var(--ink-3);font-weight:700;font-size:12.5px}.ds-diff{display:inline-flex;align-items:center;gap:3px}.ds-diff i{width:7px;height:7px;border-radius:50%;background:var(--line)}.ds-diff i.on{background:#ffc94a}.ds-diff span{margin-left:6px;color:var(--ink-3);font-size:12.5px;font-weight:800}"
     },
     {
       "name": "Navigation Rail",
@@ -984,47 +936,47 @@
       "refersTo": "rail-item",
       "description": "Left rail of icon-over-label items; the active item is green on a soft green wash.",
       "html": "<nav class=\"ds-rail\"><button class=\"ds-rail-btn ds-on\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3.5 9 10 3.5 16.5 9v7.5h-4.5v-5h-4v5H3.5z\"/></svg>Home</button><button class=\"ds-rail-btn\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7.5 15V4.5l8-1.5V13\"/><circle cx=\"5.5\" cy=\"15\" r=\"2\"/><circle cx=\"13.5\" cy=\"13\" r=\"2\"/></svg>Songs</button></nav>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-rail{display:flex;flex-direction:column;align-items:center;gap:6px;width:84px;padding:14px 6px;background:var(--bg-deep)}.ds-rail-btn{width:70px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;border-radius:14px;background:none;color:var(--ink-3);font:800 11.5px/1 var(--font);cursor:pointer;transition:color .15s,background .15s}.ds-rail-btn:hover{color:var(--ink)}.ds-rail-btn.ds-on{color:var(--go);background:rgba(63,208,122,.12)}.ds-rail-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-rail{display:flex;flex-direction:column;align-items:center;gap:6px;width:84px;padding:14px 6px;background:var(--bg-deep)}.ds-rail-btn{width:70px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;border-radius:14px;background:none;color:var(--ink-3);font:800 11.5px/1 var(--font);cursor:pointer;transition:color .15s,background .15s}.ds-rail-btn:hover{color:var(--ink)}.ds-rail-btn.ds-on{color:var(--go);background:rgba(63,208,122,.12)}.ds-rail-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
       "name": "Continue Card",
       "kind": "card",
       "refersTo": "card",
-      "description": "Surface card at 22px corners; the Home lead naming the exact next step with a star meter and the green button.",
-      "html": "<article class=\"ds-card\"><h2>Sarabande</h2><p class=\"ds-sub\">G. F. Handel</p><p class=\"ds-next\"><span>Next</span>Part 1 · Right hand</p><div class=\"ds-meter-row\"><span class=\"ds-meter\"><i style=\"width:30%\"></i></span><b><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg>12 of 144</b></div><button class=\"ds-go\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M6 3.8v12.4L16 10z\" fill=\"currentColor\"/></svg>Continue</button></article>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-card{display:grid;gap:8px;max-width:380px;padding:18px;border-radius:22px;background:var(--surface);color:var(--ink);font:600 15px/1.4 var(--font);font-variant-numeric:tabular-nums}.ds-card h2{margin:0;font:900 25px/1.08 var(--font);letter-spacing:-.01em}.ds-sub{margin:0;color:var(--ink-2);font-size:14px}.ds-next{margin:4px 0 0;display:flex;align-items:center;gap:8px;font-weight:800}.ds-next span{padding:2px 8px;border-radius:7px;background:rgba(63,208,122,.16);color:var(--go);font-size:12.5px;font-weight:900}.ds-meter-row{display:flex;align-items:center;gap:8px}.ds-meter{position:relative;flex:1;height:8px;border-radius:8px;background:var(--line);overflow:hidden}.ds-meter i{position:absolute;inset:0 auto 0 0;background:var(--star);border-radius:8px}.ds-meter-row b{display:inline-flex;align-items:center;gap:4px;color:var(--star);font-weight:900;font-size:13px}.ds-go{justify-self:start;margin-top:6px;display:inline-flex;align-items:center;gap:8px;min-height:54px;padding:0 26px;border:0;border-radius:16px;background:var(--go);color:var(--go-ink);font:800 17px/1 var(--font);box-shadow:0 4px 0 var(--go-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-go:hover{background:var(--go-hi)}.ds-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--go-edge)}.ds-go:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
+      "description": "Surface card at 22px corners; the Home lead, its song's engraved page beside the exact next step, a star meter and the green button.",
+      "html": "<article class=\"ds-card\"><div class=\"ds-cover\"><svg viewBox=\"0 0 120 160\" aria-hidden=\"true\"><text x=\"60\" y=\"20\" text-anchor=\"middle\" font-family=\"Georgia,serif\" font-size=\"10\" fill=\"#1b1640\">Sarabande</text><g stroke=\"#1b1640\" stroke-width=\".6\"><path d=\"M8 40h104M8 46h104M8 52h104M8 58h104M8 64h104M8 80h104M8 86h104M8 92h104M8 98h104M8 104h104M8 120h104M8 126h104M8 132h104M8 138h104M8 144h104\"/></g></svg></div><div class=\"ds-cbody\"><h2>Sarabande</h2><p class=\"ds-sub\">G. F. Handel</p><p class=\"ds-next\"><span>Next</span>Part 1 · Right hand</p><div class=\"ds-meter-row\"><span class=\"ds-meter\"><i style=\"width:30%\"></i></span><b><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg>12 of 144</b></div><button class=\"ds-go\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M6 3.8v12.4L16 10z\" fill=\"currentColor\"/></svg>Continue</button></div></article>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-card{display:grid;grid-template-columns:120px 1fr;gap:18px;max-width:520px;align-items:start;padding:18px;border-radius:22px;background:var(--surface);color:var(--ink);font:600 15px/1.4 var(--font);font-variant-numeric:tabular-nums}.ds-card h2{margin:0;font:900 25px/1.08 var(--font);letter-spacing:-.01em}.ds-sub{margin:0;color:var(--ink-2);font-size:14px}.ds-next{margin:4px 0 0;display:flex;align-items:center;gap:8px;font-weight:800}.ds-next span{padding:2px 8px;border-radius:7px;background:rgba(63,208,122,.16);color:var(--go);font-size:12.5px;font-weight:900}.ds-meter-row{display:flex;align-items:center;gap:8px}.ds-meter{position:relative;flex:1;height:8px;border-radius:8px;background:var(--line);overflow:hidden}.ds-meter i{position:absolute;inset:0 auto 0 0;background:var(--star);border-radius:8px}.ds-meter-row b{display:inline-flex;align-items:center;gap:4px;color:var(--star);font-weight:900;font-size:13px}.ds-go{justify-self:start;margin-top:6px;display:inline-flex;align-items:center;gap:8px;min-height:54px;padding:0 26px;border:0;border-radius:16px;background:var(--go);color:var(--go-ink);font:800 17px/1 var(--font);box-shadow:0 4px 0 var(--go-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-go:hover{background:var(--go-hi)}.ds-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--go-edge)}.ds-go:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-cbody{display:grid;gap:8px;min-width:0}.ds-cover{aspect-ratio:3/4;border-radius:6px;overflow:hidden;background:#fff;box-shadow:0 10px 24px rgba(0,0,0,.35)}.ds-cover svg{display:block;width:100%;height:auto}"
     },
     {
-      "name": "Mode Tool Bar",
+      "name": "Song Card (sheet-music page)",
+      "kind": "card",
+      "refersTo": "song-page",
+      "description": "A song as its own white 3:4 engraved first page on the paper shadow, then composer, title, difficulty dots and stars; the page lifts on hover.",
+      "html": "<button class=\"ds-song\"><span class=\"ds-page\"><svg viewBox=\"0 0 120 160\" aria-hidden=\"true\"><text x=\"60\" y=\"18\" text-anchor=\"middle\" font-family=\"Georgia,serif\" font-size=\"10\" fill=\"#1b1640\">Gymnopédie No. 1</text><text x=\"112\" y=\"28\" text-anchor=\"end\" font-family=\"Georgia,serif\" font-size=\"6\" fill=\"#1b1640\">Erik Satie</text><g stroke=\"#1b1640\" stroke-width=\".6\"><path d=\"M8 40h104M8 46h104M8 52h104M8 58h104M8 64h104M8 80h104M8 86h104M8 92h104M8 98h104M8 104h104M8 124h104M8 130h104M8 136h104M8 142h104M8 148h104\"/></g><g fill=\"#1b1640\"><ellipse cx=\"30\" cy=\"49\" rx=\"3\" ry=\"2.2\"/><ellipse cx=\"55\" cy=\"46\" rx=\"3\" ry=\"2.2\"/><ellipse cx=\"80\" cy=\"52\" rx=\"3\" ry=\"2.2\"/><ellipse cx=\"40\" cy=\"95\" rx=\"3\" ry=\"2.2\"/><ellipse cx=\"70\" cy=\"92\" rx=\"3\" ry=\"2.2\"/></g></svg></span><span class=\"ds-text\"><b>Erik Satie</b><span>Gymnopédie No. 1</span></span><span class=\"ds-foot\"><span class=\"ds-diff ds-easy\"><i class=\"on\"></i><i class=\"on\"></i><i></i><i></i><i></i><span>Easy</span></span><span class=\"ds-stars\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg>7</span></span></button>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-song{width:180px;display:grid;gap:10px;padding:0;border:0;background:none;text-align:left;color:var(--ink);font-family:var(--font);cursor:pointer}.ds-page{display:block;aspect-ratio:3/4;overflow:hidden;border-radius:6px;background:#fff;box-shadow:0 1px 0 rgba(255,255,255,.06),0 10px 24px rgba(0,0,0,.35);transition:transform .18s var(--ease),box-shadow .18s var(--ease)}.ds-page svg{display:block;width:100%;height:auto}.ds-song:hover .ds-page{transform:translateY(-3px);box-shadow:0 16px 30px rgba(0,0,0,.45)}.ds-song:active .ds-page{transform:scale(.98)}.ds-song:focus-visible{outline:3px solid var(--go);outline-offset:3px;border-radius:6px}.ds-text{display:grid;gap:1px;min-width:0}.ds-text b{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-text span{color:var(--ink-3);font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}.ds-diff{display:inline-flex;align-items:center;gap:3px}.ds-diff i{width:7px;height:7px;border-radius:50%;background:var(--line)}.ds-diff.ds-easy i.on{background:var(--go)}.ds-diff span{margin-left:6px;color:var(--ink-3);font-size:12.5px;font-weight:800}.ds-stars{display:inline-flex;align-items:center;gap:4px;color:var(--star);font-weight:900;font-size:13px}"
+    },
+    {
+      "name": "Song Bar",
       "kind": "nav",
-      "refersTo": "tool",
-      "description": "The song sheet's dark bar of modes: icon over label, active modes on a cream pill with violet ink, a separator between play modes and scroll options.",
-      "html": "<header class=\"ds-toolbar\" role=\"toolbar\"><button class=\"ds-tool ds-tool-collapse\" aria-label=\"Hide the tool bar\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 15l6-6 6 6\"/></svg></button><button class=\"ds-tool\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 9h4l5-4v14l-5-4H4z\"/><path d=\"M16 9a4 4 0 010 6M19 6a8 8 0 010 12\"/></svg><span>Listen</span></button><button class=\"ds-tool\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 9l10-5 10 5-10 5z\"/><path d=\"M6 11v5c3 2 9 2 12 0v-5\"/></svg><span>Teach me</span></button><button class=\"ds-tool ds-on\" aria-pressed=\"true\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 18V5l11-2v13\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><circle cx=\"17\" cy=\"16\" r=\"3\"/></svg><span>Play</span></button><span class=\"ds-tool-sep\"></span><button class=\"ds-tool\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M10 4H5v16h5M14 8l4 4-4 4M18 12H9\"/></svg><span>Exit</span></button></header>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-toolbar{display:flex;align-items:stretch;gap:4px;padding:6px 12px;background:var(--bg);border-radius:0}.ds-tool{min-width:74px;min-height:58px;padding:4px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;border-radius:12px;background:transparent;color:#fff;font:800 13px/1.2 var(--font);white-space:nowrap;cursor:pointer;transition:background .15s,color .15s}.ds-tool:hover{background:rgba(255,255,255,.08)}.ds-tool:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-tool.ds-on{background:#f4f0e8;color:var(--violet)}.ds-tool-collapse{min-width:54px}.ds-tool-sep{width:2px;margin:8px 6px;background:var(--line);border-radius:2px}"
+      "refersTo": "mode",
+      "description": "The song screen's compact row on night: violet hands control, mode buttons (tinted off, solid violet on), a separator, the small Waits for you / In tempo segmented control, the Feedback chip, the notes count and Connect piano with a flame dot.",
+      "html": "<header class=\"ds-bar\"><div class=\"ds-hands\" role=\"radiogroup\"><button role=\"radio\" aria-label=\"Left hand\"><span class=\"ds-mirror\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 10V4.5a1.2 1.2 0 0 1 2.4 0V9M9.4 9V3.5a1.2 1.2 0 0 1 2.4 0V9M11.8 9V4.5a1.2 1.2 0 0 1 2.4 0V11c0 3.5-2 6-5 6-2.2 0-3.4-1.2-4.6-3L3.8 11.5a1.2 1.2 0 0 1 2-1.3L7 12\"/></svg></span></button><button role=\"radio\" aria-checked=\"true\" class=\"ds-on\" aria-label=\"Both hands\"><span class=\"ds-mirror\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 10V4.5a1.2 1.2 0 0 1 2.4 0V9M9.4 9V3.5a1.2 1.2 0 0 1 2.4 0V9M11.8 9V4.5a1.2 1.2 0 0 1 2.4 0V11c0 3.5-2 6-5 6-2.2 0-3.4-1.2-4.6-3L3.8 11.5a1.2 1.2 0 0 1 2-1.3L7 12\"/></svg></span><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 10V4.5a1.2 1.2 0 0 1 2.4 0V9M9.4 9V3.5a1.2 1.2 0 0 1 2.4 0V9M11.8 9V4.5a1.2 1.2 0 0 1 2.4 0V11c0 3.5-2 6-5 6-2.2 0-3.4-1.2-4.6-3L3.8 11.5a1.2 1.2 0 0 1 2-1.3L7 12\"/></svg></button><button role=\"radio\" aria-label=\"Right hand\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 10V4.5a1.2 1.2 0 0 1 2.4 0V9M9.4 9V3.5a1.2 1.2 0 0 1 2.4 0V9M11.8 9V4.5a1.2 1.2 0 0 1 2.4 0V11c0 3.5-2 6-5 6-2.2 0-3.4-1.2-4.6-3L3.8 11.5a1.2 1.2 0 0 1 2-1.3L7 12\"/></svg></button></div><button class=\"ds-mode\">Listen</button><button class=\"ds-mode ds-on\" aria-pressed=\"true\">Play</button><button class=\"ds-mode\">Teach me</button><span class=\"ds-sep\"></span><div class=\"ds-seg\"><button class=\"ds-on\">Waits for you</button><button>In tempo</button></div><p class=\"ds-meta\">Notes: <b>12</b> / 148<span>0:24</span></p><button class=\"ds-connect\"><i></i>Connect piano</button></header>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;background:var(--bg);font-family:var(--font)}.ds-hands{display:inline-flex;padding:3px;border-radius:12px;background:var(--violet)}.ds-hands button{min-height:36px;min-width:40px;padding:0 8px;border:0;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:1px;background:none;color:#e9ddff;cursor:pointer}.ds-hands button.ds-on{background:#fff;color:var(--violet)}.ds-mirror{display:inline-flex;transform:scaleX(-1)}.ds-mode{display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:0 14px;border:0;border-radius:12px;background:rgba(143,77,255,.18);color:var(--violet-mist);font:800 14.5px/1 var(--font);cursor:pointer;transition:background .15s,color .15s}.ds-mode:hover{background:rgba(143,77,255,.3)}.ds-mode.ds-on{background:var(--violet);color:#fff}.ds-mode:focus-visible,.ds-hands button:focus-visible,.ds-connect:focus-visible,.ds-seg button:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-sep{width:2px;height:26px;border-radius:2px;background:var(--line)}.ds-seg{display:inline-flex;gap:2px;padding:4px;border-radius:14px;background:var(--bg-deep)}.ds-seg button{min-height:32px;padding:0 10px;border:0;border-radius:10px;background:none;color:var(--ink-2);font:800 13px/1 var(--font);cursor:pointer}.ds-seg .ds-on{background:var(--raised);color:var(--ink);box-shadow:0 2px 0 var(--raised-edge)}.ds-meta{margin:0;color:var(--ink-2);font-weight:700;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}.ds-meta b{color:var(--ink);font-weight:900}.ds-meta span{margin-left:12px;color:var(--ink-3)}.ds-connect{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 12px;border:0;border-radius:12px;background:var(--surface-2);color:var(--ink-2);font:800 13.5px/1 var(--font);cursor:pointer}.ds-connect i{width:9px;height:9px;border-radius:50%;background:var(--flame)}"
     },
     {
       "name": "Teach Me Section Cards",
       "kind": "card",
       "refersTo": "section-card",
-      "description": "The violet strip of white section cards under the mini keyboard; the next section wears a white-then-green ring, a learnt one a paper-green check.",
+      "description": "The violet strip of white section cards between the song bar and the score card (the keyboard steps aside while it is open); the next section wears a white-then-green ring, a learnt one a paper-green check.",
       "html": "<nav class=\"ds-sections\"><button class=\"ds-section ds-next\"><span class=\"ds-section-icon\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 9l10-5 10 5-10 5z\"/><path d=\"M6 11v5c3 2 9 2 12 0v-5\"/></svg></span><span class=\"ds-section-text\"><b>Part 1</b><small>Bars 1–4 · 0/4 steps</small></span></button><button class=\"ds-section\"><span class=\"ds-section-icon\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 9l10-5 10 5-10 5z\"/><path d=\"M6 11v5c3 2 9 2 12 0v-5\"/></svg></span><span class=\"ds-section-text\"><b>Part 2</b><small>Bars 5–8 · 0/4 steps</small></span></button></nav>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-sections{display:flex;gap:12px;padding:14px 16px;background:var(--violet);overflow-x:auto}.ds-section{flex:none;display:flex;align-items:center;gap:12px;min-width:210px;padding:12px 16px;border:0;border-radius:14px;background:#fff;color:var(--lesson-ink);text-align:left;font-family:var(--font);cursor:pointer;box-shadow:0 3px 0 rgba(40,10,90,.35);transition:transform .08s var(--ease),box-shadow .08s var(--ease)}.ds-section:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(40,10,90,.35)}.ds-section:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-section.ds-next{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--go)}.ds-section-icon{display:grid;place-items:center;color:var(--violet)}.ds-section-text{display:grid}.ds-section-text b{font-size:16px;font-weight:900}.ds-section-text small{color:#6b6585;font-size:12.5px;font-weight:700}"
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-sections{display:flex;gap:12px;padding:14px 16px;background:var(--violet);overflow-x:auto}.ds-section{flex:none;display:flex;align-items:center;gap:12px;min-width:210px;padding:12px 16px;border:0;border-radius:14px;background:#fff;color:var(--lesson-ink);text-align:left;font-family:var(--font);cursor:pointer;box-shadow:0 3px 0 rgba(40,10,90,.35);transition:transform .08s var(--ease),box-shadow .08s var(--ease)}.ds-section:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(40,10,90,.35)}.ds-section:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-section.ds-next{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--go)}.ds-section-icon{display:grid;place-items:center;color:var(--violet)}.ds-section-text{display:grid}.ds-section-text b{font-size:16px;font-weight:900}.ds-section-text small{color:#6b6585;font-size:12.5px;font-weight:700}"
     },
     {
       "name": "Score Sheet",
       "kind": "custom",
       "refersTo": "score",
-      "description": "White engraved score: compact Georgia title row, a padded violet section pill, a 6px teal cursor; played notes paper green, missed paper red.",
-      "html": "<div class=\"ds-score\"><header class=\"ds-score-head\"><h1>Cornfield Chase</h1><p>H. Zimmer · Interstellar</p></header><span class=\"ds-part-pill\">Part 1</span><svg class=\"ds-staff\" viewBox=\"0 0 420 70\" aria-hidden=\"true\"><g stroke=\"#1b1640\" stroke-width=\"1\"><line x1=\"0\" x2=\"420\" y1=\"10\" y2=\"10\"/><line x1=\"0\" x2=\"420\" y1=\"22\" y2=\"22\"/><line x1=\"0\" x2=\"420\" y1=\"34\" y2=\"34\"/><line x1=\"0\" x2=\"420\" y1=\"46\" y2=\"46\"/><line x1=\"0\" x2=\"420\" y1=\"58\" y2=\"58\"/><line x1=\"210\" x2=\"210\" y1=\"10\" y2=\"58\"/></g><ellipse cx=\"70\" cy=\"46\" rx=\"6\" ry=\"4.5\" fill=\"#178a48\"/><ellipse cx=\"130\" cy=\"40\" rx=\"6\" ry=\"4.5\" fill=\"#d92d45\"/><ellipse cx=\"250\" cy=\"34\" rx=\"6\" ry=\"4.5\" fill=\"#1b1640\"/><ellipse cx=\"330\" cy=\"28\" rx=\"6\" ry=\"4.5\" fill=\"#1b1640\"/></svg><span class=\"ds-cursor\"></span></div>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-score{position:relative;max-width:480px;padding:12px 16px 20px;background:#fff;color:var(--lesson-ink);border-radius:0}.ds-score-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;font-family:Georgia,'Times New Roman',serif}.ds-score-head h1{margin:0;font-size:20px;font-weight:700}.ds-score-head p{margin:0;font-style:italic;font-size:15px;color:#4a4566}.ds-part-pill{display:inline-block;margin:14px 0 8px 40px;padding:3px 12px;border:2px solid var(--violet);border-radius:10px;background:#fff;color:var(--violet);font:800 15px/1.2 var(--font)}.ds-staff{display:block;width:100%;height:auto}.ds-cursor{position:absolute;left:196px;bottom:14px;width:6px;height:76px;border-radius:3px;background:var(--teal);opacity:.9}"
-    },
-    {
-      "name": "Tempo Pill",
-      "kind": "custom",
-      "refersTo": "tempo-pill",
-      "description": "Dark float at the bottom-right of the score in Auto scroll: the green Start / Go on button and a small speed segmented control.",
-      "html": "<div class=\"ds-tempo\"><button class=\"ds-go\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M6 3.8v12.4L16 10z\" fill=\"currentColor\"/></svg>Go on</button><div class=\"ds-seg\" role=\"radiogroup\"><button role=\"radio\">0.6×</button><button role=\"radio\" aria-checked=\"true\" class=\"ds-on\">0.8×</button><button role=\"radio\">1×</button></div></div>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-tempo{display:inline-flex;align-items:center;gap:10px;padding:8px 10px 8px 16px;border-radius:18px;background:rgba(20,17,43,.94);color:var(--ink);box-shadow:0 10px 30px rgba(20,17,43,.3);font-family:var(--font)}.ds-go{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 20px;border:0;border-radius:14px;background:var(--go);color:var(--go-ink);font:800 15px/1 var(--font);box-shadow:0 4px 0 var(--go-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-go:hover{background:var(--go-hi)}.ds-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--go-edge)}.ds-go:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-seg{display:inline-flex;gap:2px;padding:4px;border-radius:14px;background:var(--bg-deep)}.ds-seg button{min-height:32px;padding:0 10px;border:0;border-radius:10px;background:transparent;color:var(--ink-2);font:800 13px/1 var(--font);cursor:pointer}.ds-seg button:hover{color:var(--ink)}.ds-seg .ds-on{background:var(--raised);color:var(--ink);box-shadow:0 2px 0 var(--raised-edge)}"
+      "description": "White engraved score on a 12px card over indigo: compact Georgia title row, a violet section pill, a 6px teal cursor, played notes paper green, missed paper red, and violet floating buttons at the bottom-right.",
+      "html": "<div class=\"ds-desk\"><div class=\"ds-score\"><header class=\"ds-score-head\"><h1>Cornfield Chase</h1><p>H. Zimmer · Interstellar</p></header><span class=\"ds-part-pill\">Part 1</span><svg class=\"ds-staff\" viewBox=\"0 0 420 70\" aria-hidden=\"true\"><g stroke=\"#1b1640\" stroke-width=\"1\"><line x1=\"0\" x2=\"420\" y1=\"10\" y2=\"10\"/><line x1=\"0\" x2=\"420\" y1=\"22\" y2=\"22\"/><line x1=\"0\" x2=\"420\" y1=\"34\" y2=\"34\"/><line x1=\"0\" x2=\"420\" y1=\"46\" y2=\"46\"/><line x1=\"0\" x2=\"420\" y1=\"58\" y2=\"58\"/><line x1=\"210\" x2=\"210\" y1=\"10\" y2=\"58\"/></g><ellipse cx=\"70\" cy=\"46\" rx=\"6\" ry=\"4.5\" fill=\"#178a48\"/><ellipse cx=\"130\" cy=\"40\" rx=\"6\" ry=\"4.5\" fill=\"#d92d45\"/><ellipse cx=\"250\" cy=\"34\" rx=\"6\" ry=\"4.5\" fill=\"#1b1640\"/><ellipse cx=\"330\" cy=\"28\" rx=\"6\" ry=\"4.5\" fill=\"#1b1640\"/></svg><span class=\"ds-cursor\"></span><div class=\"ds-floats\"><button class=\"ds-float\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 9.5V8a3 3 0 0 1 3-3h8.5M13 2.5 15.5 5 13 7.5\"/><path d=\"M16 10.5V12a3 3 0 0 1-3 3H4.5M7 17.5 4.5 15 7 12.5\"/></svg>Restart</button><button class=\"ds-float ds-on\" aria-pressed=\"true\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 9.5V8a3 3 0 0 1 3-3h8.5M13 2.5 15.5 5 13 7.5\"/><path d=\"M16 10.5V12a3 3 0 0 1-3 3H4.5M7 17.5 4.5 15 7 12.5\"/></svg>Looping Part 1</button></div></div></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-desk{padding:12px;background:var(--bg);max-width:520px}.ds-score{position:relative;padding:12px 16px 64px;background:#fff;color:var(--lesson-ink);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25)}.ds-score-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;font-family:Georgia,'Times New Roman',serif}.ds-score-head h1{margin:0;font-size:20px;font-weight:700}.ds-score-head p{margin:0;font-style:italic;font-size:15px;color:#4a4566}.ds-part-pill{display:inline-block;margin:14px 0 8px 40px;padding:3px 12px;border:2px solid var(--violet);border-radius:10px;background:#fff;color:var(--violet);font:800 15px/1.2 var(--font)}.ds-staff{display:block;width:100%;height:auto}.ds-cursor{position:absolute;left:196px;bottom:58px;width:6px;height:76px;border-radius:3px;background:var(--teal);opacity:.9}.ds-floats{position:absolute;right:10px;bottom:10px;display:flex;gap:8px}.ds-float{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 14px;border:0;border-radius:11px;background:var(--violet);color:#fff;font:800 14px/1 var(--font);box-shadow:0 4px 14px rgba(60,20,140,.3);cursor:pointer}.ds-float.ds-on{background:#fff;color:var(--violet);box-shadow:inset 0 0 0 2px var(--violet),0 4px 14px rgba(60,20,140,.2)}.ds-float:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
       "name": "Lesson Header",
@@ -1032,7 +984,7 @@
       "refersTo": "lesson-counter",
       "description": "Warm lesson page header: lilac pause tile, the one instruction line, arrow tiles around the n/N counter whose violet fill grows with notes played.",
       "html": "<header class=\"ds-lesson-bar\"><button class=\"ds-pause\" aria-label=\"Pause\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\" rx=\"1.5\" fill=\"currentColor\"/><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\" rx=\"1.5\" fill=\"currentColor\"/></svg></button><p class=\"ds-say\">Play E5 with finger 5</p><div class=\"ds-nav\"><button class=\"ds-arrow\" disabled aria-label=\"Previous step\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19 12H5M11 6l-6 6 6 6\"/></svg></button><div class=\"ds-count\"><i style=\"width:34%\"></i><small>Right hand</small><span>4/12</span></div><button class=\"ds-arrow\" aria-label=\"Next step\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg></button></div></header>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-lesson-bar{display:flex;align-items:center;gap:16px;padding:12px 18px;background:var(--lesson-bg);color:var(--lesson-ink);font-family:var(--font)}.ds-pause{width:56px;height:56px;flex:none;display:grid;place-items:center;border:0;border-radius:16px;background:var(--lesson-chip);color:#fff;box-shadow:0 3px 0 #8d85a3;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease)}.ds-pause:active{transform:translateY(2px);box-shadow:0 1px 0 #8d85a3}.ds-say{flex:1;min-width:0;margin:0;font-size:20px;font-weight:900;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-nav{display:flex;align-items:center;gap:10px}.ds-arrow{width:46px;height:46px;display:grid;place-items:center;border:0;border-radius:12px;background:var(--lesson-chip);color:#fff;cursor:pointer}.ds-arrow:disabled{opacity:.4;cursor:default}.ds-pause:focus-visible,.ds-arrow:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-count{position:relative;width:250px;height:46px;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px;border-radius:12px;background:#6b6182;color:#fff;font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}.ds-count i{position:absolute;inset:0 auto 0 0;background:var(--violet);transition:width .3s var(--ease)}.ds-count small,.ds-count span{position:relative}.ds-count small{font-size:13px;font-weight:800;color:#ece6ff}"
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-lesson-bar{display:flex;align-items:center;gap:16px;padding:12px 18px;background:var(--lesson-bg);color:var(--lesson-ink);font-family:var(--font)}.ds-pause{width:56px;height:56px;flex:none;display:grid;place-items:center;border:0;border-radius:16px;background:var(--lesson-chip);color:#fff;box-shadow:0 3px 0 #8d85a3;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease)}.ds-pause:active{transform:translateY(2px);box-shadow:0 1px 0 #8d85a3}.ds-say{flex:1;min-width:0;margin:0;font-size:20px;font-weight:900;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-nav{display:flex;align-items:center;gap:10px}.ds-arrow{width:46px;height:46px;display:grid;place-items:center;border:0;border-radius:12px;background:var(--lesson-chip);color:#fff;cursor:pointer}.ds-arrow:disabled{opacity:.4;cursor:default}.ds-pause:focus-visible,.ds-arrow:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-count{position:relative;width:250px;height:46px;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px;border-radius:12px;background:#6b6182;color:#fff;font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}.ds-count i{position:absolute;inset:0 auto 0 0;background:var(--violet);transition:width .3s var(--ease)}.ds-count small,.ds-count span{position:relative}.ds-count small{font-size:13px;font-weight:800;color:#ece6ff}"
     },
     {
       "name": "Finger Bubble and Target Key",
@@ -1040,40 +992,41 @@
       "refersTo": "finger-bubble-right",
       "description": "Over the next notes, a plum (right hand) or umber (left hand) bubble with the finger; on the keyboard, the target key in teal with its finger disc and name.",
       "html": "<div class=\"ds-fb-row\"><div class=\"ds-bubble\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 13V5a1.5 1.5 0 013 0v6M11 11V4a1.5 1.5 0 013 0v7M14 11V5a1.5 1.5 0 013 0v8c0 4-3 7-6.5 7S5 17 4 14l-1-3a1.5 1.5 0 012.6-1.4L8 13\"/></svg><b>5</b></div><div class=\"ds-bubble ds-left\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 13V5a1.5 1.5 0 013 0v6M11 11V4a1.5 1.5 0 013 0v7M14 11V5a1.5 1.5 0 013 0v8c0 4-3 7-6.5 7S5 17 4 14l-1-3a1.5 1.5 0 012.6-1.4L8 13\"/></svg><b>1</b></div><div class=\"ds-keys\"><div class=\"ds-key\"></div><div class=\"ds-key ds-target\"><span class=\"ds-finger\">5</span><span class=\"ds-name\">E</span></div><div class=\"ds-key ds-hit\"></div><div class=\"ds-key\"></div></div></div>",
-      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-fb-row{display:flex;align-items:flex-end;gap:18px;padding:16px;background:var(--lesson-bg);font-family:var(--font)}.ds-bubble{position:relative;width:46px;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;background:#5b2a86;color:#e7d6ff}.ds-bubble b{margin-top:-4px;color:#fff;font-size:14px;font-weight:900}.ds-bubble::after{content:'';position:absolute;bottom:-7px;left:50%;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#5b2a86}.ds-bubble.ds-left{background:#7a4b12;color:#ffe2b8}.ds-bubble.ds-left::after{border-top-color:#7a4b12}.ds-keys{display:flex;height:96px}.ds-key{position:relative;width:40px;height:100%;background:var(--paper);border-right:1px solid #d6d1ee;border-radius:0 0 8px 8px;box-shadow:inset 0 -5px 0 #e3dff4}.ds-key.ds-target{background:var(--teal);box-shadow:none}.ds-key.ds-hit{background:var(--go);box-shadow:none}.ds-finger{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:var(--bg);color:#fff;font-size:11.5px;font-weight:900}.ds-name{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#04363b;font-size:13px;font-weight:900}"
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8644f7;--violet-mist:#d9c8ff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-fb-row{display:flex;align-items:flex-end;gap:18px;padding:16px;background:var(--lesson-bg);font-family:var(--font)}.ds-bubble{position:relative;width:46px;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;background:#5b2a86;color:#e7d6ff}.ds-bubble b{margin-top:-4px;color:#fff;font-size:14px;font-weight:900}.ds-bubble::after{content:'';position:absolute;bottom:-7px;left:50%;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#5b2a86}.ds-bubble.ds-left{background:#7a4b12;color:#ffe2b8}.ds-bubble.ds-left::after{border-top-color:#7a4b12}.ds-keys{display:flex;height:96px}.ds-key{position:relative;width:40px;height:100%;background:var(--paper);border-right:1px solid #d6d1ee;border-radius:0 0 8px 8px;box-shadow:inset 0 -5px 0 #e3dff4}.ds-key.ds-target{background:var(--teal);box-shadow:none}.ds-key.ds-hit{background:var(--go);box-shadow:none}.ds-finger{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:var(--bg);color:#fff;font-size:11.5px;font-weight:900}.ds-name{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#04363b;font-size:13px;font-weight:900}"
     }
   ],
   "narrative": {
     "northStar": "The Green Light",
-    "overview": "Hugo's Piano is the category standard for learning songs, played straight: a night indigo app in the Simply Piano and Duolingo family, where one saturated green means \"go\" everywhere it appears. The next action is green, a correctly played note is green, the next section to open wears a green ring, the met goal is green. Everything else stays quiet so that green is always the answer to \"what do I do now?\". Gold is the reward (stars), orange is the streak, red is reserved for the wrong note.\n\nThe world has three grounds. The app shell (Home, Songs, Progress, Settings) sits on deep indigo with raised indigo surfaces, a single rounded face (Nunito, heavy weights) and chunky buttons that physically press down on a solid bottom edge. A song opens as printed sheet music: a full-screen white page engraved by abcjs, set under a dark tool bar of modes (Listen, Teach me, Play | Feedback, Magic scroll, Auto scroll, Connect, Exit) and a small instrument-like keyboard that lights the keys to play in yellow, with a teal cursor moving through the score. Teach me opens a violet strip of section cards; a section becomes a lesson on a warm light page: one engraved line, the next notes in teal under a finger bubble, the target keys in teal on a large keyboard, and an n/N counter filling with violet. Results and pauses return to indigo cards floating over a scrim, so the reward always feels like the app speaking.\n\nDensity is moderate and landscape-first: an 84px rail and 16px card gaps in the shell, and edge-to-edge working surfaces (score, lesson) with nothing between Hugo and the next note. This replaces the earlier aluminium \"practice instrument\" world and the canvas paper staff with lettered note heads; notation is real engraving now.",
+    "overview": "Hugo's Piano is the category standard for learning songs, played straight: a night indigo app in the Simply Piano and Duolingo family, where one saturated green means \"go\" everywhere it appears. The next action is green, a correctly played note is green, the next section to open wears a green ring, the met goal is green. Everything else stays quiet so that green is always the answer to \"what do I do now?\". Gold is the reward (stars), orange is the streak, red is reserved for the wrong note.\n\nThe world has three grounds. The app shell (Home, Songs, Progress, Settings) sits on deep indigo with raised indigo surfaces, a single rounded face (Nunito, heavy weights) and chunky buttons that physically press down on a solid bottom edge. Songs are shown the way a sheet-music site shows them: each is its own white first page, engraved by abcjs, lying on the indigo like paper on a desk, with the composer, the title and difficulty dots underneath. A song opens on the same indigo: a compact bar of violet modes (hands, Listen, Play, Teach me | Waits for you / In tempo, Feedback, the notes count, Connect piano), the engraved score on a white rounded card scaled so at least one whole grand-staff system fits, violet floating buttons at the card's corner, and the full keyboard below with the next keys in teal and played keys in green. Teach me opens a violet strip of section cards between the bar and the card; a section becomes a lesson on a warm light page: one engraved line, the next notes in teal under a finger bubble, the target keys in teal on a large keyboard, and an n/N counter filling with violet. Results and pauses return to indigo cards floating over a scrim, so the reward always feels like the app speaking.\n\nDensity is moderate and landscape-first: an 84px rail and 16px card gaps in the shell, and on the song screen a 12px indigo margin framing the score card and the keyboard. This replaces the earlier aluminium \"practice instrument\" world, the canvas paper staff with lettered note heads, the photo covers on song cards, and the tall Simply-style tool bar with its mini keyboard; notation is real engraving, and every song is shown by its own sheet music.",
     "keyCharacteristics": [
-      "Night indigo shell with three raised surface steps; tool bar, overlays and result cards stay indigo on every screen.",
+      "Night indigo shell with three raised surface steps; the song screen, overlays and result cards stay indigo on every screen.",
       "One go-green for every primary action, correct note, active nav item, next section and met goal.",
-      "A white engraved score with a compact serif title row, violet section pills and a 6px teal cursor.",
-      "Teal marks \"now\" on paper: the cursor, the next notes and the target keys; yellow marks the keys to play on the mini keyboard.",
-      "Violet carries the teaching structure: active mode ink, the Teach me strip, section pills, the lesson counter fill.",
+      "Every song is a white 3:4 sheet-music page engraved from its first bars; no photos, no generic covers.",
+      "The score is a white 12px-radius card over the full keyboard, with a compact serif title row, violet section pills and a 6px teal cursor.",
+      "Teal marks \"now\": the score cursor, the next notes and the keys to press.",
+      "Violet carries the controls that shape practice: the hands control, mode buttons, floating score buttons, the Teach me strip, section pills, the lesson counter fill.",
       "Nunito Variable for all interface text, weights 600 to 900, tabular figures throughout.",
       "Chunky rounded action controls with a solid 3-4px bottom edge that collapses on press."
     ],
     "rules": [
       {
         "name": "The Green Light Rule",
-        "body": "Green means \"go\" or \"right\": the next action, a correct note, the next section, a met goal. It is never decoration, never a heading colour, never a mode state.",
+        "body": "Green means \"go\" or \"right\": the next action, a correct note, the next section, a met goal. It is never decoration, never a heading colour, never a mode state. Its one borrowed use is the Easy difficulty dot, which always travels with its word.",
         "section": "colors"
       },
       {
         "name": "The Teal Now Rule",
-        "body": "On paper, teal is the present: the cursor, the next notes, the keys to press. It never marks an action or a result.",
+        "body": "Teal is the present: the cursor, the next notes, the keys to press. It never marks an action or a result.",
         "section": "colors"
       },
       {
-        "name": "The Violet Teacher Rule",
-        "body": "Violet belongs to the teaching structure (modes, sections, step progress). It is never \"go\" and never a note state.",
+        "name": "The Violet Practice Rule",
+        "body": "Violet belongs to the controls that shape practice and to the teaching structure (hands, modes, loop, sections, step progress). It is never \"go\" and never a note state.",
         "section": "colors"
       },
       {
         "name": "The One Red Rule",
-        "body": "Miss red is spent only on a wrong note or a real error. Locked, idle and unavailable states are indigo or lilac, never red.",
+        "body": "Miss red is spent only on a wrong note, a real error, and the Hard difficulty dot beside its word. Locked, idle and unavailable states are indigo or lilac, never red.",
         "section": "colors"
       },
       {
@@ -1083,33 +1036,40 @@
       },
       {
         "name": "The Weight Not Face Rule",
-        "body": "Interface hierarchy comes from Nunito's weight and size alone: no second interface family, no italics, no uppercase tracking, no kicker lines above headings. The serif and its italic composer line live only in the score's title row, because that row is part of the printed page.",
+        "body": "Interface hierarchy comes from Nunito's weight and size alone: no second interface family, no italics, no uppercase tracking, no kicker lines above headings. The serif and its italic composer line live only on printed sheet music, because that row is part of the page.",
         "section": "typography"
       },
       {
         "name": "The Press Edge Rule",
-        "body": "A control that commits an action (buttons, icon buttons, choice tiles, section cards, the lesson pause tile) gets a solid bottom edge in its own darker tone, and pressing moves it down onto that edge. Mode toggles on the tool bar show state by fill instead, and non-interactive cards never carry an edge.",
+        "body": "A control that commits an action in the shell (buttons, icon buttons, choice tiles, section cards, the lesson pause tile) gets a solid bottom edge in its own darker tone, and pressing moves it down onto that edge. Mode buttons on the song bar show state by fill instead; floating score buttons float on a soft violet shadow; quiet and outline buttons stay flat; non-interactive cards never carry an edge.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Paper On The Desk Rule",
+        "body": "White sheet music lying on indigo (song pages, the Continue cover, the upload preview, the score card) is the one resting surface that carries a soft dark drop shadow. Indigo cards stay flat.",
         "section": "elevation"
       }
     ],
     "dos": [
       "Do give each screen at most one go-green button, and make it name the next step.",
-      "Do keep green for go and right, teal for \"now\" on paper, violet for teaching structure, gold for stars, flame for the streak, miss red for wrong notes.",
-      "Do give every action control a solid bottom edge in its own darker tone (`raised-edge`, `go-edge`, the paper edges) that collapses on press; let mode toggles show state with the cream pill instead.",
-      "Do build depth in the shell by stepping indigo fills (night, surface, surface-2, raised), not with borders or blurred card shadows.",
-      "Do set all interface text in Nunito Variable with tabular figures, 900 for headings and numbers, 800 for controls; keep the serif to the score's title row.",
+      "Do keep green for go and right, teal for \"now\", violet for the controls that shape practice and the teaching structure, gold for stars, flame for the streak, miss red for wrong notes; difficulty dots are the one rating that borrows green and red, always beside their word.",
+      "Do show every song by its own engraved first page (abcjs, white 3:4 paper, title and composer printed on it), with the composer, the title and the difficulty dots beneath.",
+      "Do give every shell action control a solid bottom edge in its own darker tone (`raised-edge`, `go-edge`, the paper edges) that collapses on press; let mode buttons show state with a violet fill instead.",
+      "Do build depth in the shell by stepping indigo fills (night, surface, surface-2, raised), not with borders or blurred card shadows; white paper on indigo is the one resting surface with a soft shadow.",
+      "Do set all interface text in Nunito Variable with tabular figures, 900 for headings and numbers, 800 for controls; keep the serif to the score card's title row.",
       "Do engrave notation with abcjs and colour it through the paper set (`lesson-ink`, `hit-paper`, `miss-paper`, `score-next`, `score-other`); use the bright set on indigo.",
       "Do keep results and pauses on indigo cards over a scrim, whatever ground is underneath.",
-      "Do keep touch targets at 44px or more (buttons 46px, tools 58px, lesson arrows 46px, pause tile 56px, rail items 58px)."
+      "Do keep touch targets at 44px or more (buttons 46px, rail items 58px, lesson arrows 46px, pause tile 56px, the song card's edit button 44px)."
     ],
     "donts": [
       "Don't bring back the aluminium instrument-panel world: no metal textures, printed legends, LCD greens or keycap LEDs.",
+      "Don't bring back photo covers or Level badges on song cards; a song is shown by its own sheet music.",
       "Don't draw the score on a canvas or letter the note heads; the score is engraved notation with finger numbers, and note names live on the keys.",
       "Don't use green as decoration, a heading colour, a mode state or a background wash beyond the 12-16% tints on the active rail item and tags.",
       "Don't use miss red for locked, idle or disabled states.",
       "Don't add a second interface typeface, uppercase tracked labels or eyebrow lines above headings.",
-      "Don't put pure black or neutral grey in the indigo shell; every dark there is indigo. The mini keyboard's case is the one neutral dark, because it is an instrument.",
-      "Don't give static cards a press edge or a drop shadow; shadows belong to action controls and floating overlays."
+      "Don't put pure black or neutral grey in the indigo shell; every dark there is indigo.",
+      "Don't give indigo cards a press edge or a drop shadow; shadows belong to action controls, floating overlays and white paper lying on indigo."
     ]
   }
 }
