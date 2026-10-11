@@ -28,6 +28,7 @@ function stepLabel(s: CourseStep) {
 
 function intro(s: CourseStep): string {
   if (!s.wait) return 'In tempo: keep going through mistakes';
+  if (s.id.endsWith('x')) return 'The tricky bit once more, slowly';
   return s.hands === 'R' ? 'Right hand: the music waits for you' : s.hands === 'L' ? 'Left hand: the music waits for you' : 'Both hands: the music waits for you';
 }
 
@@ -79,6 +80,8 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const [paused, setPaused] = useState(false);
   const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; stars: number; streakUp?: number } | null>(null);
   const [say, setSay] = useState<{ text: string; wrong?: string }>({ text: intro(step) });
+  // A short step that went well moves on by itself, like Simply Piano; one that did not, starts again.
+  const [flash, setFlash] = useState<{ text: string; good: boolean } | null>(null);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   usePracticeClock();
 
@@ -107,10 +110,21 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         const s = engine.stats();
         const stars = starsFor(s.accuracy);
         const before = streak();
+        const quick = step.wait && !!onNext;
+        if (quick && stars === 0) {
+          setFlash({ text: 'Let’s try that again', good: false });
+          window.setTimeout(onAgain, 1300);
+          return;
+        }
         recordStep(song.entry.id, step.id, s.accuracy).then(() => {
           const after = streak();
-          setResult({ ...s, stars, streakUp: !before.today && after.today ? after.days : undefined });
           onRecorded();
+          if (quick) {
+            setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true });
+            window.setTimeout(onNext!, 1100);
+            return;
+          }
+          setResult({ ...s, stars, streakUp: !before.today && after.today ? after.days : undefined });
         });
       }
     });
@@ -167,16 +181,16 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
     <div className={`lesson view-${settings.view}`}>
       <header className="lesson-bar">
         <button className="lesson-pause" onClick={engine.playing ? pause : () => setPaused(true)} aria-label="Pause"><IconPause size={26} /></button>
+        {/* Nothing to read but the music: the instruction is for screen readers only. */}
         <div className="lesson-say" role="status" aria-live="polite">
-          <p>{say.wrong ? <><em>{say.wrong}.</em> {say.text}</> : say.text}</p>
-          {!inputOn && <p className="lesson-noinput">No piano connected. <button className="link" onClick={onSettings}>Connect</button></p>}
+          <p className="sr-only">{say.wrong ? `${say.wrong}. ${say.text}` : say.text}</p>
+          {!inputOn && <button className="lesson-noinput" onClick={onSettings}><i />Connect your piano</button>}
         </div>
         <div className="lesson-nav">
           <button className="lesson-arrow" onClick={onPrev} disabled={!onPrev} aria-label="Previous step"><IconArrowLeft size={24} /></button>
-          <div className="lesson-count" aria-label={`${section.title}, ${stepLabel(step)}: ${stats.hit} of ${stats.total} notes`}>
-            <i style={{ width: `${stats.total ? (stats.hit / stats.total) * 100 : 0}%` }} />
-            <small>{stepLabel(step)}{!step.wait ? ` ${formatSpeed(speed)}` : ''}</small>
-            <span>{stats.hit}/{stats.total}</span>
+          <div className="lesson-count" aria-label={`${section.title}, step ${index + 1} of ${section.steps.length}: ${stepLabel(step)}`}>
+            <i style={{ width: `${((index + (flash?.good ? 1 : stats.total ? stats.hit / stats.total : 0)) / section.steps.length) * 100}%` }} />
+            <span>{index + (flash?.good ? 1 : 0)}/{section.steps.length}</span>
           </div>
           <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label="Next step"><IconArrowRight size={24} /></button>
         </div>
@@ -185,8 +199,9 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
       <main className="lesson-stage">
         {settings.view === 'notes'
           ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={0} onTap={pause} />
-          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback />}
+          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
         <Countdown engine={engine} />
+        {flash && <p className={`lesson-flash ${flash.good ? 'good' : ''}`} role="status">{flash.text}</p>}
       </main>
 
       <footer className="lesson-keys">

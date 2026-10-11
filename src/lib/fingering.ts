@@ -2,9 +2,9 @@
  * Automatic fingering (1 = thumb … 5 = little finger), per hand.
  *
  * MIDI files carry no fingering, so it is worked out the way a teacher pencils it in: keep the hand
- * in one five-finger position as long as possible, pass the thumb under (or a finger over) on
- * scales, avoid thumbs and little fingers on black keys, never reuse a finger for a different key
- * straight away. A dynamic programme picks the cheapest finger sequence through each phrase;
+ * in one five-finger position as long as possible, measure stretches in white keys against each
+ * finger pair's comfortable span, pass the thumb under (or a finger over) on scales, avoid thumbs
+ * and little fingers on black keys, never reuse a finger for a different key straight away. A dynamic programme picks the cheapest finger sequence through each phrase;
  * chords are spread across the hand from their outer note.
  *
  * `cue` marks the notes worth labelling when only some numbers are shown: the start of a phrase
@@ -14,49 +14,73 @@ import type { Hand, SongNote } from './types';
 
 const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(((m % 12) + 12) % 12);
 
+// Where a key sits counted in white keys (a black key halfway between its neighbours): hands
+// measure stretches in white keys, so C–E is a third whatever the accidentals.
+const WHITE_POS = [0, 0.5, 1, 1.5, 2, 3, 3.5, 4, 4.5, 5, 5.5, 6];
+const pos = (m: number) => Math.floor(m / 12) * 7 + WHITE_POS[((m % 12) + 12) % 12];
+
+// Comfortable spans between two fingers of one hand, in white keys (after Parncutt et al. 1997,
+// scaled for an adult hand): [smallest, largest]. Beyond them the hand stretches or cramps.
+const COMFORT: Record<string, [number, number]> = {
+  '1-2': [1, 2.5], '1-3': [2, 3.5], '1-4': [3, 5], '1-5': [4, 7],
+  '2-3': [1, 2], '2-4': [2, 3], '2-5': [3, 4.5],
+  '3-4': [1, 1.5], '3-5': [2, 3], '4-5': [1, 1.5],
+};
+
 interface Ev { notes: SongNote[]; time: number; anchor: number; }
 
-/** Fingers for a chord, given the finger on its anchor (lowest note for the right hand, highest for the left). */
+/**
+ * Fingers for a chord, given the finger on its anchor (lowest note for the right hand, highest for
+ * the left): each note takes the finger as many white keys away as it is, squeezed into the fingers
+ * left, so C–E–G is 1-3-5 and C–E 1-3.
+ */
 function spreadChord(ev: Ev, hand: Hand, f0: number): number[] {
   const ns = [...ev.notes].sort((a, b) => (hand === 'R' ? a.midi - b.midi : b.midi - a.midi));
-  const out: number[] = [];
-  let f = f0;
-  ns.forEach((n, i) => {
-    if (i > 0) {
-      const gap = Math.abs(n.midi - ns[i - 1].midi);
-      f = Math.min(5, f + Math.max(1, Math.round(gap / 2.2)));
-    }
-    out.push(f);
+  const offs = ns.map(n => Math.abs(pos(n.midi) - pos(ns[0].midi)));
+  const room = 5 - f0;
+  const far = offs[offs.length - 1];
+  const out = offs.map((o, i) => {
+    if (i === 0) return f0;
+    // Wide chords (an octave, a sixth) put the outer note on the little finger and share out the rest.
+    const f = far > room ? f0 + Math.round((o / far) * room) : f0 + Math.round(o);
+    return Math.min(5, Math.max(f0 + 1, f));
   });
-  // Too many notes for the fingers left: squeeze from the top.
+  if (far > room && ns.length > 1) out[out.length - 1] = 5;
+  // Keep the fingers strictly in order, squeezing down from the top.
+  for (let i = 1; i < out.length; i++) if (out[i] <= out[i - 1]) out[i] = Math.min(5, out[i - 1] + 1);
   for (let i = out.length - 1; i > 0; i--) if (out[i] <= out[i - 1]) out[i - 1] = Math.max(1, out[i] - 1);
   return out;
 }
 
-/** Cost of moving from finger a on note x to finger b on note y (direction normalised to the right hand). */
+/** Cost of moving from finger a on note x to finger b on note y. */
 function moveCost(a: number, x: number, b: number, y: number, hand: Hand): number {
-  const d = hand === 'R' ? y - x : x - y; // positive = towards the little finger
-  const k = b - a;
-  if (d === 0) return a === b ? 0 : 1.5;
+  // Distance in white keys, positive towards the little finger.
+  const d = hand === 'R' ? pos(y) - pos(x) : pos(x) - pos(y);
   let c = 0;
-  if (k === 0) return 6; // same finger, another key
+  if (x === y) return a === b ? 0 : 1; // a repeated key: any finger, the same one is easiest
+  if (a === b) return 5 + Math.abs(d); // the same finger on another key: a jolt
+  const k = b - a;
   if (Math.sign(k) === Math.sign(d)) {
-    // Natural direction: about two semitones per finger, a bit more between thumb and index.
-    const span = Math.abs(k) * 2 + (Math.min(a, b) === 1 ? 1.5 : 0);
-    const over = Math.abs(d) - span - 1;
-    const under = Math.abs(k) - Math.abs(d); // fingers skipped on a small step
-    if (over > 0) c += over * 1.2;
-    if (under > 1) c += (under - 1) * 0.8;
+    const [lo, hi] = COMFORT[`${Math.min(a, b)}-${Math.max(a, b)}`];
+    const s = Math.abs(d);
+    if (s > hi) c += (s - hi) * 1.6; // stretch
+    if (s < lo) c += (lo - s) * 1.2; // cramp
   } else {
-    // Crossing: thumb under (b = 1 after a finger, going outwards) or a finger over the thumb.
-    const thumbUnder = b === 1 && d > 0 && a >= 2 && a <= 4;
-    const fingerOver = a === 1 && d < 0 && b >= 2 && b <= 4;
-    if (thumbUnder || fingerOver) c += 2 + Math.max(0, Math.abs(d) - 4) * 0.8 + (a === 4 || b === 4 ? 1 : 0);
-    else c += 8 + Math.abs(d);
+    // Crossing: only the thumb passes under, or a finger (2, 3, 4) over the thumb.
+    const thumbUnder = b === 1 && a >= 2 && a <= 4;
+    const fingerOver = a === 1 && b >= 2 && b <= 4;
+    if (thumbUnder || fingerOver) {
+      const f = thumbUnder ? a : b;
+      c += 2.5 + Math.max(0, Math.abs(d) - (f === 2 ? 1.5 : 3)) * 1.5 + (f === 4 ? 1.5 : 0);
+      // Crossing onto a black key is easier for the finger, harder for the thumb.
+      if (fingerOver && isBlack(y)) c -= 0.5;
+      if (thumbUnder && isBlack(y)) c += 1.5;
+    } else c += 10 + Math.abs(d);
   }
-  if (isBlack(y) && b === 1) c += 2.5;
+  if (isBlack(y) && b === 1) c += isBlack(x) ? 1 : 2.5;
   if (isBlack(y) && b === 5) c += 1;
-  if (isBlack(y) && isBlack(x) === false && (b === 1)) c += 1;
+  // Fingers 3 and 4 are the weak pair: avoid using them back to back.
+  if ((a === 3 && b === 4) || (a === 4 && b === 3)) c += 0.5;
   return c;
 }
 
@@ -99,7 +123,7 @@ function solve(evs: Ev[], hand: Hand) {
     cost.push([]); back.push([]);
     for (const f of F) {
       if (!allowed(e).includes(f)) { cost[i][f] = Infinity; continue; }
-      const base = (isBlack(e.anchor) && f === 1 ? 2.5 : 0) + (i === 0 ? Math.abs(f - (e.notes.length > 1 ? 1 : 2)) * 0.2 : 0);
+      const base = (isBlack(e.anchor) && f === 1 ? 2.5 : 0) + (i === 0 ? (f - 1) * 0.1 : 0);
       if (i === 0) { cost[i][f] = base; continue; }
       let best = Infinity, arg = 1;
       for (const g of F) {
@@ -127,9 +151,9 @@ function solve(evs: Ev[], hand: Hand) {
     // Worth a label: first strike, or the hand had to move (crossing, stretch, jump).
     let cue = i === 0;
     if (i > 0) {
-      const d = hand === 'R' ? e.anchor - evs[i - 1].anchor : evs[i - 1].anchor - e.anchor;
+      const d = hand === 'R' ? pos(e.anchor) - pos(evs[i - 1].anchor) : pos(evs[i - 1].anchor) - pos(e.anchor);
       const k = pick[i] - pick[i - 1];
-      const inPlace = Math.sign(k) === Math.sign(d) && Math.abs(d) <= Math.abs(k) * 2 + 2;
+      const inPlace = k !== 0 && Math.sign(k) === Math.sign(d) && Math.abs(d) <= COMFORT[`${Math.min(pick[i], pick[i - 1])}-${Math.max(pick[i], pick[i - 1])}`][1];
       cue = !(d === 0 && k === 0) && !inPlace;
     }
     for (const n of ns) n.fingerCue = cue;

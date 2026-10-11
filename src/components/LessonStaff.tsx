@@ -3,24 +3,25 @@ import { buildScore, density } from '../lib/abc';
 import type { Engine } from '../lib/engine';
 import { cursorAt, engrave } from '../lib/engrave';
 import { pressDots } from '../lib/pressDots';
-import { IconHand } from './Icons';
 
 interface Props {
   engine: Engine;
   from: number;
   to: number;
   feedback: boolean;
+  /** One-hand step: only that hand's notes are printed. */
+  only?: 'R' | 'L';
 }
 
 /**
- * One section as a single engraved line that slides left as he plays: the notes to play next sit
- * at a third of the width, in teal, with the finger to use in a bubble above them.
+ * One section as a single engraved line that slides left as he plays, Simply Piano style: the notes
+ * to play next sit under a soft beam of light at a third of the width, fingers printed over them.
  */
-export function LessonStaff({ engine, from, to, feedback }: Props) {
+export function LessonStaff({ engine, from, to, feedback, only }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
-  const bubbleRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const feedbackRef = useRef(feedback);
   feedbackRef.current = feedback;
@@ -34,19 +35,18 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
 
   useEffect(() => {
     if (size.w < 200 || size.h < 80) return;
-    const line = lineRef.current!, paper = paperRef.current!, bubble = bubbleRef.current!;
+    const line = lineRef.current!, paper = paperRef.current!, glow = glowRef.current!;
     const song = engine.song;
     const bars = to - from + 1;
-    // A grand staff is about 190 units tall at scale 1: fill most of the stage with it.
-    const scale = Math.max(0.8, Math.min(1.7, (size.h - 60) / 190));
-    const perBar = Math.max(180, density(song) * 40 + 60);
-    const score = buildScore(song, bars, 'all', { from, to });
+    // Big, like Simply Piano: the grand staff (about 125 units from the treble's top line to the
+    // bass's bottom line) fills the stage, a few notes to the screen.
+    const scale = Math.max(1, Math.min(2.4, (size.h - 70) / 125));
+    const perBar = Math.max(170, density(song) * 34 + 60);
+    const score = buildScore(song, bars, 'all', { from, to, only });
     const eg = engrave(line, paper, engine, score, {
       staffwidth: bars * perBar,
       scale,
       feedback: () => feedbackRef.current,
-      // The notes to play turn teal only as a hint, so he reads the staff first.
-      highlightNext: () => engine.hintVisible(),
     });
     eg.paintAll();
     let nextIds: number[] = [];
@@ -65,12 +65,13 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
     line.appendChild(dots);
     const offDots = pressDots(engine, eg, dots);
 
-    // Centre the line in the stage, but keep it close under the header on tall screens.
+    // Centre the staff in the stage.
     const svgH = paper.getBoundingClientRect().height;
-    line.style.top = `${Math.max(0, Math.min((size.h - svgH) / 2, 80)) + 14}px`;
+    line.style.top = `${Math.max(0, (size.h - svgH) / 2)}px`;
 
-    let raf = 0, offset = -1, hint = false;
+    let raf = 0, offset = -1, hint = false, lastStop = -1;
     const anchor = size.w * 0.3;
+    glow.style.transform = `translateX(${anchor - 40}px)`;
     const frame = () => {
       eg.paintTies(engine.time);
       if (engine.hintVisible() !== hint) { hint = !hint; repaintNext(); }
@@ -79,30 +80,21 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
         const target = c.x - anchor;
         offset = offset < 0 ? target : offset + (target - offset) * 0.18;
         line.style.transform = `translateX(${-offset}px)`;
-        // The finger bubble over the notes he has to play next.
-        const g = engine.groups[engine.gi];
-        const stop = g && eg.stops.find(s => s.ids.some(id => g.ids.includes(id)));
-        const fingers = g ? [...new Set(g.ids.map(id => engine.song.notes[id].finger).filter((f): f is number => !!f))] : [];
-        const n = g && engine.song.notes[g.ids[0]];
-        if (stop && n && fingers.length && !engine.opts.listen) {
-          bubble.style.display = 'flex';
-          bubble.style.transform = `translate(${stop.x - offset - 22}px, ${Math.max(0, (eg.lines[0]?.top ?? 40) + parseFloat(line.style.top) - 66)}px)`;
-          const num = bubble.querySelector('b')!;
-          const label = fingers.join(' ');
-          if (num.textContent !== label) num.textContent = label;
-          bubble.classList.toggle('left', n.hand === 'L');
-        } else bubble.style.display = 'none';
+        const at = eg.stops[c.i];
+        if (c.i !== lastStop && engine.playing && at && engine.time >= at.time - 1e-3) { lastStop = c.i; eg.pulse(at); }
+        // Stuck: the beam of light where the music is brightens and breathes.
+        glow.classList.toggle('on', hint && !!at);
       }
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
     return () => { cancelAnimationFrame(raf); off(); offDots(); dots.remove(); };
-  }, [engine, from, to, size.w, size.h]);
+  }, [engine, from, to, only, size.w, size.h]);
 
   return (
     <div className="lesson-staff" ref={hostRef}>
       <div className="lesson-line" ref={lineRef}><div ref={paperRef} /></div>
-      <div className="finger-bubble" ref={bubbleRef} aria-hidden="true"><IconHand size={26} /><b /></div>
+      <div className="now-beam" ref={glowRef} aria-hidden="true" />
     </div>
   );
 }

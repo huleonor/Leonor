@@ -8,7 +8,7 @@ export const INK = { ink: '#1b1640', hit: '#178a48', miss: '#d92d45', other: '#b
 
 /** A place the cursor can stop: one per onset, at the notehead. */
 export interface Stop { time: number; x: number; line: number; ids: number[]; }
-export interface LineBox { top: number; bottom: number; }
+export interface LineBox { top: number; bottom: number; /** Where the staff lines end. */ right: number; }
 
 export interface Engraved {
   tokens: AbcToken[];
@@ -26,6 +26,8 @@ export interface Engraved {
   pitchY: (line: number, midi: number, hand?: 'R' | 'L') => { y: number; gap: number } | null;
   /** The stop holding this written note. */
   stopOf: (id: number) => Stop | undefined;
+  /** Noteheads of a stop swell for a moment as the cursor reaches them. */
+  pulse: (stop: Stop) => void;
 }
 
 // Steps up the staff from C for each pitch class, spelled with sharps or with flats.
@@ -114,14 +116,14 @@ export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, s
   };
 
   const lines: LineBox[] = [];
-  const extend = (line: number, top: number, bottom: number) => {
+  const extend = (line: number, top: number, bottom: number, right = 0) => {
     const b = lines[line];
-    lines[line] = b ? { top: Math.min(b.top, top), bottom: Math.max(b.bottom, bottom) } : { top, bottom };
+    lines[line] = b ? { top: Math.min(b.top, top), bottom: Math.max(b.bottom, bottom), right: Math.max(b.right, right) } : { top, bottom, right };
   };
   for (let l = 0; l < score.lineCount; l++) {
     paper.querySelectorAll(`.abcjs-staff.abcjs-l${l}`).forEach(el => {
       const r = rectIn(el, host);
-      extend(l, r.top, r.top + r.height);
+      extend(l, r.top, r.top + r.height, r.left + r.width);
     });
   }
   const stops: Stop[] = [];
@@ -162,6 +164,19 @@ export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, s
       return { y: st.bottom - step * gap / 2, gap };
     },
     stopOf: id => stopById.get(id),
+    pulse: stop => {
+      for (const id of stop.ids) for (const tk of byNote.get(id) ?? []) {
+        if (tk.cont || Math.abs(tk.time - stop.time) > 0.02) continue;
+        for (const el of elsOf(tk)) {
+          const heads = el.matches?.('.abcjs-notehead') ? [el] : [...(el.querySelectorAll?.('.abcjs-notehead') ?? [])] as SVGElement[];
+          for (const h of heads) {
+            h.style.transformBox = 'fill-box';
+            h.style.transformOrigin = 'center';
+            h.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.35 }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
+          }
+        }
+      }
+    },
     paintIds: ids => {
       const seen = new Set<AbcToken>();
       for (const id of ids) for (const tk of byNote.get(id) ?? []) if (!seen.has(tk)) { seen.add(tk); paint(tk); }
@@ -171,14 +186,20 @@ export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, s
   };
 }
 
-/** The cursor's x at song time `now`: on a stop, or gliding toward the next one on the same line. */
-export function cursorAt(stops: Stop[], now: number): { x: number; line: number; i: number } | null {
+/**
+ * The cursor's x at song time `now`: on a stop, or gliding toward the next one; after the last notes
+ * of a line it carries on to the end of that line before the next line takes over.
+ */
+export function cursorAt(stops: Stop[], now: number, lines?: LineBox[]): { x: number; line: number; i: number } | null {
   if (!stops.length) return null;
   let a = 0, b = stops.length - 1;
   while (a < b) { const m = (a + b + 1) >> 1; if (stops[m].time <= now + 1e-3) a = m; else b = m - 1; }
   const s = stops[a], n = stops[a + 1];
   let x = s.x;
   if (now < s.time - 1e-3) x = s.x - 16;
-  else if (n && n.line === s.line && n.time > s.time) x = s.x + (n.x - s.x) * Math.min(1, (now - s.time) / (n.time - s.time));
+  else if (n && n.time > s.time) {
+    const to = n.line === s.line ? n.x : Math.max(s.x, (lines?.[s.line]?.right ?? s.x) - 6);
+    x = s.x + (to - s.x) * Math.min(1, (now - s.time) / (n.time - s.time));
+  }
   return { x, line: s.line, i: a };
 }

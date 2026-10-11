@@ -76,6 +76,8 @@ export interface ScoreOptions {
   composer?: string;
   /** Section labels to box above the bar where each section starts (1-based bars). */
   sections?: { bar: number; label: string }[];
+  /** A one-hand lesson step: the other staff stays empty, as in Simply Piano. */
+  only?: Hand;
 }
 
 export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' | 'some' | 'all' = 'off', opts: ScoreOptions = {}): AbcScore {
@@ -103,7 +105,7 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
 
     const byStart = new Map<number, { qs: number; end: number; notes: SongNote[] }>();
     for (const n of song.notes) {
-      if (n.hand !== hand) continue;
+      if (n.hand !== hand || (opts.only && n.hand !== opts.only)) continue;
       const qs = q(n.ticks);
       if (qs < startQ || qs >= endQ) continue;
       const qe = Math.min(endQ, Math.max(qs + 1, q(n.ticks + n.durationTicks)));
@@ -139,7 +141,7 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
             const fingerMark = fn?.finger && (fingers === 'all' || (fingers === 'some' && fn.fingerCue)) ? `!${fn.finger}!` : '';
             text = fingerMark + (pitches.length > 1 ? `[${pitches.join('')}]` : pitches[0]) + durStr + (last ? '' : '-');
           } else {
-            text = 'z' + durStr;
+            text = (opts.only && opts.only !== hand ? 'x' : 'z') + durStr;
           }
           const sep = ms[m].length && pos % beatUnits === 0 ? ' ' : '';
           ts[m].push({
