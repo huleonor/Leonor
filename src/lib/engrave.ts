@@ -4,7 +4,7 @@ import type { Engine } from './engine';
 import { AUTO, HIT, MISS } from './types';
 
 /** Colours on the white score. */
-export const INK = { ink: '#1b1640', hit: '#178a48', miss: '#e5384f', other: '#b9b4d8', next: '#0e9fb0' };
+export const INK = { ink: '#1b1640', hit: '#178a48', miss: '#d92d45', other: '#b9b4d8', next: '#0e9fb0' };
 
 /** A place the cursor can stop: one per onset, at the notehead. */
 export interface Stop { time: number; x: number; line: number; ids: number[]; }
