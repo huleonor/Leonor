@@ -692,13 +692,17 @@ p { margin: 0; }
 .lesson .key.w.next, .lesson .key.b.next { background: #ffbd3a; box-shadow: none; }
 .lesson .key.next .kname, .lesson .key.next .kfinger { display: none; }
 
-/* The beam of light where the music is: always there, softly; brighter and breathing when stuck. */
-.now-beam {
-  position: absolute; top: 0; bottom: 0; left: 0; width: 80px; pointer-events: none; z-index: 1;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .55) 50%, rgba(255, 255, 255, 0));
-  transition: opacity .5s var(--ease);
+/* Where the music is: a thin line across the staff. The beam of light comes only when he is stuck. */
+.now-line {
+  position: absolute; left: 0; top: 0; width: 4px; border-radius: 2px; z-index: 3; pointer-events: none;
+  background: var(--violet); opacity: .75;
 }
-.now-beam.on { animation: beam-breathe 1.6s ease-in-out infinite; background: linear-gradient(90deg, rgba(255, 246, 214, 0), rgba(255, 246, 214, .95) 50%, rgba(255, 246, 214, 0)); }
+.now-beam {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 80px; pointer-events: none; z-index: 1; opacity: 0;
+  background: linear-gradient(90deg, rgba(255, 246, 214, 0), rgba(255, 246, 214, .95) 50%, rgba(255, 246, 214, 0));
+  transition: opacity .6s var(--ease);
+}
+.now-beam.on { opacity: 1; animation: beam-breathe 1.6s ease-in-out infinite; }
 @keyframes beam-breathe { 50% { opacity: .55; } }
 
 .lesson .countin-num { background: #fff; color: var(--violet); }
