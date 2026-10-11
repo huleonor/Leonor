@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { isNative, nativeMidiStatus, support, type LinkState, type Source } from '../lib/input';
-import { BUILT_IN, GENERIC_COVER } from '../lib/library';
 import type { FingerMode, Settings } from '../lib/types';
 import { IconBluetooth, IconClose, IconKeys, IconMic } from './Icons';
 import { Segmented } from './ui';
@@ -103,7 +102,7 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
               {copied ? 'Link copied' : 'Copy the SideStore link'}
             </button>
           )}
-          <p className="fine credits">Cover photos from Unsplash by {[...new Set(BUILT_IN.filter(e => e.image).map(e => e.image!.by))].join(', ')}, {GENERIC_COVER.by}. Type: Nunito by Vernon Adams and the Nunito Project. Staff glyphs from abcjs.</p>
+          <p className="fine credits">Sheet music engraved with abcjs. Type: Nunito by Vernon Adams and the Nunito Project.</p>
         </section>
       </div>
     </div>

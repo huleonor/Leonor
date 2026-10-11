@@ -9,8 +9,8 @@ Live: https://hugos-piano.vercel.app
 The app works like Simply Piano, with your own songs.
 
 - **Home**: the Continue card names the exact next step of the song you are learning; Today's practice suggests steps to polish (one or two stars) and a new song. The flame is your daily streak, the bar your minutes today against the daily goal.
-- **Songs**: every song, bundled or added by you, shows its level (1 to 5, worked out from the notes) and the stars earned. Tap a song waiting for a file to add its MIDI.
-- **A song opens as sheet music**, like Simply Piano's sheet songs, with a tool bar of modes:
+- **Songs**: every song is a card showing the first page of its sheet music, with composer, title and difficulty (dots: green easy, amber medium, red hard, worked out from the notes). Collections are grouped (My songs, Film scores, Modern piano, Classical); songs still waiting for a MIDI file are listed at the end. **Upload MIDI** shows the engraved first page beside the title, composer and detected difficulty.
+- **A song opens as sheet music** on a white card with the keyboard below it (Misolla's layout) and Simply Piano's modes in the bar above: hands (left / both / right), Listen, Play, Teach me, *Waits for you* or *In tempo*, Feedback, and a notes counter. **Loop** repeats the part under the cursor; **Hide keys** gives the score the whole height.
   - **Play**: start playing whenever you like; the score follows you note by note and the notes turn green (or red for a wrong one). **Magic scroll** keeps the cursor waiting for you; **Auto scroll** runs the music in tempo at 0.6×, 0.8× or 1×.
   - **Listen**: the app plays the song while the cursor moves.
   - **Teach me**: the song is split into sections (Part 1, Part 2, …, Whole song). A section opens as a lesson: one engraved line with finger numbers, the next notes in teal, a finger bubble, the keys to press lit on the keyboard and an "n/N notes" counter. The arrows move between its steps: right hand, left hand, hands together, in tempo. Each step gives 1 star from 70% right, 2 from 85%, 3 from 95%.

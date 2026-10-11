@@ -32,6 +32,8 @@ function rectIn(el: Element, host: HTMLElement) {
 interface Options {
   staffwidth: number;
   scale: number;
+  /** Let the SVG scale to its container's width (the effective scale is then width / staffwidth). */
+  fit?: boolean;
   /** Colour played notes green and missed ones red. */
   feedback: () => boolean;
   /** Colour the notes he has to play next. */
@@ -47,7 +49,8 @@ export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, s
   const [tune] = abcjs.renderAbc(paper, score.abc, {
     add_classes: true,
     staffwidth: o.staffwidth,
-    scale: o.scale,
+    scale: o.fit ? 1 : o.scale,
+    ...(o.fit ? { responsive: 'resize' as const } : {}),
     paddingleft: 4,
     paddingright: 8,
     paddingtop: 6,

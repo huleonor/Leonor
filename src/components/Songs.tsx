@@ -1,53 +1,31 @@
-import { useEffect, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
-import { GENERIC_COVER } from '../lib/library';
 import type { SongEntry } from '../lib/types';
-import { IconMore, IconMusic, IconPlus, IconStar } from './Icons';
+import { IconMore, IconPlus, IconStar } from './Icons';
+import { Difficulty, SheetThumb } from './SheetThumb';
 
-type Shelf = 'all' | 'film' | 'modern' | 'classical' | 'mine';
-const SHELVES: [Shelf, string][] = [['all', 'All'], ['film', 'Film'], ['modern', 'Modern'], ['classical', 'Classical'], ['mine', 'My songs']];
+type Shelf = 'film' | 'modern' | 'classical' | 'mine';
+const SHELVES: [Shelf, string][] = [['mine', 'My songs'], ['film', 'Film scores'], ['modern', 'Modern piano'], ['classical', 'Classical']];
 const shelfOf = (e: SongEntry): Shelf => (e.builtIn || e.slot ? e.collection ?? 'mine' : 'mine');
 
 export const byLine = (e: SongEntry) => [e.composer, e.film && e.film !== e.title ? e.film : undefined].filter(Boolean).join(' · ');
 
-/** The song's photo; offline or broken, a quiet tile with a note takes its place. */
-export function Cover({ entry, className = '' }: { entry: SongEntry; className?: string }) {
-  const img = entry.image ?? GENERIC_COVER;
-  return (
-    <span className={`cover ${className}`}>
-      <IconMusic size={22} />
-      <img src={img.src} alt="" loading="lazy" decoding="async" onError={e => { e.currentTarget.style.display = 'none'; }} />
-    </span>
-  );
-}
-
+/** A song as a sheet-music card: its first page, then who wrote it, what it is and how hard. */
 export function SongCard({ info, onOpen, onEdit }: { info: SongInfo; onOpen: () => void; onEdit?: () => void }) {
   const e = info.entry;
-  const pct = info.total ? info.stars / info.total : 0;
-  const card = (
-    <button className={`song-card ${e.missing ? 'missing' : ''}`} onClick={onOpen}>
-      <span className="song-cover">
-        <Cover entry={e} />
-        {info.level && <span className={`level l${info.level}`}>Level {info.level}</span>}
-        {e.missing && <span className="add-file"><IconPlus size={14} />Needs a MIDI file</span>}
-      </span>
-      <span className="song-text">
-        <b>{e.title}</b>
-        <small>{byLine(e) || (e.builtIn ? '' : 'Imported')}</small>
-      </span>
-      {!e.missing && (
-        <span className="song-meter" aria-label={`${info.stars} of ${info.total} stars`}>
-          <span className="meter"><i style={{ width: `${pct * 100}%` }} /></span>
-          <span className="meter-n"><IconStar size={12} />{info.stars}</span>
-        </span>
-      )}
-    </button>
-  );
-  if (!onEdit) return card;
   return (
-    <div className="song-card-wrap">
-      {card}
-      <button className="card-more" onClick={onEdit} aria-label={`Edit ${e.title}`}><IconMore size={20} /></button>
+    <div className="song-card">
+      <button className="song-open" onClick={onOpen} aria-label={`Open ${e.title}`}>
+        <span className="song-page"><SheetThumb song={info.song} title={e.title} composer={e.composer} /></span>
+        <span className="song-text">
+          <b>{e.composer ?? (e.builtIn ? '' : 'Imported')}</b>
+          <span>{e.title}</span>
+        </span>
+        <span className="song-foot">
+          <Difficulty level={info.level} />
+          {info.stars > 0 && <span className="song-stars" aria-label={`${info.stars} of ${info.total} stars`}><IconStar size={12} />{info.stars}</span>}
+        </span>
+      </button>
+      {onEdit && <button className="card-more" onClick={onEdit} aria-label={`Edit ${e.title}`}><IconMore size={20} /></button>}
     </div>
   );
 }
@@ -62,36 +40,54 @@ interface Props {
 }
 
 export function Songs({ infos, entries, ready, onOpen, onAdd, onEdit }: Props) {
-  const [shelf, setShelf] = useState<Shelf>(() => {
-    try { return (localStorage.getItem('hugos-piano:shelf2') as Shelf) || 'all'; } catch { return 'all'; }
-  });
-  useEffect(() => { try { localStorage.setItem('hugos-piano:shelf2', shelf); } catch { /* ignore */ } }, [shelf]);
-  // Songs waiting for their file come after the ones he can play.
-  const list = entries.filter(e => shelf === 'all' || shelfOf(e) === shelf).map(e => infos[e.id]).filter(Boolean)
-    .sort((a, b) => Number(!!a.entry.missing) - Number(!!b.entry.missing));
+  const all = entries.map(e => infos[e.id]).filter(Boolean);
+  const playable = all.filter(i => !i.entry.missing);
+  const waiting = all.filter(i => i.entry.missing);
 
   return (
     <div className="page songs">
       <header className="page-head">
-        <h1>Songs</h1>
-        <div className="seg filters" role="tablist" aria-label="Collection">
-          {SHELVES.map(([id, label]) => (
-            <button key={id} role="tab" aria-selected={shelf === id} className={shelf === id ? 'on' : ''} onClick={() => setShelf(id)}>{label}</button>
-          ))}
-        </div>
-        <button className="btn go" onClick={onAdd}><IconPlus size={16} />Add song</button>
+        <h1>Choose a song</h1>
+        <button className="btn go" onClick={onAdd}><IconPlus size={16} />Upload MIDI</button>
       </header>
       {!ready && <p className="fine pad">Loading your songs…</p>}
-      {ready && list.length === 0 && (
-        <div className="empty">
-          <h2>No songs of your own yet</h2>
-          <p>Add a MIDI file (.mid) and it becomes a course, part by part, like every other song here. Two tracks, one per hand, work best.</p>
-          <button className="btn go big" onClick={onAdd}><IconPlus size={18} />Add a song</button>
-        </div>
+      {ready && SHELVES.map(([shelf, title]) => {
+        const list = playable.filter(i => shelfOf(i.entry) === shelf);
+        if (shelf === 'mine' && !list.length) {
+          return (
+            <section key={shelf} className="shelf-block" aria-labelledby="shelf-mine">
+              <h2 id="shelf-mine">{title}</h2>
+              <button className="upload-slot" onClick={onAdd}>
+                <IconPlus size={22} />
+                <b>Upload a MIDI file</b>
+                <small>It becomes sheet music you can play and learn, section by section.</small>
+              </button>
+            </section>
+          );
+        }
+        if (!list.length) return null;
+        return (
+          <section key={shelf} className="shelf-block" aria-labelledby={`shelf-${shelf}`}>
+            <h2 id={`shelf-${shelf}`}>{title}</h2>
+            <div className="song-grid">
+              {list.map(info => <SongCard key={info.entry.id} info={info} onOpen={() => onOpen(info)} onEdit={info.entry.builtIn ? undefined : () => onEdit(info.entry)} />)}
+            </div>
+          </section>
+        );
+      })}
+      {ready && waiting.length > 0 && (
+        <section className="shelf-block" aria-labelledby="shelf-waiting">
+          <h2 id="shelf-waiting">Waiting for a MIDI file</h2>
+          <ul className="waiting-list">
+            {waiting.map(info => (
+              <li key={info.entry.id}>
+                <span><b>{info.entry.title}</b><small>{byLine(info.entry)}</small></span>
+                <button className="btn quiet" onClick={() => onOpen(info)}><IconPlus size={16} />Add file</button>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
-      <div className="song-grid">
-        {list.map(info => <SongCard key={info.entry.id} info={info} onOpen={() => onOpen(info)} onEdit={info.entry.builtIn ? undefined : () => onEdit(info.entry)} />)}
-      </div>
     </div>
   );
 }

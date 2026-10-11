@@ -74,3 +74,4 @@ export const IconChevronDown = (p: P) => <svg {...base(p)}><path d="m4.5 7.5 5.5
 export const IconArrowLeft = (p: P) => <svg {...base(p)}><path d="M16 10H4.5M9 5 4 10l5 5" strokeWidth={2.2} /></svg>;
 export const IconArrowRight = (p: P) => <svg {...base(p)}><path d="M4 10h11.5M11 5l5 5-5 5" strokeWidth={2.2} /></svg>;
 export const IconStop = (p: P) => <svg {...base(p)}><rect x="5" y="5" width="10" height="10" rx="2" fill="currentColor" /></svg>;
+export const IconLoop = (p: P) => <svg {...base(p)}><path d="M4 9.5V8a3 3 0 0 1 3-3h8.5M13 2.5 15.5 5 13 7.5" /><path d="M16 10.5V12a3 3 0 0 1-3 3H4.5M7 17.5 4.5 15 7 12.5" /></svg>;

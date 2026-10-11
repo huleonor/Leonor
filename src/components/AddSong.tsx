@@ -5,7 +5,8 @@ import { useI18n } from '../lib/i18n';
 import { readMidi, saveImported } from '../lib/library';
 import { formatTime } from '../lib/names';
 import type { Song, SongEntry } from '../lib/types';
-import { IconClose, IconPlay } from './Icons';
+import { IconClose } from './Icons';
+import { Difficulty, SheetThumb } from './SheetThumb';
 
 interface Props {
   file: File;
@@ -44,35 +45,42 @@ export function AddSong({ file, slot, onDone, onClose }: Props) {
   };
 
   return (
-    <div className="scrim" onClick={onClose}>
-      <div className="side-sheet" role="dialog" aria-modal="true" aria-labelledby="add-title" onClick={e => e.stopPropagation()}>
-        <header className="sheet-head">
-          <h2 id="add-title">{slot ? `Add ${slot.title}` : 'New song'}</h2>
-          <button className="icon-btn ghost" onClick={onClose} aria-label="Close"><IconClose /></button>
-        </header>
-        <p className="fine file-name">{file.name}</p>
-        {error && (
-          <div className="set-group">
-            <p className="warn">{error}</p>
-            <p className="fine">Try another .mid file. Files with two tracks, one per hand, work best.</p>
-            <button className="btn" onClick={onClose}>Close</button>
+    <div className="upload-page" role="dialog" aria-modal="true" aria-labelledby="add-title">
+      <header className="upload-head">
+        <h2 id="add-title">{slot ? `Add the MIDI for ${slot.title}` : 'Upload a song'}</h2>
+        <button className="icon-btn ghost" onClick={onClose} aria-label="Close"><IconClose /></button>
+      </header>
+      <div className="upload-body">
+        <div className="upload-preview">
+          <div className="song-page">
+            {read ? <SheetThumb song={read.song} title={title || read.song.entry.title} composer={composer || undefined} bars={12} /> : <p className="fine pad-in">{error ? '' : 'Reading the file…'}</p>}
           </div>
-        )}
-        {!error && !read && <p className="fine">Reading the file…</p>}
-        {read && facts && (
-          <form className="set-group" onSubmit={e => { e.preventDefault(); save(); }}>
-            <label className="field">Title<input value={title} onChange={e => setTitle(e.target.value)} required /></label>
-            <label className="field">Composer<input value={composer} onChange={e => setComposer(e.target.value)} placeholder="Optional" /></label>
-            <dl className="add-facts">
-              <div><dt>Level</dt><dd>{facts.level}</dd></div>
-              <div><dt>Length</dt><dd>{formatTime(read.song.duration)}</dd></div>
-              <div><dt>Hands</dt><dd>{facts.hands === 2 ? 'Two' : 'One'}</dd></div>
-              <div><dt>Parts</dt><dd>{facts.parts}</dd></div>
-            </dl>
-            <p className="fine">It becomes a course of {facts.steps} steps: each part right hand, left hand, together and in tempo, then the whole song.</p>
-            <button className="btn go big" type="submit" disabled={saving}><IconPlay size={18} />{saving ? 'Saving…' : 'Save and learn it'}</button>
-          </form>
-        )}
+          <p className="fine file-name">{file.name}</p>
+        </div>
+        <div className="upload-form">
+          {error && (
+            <div className="set-group">
+              <p className="warn">{error}</p>
+              <p className="fine">Try another .mid file. Files with two tracks, one per hand, work best.</p>
+              <button className="btn" onClick={onClose}>Close</button>
+            </div>
+          )}
+          {read && facts && (
+            <form onSubmit={e => { e.preventDefault(); save(); }}>
+              <label className="field">Title<input value={title} onChange={e => setTitle(e.target.value)} required /></label>
+              <label className="field">Composer<input value={composer} onChange={e => setComposer(e.target.value)} placeholder="Optional" /></label>
+              <div className="field">
+                Difficulty
+                <div className="field-static"><Difficulty level={facts.level} /><small>Worked out from the notes</small></div>
+              </div>
+              <p className="fine">{formatTime(read.song.duration)} · {facts.hands === 2 ? 'two hands' : 'one hand'} · {facts.parts} sections to learn, each right hand, left hand, together and in tempo.</p>
+              <div className="upload-actions">
+                <button className="btn go big" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add to my songs'}</button>
+                <button className="btn outline big" type="button" onClick={onClose}>Cancel</button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
