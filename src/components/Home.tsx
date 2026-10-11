@@ -6,7 +6,8 @@ import { onStats, streak, today } from '../lib/stats';
 import type { Settings, SongEntry } from '../lib/types';
 import { IconBluetooth, IconFlame, IconKeys, IconMic, IconPlay, IconStar } from './Icons';
 import { stepName, Stars } from './ui';
-import { byLine, Cover, SongCard } from './Songs';
+import { SheetThumb } from './SheetThumb';
+import { byLine, SongCard } from './Songs';
 
 export function useDaily() {
   const [, bump] = useState(0);
@@ -107,8 +108,7 @@ export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSe
         {target && target.next ? (
           <section className="card continue" aria-labelledby="continue-title">
             <button className="continue-cover" onClick={() => onOpen(target)} aria-label={`Open ${target.entry.title}`}>
-              <Cover entry={target.entry} />
-              {target.level && <span className={`level l${target.level}`}>Level {target.level}</span>}
+              <SheetThumb song={target.song} title={target.entry.title} composer={target.entry.composer} />
             </button>
             <div className="continue-body">
               <h2 id="continue-title">{target.entry.title}</h2>
@@ -134,7 +134,6 @@ export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSe
             {reviews.map(r => (
               <li key={r.info.entry.id + r.step.id}>
                 <button onClick={() => onPlay(r.info, r.step)}>
-                  <Cover entry={r.info.entry} className="thumb" />
                   <span className="today-text">
                     <b>{stepName(r.step)}</b>
                     <small>{r.info.entry.title} · aim for 3 stars</small>
@@ -146,7 +145,6 @@ export function Home({ settings, ready, entries, infos, links, onSetup, onSkipSe
             {fresh.map(f => (
               <li key={f.entry.id}>
                 <button onClick={() => onOpen(f)}>
-                  <Cover entry={f.entry} className="thumb" />
                   <span className="today-text">
                     <b>{f.entry.title}</b>
                     <small><span className="new-tag">New</span> · Level {f.level} · {f.course!.parts.length} parts</small>

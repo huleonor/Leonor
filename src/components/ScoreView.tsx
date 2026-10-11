@@ -24,7 +24,8 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
   const paperRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const pillsRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  const width = size.w;
   const feedbackRef = useRef(feedback);
   const followRef = useRef(follow);
   const repaint = useRef<() => void>(() => {});
@@ -35,7 +36,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
 
   useEffect(() => {
     const el = hostRef.current!;
-    const ro = new ResizeObserver(() => setWidth(Math.round(el.clientWidth)));
+    const ro = new ResizeObserver(() => setSize({ w: Math.round(el.clientWidth), h: Math.round(el.clientHeight) }));
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
@@ -45,13 +46,15 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
     const host = hostRef.current!, paper = paperRef.current!, cursor = cursorRef.current!;
     const song = engine.song;
     const pageW = Math.min(width - 24, 1100);
-    const scale = pageW < 640 ? 0.9 : 1.05;
+    // A grand-staff system is about 210 units tall: at least one whole system fits in the card.
+    const scale = Math.max(0.62, Math.min(1.05, (size.h - 70) / 210));
     const perBar = Math.max(150, density(song) * 26 + 50) * scale;
     const mpl = Math.max(1, Math.min(5, Math.floor(pageW / perBar)));
     const score = buildScore(song, mpl, fingers, { sections });
     const eg = engrave(host, paper, engine, score, {
-      staffwidth: pageW / scale - 16,
+      staffwidth: (pageW - 30) / scale,
       scale,
+      fit: true,
       feedback: () => feedbackRef.current,
       onClickNote: start => {
         if (engine.playing && !engine.waiting) return;
@@ -91,14 +94,14 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
         cursor.style.height = `${box.bottom - box.top + 24}px`;
         if (c.line !== lastLine) {
           lastLine = c.line;
-          if (followRef.current) host.scrollTo({ top: c.line === 0 ? 0 : Math.max(0, box.top - 70), behavior: 'smooth' });
+          if (followRef.current) host.scrollTo({ top: c.line === 0 ? 0 : Math.max(0, box.top - 36), behavior: 'smooth' });
         }
       }
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
     return () => { cancelAnimationFrame(raf); off(); repaint.current = () => {}; };
-  }, [engine, width, fingers, title, composer, sections]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [engine, width, size.h, fingers, title, composer, sections]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="score" ref={hostRef}>

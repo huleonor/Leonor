@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { loadPiano, unlockAudio } from '../lib/audio';
 import type { SongInfo } from '../lib/catalog';
+import { barsToTime } from '../lib/analysis';
 import { partLearnt, type CourseStep } from '../lib/course';
 import { Engine } from '../lib/engine';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
 import { pickRange } from '../lib/keys';
 import { recordRun } from '../lib/library';
-import { formatSpeed } from '../lib/names';
+import { formatSpeed, formatTime } from '../lib/names';
 import { usePracticeClock } from '../lib/practiceClock';
-import type { Settings } from '../lib/types';
+import type { HandsChoice, Settings } from '../lib/types';
 import {
-  IconAutoScroll, IconCap, IconCheck, IconChevronDown, IconChevronUp, IconExit, IconFeedback, IconMagic, IconNotes,
-  IconKeys, IconPlay, IconRestart, IconSpeaker, IconStop,
+  IconAutoScroll, IconBack, IconCap, IconCheck, IconHand, IconKeys, IconLoop, IconMagic, IconNotes, IconPlay, IconRestart, IconSpeaker, IconStop,
 } from './Icons';
 import { Keyboard } from './Keyboard';
 import { ScoreView } from './ScoreView';
@@ -64,7 +64,9 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
   const [feedback, setFeedback] = useState(true);
   const [speed, setSpeed] = useState(0.8);
   const [teach, setTeach] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [keysHidden, setKeysHidden] = useState(false);
+  const [hands, setHands] = useState<HandsChoice>('both');
+  const [loop, setLoop] = useState<{ n: number; from: number; to: number } | null>(null);
   const [result, setResult] = useState<ReturnType<Engine['stats']> | null>(null);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   usePracticeClock();
@@ -77,7 +79,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
   const labels = useMemo(() => info.course!.parts.map(p => ({ bar: p.from, label: p.sameAs ? `Part ${p.sameAs}` : `Part ${p.n}` })), [info.course]);
   // The section he should open next: the first one not learnt yet.
   const nextSection = sections.find(s => !s.learnt);
-  const [lo, hi] = useMemo(() => pickRange(song.range[0], song.range[1]), [song]);
+  const [lo, hi] = useMemo(() => pickRange(song.range[0], song.range[1], 36), [song]);
 
   useEffect(() => { setMicRange(song.range[0], song.range[1]); }, [song]);
   useEffect(() => { loadPiano().catch(() => {}); }, []);
@@ -103,11 +105,25 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
     const listen = mode === 'listen';
     const follow = !listen && scroll === 'magic';
     engine.pause();
-    engine.setOptions({ listen, follow, wait: false, speed: listen ? 1 : follow ? 1 : speed, lenient: settings.input === 'mic' });
+    engine.setOptions({ listen, follow, wait: false, hands: song.hands.length === 1 ? song.hands[0] : hands, speed: listen ? 1 : follow ? 1 : speed, lenient: settings.input === 'mic' });
     if (follow && !engine.finished) engine.play(0);
     if (listen) { unlockAudio(); engine.play(1); }
     bump();
-  }, [engine, mode, scroll, speed, settings.input]);
+  }, [engine, mode, scroll, speed, hands, settings.input]);
+
+  // Loop: the part under the cursor plays round and round until Loop is pressed again.
+  useEffect(() => {
+    engine.setSegment(loop ? barsToTime(engine.measureTimes, loop.from, loop.to) : null, !!loop);
+    if (engine.opts.follow || engine.opts.listen) engine.play(engine.opts.listen ? 1 : 0);
+    bump();
+  }, [engine, loop]);
+  const toggleLoop = () => {
+    if (loop) { setLoop(null); return; }
+    let bar = 0;
+    while (bar + 1 < engine.measureTimes.length && engine.measureTimes[bar + 1] <= engine.time + 1e-3) bar++;
+    const part = info.course!.parts.find(p => bar + 1 >= p.from && bar + 1 <= p.to) ?? info.course!.parts[0];
+    if (part) setLoop({ n: part.sameAs ?? part.n, from: part.from, to: part.to });
+  };
 
   const restart = () => { setResult(null); engine.restart(); if (engine.opts.follow) engine.play(0); bump(); };
   const seek = (t: number) => {
@@ -121,32 +137,46 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
   const tempoMode = mode === 'play' && scroll === 'auto';
   const atStart = engine.gi === 0;
 
-  const tool = (on: boolean, label: string, icon: React.ReactNode, onClick: () => void, pressed?: boolean) => (
-    <button className={`tool ${on ? 'on' : ''}`} onClick={onClick} aria-pressed={pressed}>{icon}<span>{label}</span></button>
-  );
+  const stats = engine.stats();
+  const position = Math.max(0, engine.time - song.firstNoteTime);
+  const twoHands = song.hands.length === 2;
 
   return (
-    <div className={`song-screen ${collapsed ? 'collapsed' : ''}`}>
-      {collapsed ? (
-        <button className="toolbar-handle" onClick={() => setCollapsed(false)} aria-label="Show the tool bar"><IconChevronDown size={20} /></button>
-      ) : (
-        <header className="toolbar" role="toolbar" aria-label="Song modes">
-          <button className="tool collapse" onClick={() => setCollapsed(true)} aria-label="Hide the tool bar"><IconChevronUp size={22} /></button>
-          {tool(mode === 'listen', mode === 'listen' ? 'Stop' : 'Listen', mode === 'listen' ? <IconStop size={24} /> : <IconSpeaker size={24} />, () => { setTeach(false); setMode(m => (m === 'listen' ? 'play' : 'listen')); }, mode === 'listen')}
-          {tool(teach, 'Teach me', <IconCap size={24} />, () => setTeach(t => !t), teach)}
-          {tool(mode === 'play' && !teach, 'Play', <IconNotes size={24} />, () => { setTeach(false); setMode('play'); })}
-          <span className="tool-sep" aria-hidden="true" />
-          {tool(feedback, 'Feedback', <IconFeedback size={24} />, () => setFeedback(f => !f), feedback)}
-          {tool(scroll === 'magic', 'Magic scroll', <IconMagic size={24} />, () => setScroll('magic'), scroll === 'magic')}
-          {tool(scroll === 'auto', 'Auto scroll', <IconAutoScroll size={24} />, () => setScroll('auto'), scroll === 'auto')}
-          {!inputOn && tool(false, 'Connect', <span className="tool-alert"><IconKeys size={24} /></span>, onSettings)}
-          {tool(false, 'Exit', <IconExit size={24} />, onExit)}
-        </header>
-      )}
-
-      <div className="mini-keys" aria-hidden="true">
-        <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers="off" />
-      </div>
+    <div className="song-screen">
+      <header className="sheet-bar">
+        <button className="icon-btn ghost" onClick={onExit} aria-label="Back to the songs"><IconBack /></button>
+        <div className="sheet-modes" role="toolbar" aria-label="Song modes">
+          {twoHands && (
+            <div className="hands" role="radiogroup" aria-label="Hands">
+              {(['L', 'both', 'R'] as HandsChoice[]).map(h => (
+                <button key={h} role="radio" aria-checked={hands === h} className={hands === h ? 'on' : ''} onClick={() => setHands(h)}
+                  aria-label={h === 'both' ? 'Both hands' : h === 'L' ? 'Left hand' : 'Right hand'}>
+                  {h === 'L' ? <IconHand size={18} className="mirror" /> : h === 'R' ? <IconHand size={18} /> : <><IconHand size={16} className="mirror" /><IconHand size={16} /></>}
+                </button>
+              ))}
+            </div>
+          )}
+          <button className={`mode ${mode === 'listen' ? 'on' : ''}`} onClick={() => { setTeach(false); setMode(m => (m === 'listen' ? 'play' : 'listen')); }} aria-pressed={mode === 'listen'}>
+            {mode === 'listen' ? <IconStop size={18} /> : <IconSpeaker size={18} />}{mode === 'listen' ? 'Stop' : 'Listen'}
+          </button>
+          <button className={`mode ${mode === 'play' && !teach ? 'on' : ''}`} onClick={() => { setTeach(false); setMode('play'); }} aria-pressed={mode === 'play' && !teach}>
+            <IconNotes size={18} />Play
+          </button>
+          <button className={`mode ${teach ? 'on' : ''}`} onClick={() => setTeach(t => !t)} aria-pressed={teach}>
+            <IconCap size={18} />Teach me
+          </button>
+          <span className="bar-sep" aria-hidden="true" />
+          <div className="seg small scroll-mode" role="radiogroup" aria-label="How the music moves">
+            <button role="radio" aria-checked={scroll === 'magic'} className={scroll === 'magic' ? 'on' : ''} onClick={() => setScroll('magic')}><IconMagic size={16} /><span>Waits for you</span></button>
+            <button role="radio" aria-checked={scroll === 'auto'} className={scroll === 'auto' ? 'on' : ''} onClick={() => setScroll('auto')}><IconAutoScroll size={16} /><span>In tempo</span></button>
+          </div>
+          <button className={`chip ${feedback ? 'on' : ''}`} onClick={() => setFeedback(f => !f)} aria-pressed={feedback}><i className="dot" /><span>Feedback</span></button>
+        </div>
+        <p className="sheet-meta" aria-live="off">
+          Notes: <b>{stats.hit}</b> / {stats.total}<span>{formatTime(position)}</span>
+        </p>
+        {!inputOn && <button className="connect" onClick={onSettings}><i />Connect<span>&nbsp;piano</span></button>}
+      </header>
 
       {teach && (
         <nav className="sections" aria-label="Sections to learn">
@@ -163,31 +193,44 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
       )}
 
       <main className="sheet">
-        <ScoreView engine={engine} fingers={settings.fingers} feedback={feedback} follow title={song.entry.title} composer={byLine(song.entry) || undefined} sections={labels} onSeek={seek} />
+        <div className="sheet-card">
+          <ScoreView engine={engine} fingers={settings.fingers} feedback={feedback} follow title={song.entry.title} composer={byLine(song.entry) || undefined} sections={labels} onSeek={seek} />
 
-        {!result && tempoMode && (
-          <div className="sheet-status" role="group" aria-label="Tempo">
-            <button className="btn go" onClick={startTempo}>{engine.playing ? <><IconStop size={16} />Stop</> : <><IconPlay size={16} />{engine.started ? 'Go on' : 'Start'}</>}</button>
-            <div className="seg small" role="radiogroup" aria-label="Speed">
-              {SPEEDS.map(v => <button key={v} role="radio" aria-checked={speed === v} className={speed === v ? 'on' : ''} onClick={() => setSpeed(v)}>{formatSpeed(v)}</button>)}
-            </div>
+          <div className="sheet-float left">
+            {!result && tempoMode && (
+              <>
+                <button className="btn go" onClick={startTempo}>{engine.playing ? <><IconStop size={16} />Stop</> : <><IconPlay size={16} />{engine.started ? 'Go on' : 'Start'}</>}</button>
+                <div className="seg small" role="radiogroup" aria-label="Speed">
+                  {SPEEDS.map(v => <button key={v} role="radio" aria-checked={speed === v} className={speed === v ? 'on' : ''} onClick={() => setSpeed(v)}>{formatSpeed(v)}</button>)}
+                </div>
+              </>
+            )}
           </div>
-        )}
-        {!result && mode === 'play' && !tempoMode && !atStart && (
-          <button className="sheet-restart" onClick={restart} aria-label="From the start"><IconRestart size={20} /></button>
-        )}
+          <div className="sheet-float right">
+            {mode === 'play' && !atStart && <button className="float-btn" onClick={restart} aria-label="From the start"><IconRestart size={18} /><span>Restart</span></button>}
+            <button className={`float-btn ${loop ? 'on' : ''}`} onClick={toggleLoop} aria-pressed={!!loop} aria-label={loop ? `Looping part ${loop.n}, tap to stop` : 'Loop this part'}><IconLoop size={18} /><span>{loop ? `Looping Part ${loop.n}` : 'Loop'}</span></button>
+            <button className="float-btn" onClick={() => setKeysHidden(h => !h)} aria-pressed={keysHidden} aria-label={keysHidden ? 'Show the keyboard' : 'Hide the keyboard'}><IconKeys size={18} /><span>{keysHidden ? 'Show keys' : 'Hide keys'}</span></button>
+          </div>
 
-        {result && (
-          <div className="sheet-result card" role="dialog" aria-labelledby="sheet-result-title">
-            <h2 id="sheet-result-title">{result.accuracy >= 0.95 ? 'Beautifully played' : result.accuracy >= 0.7 ? 'You played it through' : 'Keep at it'}</h2>
-            <p className="result-line">{result.hit} of {result.total} notes · {result.wrong} wrong · {Math.round(result.accuracy * 100)}%</p>
-            <div className="actions">
-              <button className="btn go" onClick={restart}><IconRestart size={16} />Play again</button>
-              <button className="btn" onClick={() => { setResult(null); setTeach(true); }}><IconCap size={16} />Teach me</button>
+          {result && (
+            <div className="sheet-result card" role="dialog" aria-labelledby="sheet-result-title">
+              <h2 id="sheet-result-title">{result.accuracy >= 0.95 ? 'Beautifully played' : result.accuracy >= 0.7 ? 'You played it through' : 'Keep at it'}</h2>
+              <p className="result-line">{result.hit} of {result.total} notes · {result.wrong} wrong · {Math.round(result.accuracy * 100)}%</p>
+              <div className="actions">
+                <button className="btn go" onClick={restart}><IconRestart size={16} />Play again</button>
+                <button className="btn" onClick={() => { setResult(null); setTeach(true); }}><IconCap size={16} />Teach me</button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </main>
+
+      {/* While he picks a section the keyboard steps aside, so the score stays readable. */}
+      {!keysHidden && !teach && (
+        <footer className="sheet-keys">
+          <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} />
+        </footer>
+      )}
     </div>
   );
 }

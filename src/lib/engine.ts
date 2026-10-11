@@ -220,11 +220,15 @@ export class Engine {
     if (this.opts.follow && !this.opts.listen) {
       // The cursor jumps to the next notes and stays there until they are played.
       const g = this.groups[this.gi];
-      if (!g) { this.finish(); return; }
+      if (!g || (this.segment && g.time >= this.segment.to)) {
+        // End of the song, or of the looped section: go round again.
+        if (this.segmentLoop) { this.seek(this.segment!.from - 0.01); this.emit({ type: 'status', ids: 'all' }); return; }
+        this.finish();
+        return;
+      }
       this.time = g.time;
       if (!this.waiting) { this.waiting = true; this.waitSince = now; this.wrongInWait = 0; this.emit({ type: 'state' }); }
       setExpected(this.expected());
-      if (this.segment && this.time >= this.segment.to) this.finish();
       return;
     }
 
