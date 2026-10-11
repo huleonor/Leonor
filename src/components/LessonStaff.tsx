@@ -21,6 +21,7 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
   const lineRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const feedbackRef = useRef(feedback);
   feedbackRef.current = feedback;
@@ -34,7 +35,7 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
 
   useEffect(() => {
     if (size.w < 200 || size.h < 80) return;
-    const line = lineRef.current!, paper = paperRef.current!, bubble = bubbleRef.current!;
+    const line = lineRef.current!, paper = paperRef.current!, bubble = bubbleRef.current!, glow = glowRef.current!;
     const song = engine.song;
     const bars = to - from + 1;
     // A grand staff is about 190 units tall at scale 1: fill most of the stage with it.
@@ -69,7 +70,7 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
     const svgH = paper.getBoundingClientRect().height;
     line.style.top = `${Math.max(0, Math.min((size.h - svgH) / 2, 80)) + 14}px`;
 
-    let raf = 0, offset = -1, hint = false;
+    let raf = 0, offset = -1, hint = false, lastStop = -1;
     const anchor = size.w * 0.3;
     const frame = () => {
       eg.paintTies(engine.time);
@@ -79,6 +80,11 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
         const target = c.x - anchor;
         offset = offset < 0 ? target : offset + (target - offset) * 0.18;
         line.style.transform = `translateX(${-offset}px)`;
+        const at = eg.stops[c.i];
+        if (c.i !== lastStop && engine.playing && at && engine.time >= at.time - 1e-3) { lastStop = c.i; eg.pulse(at); }
+        // Stuck: Simply Piano's beam of light over the notes to play.
+        glow.classList.toggle('on', hint && !!at);
+        if (hint && at) glow.style.transform = `translateX(${at.x - offset - 28}px)`;
         // The finger bubble over the notes he has to play next.
         const g = engine.groups[engine.gi];
         const stop = g && eg.stops.find(s => s.ids.some(id => g.ids.includes(id)));
@@ -102,6 +108,7 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
   return (
     <div className="lesson-staff" ref={hostRef}>
       <div className="lesson-line" ref={lineRef}><div ref={paperRef} /></div>
+      <div className="stuck-glow tall" ref={glowRef} aria-hidden="true" />
       <div className="finger-bubble" ref={bubbleRef} aria-hidden="true"><IconHand size={26} /><b /></div>
     </div>
   );

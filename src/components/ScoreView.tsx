@@ -26,6 +26,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
   const cursorRef = useRef<HTMLDivElement>(null);
   const pillsRef = useRef<HTMLDivElement>(null);
   const dotsRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const width = size.w;
   const feedbackRef = useRef(feedback);
@@ -45,7 +46,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
 
   useEffect(() => {
     if (width < 200) return;
-    const host = hostRef.current!, paper = paperRef.current!, cursor = cursorRef.current!;
+    const host = hostRef.current!, paper = paperRef.current!, cursor = cursorRef.current!, glow = glowRef.current!;
     const song = engine.song;
     const pageW = Math.min(width - 24, 1100);
     // Read from the music stand: a grand-staff system (about 190 units) fills most of the card's
@@ -88,14 +89,24 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
       if (e.ids === 'all') eg.paintAll(); else eg.paintIds(e.ids);
     });
 
-    let raf = 0, lastLine = -1;
+    let raf = 0, lastLine = -1, lastStop = -1;
     const frame = () => {
       eg.paintTies(engine.time);
-      const c = cursorAt(eg.stops, engine.time);
+      const c = cursorAt(eg.stops, engine.time, eg.lines);
       if (c) {
-        const box = eg.lines[c.line] ?? { top: 0, bottom: 120 };
+        const box = eg.lines[c.line] ?? { top: 0, bottom: 120, right: 0 };
         cursor.style.transform = `translate(${c.x - 3}px, ${box.top - 12}px)`;
         cursor.style.height = `${box.bottom - box.top + 24}px`;
+        // The notes swell as the cursor reaches them.
+        const stop = eg.stops[c.i];
+        if (c.i !== lastStop && engine.playing && stop && engine.time >= stop.time - 1e-3) { lastStop = c.i; eg.pulse(stop); }
+        // Stuck: a soft light over the notes to play, while the keyboard shows the keys.
+        const stuck = engine.hintVisible() && stop && engine.time >= stop.time - 1e-3;
+        glow.classList.toggle('on', !!stuck);
+        if (stuck) {
+          glow.style.transform = `translate(${stop.x - 28}px, ${box.top - 20}px)`;
+          glow.style.height = `${box.bottom - box.top + 40}px`;
+        }
         if (c.line !== lastLine) {
           lastLine = c.line;
           if (followRef.current) host.scrollTo({ top: c.line === 0 ? 0 : Math.max(0, box.top - 36), behavior: 'smooth' });
@@ -114,6 +125,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
         <div ref={paperRef} />
       </div>
       <div ref={pillsRef} aria-hidden="true" />
+      <div ref={glowRef} className="stuck-glow" aria-hidden="true" />
       <div ref={cursorRef} className="score-cursor" aria-hidden="true" />
       <div ref={dotsRef} className="press-dots" aria-hidden="true" />
     </div>

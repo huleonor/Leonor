@@ -11,7 +11,7 @@ import { formatSpeed, formatTime } from '../lib/names';
 import { usePracticeClock } from '../lib/practiceClock';
 import type { HandsChoice, Settings } from '../lib/types';
 import {
-  IconAutoScroll, IconBack, IconCap, IconCheck, IconHand, IconKeys, IconLoop, IconMagic, IconNotes, IconPlay, IconRestart, IconSpeaker, IconStop,
+  IconAutoScroll, IconBack, IconCap, IconCheck, IconChevronDown, IconChevronUp, IconHand, IconKeys, IconLoop, IconMagic, IconNotes, IconPlay, IconRestart, IconSpeaker, IconStop,
 } from './Icons';
 import { Keyboard } from './Keyboard';
 import { ScoreView } from './ScoreView';
@@ -65,6 +65,9 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
   const [speed, setSpeed] = useState(0.8);
   const [teach, setTeach] = useState(false);
   const [keysHidden, setKeysHidden] = useState(false);
+  // The tool bar folds away for more score; the choice is remembered.
+  const [barOpen, setBarOpen] = useState(() => { try { return localStorage.getItem('hugos-piano:bar') !== 'closed'; } catch { return true; } });
+  const toggleBar = () => setBarOpen(o => { try { localStorage.setItem('hugos-piano:bar', o ? 'closed' : 'open'); } catch { /* ignore */ } return !o; });
   const [hands, setHands] = useState<HandsChoice>('both');
   const [loop, setLoop] = useState<{ n: number; from: number; to: number } | null>(null);
   const [result, setResult] = useState<ReturnType<Engine['stats']> | null>(null);
@@ -142,8 +145,11 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
   const twoHands = song.hands.length === 2;
 
   return (
-    <div className="song-screen">
-      <header className="sheet-bar">
+    <div className={`song-screen ${barOpen ? '' : 'bar-closed'}`}>
+      {!barOpen && (
+        <button className="bar-handle" onClick={toggleBar} aria-label="Show the tool bar" aria-expanded={false}><IconChevronDown size={18} /></button>
+      )}
+      {barOpen && <header className="sheet-bar">
         <button className="icon-btn ghost" onClick={onExit} aria-label="Back to the songs"><IconBack /></button>
         <div className="sheet-modes" role="toolbar" aria-label="Song modes">
           {twoHands && (
@@ -176,9 +182,10 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
           Notes: <b>{stats.hit}</b> / {stats.total}<span>{formatTime(position)}</span>
         </p>
         {!inputOn && <button className="connect" onClick={onSettings}><i />Connect<span>&nbsp;piano</span></button>}
-      </header>
+        <button className="icon-btn ghost" onClick={toggleBar} aria-label="Hide the tool bar" aria-expanded><IconChevronUp size={18} /></button>
+      </header>}
 
-      {teach && (
+      {teach && barOpen && (
         <nav className="sections" aria-label="Sections to learn">
           {sections.map(s => (
             <button key={s.id} className={`section ${s.learnt ? 'learnt' : ''} ${s === nextSection ? 'next' : ''}`} onClick={() => onTeach(s)}>

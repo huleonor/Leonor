@@ -1,6 +1,6 @@
 /**
- * A course per song, the way a teacher splits a piece: short parts, each learnt hand by hand,
- * then hands together, then in tempo; then the parts are joined, and finally the whole song.
+ * A course per song, the way a teacher splits a piece: short parts, each learnt phrase by phrase and
+ * hand by hand (the tricky phrase twice), then hands together, then in tempo; then the whole song.
  * Parts that repeat an earlier one are marked as such and count as learnt with it.
  */
 import { createStore, del, get, set } from 'idb-keyval';
@@ -18,7 +18,7 @@ export interface CoursePart {
   hard: boolean;
 }
 
-export type StepKind = 'hand' | 'together' | 'tempo' | 'join' | 'song';
+export type StepKind = 'phrase' | 'hand' | 'together' | 'tempo' | 'join' | 'song';
 
 export interface CourseStep {
   id: string;
@@ -106,17 +106,49 @@ export function buildCourse(song: Song): Course {
   const mean = ranked.reduce((a, r) => a + r.s, 0) / Math.max(1, ranked.length);
   ranked.slice(0, Math.max(1, Math.round(ranked.length / 3))).forEach(r => { if (r.s > mean * 1.1) r.p.hard = true; });
 
+  // Each part is a lesson of short steps, Simply Piano style: a phrase or two bars at a time, hand by
+  // hand, the trickiest phrase once more and slower, then the hands together and in tempo. So the
+  // number of steps follows the music: an easy two-bar part has four, a busy eight-bar part fifteen.
+  const scores = bars.filter(b => b.notes.length).map(scoreBar).sort((a, b) => a - b);
+  const median = scores[Math.floor(scores.length / 2)] ?? 0;
   const steps: CourseStep[] = [];
   const both: HandsChoice = twoHands ? 'both' : song.hands[0];
   for (const p of parts) {
     if (p.sameAs) continue;
     const at = { part: p.n, from: p.from, to: p.to };
+    const n = p.to - p.from + 1;
+    // Phrases of about five seconds or more, at most three to a part.
+    let plen = n <= 2 ? n : barSeconds * 2 >= 4.5 || n <= 4 ? 2 : 4;
+    while (Math.ceil(n / plen) > 3) plen *= 2;
+    const phrases: { i: number; from: number; to: number; hard: boolean }[] = [];
+    for (let b = p.from; b <= p.to; b += plen) phrases.push({ i: phrases.length + 1, from: b, to: Math.min(p.to, b + plen - 1), hard: false });
+    // The hardest phrase, if it is clearly harder than the song's typical bar, gets a second, slower go.
+    const pScore = (ph: { from: number; to: number }) => Math.max(0, ...bars.slice(ph.from - 1, ph.to).map(scoreBar));
+    const hardest = [...phrases].sort((a, b) => pScore(b) - pScore(a))[0];
+    if (hardest && pScore(hardest) > median * 1.15) hardest.hard = true;
+    const has = (h: 'R' | 'L', ph: { from: number; to: number }) => bars.slice(ph.from - 1, ph.to).some(b => b.notes.some(x => x.hand === h));
+    const span = (ph: { from: number; to: number }) => (ph.from === ph.to ? `bar ${ph.from}` : `bars ${ph.from}–${ph.to}`);
+    const many = phrases.length > 1;
+
+    const drill = (key: string, label: string, hands: HandsChoice, speed: number, h?: 'R' | 'L') => {
+      for (const ph of phrases) {
+        if (h && !has(h, ph)) continue;
+        const where = { part: p.n, from: ph.from, to: ph.to };
+        if (many) steps.push({ id: `p${p.n}-${key}${ph.i}`, kind: 'phrase', title: `${label} · ${span(ph)}`, short: `${key}${ph.i}`, ...where, hands, speed, wait: true });
+        if (ph.hard) steps.push({ id: `p${p.n}-${key}${ph.i}x`, kind: 'phrase', title: `Tricky bit · ${label.toLowerCase()} · ${span(ph)}`, short: `${key}!`, ...where, hands, speed: Math.max(0.5, speed - 0.2), wait: true });
+      }
+    };
     if (twoHands) {
-      steps.push({ id: `p${p.n}-R`, kind: 'hand', title: 'Right hand', short: 'R', ...at, hands: 'R', speed: 0.6, wait: true });
-      steps.push({ id: `p${p.n}-L`, kind: 'hand', title: 'Left hand', short: 'L', ...at, hands: 'L', speed: 0.6, wait: true });
-      steps.push({ id: `p${p.n}-both`, kind: 'together', title: 'Hands together', short: 'R+L', ...at, hands: 'both', speed: 0.8, wait: true });
+      for (const [h, label] of [['R', 'Right hand'], ['L', 'Left hand']] as const) {
+        if (!has(h, p)) continue;
+        drill(h, label, h, 0.6, h);
+        steps.push({ id: `p${p.n}-${h}`, kind: 'hand', title: many ? `${label} · whole part` : label, short: h, ...at, hands: h, speed: 0.7, wait: true });
+      }
+      drill('B', 'Hands together', 'both', 0.6);
+      steps.push({ id: `p${p.n}-both`, kind: 'together', title: 'Hands together · whole part', short: 'R+L', ...at, hands: 'both', speed: 0.8, wait: true });
     } else {
-      steps.push({ id: `p${p.n}-slow`, kind: 'hand', title: 'Slowly', short: '.6', ...at, hands: both, speed: 0.6, wait: true });
+      drill('S', 'Slowly', both, 0.6);
+      steps.push({ id: `p${p.n}-slow`, kind: 'hand', title: 'Whole part, slowly', short: '.6', ...at, hands: both, speed: 0.6, wait: true });
       steps.push({ id: `p${p.n}-both`, kind: 'together', title: 'A little faster', short: '.8', ...at, hands: both, speed: 0.8, wait: true });
     }
     steps.push({ id: `p${p.n}-tempo`, kind: 'tempo', title: 'In tempo', short: '1×', ...at, hands: both, speed: 1, wait: false });
