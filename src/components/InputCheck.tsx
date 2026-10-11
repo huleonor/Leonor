@@ -50,15 +50,15 @@ export function InputCheck({ links, naming, onClose }: Props) {
 
   return (
     <div className="scrim" onClick={onClose}>
-      <div className="sheet-panel" role="dialog" aria-label="Check input" onClick={e => e.stopPropagation()}>
-        <div className="sheet-head">
+      <div className="side-sheet wide" role="dialog" aria-modal="true" aria-labelledby="check-title" onClick={e => e.stopPropagation()}>
+        <header className="sheet-head">
           <div>
-            <h2>Check input</h2>
-            <p>Play any key. What the app hears shows up here.</p>
+            <h2 id="check-title">Test your piano</h2>
+            <p className="fine">Play any key. What the app hears shows up here.</p>
           </div>
-          <button className="keycap" onClick={onClose} aria-label="Close"><IconClose /></button>
-        </div>
-        <div className="lcd check-live" aria-live="polite">
+          <button className="icon-btn ghost" onClick={onClose} aria-label="Close"><IconClose /></button>
+        </header>
+        <div className="check-live" aria-live="polite">
           <small>{last ? `Heard from ${SOURCE_NAME[last.source]} · ${count} notes` : 'Waiting for a note'}</small>
           <strong>{heard.length ? heard.map(m => noteName(m, naming, true)).join(' + ') : '—'}</strong>
         </div>
@@ -68,7 +68,7 @@ export function InputCheck({ links, naming, onClose }: Props) {
             <div key={k}>
               <dt>{SOURCE_NAME[k]}</dt>
               <dd className={links[k].status}>
-                <i className={`led ${links[k].status === 'on' ? 'green' : links[k].status === 'error' ? 'red' : links[k].status === 'connecting' ? 'blink' : ''}`} />
+                <i className="status-dot" />
                 {links[k].status === 'on' ? `On${links[k].label ? ' · ' + links[k].label : ''}` : links[k].status === 'error' ? 'Problem' : links[k].status === 'connecting' ? 'Connecting…' : 'Off'}
               </dd>
             </div>
@@ -77,10 +77,10 @@ export function InputCheck({ links, naming, onClose }: Props) {
             <dt>Mic level</dt>
             <dd>
               <svg className="vu" viewBox="0 0 96 52" aria-label={`Mic level ${Math.round(level * 100)}%`}>
-                <path d="M8 48a40 40 0 0 1 80 0" fill="none" stroke="#bdbcb5" strokeWidth="6" strokeLinecap="round" />
-                <path d="M72 20.7a40 40 0 0 1 16 27.3" fill="none" stroke="#e0301e" strokeWidth="6" strokeLinecap="round" opacity=".7" />
-                <line className="vu-needle" x1="48" y1="48" x2="48" y2="12" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round" style={{ transform: `rotate(${-70 + level * 140}deg)` }} />
-                <circle cx="48" cy="48" r="4" fill="#1a1a1a" />
+                <path d="M8 48a40 40 0 0 1 80 0" fill="none" stroke="var(--line)" strokeWidth="6" strokeLinecap="round" />
+                <path d="M72 20.7a40 40 0 0 1 16 27.3" fill="none" stroke="var(--miss)" strokeWidth="6" strokeLinecap="round" opacity=".8" />
+                <line className="vu-needle" x1="48" y1="48" x2="48" y2="12" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" style={{ transform: `rotate(${-70 + level * 140}deg)` }} />
+                <circle cx="48" cy="48" r="4" fill="var(--ink)" />
               </svg>
             </dd>
           </div>
@@ -97,9 +97,9 @@ export function InputCheck({ links, naming, onClose }: Props) {
             </div>
           )}
         </dl>
-        <p className="note">
+        <p className="fine">
           {isNative
-            ? 'Cable: plug the piano in with the Lightning to USB Camera Adapter; it shows up above within 2 seconds. Bluetooth: press BT in the library, pick the piano, then Done.'
+            ? 'Cable: plug the piano in with the Lightning to USB Camera Adapter; it shows up above within 2 seconds. Bluetooth: choose Bluetooth under Your piano in Settings, pick the piano, then Done.'
             : 'On iPhone, use the Hugo’s Piano app for cable and Bluetooth. iPhone browsers only have the microphone.'}
         </p>
       </div>

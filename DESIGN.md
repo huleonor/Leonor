@@ -1,396 +1,529 @@
 ---
 name: Hugo's Piano
-description: A practice instrument on the music stand; a light aluminium panel with printed legends, round keycaps with LEDs and one black display where the notes fall.
+description: A song-learning app in the Simply Piano manner; a night indigo shell with one go-green for every action and every right note, songs as white engraved sheet music under a dark tool bar of modes, and Teach me lessons on a warm light page with teal next notes and violet step progress.
 colors:
-  aluminium: "#dcdbd6"
-  aluminium-hi: "#e8e7e2"
-  aluminium-lo: "#cdccc6"
-  groove: "#bdbcb5"
-  label-white: "#f6f5f1"
-  label-white-2: "#eceae4"
-  legend-ink: "#1a1a1a"
-  legend-ink-2: "#4d4c47"
-  legend-ink-3: "#62615b"
-  display-black: "#111214"
-  display-lane: "#16171a"
-  lcd-black: "#121314"
-  lcd-green: "#86f0a8"
-  lcd-green-dim: "#5a9b70"
-  lcd-off: "#9a9b96"
-  lcd-neutral: "#ecebe6"
-  lcd-fault: "#ff9b8c"
-  signal-orange: "#ff6a13"
-  signal-orange-deep: "#f25c08"
-  signal-orange-ink: "#b8430a"
-  signal-orange-soft: "#ffd9c2"
-  signal-orange-lit: "#ffb07a"
-  cobalt: "#2f5bff"
-  cobalt-ink: "#1d3bb3"
-  cobalt-soft: "#cdd8ff"
-  cobalt-lit: "#8aa2ff"
-  led-green: "#3dbe6b"
-  fault-red: "#e0301e"
-  fault-red-ink: "#b3200f"
-  key-top: "#fbfaf7"
-  key-bottom: "#eeede8"
-  key-seam: "#c3c2bb"
-  key-black: "#1b1c1f"
-  score-paper: "#f4f3ee"
+  night: "#14112b"
+  night-deep: "#0f0c22"
+  surface: "#1d1940"
+  surface-2: "#262150"
+  raised: "#302a63"
+  raised-hover: "#38317a"
+  raised-edge: "#1f1a45"
+  line: "#3a3470"
+  line-2: "#4c4590"
+  ink: "#f5f3ff"
+  ink-2: "#c0b9ec"
+  ink-3: "#9790cc"
+  go: "#3fd07a"
+  go-hi: "#5fe093"
+  go-edge: "#1f9a52"
+  go-ink: "#082414"
+  star: "#ffcf3f"
+  star-off: "#3d3775"
+  flame: "#ff8a3d"
+  miss: "#ff5d73"
+  violet: "#8f4dff"
+  teal: "#14c4cf"
+  teal-ink: "#04363b"
+  tool-cream: "#f4f0e8"
+  key-yellow: "#ffd84d"
+  mini-case: "#2a2833"
+  right-hand: "#4fb6ff"
+  left-hand: "#ffb547"
+  finger-right: "#5b2a86"
+  finger-left: "#7a4b12"
+  sheet-white: "#ffffff"
+  paper: "#fbfaff"
+  lesson-bg: "#f0eee9"
+  lesson-ink: "#1b1640"
+  lesson-ink-2: "#6b6585"
+  lesson-chip: "#a9a1bb"
+  lesson-chip-edge: "#8d85a3"
+  lesson-count: "#6b6182"
+  hit-paper: "#178a48"
+  miss-paper: "#d92d45"
+  score-next: "#0e9fb0"
+  score-other: "#b9b4d8"
+  notes-display: "#100d24"
+  notes-lane: "#151231"
+  level-1: "#8ff0b5"
+  level-2: "#9fd8ff"
+  level-3: "#ffe08a"
+  level-4: "#ffb38a"
+  level-5: "#ff9fb0"
 typography:
   display:
-    fontFamily: "Martian Mono, ui-monospace, monospace"
-    fontSize: "clamp(88px, 34vh, 150px)"
-    fontWeight: 700
-    lineHeight: 0.9
-    fontFeature: "'tnum'"
-  headline:
-    fontFamily: "Supreme, Helvetica Neue, Arial, sans-serif"
-    fontSize: "clamp(20px, 4vw, 26px)"
-    fontWeight: 800
-    lineHeight: 1.02
-    letterSpacing: "-0.015em"
-  wordmark:
-    fontFamily: "Supreme, Helvetica Neue, Arial, sans-serif"
-    fontSize: "27px"
-    fontWeight: 800
-    lineHeight: 0.94
-    letterSpacing: "-0.015em"
-  title:
-    fontFamily: "Supreme, Helvetica Neue, Arial, sans-serif"
-    fontSize: "19px"
-    fontWeight: 800
-    lineHeight: 1.02
+    fontFamily: "'Nunito Variable', Nunito, ui-rounded, system-ui, sans-serif"
+    fontSize: "26px"
+    fontWeight: 900
+    lineHeight: 1.06
     letterSpacing: "-0.01em"
-  title-bar:
-    fontFamily: "Supreme, Helvetica Neue, Arial, sans-serif"
-    fontSize: "17px"
-    fontWeight: 800
-    lineHeight: 1.05
-    letterSpacing: "-0.005em"
+  headline:
+    fontFamily: "'Nunito Variable', Nunito, ui-rounded, system-ui, sans-serif"
+    fontSize: "24px"
+    fontWeight: 900
+    lineHeight: 1.08
+    letterSpacing: "-0.01em"
+  title:
+    fontFamily: "'Nunito Variable', Nunito, ui-rounded, system-ui, sans-serif"
+    fontSize: "18px"
+    fontWeight: 900
+    lineHeight: 1.2
+    letterSpacing: "-0.01em"
+  instruction:
+    fontFamily: "'Nunito Variable', Nunito, ui-rounded, system-ui, sans-serif"
+    fontSize: "20px"
+    fontWeight: 900
+    lineHeight: 1.2
   body:
-    fontFamily: "Supreme, Helvetica Neue, Arial, sans-serif"
-    fontSize: "13.5px"
-    fontWeight: 500
-    lineHeight: 1.45
-  body-long:
-    fontFamily: "Supreme, Helvetica Neue, Arial, sans-serif"
-    fontSize: "14px"
-    fontWeight: 500
-    lineHeight: 1.5
-  control:
-    fontFamily: "Supreme, Helvetica Neue, Arial, sans-serif"
+    fontFamily: "'Nunito Variable', Nunito, ui-rounded, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 600
+    lineHeight: 1.4
+    fontFeature: "tnum"
+  button:
+    fontFamily: "'Nunito Variable', Nunito, ui-rounded, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 800
+    lineHeight: 1
+  tool:
+    fontFamily: "'Nunito Variable', Nunito, ui-rounded, system-ui, sans-serif"
     fontSize: "13px"
     fontWeight: 800
-    lineHeight: 1
-    letterSpacing: "0.12em"
-  legend:
-    fontFamily: "Supreme, Helvetica Neue, Arial, sans-serif"
-    fontSize: "10px"
-    fontWeight: 700
-    lineHeight: 1
-    letterSpacing: "0.14em"
-  readout:
-    fontFamily: "Martian Mono, ui-monospace, monospace"
-    fontSize: "16px"
-    fontWeight: 700
+    lineHeight: 1.2
+  label:
+    fontFamily: "'Nunito Variable', Nunito, ui-rounded, system-ui, sans-serif"
+    fontSize: "12.5px"
+    fontWeight: 800
+    lineHeight: 1.3
+  caption:
+    fontFamily: "'Nunito Variable', Nunito, ui-rounded, system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 600
+    lineHeight: 1.45
+  stat:
+    fontFamily: "'Nunito Variable', Nunito, ui-rounded, system-ui, sans-serif"
+    fontSize: "24px"
+    fontWeight: 900
     lineHeight: 1.1
-    fontFeature: "'tnum'"
-  readout-small:
-    fontFamily: "Martian Mono, ui-monospace, monospace"
-    fontSize: "11.5px"
-    fontWeight: 400
-    fontFeature: "'tnum'"
-  numeral:
-    fontFamily: "Martian Mono, ui-monospace, monospace"
-    fontSize: "26px"
+    fontFeature: "tnum"
+  score-title:
+    fontFamily: "Georgia, 'Times New Roman', serif"
+    fontSize: "20px"
     fontWeight: 700
-    lineHeight: 1
-    fontFeature: "'tnum'"
+    letterSpacing: "0"
+  score-composer:
+    fontFamily: "Georgia, 'Times New Roman', serif"
+    fontSize: "15px"
+    fontWeight: 400
 rounded:
-  stamp: "4px"
-  key: "6px"
-  sm: "8px"
-  label: "9px"
-  r: "12px"
-  lg: "18px"
-  pill: "23px"
-  cap: "50%"
-spacing:
-  xs: "6px"
-  sm: "10px"
+  tag: "8px"
+  pill: "10px"
+  sm: "12px"
+  control: "14px"
   md: "16px"
-  lg: "18px"
-  gutter: "22px"
-  bar: "64px"
-  keys: "96px"
+  float: "18px"
+  lg: "22px"
+  full: "9999px"
+spacing:
+  xs: "4px"
+  sm: "8px"
+  md: "12px"
+  lg: "16px"
+  xl: "22px"
 components:
-  keycap:
-    backgroundColor: "{colors.label-white}"
-    textColor: "{colors.legend-ink}"
-    rounded: "{rounded.cap}"
-    size: "44px"
-  keycap-lit:
-    backgroundColor: "{colors.signal-orange-deep}"
-    textColor: "{colors.legend-ink}"
-  keycap-dark:
-    backgroundColor: "{colors.key-black}"
-    textColor: "{colors.label-white}"
-  pill:
-    backgroundColor: "{colors.label-white}"
-    textColor: "{colors.legend-ink}"
-    typography: "{typography.control}"
-    rounded: "{rounded.pill}"
+  button-primary:
+    backgroundColor: "{colors.go}"
+    textColor: "{colors.go-ink}"
+    typography: "{typography.button}"
+    rounded: "{rounded.control}"
     padding: "0 20px"
     height: "46px"
-  pill-go:
-    backgroundColor: "{colors.signal-orange-deep}"
-    textColor: "{colors.legend-ink}"
-    typography: "{typography.control}"
-    rounded: "{rounded.pill}"
+  button-primary-hover:
+    backgroundColor: "{colors.go-hi}"
+    textColor: "{colors.go-ink}"
+  button-primary-big:
+    backgroundColor: "{colors.go}"
+    textColor: "{colors.go-ink}"
+    rounded: "{rounded.md}"
+    padding: "0 26px"
+    height: "54px"
+  button-secondary:
+    backgroundColor: "{colors.raised}"
+    textColor: "{colors.ink}"
+    typography: "{typography.button}"
+    rounded: "{rounded.control}"
     padding: "0 20px"
     height: "46px"
-  pill-danger:
-    backgroundColor: "{colors.fault-red}"
-    textColor: "#ffffff"
-    rounded: "{rounded.pill}"
+  button-secondary-hover:
+    backgroundColor: "{colors.raised-hover}"
+    textColor: "{colors.ink}"
+  button-quiet:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink-2}"
+    rounded: "{rounded.control}"
+    padding: "0 20px"
+    height: "40px"
+  button-danger:
+    backgroundColor: "{colors.miss}"
+    textColor: "#2a0610"
+    typography: "{typography.button}"
+    rounded: "{rounded.control}"
+    padding: "0 20px"
     height: "46px"
-  slider:
-    backgroundColor: "{colors.groove}"
-    textColor: "{colors.legend-ink-2}"
-    rounded: "22px"
-    padding: "3px"
-  slider-on:
-    backgroundColor: "{colors.label-white}"
-    textColor: "{colors.legend-ink}"
-    rounded: "17px"
-    height: "34px"
-  switch:
-    backgroundColor: "{colors.groove}"
-    rounded: "14px"
-    width: "50px"
-    height: "28px"
-  switch-on:
-    backgroundColor: "{colors.signal-orange-deep}"
-  lcd:
-    backgroundColor: "{colors.lcd-black}"
-    textColor: "{colors.lcd-green}"
-    typography: "{typography.readout}"
+  icon-button:
+    backgroundColor: "{colors.raised}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.sm}"
-  lcd-readout:
-    backgroundColor: "{colors.lcd-black}"
-    textColor: "{colors.lcd-neutral}"
-    typography: "{typography.readout}"
+    size: "42px"
+  icon-button-ghost:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink-2}"
     rounded: "{rounded.sm}"
-    padding: "3px 9px 4px"
-  cartridge:
-    backgroundColor: "{colors.aluminium-lo}"
+    size: "42px"
+  chip:
+    backgroundColor: "{colors.surface-2}"
+    textColor: "{colors.ink-2}"
+    typography: "{typography.button}"
+    rounded: "{rounded.sm}"
+    padding: "0 13px"
+    height: "38px"
+  segmented:
+    backgroundColor: "{colors.night-deep}"
+    textColor: "{colors.ink-2}"
+    rounded: "{rounded.control}"
+    padding: "4px"
+  segmented-on:
+    backgroundColor: "{colors.raised}"
+    textColor: "{colors.ink}"
+    rounded: "10px"
+    height: "36px"
+  card:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
-    padding: "10px 10px 11px"
-    width: "190px"
-  cartridge-label:
-    backgroundColor: "{colors.label-white}"
-    textColor: "{colors.legend-ink}"
-    rounded: "{rounded.label}"
-    padding: "10px 11px 11px"
-  speed-stamp:
-    textColor: "{colors.legend-ink-2}"
-    typography: "{typography.readout-small}"
-    rounded: "{rounded.stamp}"
-    height: "24px"
-  speed-stamp-done:
-    textColor: "{colors.signal-orange-ink}"
-  display-window:
-    backgroundColor: "{colors.display-black}"
-    rounded: "{rounded.lg}"
-  module-plate:
-    backgroundColor: "{colors.aluminium}"
-    textColor: "{colors.legend-ink}"
-    rounded: "{rounded.lg}"
-    padding: "20px 22px 18px"
-    width: "min(600px, 100%)"
-  wait-hint:
-    backgroundColor: "{colors.label-white}"
-    textColor: "{colors.legend-ink-2}"
-    rounded: "{rounded.r}"
-    padding: "8px 12px 8px 16px"
-  side-sheet:
-    backgroundColor: "{colors.aluminium}"
-    padding: "22px 24px"
-    width: "min(400px, 100%)"
+    padding: "18px"
+  song-card:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    padding: "8px 8px 12px"
+  tag:
+    backgroundColor: "rgba(255, 138, 61, .16)"
+    textColor: "{colors.flame}"
+    typography: "{typography.label}"
+    rounded: "{rounded.tag}"
+    padding: "2px 8px"
+  text-field:
+    backgroundColor: "{colors.night-deep}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sm}"
+    padding: "0 12px"
+    height: "44px"
+  rail-item:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink-3}"
+    rounded: "{rounded.control}"
+    width: "70px"
+    height: "58px"
+  rail-item-active:
+    backgroundColor: "rgba(63, 208, 122, .12)"
+    textColor: "{colors.go}"
+  tool-bar:
+    backgroundColor: "{colors.night}"
+    padding: "6px 12px"
+  tool:
+    backgroundColor: "transparent"
+    textColor: "{colors.sheet-white}"
+    typography: "{typography.tool}"
+    rounded: "{rounded.sm}"
+    padding: "4px 12px"
+    width: "74px"
+    height: "58px"
+  tool-on:
+    backgroundColor: "{colors.tool-cream}"
+    textColor: "{colors.violet}"
+  mini-keyboard:
+    backgroundColor: "{colors.mini-case}"
+    rounded: "10px"
+    padding: "0 6px 6px"
+    height: "42px"
+  mini-key-to-play:
+    backgroundColor: "{colors.key-yellow}"
+  sections-strip:
+    backgroundColor: "{colors.violet}"
+    padding: "14px 16px"
+  section-card:
+    backgroundColor: "{colors.sheet-white}"
+    textColor: "{colors.lesson-ink}"
+    rounded: "{rounded.control}"
+    padding: "12px 16px"
+    width: "210px"
+  score:
+    backgroundColor: "{colors.sheet-white}"
+    textColor: "{colors.lesson-ink}"
+    typography: "{typography.score-title}"
+    padding: "12px 12px 120px"
+  part-pill:
+    backgroundColor: "{colors.sheet-white}"
+    textColor: "{colors.violet}"
+    rounded: "{rounded.pill}"
+    padding: "3px 12px"
+  score-cursor:
+    backgroundColor: "{colors.teal}"
+    rounded: "3px"
+    width: "6px"
+  tempo-pill:
+    backgroundColor: "rgba(20, 17, 43, .94)"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.float}"
+    padding: "8px 10px 8px 16px"
+  corner-button:
+    backgroundColor: "rgba(20, 17, 43, .9)"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    size: "46px"
+  lesson-page:
+    backgroundColor: "{colors.lesson-bg}"
+    textColor: "{colors.lesson-ink}"
+    typography: "{typography.instruction}"
+  lesson-pause:
+    backgroundColor: "{colors.lesson-chip}"
+    textColor: "{colors.sheet-white}"
+    rounded: "{rounded.md}"
+    size: "56px"
+  lesson-arrow:
+    backgroundColor: "{colors.lesson-chip}"
+    textColor: "{colors.sheet-white}"
+    rounded: "{rounded.sm}"
+    size: "46px"
+  lesson-counter:
+    backgroundColor: "{colors.lesson-count}"
+    textColor: "{colors.sheet-white}"
+    rounded: "{rounded.sm}"
+    padding: "0 14px"
+    width: "250px"
+    height: "46px"
+  lesson-counter-fill:
+    backgroundColor: "{colors.violet}"
+  finger-bubble-right:
+    backgroundColor: "{colors.finger-right}"
+    textColor: "{colors.sheet-white}"
+    rounded: "{rounded.pill}"
+    width: "46px"
+    height: "54px"
+  finger-bubble-left:
+    backgroundColor: "{colors.finger-left}"
+    textColor: "{colors.sheet-white}"
+  key-target:
+    backgroundColor: "{colors.teal}"
+    textColor: "{colors.teal-ink}"
+  key-hit:
+    backgroundColor: "{colors.go}"
+    textColor: "{colors.go-ink}"
   toast:
-    backgroundColor: "{colors.lcd-black}"
-    textColor: "{colors.lcd-green}"
-    rounded: "{rounded.sm}"
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.night}"
+    rounded: "{rounded.control}"
     padding: "12px 18px"
-  toast-error:
-    textColor: "#ffb4a8"
-  keyboard:
-    backgroundColor: "{colors.key-top}"
-    height: "{spacing.keys}"
-  top-bar:
-    height: "{spacing.bar}"
 ---
 
 # Design System: Hugo's Piano
 
 ## Overview
 
-**Creative North Star: "The Practice Instrument"**
+**Creative North Star: "The Green Light"**
 
-The app is a piece of hardware standing on the music stand, in the line of Braun and Teenage Engineering panels: a light, bead-blasted aluminium panel with printed legends, round keycaps with small LEDs, recessed LCD windows, a two-position slider, and one black display window where the notes fall onto an orange gate. The library is a rack of song cartridges, each with a photo, a white paper label and the speeds already passed stamped in orange ink. Setup, pause and end are module plates that sit over the display. The world rejects the neon-bars-on-navy piano trainer and the dark cinema costume of the 35mm film world it replaced.
+Hugo's Piano is the category standard for learning songs, played straight: a night indigo app in the Simply Piano and Duolingo family, where one saturated green means "go" everywhere it appears. The next action is green, a correctly played note is green, the next section to open wears a green ring, the met goal is green. Everything else stays quiet so that green is always the answer to "what do I do now?". Gold is the reward (stars), orange is the streak, red is reserved for the wrong note.
 
-The panel is lit, never dark. Black lives only inside the display window, the LCDs and the black keys. Colour is signal and each colour owns one job: orange is the right hand, the primary control and the active state; cobalt is the left hand; green is live input; red is a fault. Two families split the work cleanly: Supreme speaks every title, legend and sentence; Martian Mono is the machine voice of readouts, numerals, note names and stamps.
+The world has three grounds. The app shell (Home, Songs, Progress, Settings) sits on deep indigo with raised indigo surfaces, a single rounded face (Nunito, heavy weights) and chunky buttons that physically press down on a solid bottom edge. A song opens as printed sheet music: a full-screen white page engraved by abcjs, set under a dark tool bar of modes (Listen, Teach me, Play | Feedback, Magic scroll, Auto scroll, Connect, Exit) and a small instrument-like keyboard that lights the keys to play in yellow, with a teal cursor moving through the score. Teach me opens a violet strip of section cards; a section becomes a lesson on a warm light page: one engraved line, the next notes in teal under a finger bubble, the target keys in teal on a large keyboard, and an n/N counter filling with violet. Results and pauses return to indigo cards floating over a scrim, so the reward always feels like the app speaking.
 
-Density follows a phone in landscape on a music stand: a 64px legend strip on top, the display filling the middle, keys along the bottom, 44px keycaps throughout. Surfaces are matte; depth is physical (key travel, recessed windows, a plate lifted over the display) rather than decorative.
+Density is moderate and landscape-first: an 84px rail and 16px card gaps in the shell, and edge-to-edge working surfaces (score, lesson) with nothing between Hugo and the next note. This replaces the earlier aluminium "practice instrument" world and the canvas paper staff with lettered note heads; notation is real engraving now.
 
 **Key Characteristics:**
-- Matte aluminium field with a soft top light; no stripes, no brushed texture, no gloss.
-- Every control is a physical key: round keycaps, pills and a slider that travel 1.5px when pressed.
-- One black display window per screen; LCDs are small recessed black readouts.
-- Signal colours with one job each: orange right hand and action, cobalt left hand, green live input, red fault.
-- Supreme for words, Martian Mono for machine readouts.
-- Cartridges with photo, paper label and orange speed stamps.
+- Night indigo shell with three raised surface steps; tool bar, overlays and result cards stay indigo on every screen.
+- One go-green for every primary action, correct note, active nav item, next section and met goal.
+- A white engraved score with a compact serif title row, violet section pills and a 6px teal cursor.
+- Teal marks "now" on paper: the cursor, the next notes and the target keys; yellow marks the keys to play on the mini keyboard.
+- Violet carries the teaching structure: active mode ink, the Teach me strip, section pills, the lesson counter fill.
+- Nunito Variable for all interface text, weights 600 to 900, tabular figures throughout.
+- Chunky rounded action controls with a solid 3-4px bottom edge that collapses on press.
 
 ## Colors
 
-A warm light-grey aluminium panel with near-black ink, one black display, and four signal colours that never swap jobs.
+A dark indigo field with a small, strictly assigned set of saturated signals, plus two light working grounds (white score, warm lesson page) with their own deeper ink set.
 
 ### Primary
-- **Signal Orange** (signal-orange): the right hand's falling notes and struck white keys, the gate line, the progress fill, count-in numerals and beat LEDs, the orange LED. **Deep** (signal-orange-deep) is the flat fill of the primary control: the lit keycap, the go pill, the switch when on, the focus ring, the sheet cursor and struck black keys. **Ink** (signal-orange-ink) is orange as text: passed speed stamps, the missing-file line, list markers. **Soft** (signal-orange-soft) tints the next right-hand key, the loop key and text selection. **Lit** (signal-orange-lit) marks a right-hand note sounding under a correct hit on the canvas.
+- **Go Green** (`go`): the one action colour. Primary buttons (Continue, Start, Play again, Resume, Next: Left hand, Go on), round play dots, the active rail item, `Next` tags, a met daily goal, focus rings, switches when on, the ring around the next section card, the "heard" note in the input test, and every correctly played key. `go-hi` is its hover; `go-edge` is the solid bottom edge under green buttons; `go-ink` is the near-black green text that sits on it.
 
 ### Secondary
-- **Cobalt** (cobalt): the left hand only; falling notes, struck keys and hint keys. **Ink** (cobalt-ink) names the next left-hand key; **Soft** (cobalt-soft) tints it; **Lit** (cobalt-lit) marks a sounding left-hand hit on the canvas.
+- **Teaching Violet** (`violet`): the teaching structure. The ink of an active mode on the tool bar, the Teach me strip behind the section cards, section icons, the outlined section pills printed on the score, the fill that grows through the lesson counter, the count-in number on the lesson page.
+- **Now Teal** (`teal`): where Hugo is on paper. The 6px score cursor and the target keys on the lesson keyboard (with `teal-ink` names on them). On the engraved line, the next notes are painted the deeper **Score Teal** (`score-next`) so they read as ink.
+- **Star Gold** (`star`): stars won, the star count beside meters, the song progress meter fill. Unwon stars use **Star Shadow** (`star-off`).
+- **Streak Flame** (`flame`): the streak pill when lit, the flame on Progress and the lesson result card, done days in the week row; at 16% alpha for the "Tricky" tag; and the small attention dot on the Connect tool when no piano is linked.
 
 ### Tertiary
-- **LED Green** (led-green): the live-input LED. **LCD Green** (lcd-green) is text on an LCD that reports live input (input LCD, input status, the input check readout, toasts); **LCD Green Dim** (lcd-green-dim) is the small caption inside those LCDs.
-- **Fault Red** (fault-red): wrong keys, missed notes (dashed outline), the wrong-note block at the gate, the destructive pill, the red LED. **Fault Red Ink** (fault-red-ink) is red as text on the panel ("You played A#2", warnings, confirm prompts). **LCD Fault** (lcd-fault) is red as text on an LCD.
+- **Miss Red** (`miss`): a wrong key, error toasts, the danger button, destructive links, error status dots. Nothing else.
+- **Key Yellow** (`key-yellow`): the keys to play on the mini keyboard under the tool bar, and only there.
+- **Hand colours.** On the lesson's finger bubble, **Plum Right** (`finger-right`) marks the right hand and **Umber Left** (`finger-left`) the left hand. In the falling-notes view, **Sky Right Hand** (`right-hand`) and **Amber Left Hand** (`left-hand`) colour the bars. They are hand identities, not states.
+- **Level Ramp** (`level-1` to `level-5`): pastel mint, sky, butter, apricot and rose for the Level 1-5 badge on covers and song facts.
 
 ### Neutral
-- **Aluminium** (aluminium) with **Hi** (aluminium-hi) and **Lo** (aluminium-lo): the panel field, graded top to bottom; plates and side sheets reuse the same field.
-- **Groove** (groove): recessed tracks (slider, switch), dashed empty stamps, the add-cartridge outline, scrollbars.
-- **Label White** (label-white) and **Label White 2** (label-white-2): paper labels on cartridges, the wait-hint panel, the active slider cell, confirm cards.
-- **Legend Ink** (legend-ink): titles and primary text, text on orange fills. **Ink 2** (legend-ink-2): printed legends, subtitles, notes. **Ink 3** (legend-ink-3): tertiary text in sheets and credits.
-- **Display Black** (display-black) and **Display Lane** (display-lane): the display window and the faint lane over every black key.
-- **LCD Black** (lcd-black): every LCD window. **LCD Neutral** (lcd-neutral): readouts that are not live input (bar and time). **LCD Off** (lcd-off): an LCD with nothing connected.
-- **Key Top / Key Bottom** (key-top, key-bottom), **Key Seam** (key-seam), **Key Black** (key-black): the keyboard and miniature keyboards.
-- **Score Paper** (score-paper): the e-paper page the display becomes in sheet view.
+- **Night** (`night`): the app background, page heads, the song tool bar and its collapse handle.
+- **Night Deep** (`night-deep`): the rail, segmented-control wells, text fields, the input-test readout.
+- **Surface** (`surface`): cards, song cards, side sheets, stat pills, and the result and pause cards over the sheet and the lesson.
+- **Surface 2** (`surface-2`): items inside cards (today rows, chips, choice tiles).
+- **Raised** (`raised`): secondary buttons, icon buttons, the selected segment; `raised-hover` on hover; `raised-edge` is the solid bottom edge under every raised control.
+- **Line** (`line`, `line-2`): empty meter tracks, field strokes, scrollbars, the tool bar separator, idle dots.
+- **Ink** (`ink`, `ink-2`, `ink-3`): primary, secondary and tertiary text on indigo. `ink-3` holds 5:1 or better on `surface` and `surface-2`.
+- **Mini Case** (`mini-case`): the dark case the mini keyboard hangs in, under the tool bar.
+
+### Paper set (score and lesson)
+- **Sheet White** (`sheet-white`): the score page and the section cards. **Paper** (`paper`) is the slightly lavender white of the keyboard's white keys.
+- **Lesson Ground** (`lesson-bg`): the warm light lesson page.
+- **Score Ink** (`lesson-ink`): engraved notation, the score title, section card titles, the lesson instruction line. **Lesson Ink 2** (`lesson-ink-2`) is secondary text on the lesson page and section cards.
+- **Lesson Chip** (`lesson-chip`, edge `lesson-chip-edge`) and **Lesson Counter** (`lesson-count`): the muted lilac pause tile and arrow tiles, and the darker track of the n/N counter.
+- **Paper signals:** **Paper Green** (`hit-paper`) for correctly played notes and a learnt section's check; **Paper Red** (`miss-paper`) for missed notes and the "You played …" correction; **Score Teal** (`score-next`) for the next notes; **Ghost Lilac** (`score-other`) for the hand Hugo is not playing in this step.
+- **Notes Display** (`notes-display`, `notes-lane`): the dark glass behind the falling-notes alternative in a lesson.
 
 ### Named Rules
-**The One Job Rule.** Each signal colour owns one meaning. Orange is right hand, primary action and active state; cobalt is left hand and never chrome; green is live input; red is a fault. A readout that is not reporting live input is never green.
+**The Green Light Rule.** Green means "go" or "right": the next action, a correct note, the next section, a met goal. It is never decoration, never a heading colour, never a mode state.
 
-**The Lit Panel Rule.** The panel is light aluminium. Black appears only inside the display window, LCDs, dark keycaps and black keys.
+**The Teal Now Rule.** On paper, teal is the present: the cursor, the next notes, the keys to press. It never marks an action or a result.
 
-**The Two Hands Rule.** Orange belongs to the right hand and cobalt to the left in every view: falling notes, keys, hint keys, sheet noteheads. A note the app plays for the other hand keeps its hue at 28% opacity.
+**The Violet Teacher Rule.** Violet belongs to the teaching structure (modes, sections, step progress). It is never "go" and never a note state.
+
+**The One Red Rule.** Miss red is spent only on a wrong note or a real error. Locked, idle and unavailable states are indigo or lilac, never red.
+
+**The Paper Variant Rule.** Ink on a light ground (notes, finger numbers, text) uses the paper set (`hit-paper`, `miss-paper`, `score-next`, `lesson-ink`); ink on indigo uses the bright set. Key fills may use the bright signals because the whole key is the signal.
 
 ## Typography
 
-**Display Font:** Supreme (Fontshare, Indian Type Foundry; self-hosted 400/500/700/800), with Helvetica Neue, Arial fallback
-**Body Font:** Supreme
-**Label/Mono Font:** Martian Mono (Evil Martians; self-hosted variable), with ui-monospace fallback; always tabular figures
+**Interface Font:** Nunito Variable (self-hosted `/fonts/nunito-latin.woff2`, weight axis 200-1000), falling back to Nunito, ui-rounded, system-ui, sans-serif.
+**Score Font:** Georgia, 'Times New Roman', serif, for the title row of the printed score only; the notation, bar numbers and finger numbers are abcjs's own engraving.
 
-**Character:** Supreme is the printed legend and the plain-spoken sentence: heavy, slightly tight titles and small tracked caps legends. Martian Mono is the instrument talking back: bar counters, speeds, note names, stamps.
+**Character:** one rounded, friendly face carried by weight alone for everything Hugo operates: 600 for reading, 800 for controls and labels, 900 for every heading and number that matters. Figures are tabular everywhere (`font-variant-numeric: tabular-nums` on the body). The score is the one printed object, and it looks printed.
 
 ### Hierarchy
-- **Display** (Martian Mono 700, clamp(88px, 34vh, 150px), 0.9, tabular): count-in numerals in orange on the display only.
-- **Headline** (Supreme 800, clamp(20px, 4vw, 26px), 1.02, -0.015em, balanced): module plate titles; side sheet titles at 22px. The library wordmark is the same voice at 27px, 0.94.
-- **Title** (Supreme 800, 19px, 1.02, -0.01em, balanced): song names on cartridge labels (22px on large screens); in the top bar 17px, single line with ellipsis; study tips 16px.
-- **Body** (Supreme 500, 13.5px, 1.45): notes, sub-lines, hints; long-form study text 14px at 1.5, max 62ch.
-- **Control** (Supreme 800, 13px, 0.12em, uppercase): pill labels; the slider uses 700 11px at 0.12em.
-- **Legend** (Supreme 700, 10px, 0.14em, uppercase): printed legends under keycaps (INPUT, SPEED, MIC) and the model legend under the wordmark.
-- **Readout** (Martian Mono 700, 16px, tabular): the bar/time LCD, the input LCD value (15px), hint note names (18px), key bubbles (12px). Small readouts at 11.5px: cartridge year and length, speed keycaps, bar numbers on the display.
-- **Numeral** (Martian Mono 700, 26px, tabular): end-of-song stats in the LCD readout; the first stat is orange.
+- **Display** (900, 26px, 1.06): page titles (Good afternoon, Songs, Progress); 22px on short landscape screens.
+- **Headline** (900, 24px, 1.08): the Continue card's song name (25px), result and pause cards (24px, 22px on the sheet, 20px on short screens), the streak count, sheet titles (22px).
+- **Title** (900, 17-19px, 1.2): section heads such as Today's practice and card headings; section card titles at 16px.
+- **Instruction** (900, 20px, 1.2): the lesson's one line ("Play E5 with finger 5"), single line with ellipsis; 17px under 760px wide.
+- **Body** (600, 15px, 1.4): default text; secondary copy at 14px in `ink-2`; the result line at 14.5px weight 700; prose capped at 56-70ch.
+- **Button** (800, 15px; 17px on big buttons): every button, chip, segment and rail label (rail at 11.5px).
+- **Tool** (800, 13px): labels under the tool bar icons.
+- **Label** (800, 12-13px): meta under titles, facts, tags, stat captions, section card meta, the step name in the lesson counter.
+- **Caption** (600, 13px, 1.45, `ink-3`): fine print, credits, helper text.
+- **Stat** (900, 18-28px, tabular): totals, add-song facts, the detected note readout, the lesson's n/N count (19px); the countdown number is the one large outlier at 64px.
+- **Score title** (Georgia 700, 20px) with the composer in Georgia italic 15px, baseline-aligned on one compact row above the first system. Section pills on the score are Nunito 800 15px in violet.
 
 ### Named Rules
-**The Machine Voice Rule.** Martian Mono is only for readouts, numerals, note names and stamps. Titles, legends, buttons and sentences are Supreme.
-
-**The Printed Legend Rule.** Legends are 10px tracked caps printed under or beside the control they name. They label controls; they never sit above a heading as an eyebrow.
+**The Weight Not Face Rule.** Interface hierarchy comes from Nunito's weight and size alone: no second interface family, no italics, no uppercase tracking, no kicker lines above headings. The serif and its italic composer line live only in the score's title row, because that row is part of the printed page.
 
 ## Layout
 
-The library is a two-column grid: a side panel (minmax(236px, 272px)) holding the wordmark and model legend, a settings keycap, the INPUT legend over three input keycaps with LEDs, the input LCD, the Check input link and the orange Import pill pinned to the bottom; a 1px seam with a shine line divides it from a horizontally scrolling rack of cartridges (190px, 16px apart; 236px wide and up to 540px tall on large screens). In portrait the side panel stacks on top and cartridges become min(66vw, 230px).
+Landscape-first. The shell is a two-column grid: an 84px rail (plus the left safe-area inset) on `night-deep`, and a scrolling content column with a 22px gutter (plus right and bottom safe-area insets). Pages cap at 1180px and open with a sticky page head on `night` holding the title and, on Home, the streak pill and the daily-minutes pill with a small green meter.
 
-The player is a four-row grid: the 64px top bar (back keycap, title over the bar/time LCD, Notes/Sheet slider, four speed keycaps over a SPEED legend, the Wait keycap with its LED, the input LCD), the display filling the middle, the wait-hint row (empty unless waiting), and the keys (96px; 62px in sheet view; 82px under 430px tall; 74px under 360px). The side gutter is 22px (14px on phones sideways, 12px in portrait). Safe-area insets pad left, right and bottom. Below 940px wide the slider drops its words; below 760px the bar legends hide. In portrait the bar wraps and the speeds take their own row.
+Home is a two-column grid (1.35fr / 1fr, 16px gap): the Continue card (cover beside song, next step, star meter and the big green button) leads, Today's practice list to its right, and a horizontal snap-scrolling shelf of 172px song cards below once songs have stars. Songs is an auto-fill grid of 150px-minimum cards with a segmented filter and an Add song button in the head. Progress is two cards side by side with a full-width totals row. Settings, Add song and Edit song are right-hand side sheets (430px; 640px wide variant).
 
-Spacing is a small even rhythm around 6, 10, 16, 18 and 22px; 22px is the player gutter and the default side-sheet padding.
+The song sheet takes the whole screen, without the rail. From the top: the tool bar (6px 12px padding, 58px tools, centred and horizontally scrollable), the mini keyboard hanging under it (42px tall, min(760px, 72%) wide, centred), the violet Teach me strip when open (14px 16px padding, 12px gap, horizontal snap scroll), then the white score filling the rest. The score page caps at 1120px with 12px padding and 120px of run-out at the bottom; each line holds one to five bars depending on note density, and Magic scroll keeps the cursor's line about 70px from the top. Floating controls sit 14px from the bottom-right corner (restart tile, or the tempo pill in Auto scroll). Collapsing the tool bar leaves a 64x30 handle hanging from the top centre.
+
+The lesson is a three-row grid: the header (12px 18px 4px padding, 16px gap: pause tile, instruction line, then arrows around the counter at the right), the stage, and the keyboard at clamp(70px, 23vh, 112px) inset 10px. The engraved line scales between 0.8 and 1.7 to fill the stage height, centres vertically (no more than 80px below the header), and slides so the next notes sit 30% of the way in.
+
+Spacing runs on 4 / 8 / 12 / 16 / 22px, with 10px and 14px as in-component steps. Under 430px tall the heads, cards, tools (50px) and lesson pause (48px) tighten; under 760px wide two-column grids stack, tool labels hide (52px icon-only tools) and the lesson counter narrows to 120px; in portrait under 640px the rail becomes a 64px bottom tab bar.
 
 ## Elevation & Depth
 
-Physical, not decorative. The panel is flat matte under a soft top light (a vertical gradient from aluminium-hi through aluminium to aluminium-lo). Controls stand proud with a short hard travel shadow plus a soft contact shadow, and sink 1.5px when pressed. Windows (display, LCDs, slider, switch tracks) are recessed with inset shadows and a 1px white shine on their lower edge. Only three things float with ambient shadows: cartridges in the rack, module plates over the display, and side sheets. Scrims are legend ink at 34% (sheets) or display black at 55% (plates).
+Depth is tonal first: night, surface, surface-2 and raised are steps of the same indigo, and a card is distinguished by its lighter fill, never by a border. The paper grounds are flat. Shadows do two specific jobs. Action controls carry a solid, unblurred bottom edge (the "press edge") that makes them look pushable and collapses when pressed. Floating things (side sheets, result and pause cards, the tempo pill, the toast, the count-in disc) sit on soft dark ambient shadows, over a dimming scrim where they are modal.
 
 ### Shadow Vocabulary
-- **Rest** (`box-shadow: 0 2px 0 #a9a8a2, 0 3px 7px rgba(0,0,0,.16), inset 0 -1px 0 rgba(0,0,0,.06)`): keycaps and pills at rest.
-- **Press** (`box-shadow: 0 1px 0 #a4a39c, 0 1px 2px rgba(0,0,0,.18), inset 0 1px 2px rgba(0,0,0,.12)`): keycaps and pills held down, with translateY(1.5px).
-- **Orange travel** (`box-shadow: 0 2px 0 #b94000, 0 3px 7px rgba(0,0,0,.16)`): the go pill; the lit keycap sits at 1px of it, already pressed.
-- **Recessed window** (`box-shadow: inset 0 2px 4px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.6)`): LCDs; the display uses a deeper inset 0 4px 14px.
-- **Cartridge** (`box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 1px 0 rgba(0,0,0,.08), 0 10px 22px rgba(0,0,0,.12)`): cartridges in the rack.
-- **Plate** (`box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 20px 44px rgba(0,0,0,.45)`): module plates over the display.
-- **LED glow** (`box-shadow: 0 0 7px <led colour>`): lit LEDs only; the gate line on the display carries the same lit glow.
+- **Press edge** (`box-shadow: 0 4px 0 var(--raised-edge)`; `0 4px 0 var(--go-edge)` on green; `0 4px 0 #a8273a` on danger): buttons at rest. Icon buttons and choice tiles use a 3px edge; the selected segment a 2px edge.
+- **Paper press edge** (`0 3px 0 rgba(40, 10, 90, .35)` under section cards; `0 3px 0 #8d85a3` under the lesson pause tile): the same idea on light grounds.
+- **Pressed** (`transform: translateY(2-3px); box-shadow: 0 1px 0 <edge>`): the active state, 80ms on the house ease.
+- **Next ring** (`box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--go)`): the next section card in the Teach me strip.
+- **Key edge** (`inset 0 -5px 0 #e3dff4` on white keys, `inset 0 -4px 0 #0f0c22` on black keys): the large keyboard's bottom lip; the mini keyboard is flat.
+- **Sheet** (`-18px 0 40px rgba(0, 0, 0, .35)`): right-hand side sheets.
+- **Floating card** (`0 20px 50px rgba(0, 0, 0, .45)` on the lesson's veil cards; `0 20px 50px rgba(20, 17, 43, .45)` on the sheet result card).
+- **Tempo pill** (`0 10px 30px rgba(20, 17, 43, .3)`) and **Toast** (`0 10px 30px rgba(0, 0, 0, .4)`).
+- **Count-in disc** (`0 12px 30px rgba(20, 17, 43, .35)`).
 
 ### Named Rules
-**The Matte Finish Rule.** The aluminium is an even matte field under a soft top light; orange controls are flat signal-orange-deep with a neutral travel shadow. No gloss highlights, no stripes, no glow on controls. Light is emitted only by LEDs, the gate line and count-in LEDs.
-
-**The Key Travel Rule.** Anything pressable has travel: a 2px hard shadow at rest, 1px when pressed, and a 1.5px drop.
+**The Press Edge Rule.** A control that commits an action (buttons, icon buttons, choice tiles, section cards, the lesson pause tile) gets a solid bottom edge in its own darker tone, and pressing moves it down onto that edge. Mode toggles on the tool bar show state by fill instead, and non-interactive cards never carry an edge.
 
 ## Shapes
 
-Round where the finger goes, softly squared where the panel is cut. Keycaps are circles (40 to 48px), pills are full capsules, the slider and switch are capsule tracks. Cut-outs in the panel use generous radii: display window 18px top and 6px bottom where it meets the keys, cartridges and plates 18px, the wait-hint panel 12px, LCDs 8px, paper labels and photos 9px, speed stamps 4px. Falling notes are 6px-rounded bars; white keys round 6px at the bottom, black keys 4px. LEDs are 7px dots (12px in the count-in). Dashed borders mean "not there yet": an unpassed stamp, the add-cartridge slot, a missed note.
+Everything Hugo touches is rounded and soft. Tags and badges use 7-9px corners; section pills on the score and the finger bubble 10px; chips, fields, icon buttons, tools, lesson arrows and the counter 12px; buttons, section cards, segment wells and the restart tile 14px; big buttons, song cards and the lesson pause tile 16px; the tempo pill 18px; cards 22px. The mini keyboard's case has 10px bottom corners and the collapse handle 14px bottom corners, both hanging from the bar above. The score cursor is a 6px rounded bar. Dots, play buttons, the switch knob, week days, finger numbers on keys and the count-in are full circles. Meters are 8px pills. Borders are rare: a 2px `line-2` outline on the setup card, the 2px violet outline of a section pill, and the 7px pointer under the finger bubble.
 
 ## Components
 
 ### Buttons
-Tactile, physical, one press from the music stand.
-- **Keycap:** a 44px circle (36px for speeds and Wait, 40px in bars and sheet heads, 48px for inputs) with a soft radial face from near-white to #e2e1dc, 19px line icon, rest shadow; pressed sinks 1.5px. **Lit** (the active speed, the primary state): flat signal-orange-deep with ink text, sitting 1px down. **Dark** (a selected input, the Wait key): a black face with light text; engaged Wait is shown held down with its orange LED on.
-- **Pill:** 46px capsule, Supreme 800 13px caps at 0.12em, 20px side padding, radial label-white face, rest shadow. **Go:** flat signal-orange-deep, ink text, orange travel shadow. **Danger:** fault red, white text, deep red travel.
-- **Focus:** 2px signal-orange-deep outline, 3px offset. Disabled: 45% opacity.
-- **Text link:** Supreme 700 12.5px with a 2px groove underline (Check input).
+Chunky, confident and pushable.
+- **Shape:** gently rounded (14px; 16px on big).
+- **Primary (go):** go green with go-ink text, 46px tall (54px big, 48px on short screens), 20px side padding (26px big), weight 800, icon then label with an 8px gap. Every screen has at most one, and it names the next step.
+- **Secondary:** raised indigo with ink text and the raised edge (Try again, Teach me, Restart, Listen).
+- **Quiet:** transparent, `ink-2` text, 40px, no edge, a 5% white wash on hover (Back to the song, Keep it).
+- **Danger:** miss red with a near-black red ink and a deeper red edge, only for confirmed deletion.
+- **Hover / Focus / Active:** hover lightens the fill (`go-hi`, `raised-hover`); focus is a 3px go outline at 3px offset; active drops onto the edge. Disabled is 45% opacity.
+- **Icon button:** 42px square, 12px corners, raised with a 3px edge; the ghost variant is transparent with `ink-2` icons.
+- **Link:** go text, weight 800, a 2px underline at 40% green, 4px offset; muted (`ink-2`) and danger (`miss`) variants.
 
-### Slider (Notes / Sheet)
-A two-position capsule track in groove, recessed; the active cell is a raised label-white capsule with ink text and a small shadow. Icons with Supreme caps words that drop on narrow screens.
-
-### Switch
-A 50 by 28px recessed groove track with a 22px radial thumb; checked fills signal-orange-deep and slides 22px on the ease-out curve.
-
-### LEDs
-7px dots above or beside a keycap. Off is a dull #a4a39c with an inset; green is live input, orange is an engaged mode (Wait, Learn it faster), red is a fault, blinking orange is connecting.
-
-### LCD windows
-Recessed lcd-black windows with Martian Mono. Green text only for live input (input LCD, input status, input check); lcd-neutral for the bar/time readout; lcd-off when nothing is connected; lcd-fault for errors. Captions inside are 9 to 10px tracked in lcd-green-dim. Toasts are LCDs too.
+### Chips and segmented controls
+- **Chip:** surface-2 fill, `ink-2` text, 38px, 12px corners, an optional 9px status dot that turns green when on.
+- **Segmented:** a night-deep well with 4px padding; the selected segment is raised with ink text and a 2px edge; a small variant (32px, 13px text) sits in the tempo pill.
+- **Tag:** 7px corners, 12-12.5px weight 900, tinted fill at 16% of its colour: green for Next, flame for Tricky.
+- **Level badge:** a dark translucent pill on the cover's top-left corner, its text in the level ramp colour.
 
 ### Cards / Containers
-- **Cartridge (signature):** an aluminium-lo cartridge (18px corners, cartridge shadow) with a ribbed grip at the top, a photo window (slightly desaturated, raised contrast, 9px corners) and a label-white paper label: Supreme 800 title, 500 subtitle, Martian Mono year and length, and a row of four speed stamps. Pressing sinks it 2px and scales the photo to 1.04. **Missing:** grayscale photo, label with diagonal label-white-2 hatching, an orange-ink sentence with a download icon.
-- **Speed stamp (signature):** empty is a 24px dashed groove box with the speed in Martian Mono; passed is a 2px solid orange-ink box, bold, rotated -5deg on a 10% orange wash, like a rubber stamp.
-- **Module plate:** the aluminium field lifted over the display at 55% black scrim, 18px corners, plate shadow; headline, sub-line, legend rows, pill actions; the end plate holds an LCD stat readout.
-- **Side sheet:** settings, input check and study slide in from the right (400px; 620px wide variant) on the aluminium field with a 1px seam; rows are Supreme 700 14.5px titles with 500 12.5px descriptions, divided by seam-and-shine rules.
+- **Corner Style:** 22px (cards, empty states, floating result and pause cards); 16px for song cards and covers.
+- **Background:** surface; nested items on surface-2.
+- **Shadow Strategy:** none at rest (see Elevation); floating cards take the ambient card shadow.
+- **Border:** none.
+- **Internal Padding:** 18px (14px on short screens).
+
+### Inputs / Fields
+- **Style:** night-deep fill, 2px `line` stroke, 12px corners, 44px tall, 16px weight-700 text, `ink-3` placeholder.
+- **Focus:** the stroke turns go green; no glow.
+- **Switch:** a 52x30 pill on `line` that turns go green when on, with an ink knob sliding 22px.
 
 ### Navigation
-The 64px top bar is a legend strip on the panel, not a separate surface: back keycap, title over the neutral bar/time LCD, slider, speed keycaps over the SPEED legend, Wait keycap with LED, input LCD. The progress track sits inside the top of the display: 4px, white at 10%, orange fill, draggable.
+- **Rail:** 84px wide on night-deep, the app icon at the top, 70x58 items (icon above an 11.5px weight-800 label) in `ink-3`; hover to ink; the active item is go text on a 12% green wash with 14px corners. Settings sits at the bottom.
+- **Mobile:** in portrait the rail becomes a 64px bottom tab bar with the same items.
 
-### Display (signature)
-The only dark surface: display black with a faint lane over every black key, bar lines at white 10% with Martian Mono bar numbers, octave guides at each C. Notes are 6px-rounded bars in the hand colour with the note name in Supreme 800 (ink on orange, white on cobalt). Hit notes dim to 35%; a sounding hit turns lit with a white underline; a miss is a dashed red outline. The gate is a 2px orange line with a lit glow; a wrong note flashes a red block at the gate. Count-in: display black at 92%, a huge orange Martian Mono numeral over a row of beat LEDs. In sheet view the window becomes score-paper e-paper with ink notation, hand-coloured noteheads and a 3px orange cursor that pulses while waiting.
+### Mode tool bar (signature)
+The song's controls, Simply Piano's way: a night bar of tools, each a 24px line icon over a 13px weight-800 label in white, at least 74x58 with 12px corners. Order: collapse chevron, Listen (becomes Stop while playing to him), Teach me, Play, a 2px `line` separator, Feedback, Magic scroll, Auto scroll, Connect (only when no piano is linked, with a flame dot on its icon), Exit. Hover is an 8% white wash. An active mode sits on a **cream pill** (`tool-cream`) with violet icon and label; several can be on at once (Play, Feedback and one of the two scroll modes). Under 760px the labels drop and the tools shrink to 52px icons.
 
-### Keyboard (signature)
-White keys graded key-top to key-bottom with key-seam dividers; black keys at 60% height. The next note tints its key soft orange or soft cobalt and shows its name; struck keys fill with the hand colour; wrong keys fill red; auto-played keys grey slightly. Octave labels in Martian Mono. A held key shows a small ink bubble with its name, hidden while the wait hint is on screen.
+### Mini keyboard
+An instrument-like strip hanging under the tool bar: paper white keys and near-black keys in a dark `mini-case` with 10px bottom corners, no labels, no lips. The keys to play next fill **key yellow**; keys played right fill go green; a wrong key flashes miss red.
 
-### Wait hint (signature)
-A label-white panel (12px corners) in its own grid row between the display and the keys, rising in on the ease-out curve: "Play" plus the target in Martian Mono 18px, a red-ink "You played" line after a wrong note, and a miniature keyboard at 48px tall with target keys filled in hand colour and the wrong key in red. It is the single waiting message; the on-display waiting plate steps aside when it shows.
+### Teach me strip and section cards
+A full-width violet band that opens under the mini keyboard. Each section of the song (Part 1, Part 2 … Whole song) is a white card, at least 210px wide, 14px corners, a violet mortarboard icon beside a 16px weight-900 title and a 12.5px meta line in `lesson-ink-2` ("Bars 1–4 · 0/4 steps"), on a translucent violet press edge. A learnt section swaps the icon for a check in paper green; the next section to learn wears a white-then-green double ring.
+
+### Score (signature)
+White engraved sheet music, edge to edge. A compact title row (Georgia 700 20px title left, Georgia italic 15px composer right) sits close above the first system. Notation is abcjs in score ink; finger numbers are printed above the notes when the Fingers setting asks for them. Where each section begins, its name is set in a padded violet-outlined pill (10px corners, Nunito 800 15px). A 6px teal cursor, rounded and slightly translucent, spans the current system and glides from note to note. With Feedback on, played notes turn paper green and missed notes paper red. Tapping a note while stopped starts from there. A dark 46px restart tile floats bottom-right once he has moved off the start; in Auto scroll it is replaced by the **tempo pill**: a dark rounded float holding the green Start / Go on / Stop button and a small 0.6x / 0.8x / 1x segmented speed control.
+
+### Lesson (signature)
+A warm light page (`lesson-bg`). Top left, a 56px lilac pause tile with a white pause glyph and a paper press edge. Beside it, the instruction line in score ink at 20px weight 900, saying exactly what to play ("Play E5 with finger 5"); a wrong note prefixes it in paper red ("You played F5."). If no piano is linked, a 13.5px line under it offers Connect. Top right, two 46px lilac arrow tiles around the **counter**: a 250px `lesson-count` bar whose violet fill grows with notes played, the step name (Right hand, Left hand, Hands together, In tempo with its speed, Whole song, Final performance) at left in 13px and the n/N count at right in 19px weight 900. The stage holds one engraved line: the step's hand in score ink, the other hand ghosted in `score-other`, played notes paper green, the next notes score teal. Over the next notes floats the **finger bubble**: a 46x54 tile with a hand glyph and the finger number, plum for the right hand and umber for the left, with a pointer underneath. Along the bottom, the large keyboard: paper keys with a 5px lip and octave labels, target keys in teal with their names in `teal-ink` and a dark finger-number disc, played keys go green, a wrong key miss red, and a held key names itself in a small bubble above. Tempo steps show Start in tempo (green) and Listen first over the keyboard before starting. The pause and result cards are indigo veil cards; the result leads with three stars (the middle one larger and raised 8px, won stars popping in gold), the headline (Almost there, Passed, Great job!, Perfect!), one line ("Part 1 · Right hand: 12 of 12 notes · 1 wrong · 92%"), the streak line in flame when it moves, then the green Next button beside Try again and a quiet Back to the song.
+
+### Sheet result card
+Over the score, a centred indigo card (max 460px): a 22px heading (Beautifully played, You played it through, Keep at it), one result line, then the green Play again and a secondary Teach me.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep the panel light aluminium with a soft top light, and put black only inside the display, LCDs, dark keycaps and black keys.
-- **Do** make every control a physical key with travel: 2px rest shadow, 1px pressed, 1.5px drop.
-- **Do** fill primary controls with flat signal-orange-deep and ink text.
-- **Do** colour right-hand material orange and left-hand material cobalt in every view, and dim the app-played hand to 28%.
-- **Do** use green only for live input, neutral lcd-neutral for other readouts, and red for faults.
-- **Do** set readouts, numerals, note names and stamps in Martian Mono with tabular figures; everything else in Supreme.
-- **Do** print legends as 10px tracked caps next to the control they name.
-- **Do** keep controls that matter mid-song at 36px or larger, 44px where space allows.
+- **Do** give each screen at most one go-green button, and make it name the next step.
+- **Do** keep green for go and right, teal for "now" on paper, violet for teaching structure, gold for stars, flame for the streak, miss red for wrong notes.
+- **Do** give every action control a solid bottom edge in its own darker tone (`raised-edge`, `go-edge`, the paper edges) that collapses on press; let mode toggles show state with the cream pill instead.
+- **Do** build depth in the shell by stepping indigo fills (night, surface, surface-2, raised), not with borders or blurred card shadows.
+- **Do** set all interface text in Nunito Variable with tabular figures, 900 for headings and numbers, 800 for controls; keep the serif to the score's title row.
+- **Do** engrave notation with abcjs and colour it through the paper set (`lesson-ink`, `hit-paper`, `miss-paper`, `score-next`, `score-other`); use the bright set on indigo.
+- **Do** keep results and pauses on indigo cards over a scrim, whatever ground is underneath.
+- **Do** keep touch targets at 44px or more (buttons 46px, tools 58px, lesson arrows 46px, pause tile 56px, rail items 58px).
 
 ### Don't:
-- **Don't** add gloss, stripes or brushed texture to the aluminium, or gloss and glow to orange controls; only LEDs and the gate emit light.
-- **Don't** make the panel dark or use neon bars on navy.
-- **Don't** use green on an LCD for anything but live input.
-- **Don't** use cobalt for chrome, links or actions; it belongs to the left hand.
-- **Don't** set titles, legends or sentences in Martian Mono.
-- **Don't** put eyebrow labels above headings.
-- **Don't** float the wait hint over the display; it is a panel in its own row between display and keys.
+- **Don't** bring back the aluminium instrument-panel world: no metal textures, printed legends, LCD greens or keycap LEDs.
+- **Don't** draw the score on a canvas or letter the note heads; the score is engraved notation with finger numbers, and note names live on the keys.
+- **Don't** use green as decoration, a heading colour, a mode state or a background wash beyond the 12-16% tints on the active rail item and tags.
+- **Don't** use miss red for locked, idle or disabled states.
+- **Don't** add a second interface typeface, uppercase tracked labels or eyebrow lines above headings.
+- **Don't** put pure black or neutral grey in the indigo shell; every dark there is indigo. The mini keyboard's case is the one neutral dark, because it is an instrument.
+- **Don't** give static cards a press edge or a drop shadow; shadows belong to action controls and floating overlays.

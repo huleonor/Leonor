@@ -1,818 +1,1115 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-26T12:00:00Z",
+  "generatedAt": "2026-10-11T11:09:11Z",
   "title": "Design System: Hugo's Piano",
   "extensions": {
     "colorMeta": {
-      "aluminium": {
+      "night": {
         "role": "neutral",
-        "displayName": "Aluminium",
-        "canonical": "#dcdbd6",
+        "displayName": "Night",
+        "canonical": "#14112b",
         "tonalRamp": [
-          "#0c0b08",
-          "#262521",
-          "#43423e",
-          "#62615d",
-          "#83827e",
-          "#a6a5a0",
-          "#cac9c4",
-          "#f0efe9"
+          "#0a071f",
+          "#23213c",
+          "#403e5c",
+          "#5e5d7d",
+          "#7f7ea0",
+          "#a2a1c4",
+          "#c6c5ea",
+          "#edecff"
         ]
       },
-      "aluminium-hi": {
+      "night-deep": {
         "role": "neutral",
-        "displayName": "Aluminium Hi",
-        "canonical": "#e8e7e2",
+        "displayName": "Night Deep",
+        "canonical": "#0f0c22",
         "tonalRamp": [
-          "#0c0b08",
-          "#262521",
-          "#43423e",
-          "#62615d",
-          "#83827e",
-          "#a6a5a0",
-          "#cac9c4",
-          "#f0eee9"
+          "#0a071d",
+          "#24213a",
+          "#403e59",
+          "#5f5e7a",
+          "#807f9c",
+          "#a3a1c0",
+          "#c7c5e5",
+          "#edecfe"
         ]
       },
-      "aluminium-lo": {
+      "surface": {
         "role": "neutral",
-        "displayName": "Aluminium Lo",
-        "canonical": "#cdccc6",
+        "displayName": "Surface",
+        "canonical": "#1d1940",
         "tonalRamp": [
-          "#0c0b07",
-          "#262521",
-          "#43423d",
-          "#62615c",
-          "#83827d",
-          "#a6a59f",
-          "#cac9c3",
-          "#f0efe8"
+          "#0a0327",
+          "#221e46",
+          "#3e3c67",
+          "#5c5b89",
+          "#7d7dac",
+          "#9f9fd1",
+          "#c3c3f7",
+          "#ecedff"
         ]
       },
-      "groove": {
+      "surface-2": {
         "role": "neutral",
-        "displayName": "Groove",
-        "canonical": "#bdbcb5",
+        "displayName": "Surface 2",
+        "canonical": "#262150",
         "tonalRamp": [
-          "#0c0b07",
-          "#262520",
-          "#43423c",
-          "#62615b",
-          "#83837c",
-          "#a6a59e",
-          "#cac9c2",
-          "#f0efe7"
+          "#0b012c",
+          "#221c4b",
+          "#3e3b6c",
+          "#5c5a8f",
+          "#7d7bb3",
+          "#9f9ed8",
+          "#c2c2fe",
+          "#ecedff"
         ]
       },
-      "label-white": {
+      "raised": {
         "role": "neutral",
-        "displayName": "Label White",
-        "canonical": "#f6f5f1",
+        "displayName": "Raised",
+        "canonical": "#302a63",
         "tonalRamp": [
-          "#0c0b09",
-          "#262522",
-          "#43423f",
-          "#62615e",
-          "#83827f",
-          "#a6a5a1",
-          "#cac9c5",
-          "#efeeea"
+          "#0b002d",
+          "#221a51",
+          "#3d3973",
+          "#5b5896",
+          "#7c7aba",
+          "#9e9de0",
+          "#c2c2fe",
+          "#ecedff"
         ]
       },
-      "label-white-2": {
+      "raised-hover": {
         "role": "neutral",
-        "displayName": "Label White 2",
-        "canonical": "#eceae4",
+        "displayName": "Raised Hover",
+        "canonical": "#38317a",
         "tonalRamp": [
-          "#0c0b07",
-          "#262521",
-          "#43423d",
-          "#63615c",
-          "#84827d",
-          "#a7a59f",
-          "#cbc9c3",
-          "#f0eee8"
+          "#0a002e",
+          "#21145c",
+          "#3b357e",
+          "#5956a2",
+          "#7978c8",
+          "#9b9bee",
+          "#c1c3ff",
+          "#ecedff"
         ]
       },
-      "legend-ink": {
+      "raised-edge": {
         "role": "neutral",
-        "displayName": "Legend Ink",
-        "canonical": "#1a1a1a",
+        "displayName": "Raised Edge",
+        "canonical": "#1f1a45",
+        "tonalRamp": [
+          "#0a022a",
+          "#221d49",
+          "#3e3b6a",
+          "#5c5b8c",
+          "#7d7cb0",
+          "#9f9fd5",
+          "#c3c3fb",
+          "#ecedff"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "canonical": "#3a3470",
+        "tonalRamp": [
+          "#0b002d",
+          "#221952",
+          "#3e3874",
+          "#5c5898",
+          "#7c79bc",
+          "#9e9ce2",
+          "#c3c2fd",
+          "#ecedfe"
+        ]
+      },
+      "line-2": {
+        "role": "neutral",
+        "displayName": "Line 2",
+        "canonical": "#4c4590",
+        "tonalRamp": [
+          "#0b002e",
+          "#23135b",
+          "#3d347e",
+          "#5b55a2",
+          "#7b77c7",
+          "#9d9aed",
+          "#c2c2fe",
+          "#ecedff"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#f5f3ff",
+        "tonalRamp": [
+          "#0b0a11",
+          "#25242c",
+          "#42404a",
+          "#61606a",
+          "#82818b",
+          "#a5a3ae",
+          "#c9c7d3",
+          "#efedf9"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "#c0b9ec",
+        "tonalRamp": [
+          "#0d0326",
+          "#261d45",
+          "#423b65",
+          "#615a87",
+          "#827baa",
+          "#a59ecf",
+          "#c9c2f5",
+          "#eeecfe"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "#9790cc",
+        "tonalRamp": [
+          "#0d002b",
+          "#251a4c",
+          "#41396d",
+          "#605890",
+          "#8179b4",
+          "#a39cd9",
+          "#c7c1fd",
+          "#edecfe"
+        ]
+      },
+      "go": {
+        "role": "primary",
+        "displayName": "Go Green",
+        "canonical": "#3fd07a",
+        "tonalRamp": [
+          "#001004",
+          "#022e15",
+          "#075028",
+          "#00753c",
+          "#029c52",
+          "#2cc36e",
+          "#5de991",
+          "#c6ffd5"
+        ]
+      },
+      "go-hi": {
+        "role": "primary",
+        "displayName": "Go Green Hover",
+        "canonical": "#5fe093",
+        "tonalRamp": [
+          "#001005",
+          "#002e16",
+          "#084f2b",
+          "#017540",
+          "#059c57",
+          "#3ac176",
+          "#67e799",
+          "#c6ffd8"
+        ]
+      },
+      "go-edge": {
+        "role": "primary",
+        "displayName": "Go Green Edge",
+        "canonical": "#1f9a52",
+        "tonalRamp": [
+          "#001004",
+          "#012e13",
+          "#025025",
+          "#06753a",
+          "#209b53",
+          "#4fbf75",
+          "#76e598",
+          "#c7ffd4"
+        ]
+      },
+      "go-ink": {
+        "role": "primary",
+        "displayName": "Go Ink",
+        "canonical": "#082414",
+        "tonalRamp": [
+          "#001005",
+          "#102c1b",
+          "#2d4937",
+          "#4c6956",
+          "#6d8b77",
+          "#8fae99",
+          "#b2d3bc",
+          "#d7f8e1"
+        ]
+      },
+      "star": {
+        "role": "secondary",
+        "displayName": "Star Gold",
+        "canonical": "#ffcf3f",
+        "tonalRamp": [
+          "#100a00",
+          "#2f2302",
+          "#523f05",
+          "#775e0d",
+          "#a07d00",
+          "#c99f10",
+          "#f2c32d",
+          "#ffedc1"
+        ]
+      },
+      "star-off": {
+        "role": "secondary",
+        "displayName": "Star Shadow",
+        "canonical": "#3d3775",
+        "tonalRamp": [
+          "#0b002d",
+          "#221854",
+          "#3d3876",
+          "#5c5899",
+          "#7c79bd",
+          "#9e9ce3",
+          "#c3c2fe",
+          "#ecedff"
+        ]
+      },
+      "flame": {
+        "role": "secondary",
+        "displayName": "Streak Flame",
+        "canonical": "#ff8a3d",
+        "tonalRamp": [
+          "#180600",
+          "#3f1900",
+          "#683006",
+          "#994601",
+          "#ca6003",
+          "#f58132",
+          "#feb68e",
+          "#ffeade"
+        ]
+      },
+      "miss": {
+        "role": "tertiary",
+        "displayName": "Miss Red",
+        "canonical": "#ff5d73",
+        "tonalRamp": [
+          "#1e0004",
+          "#4c0013",
+          "#7d0927",
+          "#b60239",
+          "#df3e59",
+          "#fc7281",
+          "#ffb1b5",
+          "#fee8e9"
+        ]
+      },
+      "violet": {
+        "role": "secondary",
+        "displayName": "Teaching Violet",
+        "canonical": "#8f4dff",
+        "tonalRamp": [
+          "#100029",
+          "#2c035e",
+          "#4c0e97",
+          "#6f1bd6",
+          "#8d4bfd",
+          "#a687f8",
+          "#c8b8fe",
+          "#efebff"
+        ]
+      },
+      "teal": {
+        "role": "secondary",
+        "displayName": "Now Teal",
+        "canonical": "#14c4cf",
+        "tonalRamp": [
+          "#000e10",
+          "#022a2d",
+          "#0a494d",
+          "#156a70",
+          "#128e96",
+          "#1bb3bd",
+          "#42dce7",
+          "#c5fafe"
+        ]
+      },
+      "teal-ink": {
+        "role": "neutral",
+        "displayName": "Teal Ink",
+        "canonical": "#04363b",
+        "tonalRamp": [
+          "#000e10",
+          "#032a2e",
+          "#1a474c",
+          "#3a666b",
+          "#59868b",
+          "#7aa8ad",
+          "#9fced4",
+          "#c9f9ff"
+        ]
+      },
+      "tool-cream": {
+        "role": "neutral",
+        "displayName": "Tool Cream",
+        "canonical": "#f4f0e8",
+        "tonalRamp": [
+          "#0d0b06",
+          "#27241e",
+          "#433f39",
+          "#615d56",
+          "#807d76",
+          "#a29e97",
+          "#c7c4bc",
+          "#f2eee6"
+        ]
+      },
+      "key-yellow": {
+        "role": "tertiary",
+        "displayName": "Key Yellow",
+        "canonical": "#ffd84d",
+        "tonalRamp": [
+          "#0f0b00",
+          "#2d2300",
+          "#4d3e03",
+          "#705c08",
+          "#947b1a",
+          "#bb9b25",
+          "#e7c02d",
+          "#feeebb"
+        ]
+      },
+      "mini-case": {
+        "role": "neutral",
+        "displayName": "Mini Case",
+        "canonical": "#2a2833",
+        "tonalRamp": [
+          "#0b0a13",
+          "#24222d",
+          "#403e4a",
+          "#5e5c68",
+          "#7d7b88",
+          "#9f9caa",
+          "#c4c2d0",
+          "#efecfb"
+        ]
+      },
+      "right-hand": {
+        "role": "tertiary",
+        "displayName": "Sky Right Hand",
+        "canonical": "#4fb6ff",
+        "tonalRamp": [
+          "#000c19",
+          "#012841",
+          "#03466d",
+          "#0a679d",
+          "#128ad0",
+          "#46aef6",
+          "#98d0fd",
+          "#e1f1fe"
+        ]
+      },
+      "left-hand": {
+        "role": "tertiary",
+        "displayName": "Amber Left Hand",
+        "canonical": "#ffb547",
+        "tonalRamp": [
+          "#130900",
+          "#352000",
+          "#5b3a00",
+          "#845603",
+          "#af7407",
+          "#dc9416",
+          "#febb5d",
+          "#feebd4"
+        ]
+      },
+      "finger-right": {
+        "role": "tertiary",
+        "displayName": "Plum Right",
+        "canonical": "#5b2a86",
+        "tonalRamp": [
+          "#130024",
+          "#330553",
+          "#53217d",
+          "#72429f",
+          "#9263c3",
+          "#b484e8",
+          "#d4b3fc",
+          "#f3eafe"
+        ]
+      },
+      "finger-left": {
+        "role": "tertiary",
+        "displayName": "Umber Left",
+        "canonical": "#7a4b12",
+        "tonalRamp": [
+          "#150800",
+          "#361d01",
+          "#5b3605",
+          "#81511a",
+          "#a3713d",
+          "#c6925e",
+          "#eeb883",
+          "#feebd9"
+        ]
+      },
+      "sheet-white": {
+        "role": "neutral",
+        "displayName": "Sheet White",
+        "canonical": "#ffffff",
         "tonalRamp": [
           "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#7d7d7d",
+          "#9e9e9e",
+          "#c4c4c4",
           "#eeeeee"
         ]
       },
-      "legend-ink-2": {
+      "paper": {
         "role": "neutral",
-        "displayName": "Legend Ink 2",
-        "canonical": "#4d4c47",
+        "displayName": "Paper",
+        "canonical": "#fbfaff",
         "tonalRamp": [
-          "#0c0b07",
-          "#262521",
-          "#43423d",
-          "#62615c",
-          "#83827d",
-          "#a6a59f",
-          "#cac9c3",
-          "#f0efe8"
+          "#0b0b0e",
+          "#252428",
+          "#424145",
+          "#616065",
+          "#828286",
+          "#a5a4a9",
+          "#c9c8cd",
+          "#efeef3"
         ]
       },
-      "legend-ink-3": {
+      "lesson-bg": {
         "role": "neutral",
-        "displayName": "Legend Ink 3",
-        "canonical": "#62615b",
-        "tonalRamp": [
-          "#0c0b07",
-          "#262520",
-          "#43423c",
-          "#62615b",
-          "#84827c",
-          "#a6a59f",
-          "#cac9c2",
-          "#f0efe8"
-        ]
-      },
-      "display-black": {
-        "role": "neutral",
-        "displayName": "Display Black",
-        "canonical": "#111214",
-        "tonalRamp": [
-          "#0a0b0d",
-          "#242527",
-          "#414244",
-          "#606164",
-          "#818285",
-          "#a4a5a8",
-          "#c8c9cc",
-          "#edeef1"
-        ]
-      },
-      "display-lane": {
-        "role": "neutral",
-        "displayName": "Display Lane",
-        "canonical": "#16171a",
-        "tonalRamp": [
-          "#0a0b0e",
-          "#242528",
-          "#414245",
-          "#606165",
-          "#818286",
-          "#a3a5a9",
-          "#c7c9cd",
-          "#edeef3"
-        ]
-      },
-      "lcd-black": {
-        "role": "neutral",
-        "displayName": "LCD Black",
-        "canonical": "#121314",
-        "tonalRamp": [
-          "#0a0b0c",
-          "#242526",
-          "#414243",
-          "#606163",
-          "#818284",
-          "#a4a5a6",
-          "#c8c9cb",
-          "#edeff0"
-        ]
-      },
-      "lcd-green": {
-        "role": "tertiary",
-        "displayName": "LCD Green",
-        "canonical": "#86f0a8",
-        "tonalRamp": [
-          "#001103",
-          "#042e15",
-          "#1a4e2d",
-          "#317047",
-          "#499563",
-          "#63bb80",
-          "#7de39e",
-          "#a7ffc4"
-        ]
-      },
-      "lcd-green-dim": {
-        "role": "tertiary",
-        "displayName": "LCD Green Dim",
-        "canonical": "#5a9b70",
-        "tonalRamp": [
-          "#001102",
-          "#042e16",
-          "#1e4d30",
-          "#386f4b",
-          "#539269",
-          "#79b58c",
-          "#a3d8b3",
-          "#cdfcda"
-        ]
-      },
-      "lcd-off": {
-        "role": "neutral",
-        "displayName": "LCD Off",
-        "canonical": "#9a9b96",
-        "tonalRamp": [
-          "#0b0c08",
-          "#252522",
-          "#42423e",
-          "#61625d",
-          "#82837e",
-          "#a5a6a1",
-          "#c9cac4",
-          "#eeefea"
-        ]
-      },
-      "lcd-neutral": {
-        "role": "neutral",
-        "displayName": "LCD Neutral",
-        "canonical": "#ecebe6",
+        "displayName": "Lesson Ground",
+        "canonical": "#f0eee9",
         "tonalRamp": [
           "#0c0b08",
-          "#262521",
-          "#43423e",
-          "#62615d",
-          "#83827e",
-          "#a6a5a0",
-          "#cac9c4",
+          "#252420",
+          "#41403c",
+          "#5f5d59",
+          "#7f7d79",
+          "#a09e9a",
+          "#c6c4bf",
           "#f0eee9"
         ]
       },
-      "lcd-fault": {
+      "lesson-ink": {
+        "role": "neutral",
+        "displayName": "Score Ink",
+        "canonical": "#1b1640",
+        "tonalRamp": [
+          "#0a0229",
+          "#211d47",
+          "#3b3967",
+          "#585788",
+          "#7877aa",
+          "#9898cd",
+          "#bdbef5",
+          "#ecedff"
+        ]
+      },
+      "lesson-ink-2": {
+        "role": "neutral",
+        "displayName": "Lesson Ink 2",
+        "canonical": "#6b6585",
+        "tonalRamp": [
+          "#0d061e",
+          "#251f3a",
+          "#413b58",
+          "#5e5878",
+          "#7e7899",
+          "#9f99bb",
+          "#c5bfe2",
+          "#efecff"
+        ]
+      },
+      "lesson-chip": {
+        "role": "neutral",
+        "displayName": "Lesson Chip",
+        "canonical": "#a9a1bb",
+        "tonalRamp": [
+          "#0e0719",
+          "#272034",
+          "#423b51",
+          "#605970",
+          "#807991",
+          "#a19ab3",
+          "#c7bfda",
+          "#f1ebff"
+        ]
+      },
+      "lesson-chip-edge": {
+        "role": "neutral",
+        "displayName": "Lesson Chip Edge",
+        "canonical": "#8d85a3",
+        "tonalRamp": [
+          "#0e061b",
+          "#261f37",
+          "#423b55",
+          "#605874",
+          "#807895",
+          "#a199b8",
+          "#c7bedf",
+          "#f0ebfe"
+        ]
+      },
+      "lesson-count": {
+        "role": "neutral",
+        "displayName": "Lesson Counter",
+        "canonical": "#6b6182",
+        "tonalRamp": [
+          "#0e051e",
+          "#271e3a",
+          "#433a58",
+          "#615778",
+          "#817799",
+          "#a298bb",
+          "#c8bde2",
+          "#f0ebff"
+        ]
+      },
+      "hit-paper": {
+        "role": "primary",
+        "displayName": "Paper Green",
+        "canonical": "#178a48",
+        "tonalRamp": [
+          "#001004",
+          "#022d13",
+          "#094d26",
+          "#14703a",
+          "#279451",
+          "#50b772",
+          "#78de96",
+          "#c8fed5"
+        ]
+      },
+      "miss-paper": {
         "role": "tertiary",
-        "displayName": "LCD Fault",
-        "canonical": "#ff9b8c",
+        "displayName": "Paper Red",
+        "canonical": "#d92d45",
         "tonalRamp": [
-          "#1c0201",
-          "#3f1712",
-          "#653029",
-          "#8d4c43",
-          "#b8695e",
-          "#e4887b",
-          "#ffab9d",
-          "#ffd4c6"
+          "#1e0003",
+          "#48050f",
+          "#7b021d",
+          "#af082e",
+          "#dd3148",
+          "#fe636d",
+          "#fdabaa",
+          "#fee9e8"
         ]
       },
-      "signal-orange": {
-        "role": "primary",
-        "displayName": "Signal Orange",
-        "canonical": "#ff6a13",
-        "tonalRamp": [
-          "#280000",
-          "#4f0000",
-          "#7a1a00",
-          "#a73600",
-          "#d75200",
-          "#ff7225",
-          "#ff9f63",
-          "#ffcb97"
-        ]
-      },
-      "signal-orange-deep": {
-        "role": "primary",
-        "displayName": "Signal Orange Deep",
-        "canonical": "#f25c08",
-        "tonalRamp": [
-          "#2a0000",
-          "#520000",
-          "#7d1400",
-          "#aa3100",
-          "#da4e00",
-          "#ff7436",
-          "#ffa06d",
-          "#ffcc9f"
-        ]
-      },
-      "signal-orange-ink": {
-        "role": "primary",
-        "displayName": "Signal Orange Ink",
-        "canonical": "#b8430a",
-        "tonalRamp": [
-          "#290000",
-          "#500000",
-          "#7a1a00",
-          "#a63700",
-          "#cb5c31",
-          "#ec8560",
-          "#ffae8d",
-          "#ffd8ba"
-        ]
-      },
-      "signal-orange-soft": {
-        "role": "primary",
-        "displayName": "Signal Orange Soft",
-        "canonical": "#ffd9c2",
-        "tonalRamp": [
-          "#110905",
-          "#2e221b",
-          "#4e3e35",
-          "#715c50",
-          "#957d6d",
-          "#bc9e8c",
-          "#e4c1ac",
-          "#ffe6d0"
-        ]
-      },
-      "signal-orange-lit": {
-        "role": "primary",
-        "displayName": "Signal Orange Lit",
-        "canonical": "#ffb07a",
-        "tonalRamp": [
-          "#190500",
-          "#3a1c05",
-          "#5e371b",
-          "#855431",
-          "#ae734a",
-          "#d89363",
-          "#ffb580",
-          "#ffddac"
-        ]
-      },
-      "cobalt": {
+      "score-next": {
         "role": "secondary",
-        "displayName": "Cobalt",
-        "canonical": "#2f5bff",
+        "displayName": "Score Teal",
+        "canonical": "#0e9fb0",
         "tonalRamp": [
-          "#07004c",
-          "#07007c",
-          "#1128ae",
-          "#244ae3",
-          "#4071ff",
-          "#679aff",
-          "#91c3ff",
-          "#bdebff"
+          "#000e11",
+          "#022a2f",
+          "#074851",
+          "#116975",
+          "#098d9d",
+          "#31b1c2",
+          "#61d8e9",
+          "#cef7fe"
         ]
       },
-      "cobalt-ink": {
-        "role": "secondary",
-        "displayName": "Cobalt Ink",
-        "canonical": "#1d3bb3",
+      "score-other": {
+        "role": "neutral",
+        "displayName": "Ghost Lilac",
+        "canonical": "#b9b4d8",
         "tonalRamp": [
-          "#050047",
-          "#060a73",
-          "#162fa2",
-          "#3255c5",
-          "#567ce1",
-          "#7ca1fd",
-          "#a5c7ff",
-          "#cfeeff"
+          "#0c061e",
+          "#241f3b",
+          "#403b59",
+          "#5e5978",
+          "#7d789a",
+          "#9e99bc",
+          "#c4bfe3",
+          "#eeecfe"
         ]
       },
-      "cobalt-soft": {
-        "role": "secondary",
-        "displayName": "Cobalt Soft",
-        "canonical": "#cdd8ff",
+      "notes-display": {
+        "role": "neutral",
+        "displayName": "Notes Display",
+        "canonical": "#100d24",
         "tonalRamp": [
-          "#090b13",
-          "#212431",
-          "#3c4152",
-          "#5a6076",
-          "#7a819c",
-          "#9ba4c3",
-          "#bdc8ec",
-          "#e2edff"
+          "#0a071d",
+          "#23213a",
+          "#403e5a",
+          "#5f5e7b",
+          "#807f9d",
+          "#a2a1c1",
+          "#c6c5e6",
+          "#edecff"
         ]
       },
-      "cobalt-lit": {
-        "role": "secondary",
-        "displayName": "Cobalt Lit",
-        "canonical": "#8aa2ff",
+      "notes-lane": {
+        "role": "neutral",
+        "displayName": "Notes Lane",
+        "canonical": "#151231",
         "tonalRamp": [
-          "#040626",
-          "#18204b",
-          "#313d73",
-          "#4c5c9e",
-          "#697ccb",
-          "#879ffa",
-          "#acc4ff",
-          "#d4ebff"
+          "#0a0523",
+          "#222041",
+          "#3e3d61",
+          "#5d5d82",
+          "#7e7ea5",
+          "#a0a1ca",
+          "#c4c5ef",
+          "#ecedfe"
         ]
       },
-      "led-green": {
+      "level-1": {
         "role": "tertiary",
-        "displayName": "LED Green",
-        "canonical": "#3dbe6b",
+        "displayName": "Level 1 Mint",
+        "canonical": "#8ff0b5",
         "tonalRamp": [
-          "#001300",
-          "#003107",
-          "#00521f",
-          "#007538",
-          "#249a52",
-          "#43c16f",
-          "#7ae498",
-          "#abffc3"
+          "#000f05",
+          "#002e17",
+          "#01502d",
+          "#057444",
+          "#339862",
+          "#5bbc84",
+          "#81e1a7",
+          "#c4ffd9"
         ]
       },
-      "fault-red": {
+      "level-2": {
         "role": "tertiary",
-        "displayName": "Fault Red",
-        "canonical": "#e0301e",
+        "displayName": "Level 2 Sky",
+        "canonical": "#9fd8ff",
         "tonalRamp": [
-          "#2f0000",
-          "#5a0000",
-          "#870000",
-          "#b61102",
-          "#e53a27",
-          "#ff6e59",
-          "#ff9c86",
-          "#ffc9b4"
+          "#000d18",
+          "#00283e",
+          "#094767",
+          "#30678a",
+          "#5289ad",
+          "#75acd2",
+          "#98d1f8",
+          "#dff1fe"
         ]
       },
-      "fault-red-ink": {
+      "level-3": {
         "role": "tertiary",
-        "displayName": "Fault Red Ink",
-        "canonical": "#b3200f",
+        "displayName": "Level 3 Butter",
+        "canonical": "#ffe08a",
         "tonalRamp": [
-          "#2f0000",
-          "#580000",
-          "#840000",
-          "#b21f0e",
-          "#d35340",
-          "#f37e6b",
-          "#ffa996",
-          "#ffd3c3"
+          "#100a00",
+          "#2f2300",
+          "#524000",
+          "#775e02",
+          "#9c7f24",
+          "#c0a24c",
+          "#e5c671",
+          "#ffeebf"
         ]
       },
-      "key-top": {
-        "role": "neutral",
-        "displayName": "Key Top",
-        "canonical": "#fbfaf7",
+      "level-4": {
+        "role": "tertiary",
+        "displayName": "Level 4 Apricot",
+        "canonical": "#ffb38a",
         "tonalRamp": [
-          "#0c0b09",
-          "#262523",
-          "#434240",
-          "#62615f",
-          "#838280",
-          "#a6a5a2",
-          "#cac9c6",
-          "#efeeeb"
+          "#180500",
+          "#3f1801",
+          "#6a2e02",
+          "#904d25",
+          "#b46e47",
+          "#da9169",
+          "#ffb68f",
+          "#ffeadf"
         ]
       },
-      "key-bottom": {
-        "role": "neutral",
-        "displayName": "Key Bottom",
-        "canonical": "#eeede8",
+      "level-5": {
+        "role": "tertiary",
+        "displayName": "Level 5 Rose",
+        "canonical": "#ff9fb0",
         "tonalRamp": [
-          "#0c0b08",
-          "#262521",
-          "#43423e",
-          "#62615d",
-          "#83827e",
-          "#a6a5a0",
-          "#cac9c4",
-          "#efeee9"
-        ]
-      },
-      "key-seam": {
-        "role": "neutral",
-        "displayName": "Key Seam",
-        "canonical": "#c3c2bb",
-        "tonalRamp": [
-          "#0c0b07",
-          "#262520",
-          "#43423c",
-          "#62615b",
-          "#83837c",
-          "#a6a59e",
-          "#cac9c2",
-          "#f0efe7"
-        ]
-      },
-      "key-black": {
-        "role": "neutral",
-        "displayName": "Key Black",
-        "canonical": "#1b1c1f",
-        "tonalRamp": [
-          "#0a0b0e",
-          "#242528",
-          "#414245",
-          "#606165",
-          "#818286",
-          "#a3a5a9",
-          "#c7c9cd",
-          "#edeef3"
-        ]
-      },
-      "score-paper": {
-        "role": "neutral",
-        "displayName": "Score Paper",
-        "canonical": "#f4f3ee",
-        "tonalRamp": [
-          "#0c0b08",
-          "#262521",
-          "#43423e",
-          "#62615d",
-          "#83827e",
-          "#a6a5a0",
-          "#cac9c4",
-          "#efeeea"
+          "#1e0006",
+          "#4b011b",
+          "#721f36",
+          "#964154",
+          "#bc6374",
+          "#e38596",
+          "#fdb1bd",
+          "#ffe8eb"
         ]
       }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Count-in",
-        "purpose": "Count-in numerals on the display only."
+        "displayName": "Display",
+        "purpose": "Page titles (Good afternoon, Songs, Progress); 22px on short landscape screens."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Module plate and side sheet titles."
-      },
-      "wordmark": {
-        "displayName": "Wordmark",
-        "purpose": "The library wordmark."
+        "purpose": "The Continue card's song name, result and pause cards, the streak count, sheet titles."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Song names on cartridge labels; study tips at 16px."
+        "purpose": "Section heads: Today's practice, card headings; section card titles at 16px."
       },
-      "title-bar": {
-        "displayName": "Bar Title",
-        "purpose": "Song title in the top bar, one line."
+      "instruction": {
+        "displayName": "Instruction",
+        "purpose": "The lesson's one line saying what to play now ('Play E5 with finger 5'); 17px under 760px wide."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Notes, sub-lines and hints."
+        "purpose": "Default text, weight 600 with tabular figures; secondary copy at 14px in ink-2."
       },
-      "body-long": {
-        "displayName": "Body Long",
-        "purpose": "Study text, max 62ch."
+      "button": {
+        "displayName": "Button",
+        "purpose": "Every button, chip, segment and rail label; 17px on big buttons."
       },
-      "control": {
-        "displayName": "Control",
-        "purpose": "Pill labels, tracked caps."
+      "tool": {
+        "displayName": "Tool",
+        "purpose": "Labels under the tool bar icons on the song sheet."
       },
-      "legend": {
-        "displayName": "Legend",
-        "purpose": "Printed legends under controls; never an eyebrow."
+      "label": {
+        "displayName": "Label",
+        "purpose": "Meta under titles, facts, tags, stat captions, week-day letters."
       },
-      "readout": {
-        "displayName": "Readout",
-        "purpose": "Bar/time and input LCD values, hint note names."
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Fine print, credits and helper text in ink-3."
       },
-      "readout-small": {
-        "displayName": "Small Readout",
-        "purpose": "Cartridge meta, speed keycaps, stamps, display bar numbers."
+      "stat": {
+        "displayName": "Stat",
+        "purpose": "Totals, add-song facts, the detected-note readout, the lesson's n/N count; tabular figures."
       },
-      "numeral": {
-        "displayName": "Numeral",
-        "purpose": "End-of-song stats in the LCD readout."
+      "score-title": {
+        "displayName": "Score Title",
+        "purpose": "Georgia title of the printed score, compact on one row with the composer; the only serif, and only on the score."
+      },
+      "score-composer": {
+        "displayName": "Score Composer",
+        "purpose": "Georgia italic composer line, right-aligned on the score title row."
       }
     },
     "shadows": [
       {
-        "name": "rest",
-        "value": "0 2px 0 #a9a8a2, 0 3px 7px rgba(0,0,0,.16), inset 0 -1px 0 rgba(0,0,0,.06)",
-        "purpose": "Keycaps and pills at rest (--rest)."
+        "name": "press-edge",
+        "value": "0 4px 0 var(--raised-edge)",
+        "purpose": "Solid bottom edge under raised buttons at rest; 3px for icon buttons and choice tiles, 2px for the selected segment."
       },
       {
-        "name": "press",
-        "value": "0 1px 0 #a4a39c, 0 1px 2px rgba(0,0,0,.18), inset 0 1px 2px rgba(0,0,0,.12)",
-        "purpose": "Keycaps and pills held down, with a 1.5px drop (--press)."
+        "name": "press-edge-go",
+        "value": "0 4px 0 var(--go-edge)",
+        "purpose": "Solid bottom edge under green buttons."
       },
       {
-        "name": "orange-travel",
-        "value": "0 2px 0 #b94000, 0 3px 7px rgba(0,0,0,.16)",
-        "purpose": "The go pill; the lit keycap sits at 1px of it."
+        "name": "press-edge-danger",
+        "value": "0 4px 0 #a8273a",
+        "purpose": "Solid bottom edge under the danger button."
       },
       {
-        "name": "recessed-window",
-        "value": "inset 0 2px 4px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.6)",
-        "purpose": "LCD windows."
+        "name": "press-edge-paper",
+        "value": "0 3px 0 rgba(40, 10, 90, .35)",
+        "purpose": "Edge under section cards on the violet strip; the lesson pause tile uses 0 3px 0 #8d85a3."
       },
       {
-        "name": "display-window",
-        "value": "inset 0 0 0 1px #000, inset 0 4px 14px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.6)",
-        "purpose": "The black display window."
+        "name": "pressed",
+        "value": "0 1px 0 <edge>; transform: translateY(2-3px)",
+        "purpose": "Active state of any pressable control."
       },
       {
-        "name": "groove",
-        "value": "inset 0 1px 3px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.6)",
-        "purpose": "Slider and switch tracks."
+        "name": "next-ring",
+        "value": "0 0 0 3px #fff, 0 0 0 6px var(--go)",
+        "purpose": "The next section card to learn in the Teach me strip."
       },
       {
-        "name": "cartridge",
-        "value": "inset 0 1px 0 rgba(255,255,255,.6), 0 1px 0 rgba(0,0,0,.08), 0 10px 22px rgba(0,0,0,.12)",
-        "purpose": "Cartridges in the rack."
+        "name": "key-lip-white",
+        "value": "inset 0 -5px 0 #e3dff4",
+        "purpose": "Bottom lip of the large keyboard's white keys."
       },
       {
-        "name": "plate",
-        "value": "inset 0 1px 0 rgba(255,255,255,.7), 0 20px 44px rgba(0,0,0,.45)",
-        "purpose": "Module plates over the display."
+        "name": "key-lip-black",
+        "value": "inset 0 -4px 0 #0f0c22",
+        "purpose": "Bottom lip of the large keyboard's black keys."
       },
       {
-        "name": "side-sheet",
-        "value": "-1px 0 0 rgba(0,0,0,.13), -18px 0 40px rgba(0,0,0,.18)",
-        "purpose": "Sheets sliding in from the right."
+        "name": "sheet",
+        "value": "-18px 0 40px rgba(0, 0, 0, .35)",
+        "purpose": "Right-hand side sheets (settings, add song, edit song, input test)."
       },
       {
-        "name": "led-glow",
-        "value": "0 0 7px <led colour>, inset 0 -1px 1px rgba(0,0,0,.2)",
-        "purpose": "Lit LEDs only."
+        "name": "floating-card",
+        "value": "0 20px 50px rgba(0, 0, 0, .45)",
+        "purpose": "The lesson's pause and result cards; the sheet result card uses 0 20px 50px rgba(20, 17, 43, .45)."
+      },
+      {
+        "name": "tempo-pill",
+        "value": "0 10px 30px rgba(20, 17, 43, .3)",
+        "purpose": "The tempo pill floating over the score in Auto scroll."
+      },
+      {
+        "name": "toast",
+        "value": "0 10px 30px rgba(0, 0, 0, .4)",
+        "purpose": "Toast at the bottom of the screen."
+      },
+      {
+        "name": "count-in",
+        "value": "0 12px 30px rgba(20, 17, 43, .35)",
+        "purpose": "The count-in disc."
       }
     ],
     "motion": [
       {
-        "name": "ease-out",
-        "value": "cubic-bezier(.16, 1, .3, 1)",
-        "purpose": "Plates rising, sheets sliding, switch thumb, cartridge press."
+        "name": "ease",
+        "value": "cubic-bezier(.22, 1, .36, 1)",
+        "purpose": "The single house easing for presses, sheets, cards, stars, meters and the lesson counter."
       },
       {
-        "name": "key-travel",
-        "value": "transform .08s, box-shadow .08s",
-        "purpose": "Keycap and pill press."
+        "name": "press",
+        "value": "80ms",
+        "purpose": "Button, tile and section card press-down on transform and edge."
       },
       {
-        "name": "rise",
-        "value": "rise .22s to .3s ease-out (translate 10px, fade)",
-        "purpose": "Plates, wait hint, toasts."
+        "name": "color",
+        "value": "150ms",
+        "purpose": "Hover fills, tool state and colour changes."
       },
       {
-        "name": "slide-in",
-        "value": "slide-in .32s ease-out (translate 40px, fade)",
+        "name": "sheet-in",
+        "value": "280ms slide-in from 40px right",
         "purpose": "Side sheets."
       },
       {
-        "name": "blink",
-        "value": "1s steps(2) infinite",
-        "purpose": "Connecting LED."
+        "name": "card-rise",
+        "value": "300ms rise from 10px below",
+        "purpose": "Veil cards; the sheet result card fades in over 250ms."
       },
       {
-        "name": "pulse",
-        "value": ".7s ease-in-out infinite alternate",
-        "purpose": "Sheet cursor while waiting."
+        "name": "count-in-pop",
+        "value": "450ms scale .6 to 1",
+        "purpose": "Count-in number."
+      },
+      {
+        "name": "star-pop",
+        "value": "500ms scale .3 to 1.15 to 1 with a small rotation, staggered 160ms",
+        "purpose": "Won stars on the lesson result card."
+      },
+      {
+        "name": "ignite",
+        "value": "900ms scale 0 to 1.5 to .9 to 1, 500ms delay",
+        "purpose": "The streak flame on the result card."
+      },
+      {
+        "name": "meter-fill",
+        "value": "600ms width",
+        "purpose": "Star and goal meters; the lesson counter fill uses 300ms."
+      },
+      {
+        "name": "cursor-glide",
+        "value": "per frame, interpolated between note positions",
+        "purpose": "The score cursor glides from note to note on its line; the lesson line eases 18% of the remaining distance per frame toward its anchor."
       },
       {
         "name": "reduced-motion",
-        "value": "durations .01ms",
-        "purpose": "prefers-reduced-motion collapses all motion."
+        "value": "all animation and transition durations to .01ms",
+        "purpose": "prefers-reduced-motion: reduce."
       }
     ],
     "breakpoints": [
       {
-        "name": "phone-landscape",
-        "value": "max-width: 940px and landscape"
+        "name": "short-landscape",
+        "value": "max-height: 430px"
       },
       {
-        "name": "small-landscape",
-        "value": "max-width: 760px and landscape"
+        "name": "stack",
+        "value": "max-width: 760px"
       },
       {
-        "name": "short",
-        "value": "max-height: 430px and landscape"
-      },
-      {
-        "name": "very-short",
-        "value": "max-height: 360px and landscape"
-      },
-      {
-        "name": "portrait",
-        "value": "orientation: portrait"
-      },
-      {
-        "name": "large",
-        "value": "min-width: 1100px and min-height: 700px"
+        "name": "portrait-phone",
+        "value": "max-width: 640px and orientation: portrait"
       }
     ]
   },
   "components": [
     {
-      "name": "Keycap",
+      "name": "Primary Button",
       "kind": "button",
-      "refersTo": "keycap",
-      "description": "Every control is a round key with travel; lit is the active state, dark a selected mode.",
-      "html": "<div class=\"ds-caps\"><span class=\"ds-cap\"><i class=\"ds-led\"></i><button class=\"ds-keycap\" aria-label=\"Back\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12.5 4 6.5 10l6 6\"/></svg></button><span class=\"ds-legend\">Back</span></span><span class=\"ds-cap\"><i class=\"ds-led\"></i><button class=\"ds-keycap ds-lit\">.8</button><span class=\"ds-legend\">Speed</span></span><span class=\"ds-cap\"><i class=\"ds-led ds-led-orange\"></i><button class=\"ds-keycap ds-dark\">WAIT</button><span class=\"ds-legend\">Wait</span></span></div>",
-      "css": ".ds-caps{display:flex;gap:18px;padding:16px;background:linear-gradient(180deg,#e8e7e2,#dcdbd6 45%,#cdccc6)}.ds-cap{display:flex;flex-direction:column;align-items:center;gap:6px}.ds-keycap{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:50%;background:radial-gradient(circle at 50% 32%,#fdfdfb,#e2e1dc 72%);box-shadow:0 2px 0 #a9a8a2, 0 3px 7px rgba(0,0,0,.16), inset 0 -1px 0 rgba(0,0,0,.06);color:#1a1a1a;font-family:'Martian Mono',ui-monospace,monospace;font-weight:700;font-size:11.5px;cursor:pointer;transition:transform .08s,box-shadow .08s}.ds-keycap:active{transform:translateY(1.5px);box-shadow:0 1px 0 #a4a39c, 0 1px 2px rgba(0,0,0,.18), inset 0 1px 2px rgba(0,0,0,.12)}.ds-keycap:focus-visible{outline:2px solid #f25c08;outline-offset:3px}.ds-lit{background:#f25c08;box-shadow:0 1px 0 #b94000,0 1px 3px rgba(0,0,0,.18),inset 0 1px 2px rgba(0,0,0,.12);transform:translateY(1px)}.ds-dark{background:radial-gradient(circle at 50% 32%,#3d3e42,#1b1c1f 72%);color:#f2f2ee;box-shadow:0 2px 0 #000,0 3px 7px rgba(0,0,0,.3);font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-size:9.5px;letter-spacing:.06em}.ds-legend{font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#4d4c47}.ds-led{width:7px;height:7px;border-radius:50%;background:#a4a39c;box-shadow:inset 0 1px 1px rgba(0,0,0,.35)}.ds-led-orange{background:#ff6a13;box-shadow:0 0 7px #ff6a13}"
+      "refersTo": "button-primary",
+      "description": "The one go-green action per screen; names the next step and presses down onto its edge.",
+      "html": "<button class=\"ds-btn ds-btn-go ds-btn-big\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M6 3.8v12.4L16 10z\" fill=\"currentColor\"/></svg>Continue</button>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 20px;border-radius:14px;font:800 15px/1 var(--font);border:0;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-btn-go{background:var(--go);color:var(--go-ink);box-shadow:0 4px 0 var(--go-edge)}.ds-btn-go:hover{background:var(--go-hi)}.ds-btn-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--go-edge)}.ds-btn-big{min-height:54px;padding:0 26px;font-size:17px;border-radius:16px}"
     },
     {
-      "name": "Go Pill",
+      "name": "Secondary Button",
       "kind": "button",
-      "refersTo": "pill-go",
-      "description": "The primary action: flat orange capsule with a neutral travel shadow.",
-      "html": "<button class=\"ds-pill ds-go\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 3v9.5M6 8.5l4 4 4-4M3.5 13.5v3h13v-3\"/></svg>Import .mid</button>",
-      "css": ".ds-pill{height:46px;padding:0 20px;display:inline-flex;align-items:center;gap:9px;border:0;border-radius:23px;font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#1a1a1a;cursor:pointer;transition:transform .08s,box-shadow .08s}.ds-go{background:#f25c08;box-shadow:0 2px 0 #b94000,0 3px 7px rgba(0,0,0,.16)}.ds-go:active{transform:translateY(1.5px);box-shadow:0 1px 0 #b94000,inset 0 1px 2px rgba(0,0,0,.15)}.ds-pill:focus-visible{outline:2px solid #f25c08;outline-offset:3px}"
+      "refersTo": "button-secondary",
+      "description": "Raised indigo for the alternative action (Try again, Teach me, Restart).",
+      "html": "<button class=\"ds-btn ds-btn-raised\">Play freely</button>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 20px;border-radius:14px;font:800 15px/1 var(--font);border:0;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-btn-raised{background:var(--raised);color:var(--ink);box-shadow:0 4px 0 var(--raised-edge)}.ds-btn-raised:hover{background:#38317a}.ds-btn-raised:active{transform:translateY(3px);box-shadow:0 1px 0 var(--raised-edge)}"
     },
     {
-      "name": "Plain Pill",
+      "name": "Quiet Button",
       "kind": "button",
-      "refersTo": "pill",
-      "description": "Secondary action: a raised light capsule.",
-      "html": "<button class=\"ds-pill2\">Restart</button>",
-      "css": ".ds-pill2{height:46px;padding:0 20px;border:0;border-radius:23px;font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#1a1a1a;background:radial-gradient(ellipse at 50% 30%,#fdfdfb,#e2e1dc 75%);box-shadow:0 2px 0 #a9a8a2, 0 3px 7px rgba(0,0,0,.16), inset 0 -1px 0 rgba(0,0,0,.06);cursor:pointer;transition:transform .08s,box-shadow .08s}.ds-pill2:active{transform:translateY(1.5px);box-shadow:0 1px 0 #a4a39c, 0 1px 2px rgba(0,0,0,.18), inset 0 1px 2px rgba(0,0,0,.12)}.ds-pill2:focus-visible{outline:2px solid #f25c08;outline-offset:3px}"
+      "refersTo": "button-quiet",
+      "description": "Edge-less exit or cancel action under the main pair.",
+      "html": "<button class=\"ds-btn-quiet\">Back to song</button>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-btn-quiet{display:inline-flex;align-items:center;min-height:40px;padding:0 20px;border-radius:14px;background:transparent;border:0;color:var(--ink-2);font:800 15px/1 var(--font);cursor:pointer;transition:background .15s,color .15s}.ds-btn-quiet:hover{color:var(--ink);background:rgba(255,255,255,.05)}.ds-btn-quiet:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
-      "name": "Slider",
-      "kind": "nav",
-      "refersTo": "slider",
-      "description": "Two-position Notes / Sheet switch in a recessed groove.",
-      "html": "<div class=\"ds-slider\"><button class=\"ds-on\">Notes</button><button>Sheet</button></div>",
-      "css": ".ds-slider{display:inline-flex;padding:3px;gap:2px;background:#bdbcb5;border-radius:22px;box-shadow:inset 0 1px 3px rgba(0,0,0,.28),0 1px 0 rgba(255,255,255,.6)}.ds-slider button{height:34px;padding:0 12px;border:0;border-radius:17px;background:none;font-family:Supreme,'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#4d4c47;cursor:pointer;transition:background .15s,color .15s}.ds-slider button:hover{color:#1a1a1a}.ds-slider button:focus-visible{outline:2px solid #f25c08;outline-offset:3px}.ds-slider .ds-on{background:#f6f5f1;color:#1a1a1a;box-shadow:0 1px 2px rgba(0,0,0,.28),inset 0 1px 0 #fff}"
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "42px raised square, used for pause in the practice bar; ghost variant for close and back.",
+      "html": "<div class=\"ds-row\"><button class=\"ds-icon\" aria-label=\"Pause\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6.5 4v12M13.5 4v12\" stroke-width=\"2.6\"/></svg></button><button class=\"ds-icon ds-icon-ghost\" aria-label=\"Back\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12.5 4 6.5 10l6 6\"/></svg></button></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-row{display:flex;gap:10px}.ds-icon{width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:12px;background:var(--raised);color:var(--ink);box-shadow:0 3px 0 var(--raised-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease)}.ds-icon:active{transform:translateY(2px);box-shadow:0 1px 0 var(--raised-edge)}.ds-icon-ghost{background:transparent;box-shadow:none;color:var(--ink-2)}.ds-icon-ghost:hover{color:var(--ink);background:rgba(255,255,255,.06)}.ds-icon:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
-      "name": "Switch",
+      "name": "Chips and Segmented Control",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Practice-bar chips with a status dot, and the segmented well used in settings and filters.",
+      "html": "<div class=\"ds-row\"><button class=\"ds-chip ds-on\"><i></i>Wait</button><button class=\"ds-chip\">0.6×</button><div class=\"ds-seg\" role=\"radiogroup\"><button class=\"ds-on\">All</button><button>Mine</button></div></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ds-chip{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 13px;border:0;border-radius:12px;background:var(--surface-2);color:var(--ink-2);font:800 14px/1 var(--font);cursor:pointer}.ds-chip i{width:9px;height:9px;border-radius:50%;background:var(--line-2)}.ds-chip.ds-on{color:var(--ink)}.ds-chip.ds-on i{background:var(--go)}.ds-chip:focus-visible,.ds-seg button:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-seg{display:inline-flex;padding:4px;gap:2px;border-radius:14px;background:var(--bg-deep)}.ds-seg button{min-height:36px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--ink-2);font:800 14px/1 var(--font);cursor:pointer;transition:background .15s,color .15s}.ds-seg button:hover{color:var(--ink)}.ds-seg button.ds-on{background:var(--raised);color:var(--ink);box-shadow:0 2px 0 var(--raised-edge)}"
+    },
+    {
+      "name": "Text Field",
       "kind": "input",
-      "refersTo": "switch",
-      "description": "Hardware toggle; orange when on.",
-      "html": "<input type=\"checkbox\" class=\"ds-switch\" checked aria-label=\"Key sound\">",
-      "css": ".ds-switch{appearance:none;width:50px;height:28px;border-radius:14px;position:relative;cursor:pointer;background:#bdbcb5;box-shadow:inset 0 1px 3px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.6);transition:background .15s}.ds-switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 50% 30%,#fff,#e2e1dc);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s cubic-bezier(.16,1,.3,1)}.ds-switch:checked{background:#f25c08}.ds-switch:checked::after{transform:translateX(22px)}.ds-switch:focus-visible{outline:2px solid #f25c08;outline-offset:3px}"
+      "refersTo": "text-field",
+      "description": "Night-deep field with a 2px line stroke that turns green on focus.",
+      "html": "<label class=\"ds-field\">Song title<input placeholder=\"Cornfield Chase\"></label>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-field{display:grid;gap:5px;font:800 13px/1.3 var(--font);color:var(--ink-2)}.ds-field input{min-height:44px;padding:0 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg-deep);color:var(--ink);font:700 16px var(--font)}.ds-field input::placeholder{color:var(--ink-3)}.ds-field input:focus{outline:none;border-color:var(--go)}"
     },
     {
-      "name": "LCD Readouts",
-      "kind": "custom",
-      "refersTo": "lcd",
-      "description": "Recessed black windows: green only for live input, neutral for bar/time, red text for faults.",
-      "html": "<div class=\"ds-lcds\"><p class=\"ds-lcd ds-neutral\">BAR 12/35 0:48</p><div class=\"ds-lcd ds-input\"><small><i></i>USB · heard</small><b>A2</b></div><p class=\"ds-lcd ds-fault\">Mic · not connected</p></div>",
-      "css": ".ds-lcds{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.ds-lcd{margin:0;background:#121314;color:#86f0a8;border-radius:8px;box-shadow:inset 0 2px 4px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.6);font-family:'Martian Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;padding:6px 10px 7px}.ds-neutral{color:#ecebe6;font-size:16px;font-weight:700}.ds-input{display:flex;flex-direction:column;gap:2px;min-width:96px}.ds-input small{font-size:9px;letter-spacing:.14em;color:#5a9b70;display:flex;align-items:center;gap:5px}.ds-input small i{width:7px;height:7px;border-radius:50%;background:#3dbe6b;box-shadow:0 0 7px #3dbe6b}.ds-input b{font-size:15px;line-height:1}.ds-fault{color:#ff9b8c;font-size:11.5px}"
+      "name": "Navigation Rail",
+      "kind": "nav",
+      "refersTo": "rail-item",
+      "description": "Left rail of icon-over-label items; the active item is green on a soft green wash.",
+      "html": "<nav class=\"ds-rail\"><button class=\"ds-rail-btn ds-on\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3.5 9 10 3.5 16.5 9v7.5h-4.5v-5h-4v5H3.5z\"/></svg>Home</button><button class=\"ds-rail-btn\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7.5 15V4.5l8-1.5V13\"/><circle cx=\"5.5\" cy=\"15\" r=\"2\"/><circle cx=\"13.5\" cy=\"13\" r=\"2\"/></svg>Songs</button></nav>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-rail{display:flex;flex-direction:column;align-items:center;gap:6px;width:84px;padding:14px 6px;background:var(--bg-deep)}.ds-rail-btn{width:70px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;border-radius:14px;background:none;color:var(--ink-3);font:800 11.5px/1 var(--font);cursor:pointer;transition:color .15s,background .15s}.ds-rail-btn:hover{color:var(--ink)}.ds-rail-btn.ds-on{color:var(--go);background:rgba(63,208,122,.12)}.ds-rail-btn:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
-      "name": "Cartridge",
+      "name": "Continue Card",
       "kind": "card",
-      "refersTo": "cartridge",
-      "description": "A song cartridge: grip, photo window, paper label and speed stamps.",
-      "html": "<article class=\"ds-cart\"><div class=\"ds-grip\"></div><div class=\"ds-photo\"></div><div class=\"ds-label\"><h3>Cornfield Chase</h3><p class=\"ds-sub\">Interstellar</p><p class=\"ds-meta\">2014 · 2:06</p><div class=\"ds-stamps\"><span class=\"ds-done\">0.6</span><span class=\"ds-done\">0.8</span><span>1</span><span>1.2</span></div></div></article>",
-      "css": ".ds-cart{width:190px;height:360px;display:flex;flex-direction:column;gap:10px;padding:10px 10px 11px;border-radius:18px;background:linear-gradient(180deg,#d2d1cb,#c1c0b9);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 1px 0 rgba(0,0,0,.08),0 10px 22px rgba(0,0,0,.12);cursor:pointer;transition:transform .18s cubic-bezier(.16,1,.3,1),box-shadow .18s}.ds-cart:active{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 4px 10px rgba(0,0,0,.14)}.ds-grip{height:6px;margin:0 44px;border-radius:3px;background:repeating-linear-gradient(90deg,#a3a29b 0 2px,transparent 2px 5px)}.ds-photo{flex:1;border-radius:9px;background:linear-gradient(160deg,#f7a24a,#b8430a 60%,#2a1a10)}.ds-label{background:#f6f5f1;border-radius:9px;padding:10px 11px 11px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);font-family:Supreme,'Helvetica Neue',Arial,sans-serif;color:#1a1a1a}.ds-label h3{margin:0 0 4px;font-weight:800;font-size:19px;line-height:1.02;letter-spacing:-.01em}.ds-sub{margin:0;font-weight:500;font-size:12.5px;color:#4d4c47}.ds-meta{margin:3px 0 0;font-family:'Martian Mono',monospace;font-size:11.5px;color:#4d4c47}.ds-stamps{display:flex;gap:5px;margin-top:11px}.ds-stamps span{flex:1;height:24px;border-radius:4px;border:1.5px dashed #bdbcb5;display:grid;place-items:center;font-family:'Martian Mono',monospace;font-size:10.5px;color:#4d4c47}.ds-stamps .ds-done{border:2px solid #b8430a;color:#b8430a;font-weight:700;rotate:-5deg;background:rgba(255,106,19,.1)}"
+      "refersTo": "card",
+      "description": "Surface card at 22px corners; the Home lead naming the exact next step with a star meter and the green button.",
+      "html": "<article class=\"ds-card\"><h2>Sarabande</h2><p class=\"ds-sub\">G. F. Handel</p><p class=\"ds-next\"><span>Next</span>Part 1 · Right hand</p><div class=\"ds-meter-row\"><span class=\"ds-meter\"><i style=\"width:30%\"></i></span><b><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z\" fill=\"currentColor\"/></svg>12 of 144</b></div><button class=\"ds-go\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M6 3.8v12.4L16 10z\" fill=\"currentColor\"/></svg>Continue</button></article>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-card{display:grid;gap:8px;max-width:380px;padding:18px;border-radius:22px;background:var(--surface);color:var(--ink);font:600 15px/1.4 var(--font);font-variant-numeric:tabular-nums}.ds-card h2{margin:0;font:900 25px/1.08 var(--font);letter-spacing:-.01em}.ds-sub{margin:0;color:var(--ink-2);font-size:14px}.ds-next{margin:4px 0 0;display:flex;align-items:center;gap:8px;font-weight:800}.ds-next span{padding:2px 8px;border-radius:7px;background:rgba(63,208,122,.16);color:var(--go);font-size:12.5px;font-weight:900}.ds-meter-row{display:flex;align-items:center;gap:8px}.ds-meter{position:relative;flex:1;height:8px;border-radius:8px;background:var(--line);overflow:hidden}.ds-meter i{position:absolute;inset:0 auto 0 0;background:var(--star);border-radius:8px}.ds-meter-row b{display:inline-flex;align-items:center;gap:4px;color:var(--star);font-weight:900;font-size:13px}.ds-go{justify-self:start;margin-top:6px;display:inline-flex;align-items:center;gap:8px;min-height:54px;padding:0 26px;border:0;border-radius:16px;background:var(--go);color:var(--go-ink);font:800 17px/1 var(--font);box-shadow:0 4px 0 var(--go-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-go:hover{background:var(--go-hi)}.ds-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--go-edge)}.ds-go:focus-visible{outline:3px solid var(--go);outline-offset:3px}"
     },
     {
-      "name": "Wait Hint",
+      "name": "Mode Tool Bar",
+      "kind": "nav",
+      "refersTo": "tool",
+      "description": "The song sheet's dark bar of modes: icon over label, active modes on a cream pill with violet ink, a separator between play modes and scroll options.",
+      "html": "<header class=\"ds-toolbar\" role=\"toolbar\"><button class=\"ds-tool ds-tool-collapse\" aria-label=\"Hide the tool bar\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 15l6-6 6 6\"/></svg></button><button class=\"ds-tool\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 9h4l5-4v14l-5-4H4z\"/><path d=\"M16 9a4 4 0 010 6M19 6a8 8 0 010 12\"/></svg><span>Listen</span></button><button class=\"ds-tool\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 9l10-5 10 5-10 5z\"/><path d=\"M6 11v5c3 2 9 2 12 0v-5\"/></svg><span>Teach me</span></button><button class=\"ds-tool ds-on\" aria-pressed=\"true\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 18V5l11-2v13\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><circle cx=\"17\" cy=\"16\" r=\"3\"/></svg><span>Play</span></button><span class=\"ds-tool-sep\"></span><button class=\"ds-tool\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M10 4H5v16h5M14 8l4 4-4 4M18 12H9\"/></svg><span>Exit</span></button></header>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-toolbar{display:flex;align-items:stretch;gap:4px;padding:6px 12px;background:var(--bg);border-radius:0}.ds-tool{min-width:74px;min-height:58px;padding:4px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;border-radius:12px;background:transparent;color:#fff;font:800 13px/1.2 var(--font);white-space:nowrap;cursor:pointer;transition:background .15s,color .15s}.ds-tool:hover{background:rgba(255,255,255,.08)}.ds-tool:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-tool.ds-on{background:#f4f0e8;color:var(--violet)}.ds-tool-collapse{min-width:54px}.ds-tool-sep{width:2px;margin:8px 6px;background:var(--line);border-radius:2px}"
+    },
+    {
+      "name": "Teach Me Section Cards",
+      "kind": "card",
+      "refersTo": "section-card",
+      "description": "The violet strip of white section cards under the mini keyboard; the next section wears a white-then-green ring, a learnt one a paper-green check.",
+      "html": "<nav class=\"ds-sections\"><button class=\"ds-section ds-next\"><span class=\"ds-section-icon\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 9l10-5 10 5-10 5z\"/><path d=\"M6 11v5c3 2 9 2 12 0v-5\"/></svg></span><span class=\"ds-section-text\"><b>Part 1</b><small>Bars 1–4 · 0/4 steps</small></span></button><button class=\"ds-section\"><span class=\"ds-section-icon\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 9l10-5 10 5-10 5z\"/><path d=\"M6 11v5c3 2 9 2 12 0v-5\"/></svg></span><span class=\"ds-section-text\"><b>Part 2</b><small>Bars 5–8 · 0/4 steps</small></span></button></nav>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-sections{display:flex;gap:12px;padding:14px 16px;background:var(--violet);overflow-x:auto}.ds-section{flex:none;display:flex;align-items:center;gap:12px;min-width:210px;padding:12px 16px;border:0;border-radius:14px;background:#fff;color:var(--lesson-ink);text-align:left;font-family:var(--font);cursor:pointer;box-shadow:0 3px 0 rgba(40,10,90,.35);transition:transform .08s var(--ease),box-shadow .08s var(--ease)}.ds-section:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(40,10,90,.35)}.ds-section:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-section.ds-next{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--go)}.ds-section-icon{display:grid;place-items:center;color:var(--violet)}.ds-section-text{display:grid}.ds-section-text b{font-size:16px;font-weight:900}.ds-section-text small{color:#6b6585;font-size:12.5px;font-weight:700}"
+    },
+    {
+      "name": "Score Sheet",
       "kind": "custom",
-      "refersTo": "wait-hint",
-      "description": "The single waiting message, a panel in its own row between display and keys.",
-      "html": "<div class=\"ds-wh\"><div><p class=\"ds-wh-t\">Play <b>A2</b></p><p class=\"ds-wh-s\"><em>You played A#2</em></p></div><div class=\"ds-wh-keys\"><span class=\"ds-hk\"></span><span class=\"ds-hk ds-tl\">A2</span><span class=\"ds-hk\"></span><span class=\"ds-hkb ds-x\" style=\"left:38%\">A#2</span></div></div>",
-      "css": ".ds-wh{display:flex;align-items:center;gap:16px;padding:8px 12px 8px 16px;border-radius:12px;background:#f6f5f1;box-shadow:inset 0 0 0 1px rgba(0,0,0,.07),0 1px 0 rgba(255,255,255,.6);font-family:Supreme,'Helvetica Neue',Arial,sans-serif;max-width:560px}.ds-wh p{margin:0}.ds-wh-t{font-weight:500;font-size:13px;color:#4d4c47}.ds-wh-t b{font-family:'Martian Mono',monospace;font-weight:700;font-size:18px;color:#1a1a1a;margin-left:4px}.ds-wh-s{margin-top:2px;font-weight:700;font-size:12.5px}.ds-wh-s em{font-style:normal;color:#b3200f}.ds-wh-keys{position:relative;display:flex;flex:1;height:48px;margin-left:auto}.ds-hk{flex:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;background:linear-gradient(#fff,#eeede8);border:1px solid #c3c2bb;border-radius:0 0 5px 5px;font-family:'Martian Mono',monospace;font-weight:700;font-size:10px}.ds-tl{background:#2f5bff;border-color:#1d3bb3;color:#fff}.ds-hkb{position:absolute;top:0;width:18%;height:58%;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;border-radius:0 0 3px 3px;font-family:'Martian Mono',monospace;font-weight:700;font-size:8.5px;color:#fff}.ds-x{background:#e0301e}"
+      "refersTo": "score",
+      "description": "White engraved score: compact Georgia title row, a padded violet section pill, a 6px teal cursor; played notes paper green, missed paper red.",
+      "html": "<div class=\"ds-score\"><header class=\"ds-score-head\"><h1>Cornfield Chase</h1><p>H. Zimmer · Interstellar</p></header><span class=\"ds-part-pill\">Part 1</span><svg class=\"ds-staff\" viewBox=\"0 0 420 70\" aria-hidden=\"true\"><g stroke=\"#1b1640\" stroke-width=\"1\"><line x1=\"0\" x2=\"420\" y1=\"10\" y2=\"10\"/><line x1=\"0\" x2=\"420\" y1=\"22\" y2=\"22\"/><line x1=\"0\" x2=\"420\" y1=\"34\" y2=\"34\"/><line x1=\"0\" x2=\"420\" y1=\"46\" y2=\"46\"/><line x1=\"0\" x2=\"420\" y1=\"58\" y2=\"58\"/><line x1=\"210\" x2=\"210\" y1=\"10\" y2=\"58\"/></g><ellipse cx=\"70\" cy=\"46\" rx=\"6\" ry=\"4.5\" fill=\"#178a48\"/><ellipse cx=\"130\" cy=\"40\" rx=\"6\" ry=\"4.5\" fill=\"#d92d45\"/><ellipse cx=\"250\" cy=\"34\" rx=\"6\" ry=\"4.5\" fill=\"#1b1640\"/><ellipse cx=\"330\" cy=\"28\" rx=\"6\" ry=\"4.5\" fill=\"#1b1640\"/></svg><span class=\"ds-cursor\"></span></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-score{position:relative;max-width:480px;padding:12px 16px 20px;background:#fff;color:var(--lesson-ink);border-radius:0}.ds-score-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;font-family:Georgia,'Times New Roman',serif}.ds-score-head h1{margin:0;font-size:20px;font-weight:700}.ds-score-head p{margin:0;font-style:italic;font-size:15px;color:#4a4566}.ds-part-pill{display:inline-block;margin:14px 0 8px 40px;padding:3px 12px;border:2px solid var(--violet);border-radius:10px;background:#fff;color:var(--violet);font:800 15px/1.2 var(--font)}.ds-staff{display:block;width:100%;height:auto}.ds-cursor{position:absolute;left:196px;bottom:14px;width:6px;height:76px;border-radius:3px;background:var(--teal);opacity:.9}"
+    },
+    {
+      "name": "Tempo Pill",
+      "kind": "custom",
+      "refersTo": "tempo-pill",
+      "description": "Dark float at the bottom-right of the score in Auto scroll: the green Start / Go on button and a small speed segmented control.",
+      "html": "<div class=\"ds-tempo\"><button class=\"ds-go\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M6 3.8v12.4L16 10z\" fill=\"currentColor\"/></svg>Go on</button><div class=\"ds-seg\" role=\"radiogroup\"><button role=\"radio\">0.6×</button><button role=\"radio\" aria-checked=\"true\" class=\"ds-on\">0.8×</button><button role=\"radio\">1×</button></div></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-tempo{display:inline-flex;align-items:center;gap:10px;padding:8px 10px 8px 16px;border-radius:18px;background:rgba(20,17,43,.94);color:var(--ink);box-shadow:0 10px 30px rgba(20,17,43,.3);font-family:var(--font)}.ds-go{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 20px;border:0;border-radius:14px;background:var(--go);color:var(--go-ink);font:800 15px/1 var(--font);box-shadow:0 4px 0 var(--go-edge);cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease),background .15s}.ds-go:hover{background:var(--go-hi)}.ds-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--go-edge)}.ds-go:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-seg{display:inline-flex;gap:2px;padding:4px;border-radius:14px;background:var(--bg-deep)}.ds-seg button{min-height:32px;padding:0 10px;border:0;border-radius:10px;background:transparent;color:var(--ink-2);font:800 13px/1 var(--font);cursor:pointer}.ds-seg button:hover{color:var(--ink)}.ds-seg .ds-on{background:var(--raised);color:var(--ink);box-shadow:0 2px 0 var(--raised-edge)}"
+    },
+    {
+      "name": "Lesson Header",
+      "kind": "custom",
+      "refersTo": "lesson-counter",
+      "description": "Warm lesson page header: lilac pause tile, the one instruction line, arrow tiles around the n/N counter whose violet fill grows with notes played.",
+      "html": "<header class=\"ds-lesson-bar\"><button class=\"ds-pause\" aria-label=\"Pause\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\" rx=\"1.5\" fill=\"currentColor\"/><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\" rx=\"1.5\" fill=\"currentColor\"/></svg></button><p class=\"ds-say\">Play E5 with finger 5</p><div class=\"ds-nav\"><button class=\"ds-arrow\" disabled aria-label=\"Previous step\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19 12H5M11 6l-6 6 6 6\"/></svg></button><div class=\"ds-count\"><i style=\"width:34%\"></i><small>Right hand</small><span>4/12</span></div><button class=\"ds-arrow\" aria-label=\"Next step\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg></button></div></header>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-lesson-bar{display:flex;align-items:center;gap:16px;padding:12px 18px;background:var(--lesson-bg);color:var(--lesson-ink);font-family:var(--font)}.ds-pause{width:56px;height:56px;flex:none;display:grid;place-items:center;border:0;border-radius:16px;background:var(--lesson-chip);color:#fff;box-shadow:0 3px 0 #8d85a3;cursor:pointer;transition:transform .08s var(--ease),box-shadow .08s var(--ease)}.ds-pause:active{transform:translateY(2px);box-shadow:0 1px 0 #8d85a3}.ds-say{flex:1;min-width:0;margin:0;font-size:20px;font-weight:900;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-nav{display:flex;align-items:center;gap:10px}.ds-arrow{width:46px;height:46px;display:grid;place-items:center;border:0;border-radius:12px;background:var(--lesson-chip);color:#fff;cursor:pointer}.ds-arrow:disabled{opacity:.4;cursor:default}.ds-pause:focus-visible,.ds-arrow:focus-visible{outline:3px solid var(--go);outline-offset:3px}.ds-count{position:relative;width:250px;height:46px;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px;border-radius:12px;background:#6b6182;color:#fff;font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}.ds-count i{position:absolute;inset:0 auto 0 0;background:var(--violet);transition:width .3s var(--ease)}.ds-count small,.ds-count span{position:relative}.ds-count small{font-size:13px;font-weight:800;color:#ece6ff}"
+    },
+    {
+      "name": "Finger Bubble and Target Key",
+      "kind": "custom",
+      "refersTo": "finger-bubble-right",
+      "description": "Over the next notes, a plum (right hand) or umber (left hand) bubble with the finger; on the keyboard, the target key in teal with its finger disc and name.",
+      "html": "<div class=\"ds-fb-row\"><div class=\"ds-bubble\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 13V5a1.5 1.5 0 013 0v6M11 11V4a1.5 1.5 0 013 0v7M14 11V5a1.5 1.5 0 013 0v8c0 4-3 7-6.5 7S5 17 4 14l-1-3a1.5 1.5 0 012.6-1.4L8 13\"/></svg><b>5</b></div><div class=\"ds-bubble ds-left\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 13V5a1.5 1.5 0 013 0v6M11 11V4a1.5 1.5 0 013 0v7M14 11V5a1.5 1.5 0 013 0v8c0 4-3 7-6.5 7S5 17 4 14l-1-3a1.5 1.5 0 012.6-1.4L8 13\"/></svg><b>1</b></div><div class=\"ds-keys\"><div class=\"ds-key\"></div><div class=\"ds-key ds-target\"><span class=\"ds-finger\">5</span><span class=\"ds-name\">E</span></div><div class=\"ds-key ds-hit\"></div><div class=\"ds-key\"></div></div></div>",
+      "css": ":root{--bg:#14112b;--bg-deep:#0f0c22;--surface:#1d1940;--surface-2:#262150;--raised:#302a63;--raised-edge:#1f1a45;--line:#3a3470;--line-2:#4c4590;--ink:#f5f3ff;--ink-2:#c0b9ec;--ink-3:#9790cc;--go:#3fd07a;--go-hi:#5fe093;--go-edge:#1f9a52;--go-ink:#082414;--star:#ffcf3f;--star-off:#3d3775;--flame:#ff8a3d;--miss:#ff5d73;--right:#4fb6ff;--left:#ffb547;--paper:#fbfaff;--violet:#8f4dff;--teal:#14c4cf;--lesson-bg:#f0eee9;--lesson-ink:#1b1640;--lesson-chip:#a9a1bb;--hit-paper:#178a48;--miss-paper:#d92d45;--ease:cubic-bezier(.22,1,.36,1);--font:'Nunito Variable',Nunito,ui-rounded,system-ui,sans-serif}.ds-fb-row{display:flex;align-items:flex-end;gap:18px;padding:16px;background:var(--lesson-bg);font-family:var(--font)}.ds-bubble{position:relative;width:46px;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;background:#5b2a86;color:#e7d6ff}.ds-bubble b{margin-top:-4px;color:#fff;font-size:14px;font-weight:900}.ds-bubble::after{content:'';position:absolute;bottom:-7px;left:50%;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#5b2a86}.ds-bubble.ds-left{background:#7a4b12;color:#ffe2b8}.ds-bubble.ds-left::after{border-top-color:#7a4b12}.ds-keys{display:flex;height:96px}.ds-key{position:relative;width:40px;height:100%;background:var(--paper);border-right:1px solid #d6d1ee;border-radius:0 0 8px 8px;box-shadow:inset 0 -5px 0 #e3dff4}.ds-key.ds-target{background:var(--teal);box-shadow:none}.ds-key.ds-hit{background:var(--go);box-shadow:none}.ds-finger{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:var(--bg);color:#fff;font-size:11.5px;font-weight:900}.ds-name{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#04363b;font-size:13px;font-weight:900}"
     }
   ],
   "narrative": {
-    "northStar": "The Practice Instrument",
-    "overview": "The app is a piece of hardware standing on the music stand, in the line of Braun and Teenage Engineering panels: a light, bead-blasted aluminium panel with printed legends, round keycaps with small LEDs, recessed LCD windows, a two-position slider, and one black display window where the notes fall onto an orange gate. The library is a rack of song cartridges, each with a photo, a white paper label and the speeds already passed stamped in orange ink. Setup, pause and end are module plates that sit over the display. The world rejects the neon-bars-on-navy piano trainer and the dark cinema costume of the 35mm film world it replaced.\n\nThe panel is lit, never dark. Black lives only inside the display window, the LCDs and the black keys. Colour is signal and each colour owns one job: orange is the right hand, the primary control and the active state; cobalt is the left hand; green is live input; red is a fault. Two families split the work cleanly: Supreme speaks every title, legend and sentence; Martian Mono is the machine voice of readouts, numerals, note names and stamps.\n\nDensity follows a phone in landscape on a music stand: a 64px legend strip on top, the display filling the middle, keys along the bottom, 44px keycaps throughout. Surfaces are matte; depth is physical (key travel, recessed windows, a plate lifted over the display) rather than decorative.",
+    "northStar": "The Green Light",
+    "overview": "Hugo's Piano is the category standard for learning songs, played straight: a night indigo app in the Simply Piano and Duolingo family, where one saturated green means \"go\" everywhere it appears. The next action is green, a correctly played note is green, the next section to open wears a green ring, the met goal is green. Everything else stays quiet so that green is always the answer to \"what do I do now?\". Gold is the reward (stars), orange is the streak, red is reserved for the wrong note.\n\nThe world has three grounds. The app shell (Home, Songs, Progress, Settings) sits on deep indigo with raised indigo surfaces, a single rounded face (Nunito, heavy weights) and chunky buttons that physically press down on a solid bottom edge. A song opens as printed sheet music: a full-screen white page engraved by abcjs, set under a dark tool bar of modes (Listen, Teach me, Play | Feedback, Magic scroll, Auto scroll, Connect, Exit) and a small instrument-like keyboard that lights the keys to play in yellow, with a teal cursor moving through the score. Teach me opens a violet strip of section cards; a section becomes a lesson on a warm light page: one engraved line, the next notes in teal under a finger bubble, the target keys in teal on a large keyboard, and an n/N counter filling with violet. Results and pauses return to indigo cards floating over a scrim, so the reward always feels like the app speaking.\n\nDensity is moderate and landscape-first: an 84px rail and 16px card gaps in the shell, and edge-to-edge working surfaces (score, lesson) with nothing between Hugo and the next note. This replaces the earlier aluminium \"practice instrument\" world and the canvas paper staff with lettered note heads; notation is real engraving now.",
     "keyCharacteristics": [
-      "Matte aluminium field with a soft top light; no stripes, no brushed texture, no gloss.",
-      "Every control is a physical key: round keycaps, pills and a slider that travel 1.5px when pressed.",
-      "One black display window per screen; LCDs are small recessed black readouts.",
-      "Signal colours with one job each: orange right hand and action, cobalt left hand, green live input, red fault.",
-      "Supreme for words, Martian Mono for machine readouts.",
-      "Cartridges with photo, paper label and orange speed stamps."
+      "Night indigo shell with three raised surface steps; tool bar, overlays and result cards stay indigo on every screen.",
+      "One go-green for every primary action, correct note, active nav item, next section and met goal.",
+      "A white engraved score with a compact serif title row, violet section pills and a 6px teal cursor.",
+      "Teal marks \"now\" on paper: the cursor, the next notes and the target keys; yellow marks the keys to play on the mini keyboard.",
+      "Violet carries the teaching structure: active mode ink, the Teach me strip, section pills, the lesson counter fill.",
+      "Nunito Variable for all interface text, weights 600 to 900, tabular figures throughout.",
+      "Chunky rounded action controls with a solid 3-4px bottom edge that collapses on press."
     ],
     "rules": [
       {
-        "name": "The One Job Rule",
-        "body": "Each signal colour owns one meaning. Orange is right hand, primary action and active state; cobalt is left hand and never chrome; green is live input; red is a fault. A readout that is not reporting live input is never green.",
+        "name": "The Green Light Rule",
+        "body": "Green means \"go\" or \"right\": the next action, a correct note, the next section, a met goal. It is never decoration, never a heading colour, never a mode state.",
         "section": "colors"
       },
       {
-        "name": "The Lit Panel Rule",
-        "body": "The panel is light aluminium. Black appears only inside the display window, LCDs, dark keycaps and black keys.",
+        "name": "The Teal Now Rule",
+        "body": "On paper, teal is the present: the cursor, the next notes, the keys to press. It never marks an action or a result.",
         "section": "colors"
       },
       {
-        "name": "The Two Hands Rule",
-        "body": "Orange belongs to the right hand and cobalt to the left in every view: falling notes, keys, hint keys, sheet noteheads. A note the app plays for the other hand keeps its hue at 28% opacity.",
+        "name": "The Violet Teacher Rule",
+        "body": "Violet belongs to the teaching structure (modes, sections, step progress). It is never \"go\" and never a note state.",
         "section": "colors"
       },
       {
-        "name": "The Machine Voice Rule",
-        "body": "Martian Mono is only for readouts, numerals, note names and stamps. Titles, legends, buttons and sentences are Supreme.",
+        "name": "The One Red Rule",
+        "body": "Miss red is spent only on a wrong note or a real error. Locked, idle and unavailable states are indigo or lilac, never red.",
+        "section": "colors"
+      },
+      {
+        "name": "The Paper Variant Rule",
+        "body": "Ink on a light ground (notes, finger numbers, text) uses the paper set (`hit-paper`, `miss-paper`, `score-next`, `lesson-ink`); ink on indigo uses the bright set. Key fills may use the bright signals because the whole key is the signal.",
+        "section": "colors"
+      },
+      {
+        "name": "The Weight Not Face Rule",
+        "body": "Interface hierarchy comes from Nunito's weight and size alone: no second interface family, no italics, no uppercase tracking, no kicker lines above headings. The serif and its italic composer line live only in the score's title row, because that row is part of the printed page.",
         "section": "typography"
       },
       {
-        "name": "The Printed Legend Rule",
-        "body": "Legends are 10px tracked caps printed under or beside the control they name. They label controls; they never sit above a heading as an eyebrow.",
-        "section": "typography"
-      },
-      {
-        "name": "The Matte Finish Rule",
-        "body": "The aluminium is an even matte field under a soft top light; orange controls are flat signal-orange-deep with a neutral travel shadow. No gloss highlights, no stripes, no glow on controls. Light is emitted only by LEDs, the gate line and count-in LEDs.",
-        "section": "elevation"
-      },
-      {
-        "name": "The Key Travel Rule",
-        "body": "Anything pressable has travel: a 2px hard shadow at rest, 1px when pressed, and a 1.5px drop.",
+        "name": "The Press Edge Rule",
+        "body": "A control that commits an action (buttons, icon buttons, choice tiles, section cards, the lesson pause tile) gets a solid bottom edge in its own darker tone, and pressing moves it down onto that edge. Mode toggles on the tool bar show state by fill instead, and non-interactive cards never carry an edge.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do keep the panel light aluminium with a soft top light, and put black only inside the display, LCDs, dark keycaps and black keys.",
-      "Do make every control a physical key with travel: 2px rest shadow, 1px pressed, 1.5px drop.",
-      "Do fill primary controls with flat signal-orange-deep and ink text.",
-      "Do colour right-hand material orange and left-hand material cobalt in every view, and dim the app-played hand to 28%.",
-      "Do use green only for live input, neutral lcd-neutral for other readouts, and red for faults.",
-      "Do set readouts, numerals, note names and stamps in Martian Mono with tabular figures; everything else in Supreme.",
-      "Do print legends as 10px tracked caps next to the control they name.",
-      "Do keep controls that matter mid-song at 36px or larger, 44px where space allows."
+      "Do give each screen at most one go-green button, and make it name the next step.",
+      "Do keep green for go and right, teal for \"now\" on paper, violet for teaching structure, gold for stars, flame for the streak, miss red for wrong notes.",
+      "Do give every action control a solid bottom edge in its own darker tone (`raised-edge`, `go-edge`, the paper edges) that collapses on press; let mode toggles show state with the cream pill instead.",
+      "Do build depth in the shell by stepping indigo fills (night, surface, surface-2, raised), not with borders or blurred card shadows.",
+      "Do set all interface text in Nunito Variable with tabular figures, 900 for headings and numbers, 800 for controls; keep the serif to the score's title row.",
+      "Do engrave notation with abcjs and colour it through the paper set (`lesson-ink`, `hit-paper`, `miss-paper`, `score-next`, `score-other`); use the bright set on indigo.",
+      "Do keep results and pauses on indigo cards over a scrim, whatever ground is underneath.",
+      "Do keep touch targets at 44px or more (buttons 46px, tools 58px, lesson arrows 46px, pause tile 56px, rail items 58px)."
     ],
     "donts": [
-      "Don't add gloss, stripes or brushed texture to the aluminium, or gloss and glow to orange controls; only LEDs and the gate emit light.",
-      "Don't make the panel dark or use neon bars on navy.",
-      "Don't use green on an LCD for anything but live input.",
-      "Don't use cobalt for chrome, links or actions; it belongs to the left hand.",
-      "Don't set titles, legends or sentences in Martian Mono.",
-      "Don't put eyebrow labels above headings.",
-      "Don't float the wait hint over the display; it is a panel in its own row between display and keys."
+      "Don't bring back the aluminium instrument-panel world: no metal textures, printed legends, LCD greens or keycap LEDs.",
+      "Don't draw the score on a canvas or letter the note heads; the score is engraved notation with finger numbers, and note names live on the keys.",
+      "Don't use green as decoration, a heading colour, a mode state or a background wash beyond the 12-16% tints on the active rail item and tags.",
+      "Don't use miss red for locked, idle or disabled states.",
+      "Don't add a second interface typeface, uppercase tracked labels or eyebrow lines above headings.",
+      "Don't put pure black or neutral grey in the indigo shell; every dark there is indigo. The mini keyboard's case is the one neutral dark, because it is an instrument.",
+      "Don't give static cards a press edge or a drop shadow; shadows belong to action controls and floating overlays."
     ]
   }
 }

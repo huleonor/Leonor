@@ -66,7 +66,17 @@ function spell(midi: number, fifths: number, keyAcc: Record<string, number>, bar
 
 interface Event { qs: number; dur: number; notes: SongNote[]; }
 
-export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' | 'some' | 'all' = 'off'): AbcScore {
+export interface ScoreOptions {
+  /** Only these bars (1-based, inclusive): a lesson's section. */
+  from?: number;
+  to?: number;
+  title?: string;
+  composer?: string;
+  /** Section labels to box above the bar where each section starts (1-based bars). */
+  sections?: { bar: number; label: string }[];
+}
+
+export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' | 'some' | 'all' = 'off', opts: ScoreOptions = {}): AbcScore {
   const [num, den] = song.timeSig;
   const grid = song.ppq / 4; // one 16th note in ticks
   const measureUnits = Math.max(1, Math.round((num * 16) / den));
@@ -76,8 +86,9 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
 
   const firstQ = Math.min(...song.notes.map(n => q(n.ticks)));
   const lastQ = Math.max(...song.notes.map(n => q(n.ticks + n.durationTicks)));
-  const firstMeasure = Math.floor(firstQ / measureUnits);
-  const totalMeasures = Math.ceil(Math.max(lastQ, firstQ + 1) / measureUnits);
+  const firstMeasure = opts.from ? opts.from - 1 : Math.floor(firstQ / measureUnits);
+  const totalMeasures = opts.to ?? Math.ceil(Math.max(lastQ, firstQ + 1) / measureUnits);
+  const startQ = firstMeasure * measureUnits, endQ = totalMeasures * measureUnits;
   const hands = song.hands;
 
   const measures: Record<Hand, string[]> = { R: [], L: [] };
@@ -92,7 +103,8 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
     for (const n of song.notes) {
       if (n.hand !== hand) continue;
       const qs = q(n.ticks);
-      const qe = Math.max(qs + 1, q(n.ticks + n.durationTicks));
+      if (qs < startQ || qs >= endQ) continue;
+      const qe = Math.min(endQ, Math.max(qs + 1, q(n.ticks + n.durationTicks)));
       const o = byStart.get(qs);
       if (o) { o.notes.push(n); o.end = Math.max(o.end, qe); } else byStart.set(qs, { qs, end: qe, notes: [n] });
     }
@@ -159,7 +171,8 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
   const rAvg = song.notes.filter(n => n.hand === 'R').reduce((s, n, _, a) => s + n.midi / a.length, 0);
   const rClef = rAvg && rAvg < 55 ? 'bass' : 'treble';
 
-  let abc = `X:1\nM:${num}/${den}\nL:1/16\n`;
+  let abc = `X:1\n${opts.title ? `T:${opts.title.replace(/\n/g, ' ')}\n` : ''}${opts.composer ? `C:${opts.composer.replace(/\n/g, ' ')}\n` : ''}M:${num}/${den}\nL:1/16\n`;
+  if (opts.sections?.length) abc += '%%partsbox true\n';
   if (hands.length === 2) abc += '%%score {R | L}\n';
   if (hands.includes('R')) abc += `V:R clef=${rClef}\n`;
   if (hands.includes('L')) abc += `V:L clef=${lClef}\n`;
@@ -172,6 +185,8 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
     for (const hand of hands) {
       abc += `[V:${hand}] `;
       for (let m = s; m < end; m++) {
+        const part = hand === hands[0] ? opts.sections?.find(sc => sc.bar === m + 1) : undefined;
+        if (part) abc += `[P:${part.label.replace(/[\]\n]/g, ' ')}]`;
         const base = abc.length;
         for (const { rel, tok } of toks[hand][m]) tokens.push({ ...tok, start: base + rel });
         abc += measures[hand][m] + (m === totalMeasures - 1 ? ' |]' : ' | ');

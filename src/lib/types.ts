@@ -80,6 +80,10 @@ export interface Settings {
   localSound: boolean;
   /** Finger numbers on the notes: none, only where the hand moves, or every note. */
   fingers: FingerMode;
+  /** Minutes of practice a day that fill the daily goal. */
+  dailyGoal: number;
+  /** The first-run "connect your piano" card has been answered. */
+  setupDone: boolean;
   /** Settings format, for one-off migrations. */
   v?: number;
 }

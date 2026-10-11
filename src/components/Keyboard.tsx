@@ -18,6 +18,7 @@ export function Keyboard({ engine, lo, hi, naming, fingers }: Props) {
       const now = performance.now();
       const t = engine.time;
       const expected = new Set(engine.expected());
+      const groupNotes = (engine.groups[engine.gi]?.ids ?? []).map(id => notes[id]);
       const sounding: Record<number, string> = {};
       // Binary search the first note that could still be sounding.
       let a = 0, b = notes.length;
@@ -33,7 +34,7 @@ export function Keyboard({ engine, lo, hi, naming, fingers }: Props) {
         const el = refs.current[m];
         if (!el) continue;
         let cls = '';
-        const expNote = expected.has(m) ? notes.find(n => n.midi === m && Math.abs(n.time - t) < 1.3) : undefined;
+        const expNote = expected.has(m) ? groupNotes.find(n => n.midi === m) ?? notes.find(n => n.midi === m && Math.abs(n.time - t) < 1.3) : undefined;
         const expHand = expected.has(m) ? expNote?.hand ?? 'R' : null;
         // The finger for the next key, printed on the key (every next key when fingers are on).
         const fg = expNote?.finger && fingers !== 'off' ? String(expNote.finger) : '';

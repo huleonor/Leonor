@@ -11,6 +11,8 @@ export interface EngineOptions {
   accompaniment: boolean;
   /** Microphone: match by pitch class (octave slips are forgiven), half of a chord counts. */
   lenient: boolean;
+  /** Score following: no clock, the cursor sits on the next notes until he plays them. */
+  follow?: boolean;
 }
 
 interface Group { time: number; ids: number[]; midis: number[]; }
@@ -20,7 +22,9 @@ export type EngineEvent =
   | { type: 'status'; ids: number[] | 'all' }
   | { type: 'state' }
   | { type: 'end' }
-  | { type: 'wrong'; midi: number };
+  | { type: 'wrong'; midi: number }
+  /** A note hit in tempo: how early (negative) or late it was, in real seconds. */
+  | { type: 'judge'; offset: number };
 
 const CHORD_WINDOW = 0.045; // seconds: notes closer than this form one chord
 const LEAD_IN = 2.2; // seconds of song time before the first note
@@ -83,11 +87,14 @@ export class Engine {
     const notes = this.song.notes;
     for (const n of notes) this.user[n.id] = !listen && (hands === 'both' || hands === n.hand) && this.inSegment(n.time) ? 1 : 0;
     this.groups = [];
+    // Notes written as one chord on the score (same sixteenth) are played as one chord.
+    const q = (ticks: number) => Math.round(ticks / (this.song.ppq / 4));
+    let lastQ = -1;
     for (const n of notes) {
       if (!this.user[n.id]) continue;
       const g = this.groups[this.groups.length - 1];
-      if (g && n.time - g.time < CHORD_WINDOW) { g.ids.push(n.id); g.midis.push(n.midi); }
-      else this.groups.push({ time: n.time, ids: [n.id], midis: [n.midi] });
+      if (g && (n.time - g.time < CHORD_WINDOW || q(n.ticks) === lastQ)) { g.ids.push(n.id); g.midis.push(n.midi); lastQ = q(n.ticks); }
+      else { this.groups.push({ time: n.time, ids: [n.id], midis: [n.midi] }); lastQ = q(n.ticks); }
     }
     this.seek(this.time, false);
   }
@@ -185,7 +192,7 @@ export class Engine {
 
   /** Wait mode: stuck for a while, or after a wrong note, the app shows which keys to press. */
   hintVisible() {
-    return this.playing && this.waiting && this.countdown === 0 && this.opts.wait && !this.opts.listen
+    return this.playing && this.waiting && this.countdown === 0 && (this.opts.wait || !!this.opts.follow) && !this.opts.listen
       && (this.wrongInWait > 0 || performance.now() - this.waitSince > 3500);
   }
 
@@ -209,6 +216,17 @@ export class Engine {
     }
     let next = this.time + dt * this.opts.speed;
     const changed: number[] = [];
+
+    if (this.opts.follow && !this.opts.listen) {
+      // The cursor jumps to the next notes and stays there until they are played.
+      const g = this.groups[this.gi];
+      if (!g) { this.finish(); return; }
+      this.time = g.time;
+      if (!this.waiting) { this.waiting = true; this.waitSince = now; this.wrongInWait = 0; this.emit({ type: 'state' }); }
+      setExpected(this.expected());
+      if (this.segment && this.time >= this.segment.to) this.finish();
+      return;
+    }
 
     if (this.opts.wait && !this.opts.listen) {
       let blocked = false;
@@ -320,7 +338,7 @@ export class Engine {
       (g && g.midis.some(m => this.matches(midi, m))) || (nextG && nextG.midis.some(m => this.matches(midi, m)));
     // In a strike the mic heard several notes: a stray overtone next to a right note is not a mistake.
     const strikeOk = e.chord ? e.chord.some(relevantNote) : false;
-    if (this.opts.wait) {
+    if (this.opts.wait || this.opts.follow) {
       if (!relevantNote(e.midi)) { if (!strikeOk) this.registerWrong(e.midi); return; }
       if (g && this.waiting && this.trySatisfy(g, now)) {
         this.markHit(g, changed);
@@ -341,6 +359,7 @@ export class Engine {
       if (best < 0) { if (!strikeOk) this.registerWrong(e.midi); return; }
       this.status[best] = HIT;
       changed.push(best);
+      this.emit({ type: 'judge', offset: (t - this.song.notes[best].time) / this.opts.speed });
     }
     if (changed.length) this.emit({ type: 'status', ids: changed });
   }
