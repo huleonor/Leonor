@@ -121,13 +121,7 @@ export function buildCourse(song: Song): Course {
     }
     steps.push({ id: `p${p.n}-tempo`, kind: 'tempo', title: 'In tempo', short: '1×', ...at, hands: both, speed: 1, wait: false });
   }
-  // Join neighbouring parts in pairs, then the whole song.
-  if (parts.length > 2) {
-    for (let i = 0; i + 1 < parts.length; i += 2) {
-      const a = parts[i], b = parts[i + 1];
-      steps.push({ id: `j${a.n}-${b.n}`, kind: 'join', title: `Parts ${a.n} and ${b.n}`, short: `${a.n}+${b.n}`, parts: [a.n, b.n], from: a.from, to: b.to, hands: both, speed: 0.8, wait: true });
-    }
-  }
+  // Then the whole song: once with Wait, then the final performance in tempo.
   const from = parts[0].from, to = parts[parts.length - 1].to;
   steps.push({ id: 'song-wait', kind: 'song', title: 'Whole song', short: 'All', from, to, hands: both, speed: 0.8, wait: true });
   steps.push({ id: 'song', kind: 'song', title: 'Final performance', short: '1×', from, to, hands: both, speed: 1, wait: false });

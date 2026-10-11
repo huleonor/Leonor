@@ -3,7 +3,7 @@ import { lastDays, totals } from '../lib/stats';
 import type { Settings, SongEntry } from '../lib/types';
 import { GoalPill, StreakPill, useDaily } from './Home';
 import { IconFlame } from './Icons';
-import { Segmented } from './Practice';
+import { Segmented } from './ui';
 
 const DAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 

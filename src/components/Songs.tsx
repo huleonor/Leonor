@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
 import { GENERIC_COVER } from '../lib/library';
 import type { SongEntry } from '../lib/types';
-import { IconMusic, IconPlus, IconStar } from './Icons';
+import { IconMore, IconMusic, IconPlus, IconStar } from './Icons';
 
 type Shelf = 'all' | 'film' | 'modern' | 'classical' | 'mine';
 const SHELVES: [Shelf, string][] = [['all', 'All'], ['film', 'Film'], ['modern', 'Modern'], ['classical', 'Classical'], ['mine', 'My songs']];
@@ -21,10 +21,10 @@ export function Cover({ entry, className = '' }: { entry: SongEntry; className?:
   );
 }
 
-export function SongCard({ info, onOpen }: { info: SongInfo; onOpen: () => void }) {
+export function SongCard({ info, onOpen, onEdit }: { info: SongInfo; onOpen: () => void; onEdit?: () => void }) {
   const e = info.entry;
   const pct = info.total ? info.stars / info.total : 0;
-  return (
+  const card = (
     <button className={`song-card ${e.missing ? 'missing' : ''}`} onClick={onOpen}>
       <span className="song-cover">
         <Cover entry={e} />
@@ -43,6 +43,13 @@ export function SongCard({ info, onOpen }: { info: SongInfo; onOpen: () => void 
       )}
     </button>
   );
+  if (!onEdit) return card;
+  return (
+    <div className="song-card-wrap">
+      {card}
+      <button className="card-more" onClick={onEdit} aria-label={`Edit ${e.title}`}><IconMore size={20} /></button>
+    </div>
+  );
 }
 
 interface Props {
@@ -51,9 +58,10 @@ interface Props {
   ready: boolean;
   onOpen: (info: SongInfo) => void;
   onAdd: () => void;
+  onEdit: (entry: SongEntry) => void;
 }
 
-export function Songs({ infos, entries, ready, onOpen, onAdd }: Props) {
+export function Songs({ infos, entries, ready, onOpen, onAdd, onEdit }: Props) {
   const [shelf, setShelf] = useState<Shelf>(() => {
     try { return (localStorage.getItem('hugos-piano:shelf2') as Shelf) || 'all'; } catch { return 'all'; }
   });
@@ -82,7 +90,7 @@ export function Songs({ infos, entries, ready, onOpen, onAdd }: Props) {
         </div>
       )}
       <div className="song-grid">
-        {list.map(info => <SongCard key={info.entry.id} info={info} onOpen={() => onOpen(info)} />)}
+        {list.map(info => <SongCard key={info.entry.id} info={info} onOpen={() => onOpen(info)} onEdit={info.entry.builtIn ? undefined : () => onEdit(info.entry)} />)}
       </div>
     </div>
   );

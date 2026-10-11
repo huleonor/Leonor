@@ -3,10 +3,11 @@ import { AddSong } from './components/AddSong';
 import { Home } from './components/Home';
 import { IconChart, IconGear, IconHome, IconMusic } from './components/Icons';
 import { InputCheck } from './components/InputCheck';
-import { Practice } from './components/Practice';
+import { Lesson } from './components/Lesson';
 import { ProgressView } from './components/ProgressView';
 import { SettingsSheet } from './components/SettingsSheet';
-import { SongPage } from './components/SongPage';
+import { EditSong } from './components/EditSong';
+import { SongScreen, sectionsOf } from './components/SongScreen';
 import { Songs } from './components/Songs';
 import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
@@ -27,7 +28,8 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [tab, setTab] = useState<Tab>('home');
   const [openId, setOpenId] = useState<string | null>(null);
-  const [play, setPlay] = useState<{ id: string; step?: CourseStep; n: number } | null>(null);
+  const [lesson, setLesson] = useState<{ id: string; section: string; step?: string; n: number } | null>(null);
+  const [editing, setEditing] = useState<SongEntry | null>(null);
   const [sheet, setSheet] = useState<'settings' | 'check' | null>(null);
   const [adding, setAdding] = useState<{ file: File; slot?: SongEntry } | null>(null);
   const [links, setLinks] = useState<Record<Source, LinkState>>(linkState);
@@ -94,29 +96,40 @@ export default function App() {
     if (info.error || !info.song) { setNotice({ text: i18n.t(info.entry.builtIn ? 'err.loadFailed' : 'err.missing'), error: true }); return; }
     setOpenId(info.entry.id);
   };
-  const startStep = (info: SongInfo, step?: CourseStep) => {
+  // Opening a song shows its sheet music; Teach me opens a section's lesson on top of it.
+  const openSheet = (info: SongInfo) => { unlockAudio(); ensureInput(); openSong(info); };
+  const startStep = (info: SongInfo, step: CourseStep) => {
     unlockAudio();
     ensureInput();
+    const section = sectionsOf(info).find(sc => sc.steps.some(st => st.id === step.id));
     setOpenId(info.entry.id);
-    setPlay({ id: info.entry.id, step, n: 0 });
-  };
-  const exitPractice = () => {
-    if (play) refreshSong(play.id);
-    setPlay(null);
+    if (section) setLesson({ id: info.entry.id, section: section.id, step: step.id, n: 0 });
   };
 
-  const playing = play && infos[play.id];
   const open = openId ? infos[openId] : undefined;
+  const lessonInfo = lesson && infos[lesson.id];
+  const lessonSections = lessonInfo?.course ? sectionsOf(lessonInfo) : [];
+  const lessonSection = lessonSections.find(sc => sc.id === lesson?.section);
+  const nextSection = lessonSection && lessonSections[lessonSections.indexOf(lessonSection) + 1];
 
   return (
     <I18nContext.Provider value={i18n}>
-      {playing && playing.song ? (
-        <Practice
-          key={`${play.step?.id ?? 'free'}-${play.n}`}
-          song={playing.song} course={playing.course} step={play.step}
+      {lesson && lessonInfo?.song && lessonSection ? (
+        <Lesson
+          key={`${lesson.id}-${lesson.section}-${lesson.n}`}
+          info={lessonInfo} section={lessonSection} startAt={lesson.step}
           settings={settings} update={update} links={links}
-          onExit={exitPractice}
-          onStep={step => { refreshSong(play.id); setPlay(p => p && { ...p, step, n: p.n + 1 }); }}
+          onExit={() => setLesson(null)}
+          onNextSection={nextSection ? () => setLesson(l => l && { ...l, section: nextSection.id, step: undefined, n: l.n + 1 }) : undefined}
+          onRecorded={() => refreshSong(lesson.id)}
+          onSettings={() => setSheet('settings')}
+        />
+      ) : open?.song ? (
+        <SongScreen
+          key={open.entry.id}
+          info={open} settings={settings} links={links}
+          onExit={() => setOpenId(null)}
+          onTeach={section => { unlockAudio(); ensureInput(); setLesson({ id: open.entry.id, section: section.id, n: 0 }); }}
           onSettings={() => setSheet('settings')}
         />
       ) : (
@@ -124,7 +137,7 @@ export default function App() {
           <nav className="rail" aria-label="Main">
             <img className="rail-logo" src="/icons/icon.svg" alt="Hugo's Piano" width={36} height={36} />
             {TABS.map(([id, label, Icon]) => (
-              <button key={id} className={`rail-btn ${tab === id && !open ? 'on' : ''}`} aria-current={tab === id && !open ? 'page' : undefined}
+              <button key={id} className={`rail-btn ${tab === id ? 'on' : ''}`} aria-current={tab === id ? 'page' : undefined}
                 onClick={() => { setTab(id); setOpenId(null); }}>
                 <Icon size={22} /><span>{label}</span>
               </button>
@@ -132,27 +145,17 @@ export default function App() {
             <button className="rail-btn settings" onClick={() => setSheet('settings')}><IconGear size={22} /><span>Settings</span></button>
           </nav>
           <main className="content">
-            {open && open.song ? (
-              <SongPage
-                key={open.entry.id}
-                info={open}
-                onBack={() => setOpenId(null)}
-                onStep={step => startStep(open, step)}
-                onFree={() => startStep(open)}
-                onRename={open.entry.builtIn ? undefined : async (title, composer) => { await renameSong(open.entry, title, composer); await refreshCatalog(); }}
-                onDelete={open.entry.builtIn ? undefined : async () => { await removeSong(open.entry); setOpenId(null); await refreshCatalog(); }}
-              />
-            ) : tab === 'home' ? (
+            {tab === 'home' ? (
               <Home
                 settings={settings} ready={ready} entries={entries} infos={infos} links={links}
                 onSetup={kind => { update({ input: kind, setupDone: true }); connectInput(kind); }}
                 onSkipSetup={() => update({ setupDone: true })}
-                onOpen={openSong}
+                onOpen={openSheet}
                 onPlay={startStep}
                 onBrowse={() => setTab('songs')}
               />
             ) : tab === 'songs' ? (
-              <Songs infos={infos} entries={entries} ready={ready} onOpen={openSong} onAdd={() => pickFile()} />
+              <Songs infos={infos} entries={entries} ready={ready} onOpen={openSheet} onAdd={() => pickFile()} onEdit={setEditing} />
             ) : (
               <ProgressView settings={settings} update={update} entries={entries} infos={infos} />
             )}
@@ -164,11 +167,19 @@ export default function App() {
         ref={fileRef} type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden
         onChange={e => { const f = e.target.files?.[0]; if (f) setAdding({ file: f, slot: slotRef.current }); e.target.value = ''; }}
       />
+      {editing && (
+        <EditSong
+          entry={editing}
+          onClose={() => setEditing(null)}
+          onSave={async (title, composer) => { await renameSong(editing, title, composer); setEditing(null); await refreshCatalog(); }}
+          onDelete={async () => { await removeSong(editing); setEditing(null); await refreshCatalog(); }}
+        />
+      )}
       {adding && (
         <AddSong
           file={adding.file} slot={adding.slot}
           onClose={() => setAdding(null)}
-          onDone={async entry => { setAdding(null); await refreshCatalog(); setTab('songs'); setOpenId(entry.id); setNotice({ text: `“${entry.title}” is ready to learn.` }); }}
+          onDone={async entry => { setAdding(null); await refreshCatalog(); setTab('songs'); setNotice({ text: `“${entry.title}” is ready: open it to play or learn it.` }); }}
         />
       )}
       {sheet === 'settings' && (

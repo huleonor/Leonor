@@ -5,7 +5,7 @@ import type { LinkState, Source } from '../lib/input';
 import { onStats, streak, today } from '../lib/stats';
 import type { Settings, SongEntry } from '../lib/types';
 import { IconBluetooth, IconFlame, IconKeys, IconMic, IconPlay, IconStar } from './Icons';
-import { stepName, Stars } from './Practice';
+import { stepName, Stars } from './ui';
 import { byLine, Cover, SongCard } from './Songs';
 
 export function useDaily() {

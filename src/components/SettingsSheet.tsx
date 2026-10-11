@@ -4,7 +4,7 @@ import { isNative, nativeMidiStatus, support, type LinkState, type Source } from
 import { BUILT_IN, GENERIC_COVER } from '../lib/library';
 import type { FingerMode, Settings } from '../lib/types';
 import { IconBluetooth, IconClose, IconKeys, IconMic } from './Icons';
-import { Segmented } from './Practice';
+import { Segmented } from './ui';
 
 const SOURCE_URL = 'https://hugos-piano.vercel.app/sidestore.json';
 const INPUTS: [Source, string, (p: { size?: number }) => React.ReactElement][] = [

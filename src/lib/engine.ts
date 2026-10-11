@@ -11,6 +11,8 @@ export interface EngineOptions {
   accompaniment: boolean;
   /** Microphone: match by pitch class (octave slips are forgiven), half of a chord counts. */
   lenient: boolean;
+  /** Score following: no clock, the cursor sits on the next notes until he plays them. */
+  follow?: boolean;
 }
 
 interface Group { time: number; ids: number[]; midis: number[]; }
@@ -187,7 +189,7 @@ export class Engine {
 
   /** Wait mode: stuck for a while, or after a wrong note, the app shows which keys to press. */
   hintVisible() {
-    return this.playing && this.waiting && this.countdown === 0 && this.opts.wait && !this.opts.listen
+    return this.playing && this.waiting && this.countdown === 0 && (this.opts.wait || !!this.opts.follow) && !this.opts.listen
       && (this.wrongInWait > 0 || performance.now() - this.waitSince > 3500);
   }
 
@@ -211,6 +213,17 @@ export class Engine {
     }
     let next = this.time + dt * this.opts.speed;
     const changed: number[] = [];
+
+    if (this.opts.follow && !this.opts.listen) {
+      // The cursor jumps to the next notes and stays there until they are played.
+      const g = this.groups[this.gi];
+      if (!g) { this.finish(); return; }
+      this.time = g.time;
+      if (!this.waiting) { this.waiting = true; this.waitSince = now; this.wrongInWait = 0; this.emit({ type: 'state' }); }
+      setExpected(this.expected());
+      if (this.segment && this.time >= this.segment.to) this.finish();
+      return;
+    }
 
     if (this.opts.wait && !this.opts.listen) {
       let blocked = false;
@@ -322,7 +335,7 @@ export class Engine {
       (g && g.midis.some(m => this.matches(midi, m))) || (nextG && nextG.midis.some(m => this.matches(midi, m)));
     // In a strike the mic heard several notes: a stray overtone next to a right note is not a mistake.
     const strikeOk = e.chord ? e.chord.some(relevantNote) : false;
-    if (this.opts.wait) {
+    if (this.opts.wait || this.opts.follow) {
       if (!relevantNote(e.midi)) { if (!strikeOk) this.registerWrong(e.midi); return; }
       if (g && this.waiting && this.trySatisfy(g, now)) {
         this.markHit(g, changed);
