@@ -87,11 +87,14 @@ export class Engine {
     const notes = this.song.notes;
     for (const n of notes) this.user[n.id] = !listen && (hands === 'both' || hands === n.hand) && this.inSegment(n.time) ? 1 : 0;
     this.groups = [];
+    // Notes written as one chord on the score (same sixteenth) are played as one chord.
+    const q = (ticks: number) => Math.round(ticks / (this.song.ppq / 4));
+    let lastQ = -1;
     for (const n of notes) {
       if (!this.user[n.id]) continue;
       const g = this.groups[this.groups.length - 1];
-      if (g && n.time - g.time < CHORD_WINDOW) { g.ids.push(n.id); g.midis.push(n.midi); }
-      else this.groups.push({ time: n.time, ids: [n.id], midis: [n.midi] });
+      if (g && (n.time - g.time < CHORD_WINDOW || q(n.ticks) === lastQ)) { g.ids.push(n.id); g.midis.push(n.midi); lastQ = q(n.ticks); }
+      else { this.groups.push({ time: n.time, ids: [n.id], midis: [n.midi] }); lastQ = q(n.ticks); }
     }
     this.seek(this.time, false);
   }

@@ -72,6 +72,8 @@ export interface ScoreOptions {
   to?: number;
   title?: string;
   composer?: string;
+  /** Section labels to box above the bar where each section starts (1-based bars). */
+  sections?: { bar: number; label: string }[];
 }
 
 export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' | 'some' | 'all' = 'off', opts: ScoreOptions = {}): AbcScore {
@@ -170,6 +172,7 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
   const rClef = rAvg && rAvg < 55 ? 'bass' : 'treble';
 
   let abc = `X:1\n${opts.title ? `T:${opts.title.replace(/\n/g, ' ')}\n` : ''}${opts.composer ? `C:${opts.composer.replace(/\n/g, ' ')}\n` : ''}M:${num}/${den}\nL:1/16\n`;
+  if (opts.sections?.length) abc += '%%partsbox true\n';
   if (hands.length === 2) abc += '%%score {R | L}\n';
   if (hands.includes('R')) abc += `V:R clef=${rClef}\n`;
   if (hands.includes('L')) abc += `V:L clef=${lClef}\n`;
@@ -182,6 +185,8 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
     for (const hand of hands) {
       abc += `[V:${hand}] `;
       for (let m = s; m < end; m++) {
+        const part = hand === hands[0] ? opts.sections?.find(sc => sc.bar === m + 1) : undefined;
+        if (part) abc += `[P:${part.label.replace(/[\]\n]/g, ' ')}]`;
         const base = abc.length;
         for (const { rel, tok } of toks[hand][m]) tokens.push({ ...tok, start: base + rel });
         abc += measures[hand][m] + (m === totalMeasures - 1 ? ' |]' : ' | ');

@@ -634,10 +634,10 @@ p { margin: 0; }
   pointer-events: none; will-change: transform;
 }
 .sheet-status {
-  position: absolute; left: 50%; bottom: calc(14px + var(--safe-b)); transform: translateX(-50%); z-index: 2;
+  position: absolute; right: calc(14px + var(--safe-r)); bottom: calc(14px + var(--safe-b)); z-index: 2;
   display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 16px; border-radius: 18px;
   background: rgba(20, 17, 43, .94); color: var(--ink); box-shadow: 0 10px 30px rgba(20, 17, 43, .3);
-  max-width: calc(100% - 24px);
+  max-width: min(520px, calc(100% - 24px));
 }
 .sheet-status .btn { min-height: 42px; }
 .status-text { font-weight: 700; font-size: 14px; color: var(--ink-2); padding-right: 6px; }
@@ -671,10 +671,11 @@ p { margin: 0; }
 }
 .lesson-arrow:disabled { opacity: .4; }
 .lesson-count {
-  position: relative; width: 190px; height: 46px; border-radius: 12px; overflow: hidden;
-  background: #6b6182; color: #fff; display: flex; align-items: center; justify-content: flex-end; padding: 0 14px;
+  position: relative; width: 250px; height: 46px; border-radius: 12px; overflow: hidden;
+  background: #6b6182; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 14px;
   font-size: 19px; font-weight: 900;
 }
+.lesson-count small { position: relative; font-size: 13px; font-weight: 800; color: #ece6ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lesson-count i { position: absolute; inset: 0 auto 0 0; background: var(--violet); transition: width .3s var(--ease); }
 .lesson-count span { position: relative; }
 .lesson-stage { position: relative; min-height: 0; overflow: hidden; }
@@ -694,10 +695,8 @@ p { margin: 0; }
   position: absolute; inset: 0 10px 6px; z-index: 3; border-radius: 0 0 8px 8px;
   display: flex; align-items: center; gap: 10px; justify-content: center; background: rgba(240, 238, 233, .82);
 }
-.lesson-noinput {
-  position: absolute; left: 50%; top: -34px; transform: translateX(-50%); z-index: 3; white-space: nowrap;
-  padding: 4px 12px; border-radius: 10px; background: rgba(255, 255, 255, .9); color: #6b6585; font-weight: 700; font-size: 13.5px;
-}
+.lesson-say .lesson-noinput { font-size: 13.5px; font-weight: 700; color: #6b6585; }
+.lesson-noinput .link { font-size: 13.5px; min-height: 0; }
 .lesson-keys { position: relative; padding: 0 10px 6px; min-height: 0; }
 .lesson .key.next, .lesson .key.b.next { background: var(--teal); box-shadow: none; }
 .lesson .key.next .kname { color: #04363b; }
@@ -723,3 +722,9 @@ p { margin: 0; }
   .lesson-bar { padding-top: 8px; }
   .lesson-pause { width: 48px; height: 48px; }
 }
+
+/* Section labels set into the score, like Simply Piano's boxed "Intro" */
+.score .abcjs-part text { fill: var(--violet) !important; font-family: var(--font) !important; font-weight: 800 !important; font-size: 17px; }
+.score .abcjs-part rect, .score .abcjs-part path { fill: none !important; stroke: var(--violet) !important; stroke-width: 2px; rx: 7px; ry: 7px; }
+.section.next { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--go); }
+.result-line { color: var(--ink-2); font-weight: 700; font-size: 14.5px; }

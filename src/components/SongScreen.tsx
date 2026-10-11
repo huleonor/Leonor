@@ -22,7 +22,7 @@ type Mode = 'play' | 'listen';
 type Scroll = 'magic' | 'auto';
 
 /** A section of the song as the Teach me strip shows it. */
-export interface Section { id: string; title: string; bars: string; steps: CourseStep[]; learnt: boolean; done: number; }
+export interface Section { id: string; title: string; bars: string; from: number; steps: CourseStep[]; learnt: boolean; done: number; }
 
 export function sectionsOf(info: SongInfo): Section[] {
   const course = info.course!;
@@ -31,13 +31,13 @@ export function sectionsOf(info: SongInfo): Section[] {
     if (p.sameAs) continue;
     const steps = course.steps.filter(s => s.part === p.n);
     out.push({
-      id: `p${p.n}`, title: `Part ${p.n}`, bars: `Bars ${p.from}–${p.to}`, steps,
+      id: `p${p.n}`, title: `Part ${p.n}`, bars: `Bars ${p.from}–${p.to}`, from: p.from, steps,
       learnt: partLearnt(course, info.prog, p.n), done: steps.filter(s => (info.prog[s.id]?.stars ?? 0) > 0).length,
     });
   }
   const whole = course.steps.filter(s => s.kind === 'song');
   out.push({
-    id: 'song', title: 'Whole song', bars: 'Start to finish', steps: whole,
+    id: 'song', title: 'Whole song', bars: 'Start to finish', from: 0, steps: whole,
     learnt: (info.prog.song?.stars ?? 0) > 0, done: whole.filter(s => (info.prog[s.id]?.stars ?? 0) > 0).length,
   });
   return out;
@@ -73,6 +73,10 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
     speed: 1, wait: false, follow: true, hands: 'both', listen: false, accompaniment: false, lenient: settings.input === 'mic',
   }), [song]); // eslint-disable-line react-hooks/exhaustive-deps
   const sections = useMemo(() => sectionsOf(info), [info]);
+  // The parts, labelled on the score where each one begins (a repeat is labelled with the part it repeats).
+  const labels = useMemo(() => info.course!.parts.map(p => ({ bar: p.from, label: p.sameAs ? `Part ${p.sameAs}` : `Part ${p.n}` })), [info.course]);
+  // The section he should open next: the first one not learnt yet.
+  const nextSection = sections.find(s => !s.learnt);
   const [lo, hi] = useMemo(() => pickRange(song.range[0], song.range[1]), [song]);
 
   useEffect(() => { setMicRange(song.range[0], song.range[1]); }, [song]);
@@ -146,7 +150,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
       {teach && (
         <nav className="sections" aria-label="Sections to learn">
           {sections.map(s => (
-            <button key={s.id} className={`section ${s.learnt ? 'learnt' : ''}`} onClick={() => onTeach(s)}>
+            <button key={s.id} className={`section ${s.learnt ? 'learnt' : ''} ${s === nextSection ? 'next' : ''}`} onClick={() => onTeach(s)}>
               <span className="section-icon">{s.learnt ? <IconCheck size={18} /> : <IconCap size={20} />}</span>
               <span className="section-text">
                 <b>{s.title}</b>
@@ -158,7 +162,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
       )}
 
       <main className="sheet">
-        <ScoreView engine={engine} fingers={settings.fingers} feedback={feedback} follow title={song.entry.title} composer={byLine(song.entry) || undefined} onSeek={seek} />
+        <ScoreView engine={engine} fingers={settings.fingers} feedback={feedback} follow title={song.entry.title} composer={byLine(song.entry) || undefined} sections={labels} onSeek={seek} />
 
         {!result && (mode === 'listen' || tempoMode || atStart || !inputOn) && (
           <div className="sheet-status" role="status">
@@ -188,11 +192,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
         {result && (
           <div className="sheet-result card" role="dialog" aria-labelledby="sheet-result-title">
             <h2 id="sheet-result-title">{result.accuracy >= 0.95 ? 'Beautifully played' : result.accuracy >= 0.7 ? 'You played it through' : 'Keep at it'}</h2>
-            <dl className="result-stats">
-              <div><dt>Accuracy</dt><dd>{Math.round(result.accuracy * 100)}%</dd></div>
-              <div><dt>Notes</dt><dd>{result.hit}/{result.total}</dd></div>
-              <div><dt>Wrong</dt><dd>{result.wrong}</dd></div>
-            </dl>
+            <p className="result-line">{result.hit} of {result.total} notes · {result.wrong} wrong · {Math.round(result.accuracy * 100)}%</p>
             <div className="actions">
               <button className="btn go" onClick={restart}><IconRestart size={16} />Play again</button>
               <button className="btn" onClick={() => { setResult(null); setTeach(true); }}><IconCap size={16} />Teach me</button>

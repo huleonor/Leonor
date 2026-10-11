@@ -85,15 +85,16 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const engine = useMemo(() => new Engine(song, {
     speed: step.speed, wait: step.wait, hands: step.hands, listen: false,
     accompaniment: settings.accompaniment, lenient: settings.input === 'mic',
-  }), [song, step]); // eslint-disable-line react-hooks/exhaustive-deps
+  }), [song, step.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // (Keyed by id: refreshed progress hands down new step objects for the same step.)
 
-  useEffect(() => { engine.setSegment(barsToTime(engine.measureTimes, step.from, step.to)); bump(); }, [engine, step]);
+  useEffect(() => { engine.setSegment(barsToTime(engine.measureTimes, step.from, step.to)); bump(); }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
   // Wait steps start by themselves, like Simply Piano: the run-up plays, then the music waits for him.
   useEffect(() => {
     if (!step.wait) return;
     const id = window.setTimeout(() => { if (!engine.started) { unlockAudio(); engine.play(0); bump(); } }, 700);
     return () => window.clearTimeout(id);
-  }, [engine, step]);
+  }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setMicRange(song.range[0], song.range[1]); loadPiano().catch(() => {}); }, [song]);
   useEffect(() => { if (import.meta.env.DEV) (window as unknown as { __engine: Engine }).__engine = engine; }, [engine]);
   useEffect(() => { engine.setOptions({ speed, listen, accompaniment: settings.accompaniment, lenient: settings.input === 'mic' }); }, [engine, speed, listen, settings.accompaniment, settings.input]);
@@ -115,21 +116,23 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
     });
     const offNote = onNote(e => engine.input(e));
     return () => { off(); offNote(); engine.destroy(); };
-  }, [engine, song, step]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The instruction line says what to play now, and what he played instead.
   useEffect(() => {
     let raf = 0, last = '';
     const frame = () => {
       let next: { text: string; wrong?: string } = { text: intro(step) };
-      if (engine.opts.listen) next = { text: 'Listen to this part, then play it.' };
-      else if (engine.started && engine.waiting && engine.countdown === 0) {
+      const target = engine.groups[engine.gi];
+      if (engine.opts.listen) next = { text: 'Listen to this part, then play it' };
+      else if (target && step.wait && (engine.waiting || engine.stats().hit === 0 || engine.countdown > 0)) {
         const want = engine.waitingFor();
+        if (!want.length) { raf = requestAnimationFrame(frame); return; }
         const f = want.length === 1 && want[0].finger ? ` with finger ${want[0].finger}` : '';
         const wrong = engine.wrongInWait > 0 && performance.now() - engine.lastWrong.at < 2500 && !want.some(w => w.midi === engine.lastWrong.midi)
           ? `You played ${noteName(engine.lastWrong.midi, settings.naming, true)}` : undefined;
         next = { text: `Play ${want.map(w => noteName(w.midi, settings.naming, true)).join(' + ')}${f}`, wrong };
-      } else if (engine.started && engine.playing && engine.stats().hit > 0) next = { text: step.wait ? 'Keep going' : 'Keep playing in tempo' };
+      } else if (engine.started && engine.playing) next = { text: step.wait ? 'Keep going' : 'Keep playing in tempo' };
       const key = next.text + '|' + (next.wrong ?? '');
       if (key !== last) { last = key; setSay(next); }
       raf = requestAnimationFrame(frame);
@@ -165,13 +168,14 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
       <header className="lesson-bar">
         <button className="lesson-pause" onClick={engine.playing ? pause : () => setPaused(true)} aria-label="Pause"><IconPause size={26} /></button>
         <div className="lesson-say" role="status" aria-live="polite">
-          <small>{section.title} · {stepLabel(step)}{!step.wait ? ` · ${formatSpeed(speed)}` : ''}</small>
           <p>{say.wrong ? <><em>{say.wrong}.</em> {say.text}</> : say.text}</p>
+          {!inputOn && <p className="lesson-noinput">No piano connected. <button className="link" onClick={onSettings}>Connect</button></p>}
         </div>
         <div className="lesson-nav">
           <button className="lesson-arrow" onClick={onPrev} disabled={!onPrev} aria-label="Previous step"><IconArrowLeft size={24} /></button>
-          <div className="lesson-count" aria-label={`${stats.hit} of ${stats.total} notes`}>
+          <div className="lesson-count" aria-label={`${section.title}, ${stepLabel(step)}: ${stats.hit} of ${stats.total} notes`}>
             <i style={{ width: `${stats.total ? (stats.hit / stats.total) * 100 : 0}%` }} />
+            <small>{stepLabel(step)}{!step.wait ? ` ${formatSpeed(speed)}` : ''}</small>
             <span>{stats.hit}/{stats.total}</span>
           </div>
           <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label="Next step"><IconArrowRight size={24} /></button>
@@ -193,7 +197,6 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
             <button className="btn" onClick={listenFirst}><IconHeadphones size={18} />Listen first</button>
           </div>
         )}
-        {!inputOn && !result && <p className="lesson-noinput">No piano connected. <button className="link" onClick={onSettings}>Connect</button></p>}
       </footer>
 
       {paused && !result && (
@@ -224,11 +227,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
               ))}
             </div>
             <h2 id="lesson-result-title">{HEADLINE[result.stars]}</h2>
-            <dl className="result-stats">
-              <div><dt>Accuracy</dt><dd>{Math.round(result.accuracy * 100)}%</dd></div>
-              <div><dt>Notes</dt><dd>{result.hit}/{result.total}</dd></div>
-              <div><dt>Wrong</dt><dd>{result.wrong}</dd></div>
-            </dl>
+            <p className="result-line">{section.title} · {stepLabel(step)}: {result.hit} of {result.total} notes · {result.wrong} wrong · {Math.round(result.accuracy * 100)}%</p>
             {result.streakUp !== undefined && <p className="streak-up"><IconFlame size={18} />{result.streakUp === 1 ? 'Streak started' : `${result.streakUp}-day streak`}</p>}
             {result.stars === 0 && <p className="fine">You need 70% for a star. {step.wait ? 'Take it one note at a time.' : 'Try it slower: pause and pick a speed.'}</p>}
             <div className="actions">

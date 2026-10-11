@@ -12,12 +12,14 @@ interface Props {
   follow: boolean;
   title: string;
   composer?: string;
+  /** Boxed labels where each section starts, matching the Teach me strip. */
+  sections?: { bar: number; label: string }[];
   /** Tapped a note while stopped: start from there. */
   onSeek: (time: number) => void;
 }
 
 /** The whole song as printed sheet music, lines down the page, with a cursor that follows the music. */
-export function ScoreView({ engine, fingers, feedback, follow, title, composer, onSeek }: Props) {
+export function ScoreView({ engine, fingers, feedback, follow, title, composer, sections, onSeek }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -45,7 +47,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
     const scale = pageW < 640 ? 0.9 : 1.05;
     const perBar = Math.max(150, density(song) * 26 + 50) * scale;
     const mpl = Math.max(1, Math.min(5, Math.floor(pageW / perBar)));
-    const score = buildScore(song, mpl, fingers, { title, composer });
+    const score = buildScore(song, mpl, fingers, { title, composer, sections });
     const eg = engrave(host, paper, engine, score, {
       staffwidth: pageW / scale - 16,
       scale,
@@ -80,7 +82,7 @@ export function ScoreView({ engine, fingers, feedback, follow, title, composer, 
     };
     raf = requestAnimationFrame(frame);
     return () => { cancelAnimationFrame(raf); off(); repaint.current = () => {}; };
-  }, [engine, width, fingers, title, composer]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [engine, width, fingers, title, composer, sections]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="score" ref={hostRef}>

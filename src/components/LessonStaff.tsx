@@ -59,9 +59,9 @@ export function LessonStaff({ engine, from, to, feedback }: Props) {
     });
     repaintNext();
 
-    // Vertically centre the line in the stage.
+    // Centre the line in the stage, but keep it close under the header on tall screens.
     const svgH = paper.getBoundingClientRect().height;
-    line.style.top = `${Math.max(0, (size.h - svgH) / 2 + 14)}px`;
+    line.style.top = `${Math.max(0, Math.min((size.h - svgH) / 2, 80)) + 14}px`;
 
     let raf = 0, offset = -1;
     const anchor = size.w * 0.3;
