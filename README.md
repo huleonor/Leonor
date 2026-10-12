@@ -15,7 +15,14 @@ The app works like Simply Piano, with your own songs.
   - **Listen**: the app plays the song while the cursor moves.
   - **Teach me**: the song is split into sections (Part 1, Part 2, …, Whole song). A section opens as a lesson: one engraved line with finger numbers, the next notes in teal, a finger bubble, the keys to press lit on the keyboard and an "n/N notes" counter. The arrows move between its steps: right hand, left hand, hands together, in tempo. Each step gives 1 star from 70% right, 2 from 85%, 3 from 95%.
   - **Feedback** switches the green/red colouring on and off. The mini keyboard under the tool bar lights the keys to play in yellow. Tap a note while stopped to start from there.
-- **Progress**: streak, the last seven days, minutes per day and the daily goal.
+- **Learn**: the main course, a path of units (Middle C right hand, Bass clef left hand, Hands together), each lesson unlocking the next and each unit ending in a song. On top, **Today's session** (also on Home): about ten minutes made fresh each day, a warm-up on your weakest skill, the next lesson on the path, and a short review.
+- **The coach** keeps every lesson at the right difficulty, aiming for about 85% right first time. It learns from every chord you play (how often it is right first time, how long you hesitate, which skill it exercises) and turns three knobs one step at a time, after two runs agree: speed, how soon the keys light up when you are stuck, and how many finger numbers show. When it changes something it says why ("A little slower for now: bass clef notes were tripping you up").
+- **Placement test**: on Learn, one short piece per unit; each passed with 2 stars skips that unit. Locked units also have **Test out**. The course has seven units: Middle C right hand, bass clef left hand, hands together, eighth notes, left-hand chords, G major (F sharp), dotted rhythms and 3/4.
+- **Coming back every day**: XP for every step (more for more stars, a bonus for a perfect one, 20 for finishing today's session), shown top right; the daily streak with **streak freezes** (seven days in a row earn one, two at most; a missed day is covered automatically); a celebration when the daily goal is reached, the session is done or a freeze is earned or used; the session's review is **spaced** (a skill comes due again after 1, 2, 4 or 7 days, by its level); an optional **practice reminder** in Settings (real notifications in the iPhone app, scheduled a week ahead and skipped once the goal is met; on the web only while the app is open).
+- **Plans**: Free has units 1 and 2, the daily session, the coach and skill map, 3 skill practices a day and 3 songs of your own. **Premium** (9.99 a month, 59.99 a year with a free first week, 89.99 a year for a family of up to 6; priced per region: euros, dollars, pounds, reais) opens all units, unlimited practice and unlimited songs. No store is connected yet: buying runs in test mode and unlocks Premium on this device only, as the paywall says. Settings shows your plan.
+- **AI coach** (Premium, on Learn): a plan for the next seven days written by Claude from your skill map, recent runs, week and place on the course (what changed and why, the week's focus, a skill and minutes for each day, a tip), with a Practise button for today; and **Ask your coach**, a chat that sees the same picture of you and answers in your language. The engine on the device still sets the difficulty note by note; the coach explains, plans and encourages. Offline, the plan is made on the device.
+- **Look**: Duolingo-style around the piano (white pages, green 3D buttons, unit banners and a winding path, Fredoka and Nunito, confetti and bouncing celebrations); Simply Piano at the piano. See DESIGN.md.
+- **Progress**: this week against last week (minutes, XP, steps, biggest skill gains); your skill map (treble and bass clef, ledger lines, sharps and flats, beat, eighths, dotted rhythms, hands together, chords, leaps), each with its level, how it moved since about a week ago, and a Practise button that writes an exercise for that skill at your level; what the coach has set; streak, the last seven days, minutes per day and the daily goal.
 - **Settings**: your piano (USB cable, Bluetooth, microphone) with a test screen, note names (C D E or Dó Ré Mi), finger numbers, hearing the keys you play, and the app playing the other hand.
 
 Inputs:
@@ -40,8 +47,11 @@ npm run dev
 ## Deploy
 
 ```bash
+vercel env add ANTHROPIC_API_KEY production   # once: turns on the AI coach
 vercel deploy --prod
 ```
+
+The AI coach runs as a Vercel Function (`api/coach.ts`, Claude Opus 5.5 with automatic refusal fallback). The key lives only in the Vercel project; the web app calls `/api/coach` and the iPhone app calls `https://hugos-piano.vercel.app/api/coach`. Without a key the coach answers "not switched on yet" and the weekly plan is written on the device. Locally, `npm run dev` serves `api/` too; `COACH_MOCK=1 npm run dev` returns canned answers without a key. Before a public launch, put the endpoint behind sign-in or a purchase check so only Premium users can call it.
 
 The bundled Hans Zimmer pieces are fan transcriptions for personal practice (bitmidi.com, midisfree.com). Keep the link private.
 

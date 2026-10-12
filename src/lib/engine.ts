@@ -3,6 +3,8 @@ import { markAppPlayed, setExpected, type NoteEvent } from './input';
 import { AUTO, HIT, MISS, PENDING, type HandsChoice, type Song } from './types';
 
 export interface EngineOptions {
+  /** When the keys to press light up while he waits: after this many wrong notes, or this long stuck. */
+  hintAfter?: { wrongs: number; ms: number };
   speed: number;
   wait: boolean;
   hands: HandsChoice;
@@ -195,8 +197,8 @@ export class Engine {
   /** Wait mode: stuck for a while, or after a wrong note, the app shows which keys to press. */
   hintVisible() {
     return this.playing && this.waiting && this.countdown === 0 && (this.opts.wait || !!this.opts.follow) && !this.opts.listen
-      // Like Simply Piano: help only after two wrong notes, or a long stall.
-      && (this.wrongInWait >= 2 || performance.now() - this.waitSince > 5000);
+      // Like Simply Piano: help only after a few wrong notes, or a long stall (the coach sets how many).
+      && (this.wrongInWait >= (this.opts.hintAfter?.wrongs ?? 2) || performance.now() - this.waitSince > (this.opts.hintAfter?.ms ?? 5000));
   }
 
   /** The group the player is stuck on, with the hand of each note (for the hint keyboard). */

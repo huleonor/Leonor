@@ -1,9 +1,11 @@
+import { cancelTest, usePlan } from '../lib/billing';
 import { useEffect, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { isNative, nativeMidiStatus, support, type LinkState, type Source } from '../lib/input';
 import type { FingerMode, Settings } from '../lib/types';
 import { IconBluetooth, IconClose, IconKeys, IconMic } from './Icons';
 import { Segmented } from './ui';
+import { allowWebReminders } from '../lib/reminders';
 
 const SOURCE_URL = 'https://hugos-piano.vercel.app/sidestore.json';
 const INPUTS: [Source, string, (p: { size?: number }) => React.ReactElement][] = [
@@ -26,9 +28,11 @@ interface Props {
   connectInput: (kind: Source) => void;
   onCheck: () => void;
   onClose: () => void;
+  onPlan: () => void;
 }
 
-export function SettingsSheet({ settings, update, links, connectInput, onCheck, onClose }: Props) {
+export function SettingsSheet({ settings, update, links, connectInput, onCheck, onClose, onPlan }: Props) {
+  const plan = usePlan();
   const { t } = useI18n();
   const [nativeApp, setNativeApp] = useState<{ version: string; build: number } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -51,6 +55,17 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
           <h2 id="settings-title">Settings</h2>
           <button className="icon-btn ghost" onClick={onClose} aria-label="Close"><IconClose /></button>
         </header>
+
+        <section className="set-group" aria-labelledby="plan-title">
+          <h3 id="plan-title">Your plan</h3>
+          <div className="toggle-row">
+            <span>
+              <b>{plan ? 'Premium' : 'Free'}{plan?.test ? ' (test mode)' : ''}</b>
+              <small>{plan ? `${plan.trial ? 'Free week' : 'Active'} until ${new Date(plan.until).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}` : 'Units 1 and 2, the daily session, the coach, 3 songs of your own'}</small>
+            </span>
+            {plan ? <button className="btn small" onClick={cancelTest}>End test</button> : <button className="btn small go" onClick={onPlan}>Get Premium</button>}
+          </div>
+        </section>
 
         <section className="set-group" aria-labelledby="piano-title">
           <h3 id="piano-title">Your piano</h3>
@@ -81,6 +96,10 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
           <Segmented<FingerMode> label="Finger numbers" value={settings.fingers} onChange={v => update({ fingers: v })} options={[['off', 'Off'], ['some', 'Some'], ['all', 'All']]} />
           <p className="fine">1 is the thumb, 5 the little finger. Some shows them only where the hand moves.</p>
           <Segmented label="Daily goal, minutes" value={settings.dailyGoal} onChange={v => update({ dailyGoal: v })} options={[5, 10, 15, 20, 30].map(v => [v, `${v}`] as [number, string])} />
+          <Segmented label="Practice reminder" value={settings.reminder ?? 'off'}
+            onChange={async v => { if (v !== 'off') await allowWebReminders(); update({ reminder: v === 'off' ? null : v }); }}
+            options={[['off', 'Off'], ['08:00', '8:00'], ['13:00', '13:00'], ['19:00', '19:00'], ['21:00', '21:00']]} />
+          {settings.reminder && !isNative && <p className="fine">On the web, the reminder shows only while the app is open. The iPhone app reminds you even when it is closed.</p>}
         </section>
 
         <section className="set-group">

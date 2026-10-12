@@ -75,3 +75,6 @@ export const IconArrowLeft = (p: P) => <svg {...base(p)}><path d="M16 10H4.5M9 5
 export const IconArrowRight = (p: P) => <svg {...base(p)}><path d="M4 10h11.5M11 5l5 5-5 5" strokeWidth={2.2} /></svg>;
 export const IconStop = (p: P) => <svg {...base(p)}><rect x="5" y="5" width="10" height="10" rx="2" fill="currentColor" /></svg>;
 export const IconLoop = (p: P) => <svg {...base(p)}><path d="M4 9.5V8a3 3 0 0 1 3-3h8.5M13 2.5 15.5 5 13 7.5" /><path d="M16 10.5V12a3 3 0 0 1-3 3H4.5M7 17.5 4.5 15 7 12.5" /></svg>;
+export const IconBolt = (p: P) => <svg {...base(p)}><path d="M11.5 2.5 4.5 11h5l-1 6.5 7-8.5h-5z" fill="currentColor" strokeWidth={1.2} /></svg>;
+export const IconSnow = (p: P) => <svg {...base(p)}><path d="M10 2.5v15M3.5 6.2l13 7.6M3.5 13.8l13-7.6M8 3.8l2 1.7 2-1.7M8 16.2l2-1.7 2 1.7" /></svg>;
+export const IconBell = (p: P) => <svg {...base(p)}><path d="M5 14V9a5 5 0 0 1 10 0v5l1.5 1.5h-13zM8.3 17.2a1.9 1.9 0 0 0 3.4 0" /></svg>;

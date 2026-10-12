@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { barsToTime } from '../lib/analysis';
 import { loadPiano, unlockAudio } from '../lib/audio';
+import { coachRun, settingsFor, type Change } from '../lib/adapt';
 import { recordStep, starsFor, type CourseStep } from '../lib/course';
+import { listenForSkills } from '../lib/skills';
+import { logRun } from '../lib/aicoach';
 import type { SongInfo } from '../lib/catalog';
 import { Engine } from '../lib/engine';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
 import { pickRange } from '../lib/keys';
 import { formatSpeed, noteName } from '../lib/names';
 import { usePracticeClock } from '../lib/practiceClock';
-import { streak } from '../lib/stats';
+import { addPractice, streak, xpForStars } from '../lib/stats';
 import type { FingerMode, Settings } from '../lib/types';
+import { Confetti, CountUp } from './Confetti';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
 import { IconArrowLeft, IconArrowRight, IconFlame, IconHeadphones, IconPause, IconPlay, IconRestart, IconStar } from './Icons';
@@ -41,6 +45,13 @@ interface Props {
   links: Record<Source, LinkState>;
   onExit: () => void;
   onNextSection?: () => void;
+  /** Words for the last step's "next" button and the way out (a song's lesson, or the daily session). */
+  nextLabel?: string;
+  exitLabel?: string;
+  /** Stars the last step needs before "next" shows (a test needs 2). Below it, `onStop` ends the run. */
+  minStars?: number;
+  onStop?: () => void;
+  stopLabel?: string;
   onSettings: () => void;
   onRecorded: () => void;
 }
@@ -73,20 +84,24 @@ interface RunProps extends Props {
   onAgain: () => void;
 }
 
-function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, onSettings, onRecorded, onPrev, onNext, onAgain }: RunProps) {
+function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onSettings, onRecorded, onPrev, onNext, onAgain }: RunProps) {
   const song = info.song!;
-  const [speed, setSpeed] = useState(step.speed);
+  // The coach sets this step's speed, how soon help comes and how many finger numbers show.
+  const coach = useMemo(() => settingsFor(step.speed, step.wait), [step.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const fingers: FingerMode = settings.fingers === 'off' ? 'off' : settings.fingers === 'some' && coach.fingers === 'all' ? 'some' : coach.fingers;
+  const [speed, setSpeed] = useState(coach.speed);
+  const [change, setChange] = useState<Change | null>(null);
   const [listen, setListen] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; stars: number; streakUp?: number } | null>(null);
+  const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; stars: number; xp: number; streakUp?: number } | null>(null);
   const [say, setSay] = useState<{ text: string; wrong?: string }>({ text: intro(step) });
   // A short step that went well moves on by itself, like Simply Piano; one that did not, starts again.
-  const [flash, setFlash] = useState<{ text: string; good: boolean } | null>(null);
+  const [flash, setFlash] = useState<{ text: string; good: boolean; xp?: number } | null>(null);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   usePracticeClock();
 
   const engine = useMemo(() => new Engine(song, {
-    speed: step.speed, wait: step.wait, hands: step.hands, listen: false,
+    speed: coach.speed, wait: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter,
     accompaniment: settings.accompaniment, lenient: settings.input === 'mic',
   }), [song, step.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // (Keyed by id: refreshed progress hands down new step objects for the same step.)
@@ -103,33 +118,42 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   useEffect(() => { engine.setOptions({ speed, listen, accompaniment: settings.accompaniment, lenient: settings.input === 'mic' }); }, [engine, speed, listen, settings.accompaniment, settings.input]);
 
   useEffect(() => {
+    // Every chord he plays teaches the app about his skills; a whole run also tunes the coach.
+    let skills = listenForSkills(engine);
     const off = engine.on(e => {
       if (e.type === 'state' || e.type === 'status') bump();
       if (e.type === 'end') {
-        if (engine.opts.listen) { setListen(false); engine.setOptions({ listen: false }); engine.restart(); engine.started = false; bump(); return; }
+        if (engine.opts.listen) { setListen(false); engine.setOptions({ listen: false }); engine.restart(); engine.started = false; skills.stop(); skills = listenForSkills(engine); bump(); return; }
+        const run = skills.stop();
+        const made = coachRun(run, !step.wait);
+        logRun(`${section.title} · ${stepLabel(step)}`, run, !step.wait);
+        setChange(made);
         const s = engine.stats();
         const stars = starsFor(s.accuracy);
         const before = streak();
         const quick = step.wait && !!onNext;
         if (quick && stars === 0) {
           setFlash({ text: 'Let’s try that again', good: false });
-          window.setTimeout(onAgain, 1300);
+          window.setTimeout(onAgain, made ? 2600 : 1300);
           return;
         }
         recordStep(song.entry.id, step.id, s.accuracy).then(() => {
+          // A finished step earns XP and counts for the streak.
+          const xp = xpForStars(stars);
+          if (stars > 0) addPractice(0, 1, xp);
           const after = streak();
           onRecorded();
           if (quick) {
-            setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true });
-            window.setTimeout(onNext!, 1100);
+            setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true, xp });
+            window.setTimeout(onNext!, made ? 2600 : 1100);
             return;
           }
-          setResult({ ...s, stars, streakUp: !before.today && after.today ? after.days : undefined });
+          setResult({ ...s, stars, xp, streakUp: !before.today && after.today ? after.days : undefined });
         });
       }
     });
     const offNote = onNote(e => engine.input(e));
-    return () => { off(); offNote(); engine.destroy(); };
+    return () => { off(); offNote(); skills.stop(); engine.destroy(); };
   }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The instruction line says what to play now, and what he played instead.
@@ -175,7 +199,8 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const resume = () => { unlockAudio(); setPaused(false); engine.play(1); bump(); };
   const listenFirst = () => { unlockAudio(); setPaused(false); setListen(true); engine.setOptions({ listen: true }); engine.restart(); engine.play(1); };
   const inputOn = settings.input !== 'none' && links[settings.input as Source]?.status === 'on';
-  const next = result && result.stars > 0 ? (onNext ? { label: `Next: ${stepLabel(section.steps[index + 1])}`, go: onNext } : onNextSection ? { label: 'Next section', go: onNextSection } : null) : null;
+  const next = result && result.stars >= minStars ? (onNext ? { label: `Next: ${stepLabel(section.steps[index + 1])}`, go: onNext } : onNextSection ? { label: nextLabel, go: onNextSection } : null)
+    : result && onStop && !onNext ? { label: stopLabel, go: onStop } : null;
 
   return (
     <div className={`lesson view-${settings.view}`}>
@@ -199,13 +224,18 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
       <main className="lesson-stage">
         {settings.view === 'notes'
           ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={0} onTap={pause} />
-          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
+          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback fingers={fingers} only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
         <Countdown engine={engine} />
-        {flash && <p className={`lesson-flash ${flash.good ? 'good' : ''}`} role="status">{flash.text}</p>}
+        {flash && (
+          <div className="lesson-flash-wrap" role="status">
+            <p className={`lesson-flash ${flash.good ? 'good' : ''}`}>{flash.text}{flash.xp ? <small className="xp-gain">+{flash.xp} XP</small> : null}</p>
+            {change && <p className="coach-note">{change.why}</p>}
+          </div>
+        )}
       </main>
 
       <footer className="lesson-keys">
-        <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} />
+        <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={fingers} />
         {!engine.started && !paused && !result && !listen && !step.wait && (
           <div className="lesson-start">
             <button className="btn go big" onClick={start}><IconPlay size={18} />Start in tempo</button>
@@ -228,7 +258,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
               <Segmented<FingerMode> label="Fingers" value={settings.fingers} onChange={v => update({ fingers: v })} options={[['off', 'Off'], ['some', 'Some'], ['all', 'All']]} />
               <Segmented label="View" value={settings.view} onChange={v => update({ view: v })} options={[['sheet', 'Score'], ['notes', 'Falling notes']]} />
             </div>
-            <button className="btn quiet" onClick={onExit}>Back to the song</button>
+            <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
           </section>
         </div>
       )}
@@ -236,19 +266,22 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
       {result && (
         <div className="veil">
           <section className="card result" aria-labelledby="lesson-result-title">
+            {result.stars >= 2 && <Confetti />}
             <div className="result-stars" aria-label={`${result.stars} of 3 stars`}>
               {[0, 1, 2].map(i => (
                 <span key={i} className={`big-star ${i < result.stars ? 'won' : ''}`} style={{ animationDelay: `${120 + i * 160}ms` }}><IconStar size={44} /></span>
               ))}
             </div>
             <h2 id="lesson-result-title">{HEADLINE[result.stars]}</h2>
+            {result.xp > 0 && <p className="xp-badge">+<CountUp to={result.xp} /> XP</p>}
             <p className="result-line">{section.title} · {stepLabel(step)}: {result.hit} of {result.total} notes · {result.wrong} wrong · {Math.round(result.accuracy * 100)}%</p>
             {result.streakUp !== undefined && <p className="streak-up"><IconFlame size={18} />{result.streakUp === 1 ? 'Streak started' : `${result.streakUp}-day streak`}</p>}
+            {change && <p className="coach-note inline">{change.why}</p>}
             {result.stars === 0 && <p className="fine">You need 70% for a star. {step.wait ? 'Take it one note at a time.' : 'Try it slower: pause and pick a speed.'}</p>}
             <div className="actions">
               {next && <button className="btn go big" onClick={next.go}><IconPlay size={18} />{next.label}</button>}
               <button className={`btn ${next ? '' : 'go big'}`} onClick={onAgain}><IconRestart size={18} />Try again</button>
-              <button className="btn quiet" onClick={onExit}>Back to the song</button>
+              <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
             </div>
           </section>
         </div>
