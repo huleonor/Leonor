@@ -1139,3 +1139,49 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing:
 }
 .upsell { margin-top: 26px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-color: #e8cfff; background: #faf3ff; }
 .upsell h2 { font-size: 19px; }
+
+/* ---------- AI coach ---------- */
+.card.coach-plan { margin-bottom: 16px; display: grid; gap: 14px; border-color: #e8cfff; }
+.card.coach-plan.locked { grid-template-columns: auto 1fr auto; align-items: center; background: #faf3ff; }
+.coach-mark { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; color: #fff; background: linear-gradient(135deg, var(--purple), var(--blue)); box-shadow: 0 4px 0 var(--purple-edge); flex: none; }
+.coach-mark.small { width: 34px; height: 34px; box-shadow: 0 3px 0 var(--purple-edge); }
+.coach-head { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }
+.coach-head h2, .coach-plan h2 { font-size: 20px; }
+.coach-focus { color: var(--purple-edge); font-weight: 900; font-size: 15px; }
+.coach-actions { display: flex; gap: 8px; align-items: center; }
+.coach-summary { font-size: 15px; line-height: 1.5; color: var(--ink); max-width: 75ch; }
+.plan-days { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.plan-days li { display: grid; gap: 2px; padding: 10px; border-radius: 14px; border: 2px solid var(--line); background: #fff; min-width: 0; }
+.plan-days li.today { border-color: var(--purple); background: #faf3ff; box-shadow: 0 3px 0 #e8cfff; }
+.plan-days li.past { opacity: .5; }
+.plan-days small { color: var(--ink-3); font-weight: 900; font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; }
+.plan-days li.today small { color: var(--purple-edge); }
+.plan-days b { font-size: 13.5px; font-weight: 800; color: var(--heading); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.plan-days span { color: var(--ink-2); font-size: 12.5px; font-weight: 700; }
+.plan-today { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; background: var(--bg-deep); }
+.plan-today p { max-width: 60ch; }
+.coach-tip b, .plan-today b { color: var(--heading); }
+.coach-chat { display: flex; flex-direction: column; gap: 12px; }
+.chat-title { display: flex; align-items: center; gap: 10px; }
+.chat-list { flex: 1; min-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 2px; }
+.chat-bubble { max-width: 88%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 1.45; white-space: pre-wrap; user-select: text; -webkit-user-select: text; animation: rise .25s var(--ease); }
+.chat-bubble.coach { align-self: flex-start; background: #fff; border: 2px solid var(--line); border-bottom-left-radius: 6px; }
+.chat-bubble.me { align-self: flex-end; background: var(--blue); color: #fff; border-bottom-right-radius: 6px; }
+.chat-bubble.typing { display: inline-flex; gap: 5px; padding: 14px; }
+.chat-bubble.typing i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-2); animation: typing 1s infinite; }
+.chat-bubble.typing i:nth-child(2) { animation-delay: .15s; }
+.chat-bubble.typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes typing { 50% { transform: translateY(-4px); background: var(--ink-3); } }
+.chat-error { color: var(--miss-edge); font-weight: 800; font-size: 14px; }
+.chat-suggest { display: flex; flex-wrap: wrap; gap: 8px; }
+.chat-suggest .chip { min-height: 40px; color: var(--blue); }
+.chat-input { display: flex; gap: 8px; }
+.chat-input input { flex: 1; min-width: 0; min-height: 50px; padding: 0 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg-deep); font: inherit; font-size: 16px; color: var(--ink); }
+.chat-input input:focus { outline: none; border-color: var(--blue); }
+@media (max-width: 900px) {
+  .plan-days { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .coach-head { grid-template-columns: auto 1fr; }
+  .coach-actions { grid-column: 1 / -1; }
+  .card.coach-plan.locked { grid-template-columns: auto 1fr; }
+  .card.coach-plan.locked .btn { grid-column: 1 / -1; justify-self: start; }
+}

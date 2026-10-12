@@ -1,7 +1,7 @@
 /**
  * Plans and what they unlock. Free keeps the habit going (the first two units, the daily session,
- * the coach, your skill map, up to three songs of your own); Premium opens the whole course,
- * unlimited skill practice and unlimited songs.
+ * the difficulty coach, your skill map, up to three songs of your own); Premium opens the whole
+ * course, unlimited skill practice, unlimited songs, and the AI coach with a weekly plan.
  *
  * Prices follow the business plan (9.99 a month, 59.99 a year with a free week, 89.99 a year for a
  * family) and are set per region. No store is connected yet: purchases run in test mode and unlock
@@ -111,10 +111,11 @@ export function countPractice() {
 }
 
 /** Why the paywall opened, in one line on top of it. */
-export type PaywallReason = 'unit' | 'practice' | 'songs' | 'upgrade';
+export type PaywallReason = 'unit' | 'practice' | 'songs' | 'coach' | 'upgrade';
 export const REASON: Record<PaywallReason, string> = {
   unit: 'Units 3 to 7 are part of Premium.',
   practice: `The free plan includes ${FREE_PRACTICE} skill practices a day.`,
   songs: `The free plan holds ${FREE_SONGS} songs of your own.`,
+  coach: 'The AI coach and your weekly plan are part of Premium.',
   upgrade: 'Learn faster with everything unlocked.',
 };

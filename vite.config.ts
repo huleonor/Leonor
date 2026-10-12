@@ -7,6 +7,34 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 // The deploy uploads files without git history, so the build date identifies the build.
 const built = new Date().toISOString().slice(0, 16).replace('T', ' ');
 
+/** In development, serve the Vercel functions in api/ from the Vite server (POST /api/<name>). */
+const devApi = {
+  name: 'dev-api',
+  configureServer(server: import('vite').ViteDevServer) {
+    server.middlewares.use(async (req, res, next) => {
+      const m = /^\/api\/([a-z-]+)/.exec(req.url ?? '');
+      if (!m) return next();
+      try {
+        const mod = await server.ssrLoadModule(`/api/${m[1]}.ts`);
+        const handler = mod[req.method ?? 'GET'];
+        if (!handler) { res.statusCode = 405; res.end(); return; }
+        const chunks: Buffer[] = [];
+        for await (const c of req) chunks.push(c as Buffer);
+        const response: Response = await handler(new Request(`http://localhost${req.url}`, {
+          method: req.method, headers: { 'content-type': 'application/json' },
+          body: req.method === 'POST' ? Buffer.concat(chunks).toString() : undefined,
+        }));
+        res.statusCode = response.status;
+        response.headers.forEach((v, k) => res.setHeader(k, v));
+        res.end(await response.text());
+      } catch (e) {
+        res.statusCode = 500;
+        res.end(String(e));
+      }
+    });
+  },
+};
+
 export default defineConfig({
   // Shown in Settings, and used to tell an iPhone app that is older than this site needs.
   define: {
@@ -15,6 +43,7 @@ export default defineConfig({
     __NATIVE_VERSION__: JSON.stringify(pkg.ios.version),
   },
   plugins: [
+    devApi,
     react(),
     VitePWA({
       // The iPhone app serves files from the bundle; a service worker has nothing to do there.

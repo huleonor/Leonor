@@ -4,11 +4,12 @@ import { IconCheck, IconClose } from './Icons';
 
 const FEATURES: [string, boolean][] = [
   ['Daily session made for you', true],
-  ['The coach and your skill map', true],
+  ['Difficulty that adapts, and your skill map', true],
   ['Units 1 and 2 of the course', true],
   ['All 7 units, and every new one', false],
   ['Unlimited skill practice', false],
   ['Unlimited songs of your own', false],
+  ['AI coach: ask anything, a plan every week', false],
 ];
 
 interface Props { reason: PaywallReason; onClose: () => void; onDone: (text: string) => void; }

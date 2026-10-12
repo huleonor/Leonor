@@ -4,6 +4,7 @@ import { loadPiano, unlockAudio } from '../lib/audio';
 import { coachRun, settingsFor, type Change } from '../lib/adapt';
 import { recordStep, starsFor, type CourseStep } from '../lib/course';
 import { listenForSkills } from '../lib/skills';
+import { logRun } from '../lib/aicoach';
 import type { SongInfo } from '../lib/catalog';
 import { Engine } from '../lib/engine';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
@@ -125,6 +126,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         if (engine.opts.listen) { setListen(false); engine.setOptions({ listen: false }); engine.restart(); engine.started = false; skills.stop(); skills = listenForSkills(engine); bump(); return; }
         const run = skills.stop();
         const made = coachRun(run, !step.wait);
+        logRun(`${section.title} · ${stepLabel(step)}`, run, !step.wait);
         setChange(made);
         const s = engine.stats();
         const stars = starsFor(s.accuracy);

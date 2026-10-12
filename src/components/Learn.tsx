@@ -5,6 +5,7 @@ import type { Settings } from '../lib/types';
 import { GoalPill, StreakPill, useDaily, XpPill } from './Home';
 import { IconCap, IconCheck, IconLock, IconMusic, IconPlay, IconStar } from './Icons';
 import { Stars } from './ui';
+import { CoachCard } from './Coach';
 import { FREE_UNITS, usePlan, type PaywallReason } from '../lib/billing';
 
 const SESSION_KEY = 'hugos-piano:session';
@@ -105,6 +106,8 @@ export function Learn({ settings, onPlay, onTest, onPaywall }: Props) {
       )}
 
       <DailyCard items={session} onStart={(items, from) => onPlay(items, from, true)} />
+
+      <CoachCard settings={settings} onPractise={p => onPlay([p], 0, false)} onPaywall={() => onPaywall('coach')} />
 
       {UNITS.map((u, ui) => {
         const states = u.lessons.map(l => path?.state[l.id]);
