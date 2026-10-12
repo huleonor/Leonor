@@ -14,7 +14,7 @@ const LINGER_MS = 1600;
  * notes) or just played a wrong key, shows a small stretch of keys around the notes he needs with
  * them lit, and slides away again once he is playing right.
  */
-export function HelpKeys({ engine, naming, fingers, always = false }: { engine: Engine; naming: NoteNaming; fingers: FingerMode; always?: boolean }) {
+export function HelpKeys({ engine, naming, fingers, always = false, lo, hi, wide = false }: { engine: Engine; naming: NoteNaming; fingers: FingerMode; always?: boolean; /** A fixed range: every key the piece needs. */ lo?: number; hi?: number; /** Full width along the bottom of a lesson. */ wide?: boolean }) {
   const [show, setShow] = useState(always);
   const [range, setRange] = useState<[number, number]>(() => pickRange(60, 72, 14));
   const lastNeed = useRef(0);
@@ -28,7 +28,7 @@ export function HelpKeys({ engine, naming, fingers, always = false }: { engine: 
       if (need) lastNeed.current = now;
       const next = need || now - lastNeed.current < LINGER_MS;
       if (next !== shown) { shown = next; setShow(next); }
-      if (need) {
+      if (need && lo === undefined) {
         // Centre the stretch of keys on what he has to play now (and the key he hit by mistake).
         const want = engine.waitingFor().map(w => w.midi);
         const around = want.length ? want : engine.expected();
@@ -45,13 +45,13 @@ export function HelpKeys({ engine, naming, fingers, always = false }: { engine: 
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [engine, always]);
+  }, [engine, always, lo]);
 
   return (
     <AnimatePresence>
       {show && (
-        <motion.div className="help-keys" initial={{ y: '110%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '110%', opacity: 0 }} transition={SOFT} aria-hidden="true">
-          <Keyboard engine={engine} lo={range[0]} hi={range[1]} naming={naming} fingers={fingers} showNext />
+        <motion.div className={`help-keys ${wide ? 'wide' : ''}`} initial={{ y: '110%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '110%', opacity: 0 }} transition={SOFT} aria-hidden="true">
+          <Keyboard engine={engine} lo={lo ?? range[0]} hi={hi ?? range[1]} naming={naming} fingers={fingers} showNext />
         </motion.div>
       )}
     </AnimatePresence>

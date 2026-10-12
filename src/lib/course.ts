@@ -137,28 +137,28 @@ export function buildCourse(song: Song): Course {
         if (h && !has(h, ph)) continue;
         const where = { part: p.n, from: ph.from, to: ph.to };
         if (many) steps.push({ id: `p${p.n}-${key}${ph.i}`, kind: 'phrase', title: `${label} · ${span(ph)}`, short: `${key}${ph.i}`, ...where, hands, speed, wait: true });
-        if (ph.hard) steps.push({ id: `p${p.n}-${key}${ph.i}x`, kind: 'phrase', title: `Tricky bit · ${label.toLowerCase()} · ${span(ph)}`, short: `${key}!`, ...where, hands, speed: Math.max(0.5, speed - 0.2), wait: true });
+        if (ph.hard) steps.push({ id: `p${p.n}-${key}${ph.i}x`, kind: 'phrase', title: `Tricky bit, ${label.replace('Free play: ', '')} · ${span(ph)}`, short: `${key}!`, ...where, hands, speed: Math.max(0.5, speed - 0.2), wait: true });
       }
     };
     if (twoHands) {
-      for (const [h, label] of [['R', 'Right hand'], ['L', 'Left hand']] as const) {
+      for (const [h, label] of [['R', 'Free play: right hand'], ['L', 'Free play: left hand']] as const) {
         if (!has(h, p)) continue;
         drill(h, label, h, 0.6, h);
         steps.push({ id: `p${p.n}-${h}`, kind: 'hand', title: many ? `${label} · whole part` : label, short: h, ...at, hands: h, speed: 0.7, wait: true });
       }
       drill('B', 'Hands together', 'both', 0.6);
-      steps.push({ id: `p${p.n}-both`, kind: 'together', title: 'Hands together · whole part', short: 'R+L', ...at, hands: 'both', speed: 0.8, wait: true });
+      steps.push({ id: `p${p.n}-both`, kind: 'together', title: 'Free play: hands together', short: 'R+L', ...at, hands: 'both', speed: 0.8, wait: true });
     } else {
       drill('S', 'Slowly', both, 0.6);
-      steps.push({ id: `p${p.n}-slow`, kind: 'hand', title: 'Whole part, slowly', short: '.6', ...at, hands: both, speed: 0.6, wait: true });
-      steps.push({ id: `p${p.n}-both`, kind: 'together', title: 'A little faster', short: '.8', ...at, hands: both, speed: 0.8, wait: true });
+      steps.push({ id: `p${p.n}-slow`, kind: 'hand', title: 'Free play, slowly', short: '.6', ...at, hands: both, speed: 0.6, wait: true });
+      steps.push({ id: `p${p.n}-both`, kind: 'together', title: 'Free play, a little faster', short: '.8', ...at, hands: both, speed: 0.8, wait: true });
     }
-    steps.push({ id: `p${p.n}-tempo`, kind: 'tempo', title: 'In tempo', short: '1×', ...at, hands: both, speed: 1, wait: false });
+    steps.push({ id: `p${p.n}-tempo`, kind: 'tempo', title: 'With the beat', short: '1×', ...at, hands: both, speed: 1, wait: false });
   }
   // Then the whole song: once with Wait, then the final performance in tempo.
   const from = parts[0].from, to = parts[parts.length - 1].to;
-  steps.push({ id: 'song-wait', kind: 'song', title: 'Whole song', short: 'All', from, to, hands: both, speed: 0.8, wait: true });
-  steps.push({ id: 'song', kind: 'song', title: 'Final performance', short: '1×', from, to, hands: both, speed: 1, wait: false });
+  steps.push({ id: 'song-wait', kind: 'song', title: 'Free play: whole song', short: 'All', from, to, hands: both, speed: 0.8, wait: true });
+  steps.push({ id: 'song', kind: 'song', title: 'With the beat: whole song', short: '1×', from, to, hands: both, speed: 1, wait: false });
   return { parts, steps, twoHands };
 }
 
