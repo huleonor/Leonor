@@ -84,13 +84,16 @@ const CHEERS: [number, string][] = [[5, 'Nice!'], [10, '10 in a row!'], [15, 'Gr
 /** A word of praise that pops up when a run of right notes reaches a milestone, then floats away. */
 export function Cheer({ combo }: { combo: number }) {
   const [shown, setShown] = useState<{ text: string; n: number } | null>(null);
+  const timer = useRef(0);
   useEffect(() => {
     const hit = CHEERS.find(([n]) => n === combo) ?? (combo > 30 && combo % 10 === 0 ? [combo, `${combo} in a row!`] as [number, string] : undefined);
     if (!hit) return;
     setShown({ text: hit[1], n: combo });
-    const id = window.setTimeout(() => setShown(null), 1100);
-    return () => window.clearTimeout(id);
+    // Its own timer: more right notes must not keep it on screen.
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setShown(null), 1100);
   }, [combo]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
   return (
     <AnimatePresence>
       {shown && (

@@ -119,7 +119,8 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const toggleKeys = () => setAlwaysKeys(a => { try { localStorage.setItem('hugos-piano:keys', a ? 'help' : 'always'); } catch { /* ignore */ } return !a; });
 
   const engine = useMemo(() => new Engine(song, {
-    speed: coach.speed, wait: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter,
+    // Free play: the cursor jumps to the next notes and waits there, no bars to sit through.
+    speed: coach.speed, wait: false, follow: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter,
     accompaniment: settings.accompaniment, lenient: settings.input === 'mic',
   }), [song, step.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // (Keyed by id: refreshed progress hands down new step objects for the same step.)

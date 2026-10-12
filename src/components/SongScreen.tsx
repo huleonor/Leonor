@@ -245,7 +245,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
                 {sections.map((sc, n) => (
                   <motion.li key={sc.id} initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...SOFT, delay: n * 0.04 }}>
                     <button className={`section-row ${sc.learnt ? 'learnt' : ''} ${sc === nextSection ? 'next' : ''}`} onClick={() => onTeach(sc)}>
-                      <span className="section-icon">{sc.learnt ? <IconCheck size={18} /> : sc.id === 'song' ? <IconMagic size={18} /> : n + 1}</span>
+                      <span className="section-icon">{sc.learnt ? <IconCheck size={18} /> : sc.id === 'song' ? <IconMagic size={18} /> : sc.id.slice(1)}</span>
                       <span className="section-text"><b>{sc.title}</b><small>{sc.bars}, {sc.done} of {sc.steps.length} steps</small></span>
                       {sc === nextSection && <span className="section-go">Start</span>}
                     </button>

@@ -37,6 +37,46 @@ function estimateFifths(notes: SongNote[]): number {
   return fifths;
 }
 
+/**
+ * Accompaniment written in the right-hand track (a common shortcut in arrangements, as in the
+ * opening bars of Gymnopédie No. 1): a chord of three or more notes, all at or below G4, struck
+ * while a left-hand note is still sounding, belongs to the left hand.
+ */
+function tidyHands(notes: SongNote[]) {
+  const byTick = new Map<number, SongNote[]>();
+  for (const n of notes) if (n.hand === 'R') byTick.set(n.ticks, [...(byTick.get(n.ticks) ?? []), n]);
+  const left = notes.filter(n => n.hand === 'L');
+  for (const [t, chord] of byTick) {
+    if (chord.length < 3 || chord.some(n => n.midi > 67)) continue;
+    const allRightHere = notes.filter(n => n.hand === 'R' && n.ticks === t).length === chord.length;
+    const leftSounding = left.some(l => l.ticks <= t && l.ticks + l.durationTicks > t);
+    if (allRightHere && leftSounding) chord.forEach(n => (n.hand = 'L'));
+  }
+}
+
+const NOTE_BEATS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8];
+/**
+ * Performed MIDI lets notes go a little early (a half note played as 1.8 beats); printed, that
+ * becomes a half tied to a dotted thirty-second. A note up to a quarter short of a plain value is
+ * written as that value, as long as it does not run into the next note in the same hand.
+ */
+function snapDurations(notes: SongNote[], ppq: number, toSec: (t: number) => number) {
+  for (const hand of ['R', 'L'] as Hand[]) {
+    const own = notes.filter(n => n.hand === hand);
+    const onsets = [...new Set(own.map(n => n.ticks))].sort((a, b) => a - b);
+    for (const n of own) {
+      const beats = n.durationTicks / ppq;
+      const want = NOTE_BEATS.find(c => c >= beats - 1e-6);
+      if (!want || want - beats > want * 0.25) continue;
+      const next = onsets.find(o => o > n.ticks);
+      const ticks = Math.round(want * ppq);
+      if (next !== undefined && n.ticks + ticks > next) continue;
+      n.durationTicks = ticks;
+      n.duration = Math.max(0.05, toSec(n.ticks + ticks) - n.time);
+    }
+  }
+}
+
 export function parseSong(buf: ArrayBuffer, entry: SongEntry): Song {
   let midi: Midi;
   try {
@@ -76,6 +116,8 @@ export function parseSong(buf: ArrayBuffer, entry: SongEntry): Song {
     });
   }
 
+  tidyHands(notes);
+  snapDurations(notes, midi.header.ppq, t => midi.header.ticksToSeconds(t));
   assignFingering(notes);
 
   const ks = midi.header.keySignatures[0];
