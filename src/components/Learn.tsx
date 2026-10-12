@@ -5,6 +5,7 @@ import type { Settings } from '../lib/types';
 import { GoalPill, StreakPill, useDaily, XpPill } from './Home';
 import { IconCap, IconCheck, IconLock, IconMusic, IconPlay, IconStar } from './Icons';
 import { Stars } from './ui';
+import { FREE_UNITS, usePlan, type PaywallReason } from '../lib/billing';
 
 const SESSION_KEY = 'hugos-piano:session';
 
@@ -26,6 +27,12 @@ export function useSession(): Playable[] | null {
 }
 
 const KIND_LABEL = ['Warm-up', 'Lesson', 'Review'];
+
+/** Each unit has its own colour, as on Duolingo's path. */
+const UNIT_COLORS = [
+  ['var(--go)', 'var(--go-edge)'], ['var(--purple)', 'var(--purple-edge)'], ['var(--blue)', 'var(--blue-edge)'],
+  ['var(--flame)', 'var(--flame-edge)'], ['#ff86d0', '#e070b4'], ['#00cd9c', '#00a57d'], ['#ff4b4b', '#ea2b2b'],
+];
 
 export function DailyCard({ items, onStart }: { items: Playable[] | null; onStart: (items: Playable[], from: number) => void }) {
   const done = sessionDone();
@@ -64,10 +71,12 @@ interface Props {
   settings: Settings;
   onPlay: (items: Playable[], from: number, session: boolean) => void;
   onTest: (items: Playable[]) => void;
+  onPaywall: (reason: PaywallReason) => void;
 }
 
 /** The main course: today's session on top, then the path of units, each ending in a song. */
-export function Learn({ settings, onPlay, onTest }: Props) {
+export function Learn({ settings, onPlay, onTest, onPaywall }: Props) {
+  const premium = !!usePlan();
   const daily = useDaily();
   const path = usePath();
   const session = useMemo(() => (path ? dailySession(path.state, path.progs) : null), [path]);
@@ -101,13 +110,14 @@ export function Learn({ settings, onPlay, onTest }: Props) {
         const states = u.lessons.map(l => path?.state[l.id]);
         const doneN = states.filter(s => s?.done).length;
         return (
-          <section key={u.id} className="unit" aria-labelledby={`${u.id}-title`}>
+          <section key={u.id} className="unit" aria-labelledby={`${u.id}-title`}
+            style={{ '--unit': UNIT_COLORS[ui % UNIT_COLORS.length][0], '--unit-edge': UNIT_COLORS[ui % UNIT_COLORS.length][1] } as React.CSSProperties}>
             <header className="unit-head">
-              <span className="unit-n">Unit {ui + 1}</span>
+              <span className="unit-n">Unit {ui + 1}{ui >= FREE_UNITS && !premium && <> · <span className="premium-tag">Premium</span></>}</span>
               <h2 id={`${u.id}-title`}>{u.title}</h2>
               <p className="sub">{u.sub}</p>
               {path && !states[0]?.open && (
-                <button className="btn small test-out" onClick={() => onTest([unitTest(u)])}>Test out</button>
+                <button className="btn small test-out" onClick={() => (ui >= FREE_UNITS && !premium ? onPaywall('unit') : onTest([unitTest(u)]))}>Test out</button>
               )}
               <span className="unit-meter" aria-label={`${doneN} of ${u.lessons.length} lessons done`}>
                 <span className="meter"><i style={{ width: `${(doneN / u.lessons.length) * 100}%` }} /></span>
@@ -121,7 +131,8 @@ export function Learn({ settings, onPlay, onTest }: Props) {
                 const isNext = open && !st?.done;
                 return (
                   <li key={l.id} className={`path-node ${st?.done ? 'done' : ''} ${isNext ? 'next' : ''} ${open ? '' : 'locked'}`} style={{ '--sway': [0, 1, 2, 1, 0, -1, -2, -1][li % 8] } as React.CSSProperties}>
-                    <button disabled={!open} onClick={() => onPlay([lessonPlayable(l, path?.progs[l.id])], 0, false)}
+                    {isNext && <span className="node-start" aria-hidden="true">{st && st.passed > 0 ? 'Continue' : 'Start'}</span>}
+                    <button disabled={!open} onClick={() => (ui >= FREE_UNITS && !premium ? onPaywall('unit') : onPlay([lessonPlayable(l, path?.progs[l.id])], 0, false))}
                       aria-label={`${l.title}${st?.done ? `, ${st.stars} stars` : open ? '' : ', locked'}`}>
                       <span className="node-disc">
                         {!open ? <IconLock size={22} /> : l.kind === 'song' ? <IconMusic size={24} /> : st?.done ? <IconStar size={24} /> : <IconCap size={24} />}
@@ -138,6 +149,15 @@ export function Learn({ settings, onPlay, onTest }: Props) {
           </section>
         );
       })}
+      {!premium && (
+        <section className="card upsell" aria-labelledby="upsell-title">
+          <div>
+            <h2 id="upsell-title">Unlock all 7 units</h2>
+            <p className="sub">Premium opens the whole course, unlimited skill practice and unlimited songs. The first week is free.</p>
+          </div>
+          <button className="btn go" onClick={() => onPaywall('upgrade')}>Try 1 week free</button>
+        </section>
+      )}
       <p className="fine learn-more">More units are on the way: chords, eighth notes, sharps and flats.</p>
     </div>
   );

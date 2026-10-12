@@ -12,6 +12,7 @@ import { formatSpeed, noteName } from '../lib/names';
 import { usePracticeClock } from '../lib/practiceClock';
 import { addPractice, streak, xpForStars } from '../lib/stats';
 import type { FingerMode, Settings } from '../lib/types';
+import { Confetti, CountUp } from './Confetti';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
 import { IconArrowLeft, IconArrowRight, IconFlame, IconHeadphones, IconPause, IconPlay, IconRestart, IconStar } from './Icons';
@@ -263,13 +264,14 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
       {result && (
         <div className="veil">
           <section className="card result" aria-labelledby="lesson-result-title">
+            {result.stars >= 2 && <Confetti />}
             <div className="result-stars" aria-label={`${result.stars} of 3 stars`}>
               {[0, 1, 2].map(i => (
                 <span key={i} className={`big-star ${i < result.stars ? 'won' : ''}`} style={{ animationDelay: `${120 + i * 160}ms` }}><IconStar size={44} /></span>
               ))}
             </div>
             <h2 id="lesson-result-title">{HEADLINE[result.stars]}</h2>
-            {result.xp > 0 && <p className="xp-badge">+{result.xp} XP</p>}
+            {result.xp > 0 && <p className="xp-badge">+<CountUp to={result.xp} /> XP</p>}
             <p className="result-line">{section.title} · {stepLabel(step)}: {result.hit} of {result.total} notes · {result.wrong} wrong · {Math.round(result.accuracy * 100)}%</p>
             {result.streakUp !== undefined && <p className="streak-up"><IconFlame size={18} />{result.streakUp === 1 ? 'Streak started' : `${result.streakUp}-day streak`}</p>}
             {change && <p className="coach-note inline">{change.why}</p>}

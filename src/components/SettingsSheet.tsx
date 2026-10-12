@@ -1,3 +1,4 @@
+import { cancelTest, usePlan } from '../lib/billing';
 import { useEffect, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { isNative, nativeMidiStatus, support, type LinkState, type Source } from '../lib/input';
@@ -27,9 +28,11 @@ interface Props {
   connectInput: (kind: Source) => void;
   onCheck: () => void;
   onClose: () => void;
+  onPlan: () => void;
 }
 
-export function SettingsSheet({ settings, update, links, connectInput, onCheck, onClose }: Props) {
+export function SettingsSheet({ settings, update, links, connectInput, onCheck, onClose, onPlan }: Props) {
+  const plan = usePlan();
   const { t } = useI18n();
   const [nativeApp, setNativeApp] = useState<{ version: string; build: number } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -52,6 +55,17 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
           <h2 id="settings-title">Settings</h2>
           <button className="icon-btn ghost" onClick={onClose} aria-label="Close"><IconClose /></button>
         </header>
+
+        <section className="set-group" aria-labelledby="plan-title">
+          <h3 id="plan-title">Your plan</h3>
+          <div className="toggle-row">
+            <span>
+              <b>{plan ? 'Premium' : 'Free'}{plan?.test ? ' (test mode)' : ''}</b>
+              <small>{plan ? `${plan.trial ? 'Free week' : 'Active'} until ${new Date(plan.until).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}` : 'Units 1 and 2, the daily session, the coach, 3 songs of your own'}</small>
+            </span>
+            {plan ? <button className="btn small" onClick={cancelTest}>End test</button> : <button className="btn small go" onClick={onPlan}>Get Premium</button>}
+          </div>
+        </section>
 
         <section className="set-group" aria-labelledby="piano-title">
           <h3 id="piano-title">Your piano</h3>

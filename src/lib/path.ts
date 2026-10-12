@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import type { SongInfo } from './catalog';
 import { getCourseProgress, type CourseProgress, type CourseStep } from './course';
 import { COURSE_SONGS, EXERCISE_TITLE, LEVEL_NAME, levelFor, line, makeExercise, writeSong } from './exercises';
+import { FREE_UNITS, isPremium } from './billing';
 import { dueSkills, loadProfile, SKILLS, weakest, type SkillId } from './skills';
 import { dayKey } from './stats';
 import type { Song } from './types';
@@ -225,8 +226,10 @@ export function dailySession(state: PathState, progs: Record<string, CourseProgr
   out.push(playable(`warm-${first}`, EXERCISE_TITLE[first],
     weak[0] ? `Your weakest skill right now: ${name(first)} (${LEVEL_NAME[lv]})` : 'A first look at how you read',
     makeExercise(first, lv, seedOfDay(1)), 'warmup'));
+  // On the free plan the session's lesson comes from the free units only.
   const next = nextLesson(state);
-  if (next) out.push({ ...lessonPlayable(next, progs[next.id]), why: `Next on your path: ${next.sub}` });
+  const nextUnit = next ? UNITS.findIndex(u => u.lessons.includes(next)) : -1;
+  if (next && (isPremium() || nextUnit < FREE_UNITS)) out.push({ ...lessonPlayable(next, progs[next.id]), why: `Next on your path: ${next.sub}` });
   // The review is spaced: a skill whose gap has run out, else the next weakest.
   const due = dueSkills(profile).find(d => d.id !== first);
   const second: SkillId = due?.id ?? weak.find(id => id !== first) ?? (first === 'rhythm' ? 'treble' : 'rhythm');

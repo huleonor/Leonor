@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AddSong } from './components/AddSong';
 import { Celebrate } from './components/Celebrate';
+import { Paywall } from './components/Paywall';
+import { countPractice, FREE_SONGS, isPremium, practicesLeft, type PaywallReason } from './lib/billing';
 import { applyFreezes, onStats, sessionComplete, setGoalMinutes } from './lib/stats';
 import { scheduleReminders, startWebReminders } from './lib/reminders';
 import { Home } from './components/Home';
@@ -109,7 +111,18 @@ export default function App() {
     if ((k === 'mic' || k === 'midi') && links[k].status === 'off') connect(k);
   };
 
-  const pickFile = (slot?: SongEntry) => { slotRef.current = slot; fileRef.current?.click(); };
+  const [paywall, setPaywall] = useState<PaywallReason | null>(null);
+  // Free plan: up to FREE_SONGS songs of your own (filling a built-in slot is always free).
+  const pickFile = (slot?: SongEntry) => {
+    if (!slot && !isPremium() && entries.filter(e => !e.builtIn).length >= FREE_SONGS) { setPaywall('songs'); return; }
+    slotRef.current = slot; fileRef.current?.click();
+  };
+  // Free plan: a few skill practices a day.
+  const practise = (p: Playable) => {
+    if (practicesLeft() <= 0) { setPaywall('practice'); return; }
+    countPractice();
+    play([p], 0, false);
+  };
   const openSong = (info: SongInfo) => {
     if (info.entry.missing) { pickFile(info.entry); return; }
     if (info.error || !info.song) { setNotice({ text: i18n.t(info.entry.builtIn ? 'err.loadFailed' : 'err.missing'), error: true }); return; }
@@ -227,11 +240,11 @@ export default function App() {
                 onSession={(items, from) => play(items, from, true)}
               />
             ) : tab === 'learn' ? (
-              <Learn settings={settings} onPlay={play} onTest={takeTest} />
+              <Learn settings={settings} onPlay={play} onTest={takeTest} onPaywall={setPaywall} />
             ) : tab === 'songs' ? (
               <Songs infos={infos} entries={entries} ready={ready} onOpen={openSheet} onAdd={() => pickFile()} onEdit={setEditing} />
             ) : (
-              <ProgressView settings={settings} update={update} entries={entries} infos={infos} onPractice={p => play([p], 0, false)} />
+              <ProgressView settings={settings} update={update} entries={entries} infos={infos} onPractice={practise} />
             )}
           </main>
         </div>
@@ -257,10 +270,11 @@ export default function App() {
         />
       )}
       {sheet === 'settings' && (
-        <SettingsSheet settings={settings} update={update} links={links} connectInput={connectInput} onCheck={() => setSheet('check')} onClose={() => setSheet(null)} />
+        <SettingsSheet settings={settings} update={update} links={links} connectInput={connectInput} onCheck={() => setSheet('check')} onClose={() => setSheet(null)} onPlan={() => { setSheet(null); setPaywall('upgrade'); }} />
       )}
       {sheet === 'check' && <InputCheck links={links} naming={settings.naming} onClose={() => setSheet('settings')} />}
       <Celebrate />
+      {paywall && <Paywall reason={paywall} onClose={() => setPaywall(null)} onDone={text => { setPaywall(null); pathChanged(); setNotice({ text }); }} />}
       {notice && <div className={`toast ${notice.error ? 'error' : ''}`} role="status">{notice.text}</div>}
     </I18nContext.Provider>
   );
