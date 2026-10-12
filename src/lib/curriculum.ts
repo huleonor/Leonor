@@ -19,7 +19,6 @@ import { accompany, arpeggio, bluesScale, contrary, fiveFinger, intervals, leftA
 import { rng } from './exercises';
 import type { SkillId } from './skills';
 import type { Song } from './types';
-import type { Pose } from '../components/Penguin';
 
 // ---------- Theory cards ----------
 
@@ -27,7 +26,7 @@ import type { Pose } from '../components/Penguin';
 export interface Staff { notes: string; clef?: 'treble' | 'bass'; key?: string; meter?: string; left?: string; }
 export interface KeysView { lo: number; hi: number; mark?: number[]; labels?: boolean; }
 export type Card =
-  | { t: 'say'; text: string; pose?: Pose; staff?: Staff; keys?: KeysView }
+  | { t: 'say'; text: string; staff?: Staff; keys?: KeysView }
   | { t: 'pick'; text: string; staff?: Staff; keys?: KeysView; options: string[]; answer: number }
   /** Play these, in order; an array inside is a chord. Any octave counts unless `exact`. */
   | { t: 'play'; text: string; staff?: Staff; keys?: KeysView; play: (number | number[])[]; exact?: boolean };
@@ -99,7 +98,7 @@ export interface Unit {
 
 export interface Section { id: string; title: string; sub: string; units: Unit[]; }
 
-const theory = (id: string, title: string, cards: Card[]): PathNode => ({ id, kind: 'theory', title, sub: 'Theory with Pip', hands: 'R', cards });
+const theory = (id: string, title: string, cards: Card[]): PathNode => ({ id, kind: 'theory', title, sub: 'Theory', hands: 'R', cards });
 const lesson = (id: string, title: string, sub: string, skill: SkillId, hands: NodeHands, gen: Gen, base = 0): PathNode => ({ id, kind: 'lesson', title, sub, skill, hands, gen, base });
 const listen = (id: string, title: string, sub: string, skill: SkillId, hands: NodeHands, gen: Gen, base = 0): PathNode => ({ id, kind: 'listen', title, sub, skill, hands, gen, base });
 const tech = (id: string, title: string, sub: string, skill: SkillId, hands: NodeHands, gen: Gen, base = 0): PathNode => ({ id, kind: 'technique', title, sub, skill, hands, gen, base });
@@ -133,13 +132,13 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u1-t', 'Meet the keyboard', [
-            say('Hi, I’m Pip! Let’s learn the piano together. First, the keys.', { pose: 'wave', keys: K(48, 72) }),
+            say('Let’s learn the piano together. First, the keys.', { keys: K(48, 72) }),
             say('See the black keys? They come in groups of two and three.', { keys: K(48, 72, [49, 51, 54, 56, 58, 61, 63, 66, 68, 70]) }),
             say('C is the white key just left of the two black keys. The C in the middle of the piano is middle C.', { keys: K(48, 72, [60], true) }),
             playC('Find middle C and play it.', [60], { keys: K(48, 72) }),
             say('The white keys are named C D E F G A B. Then the names start again.', { keys: K(60, 72, [60, 62, 64, 65, 67, 69, 71], true) }),
             pickC('Which key comes just after C?', ['B', 'D', 'E'], 1, { keys: K(60, 67, [60], true) }),
-            say('Your fingers have numbers: thumb 1, pointer 2, middle 3, ring 4, little finger 5. The same on both hands.', { pose: 'keys' }),
+            say('Your fingers have numbers: thumb 1, pointer 2, middle 3, ring 4, little finger 5. The same on both hands.'),
             playC('Play C, D and E with fingers 1, 2 and 3.', [60, 62, 64], { keys: K(60, 67, [60, 62, 64], true) }),
           ]),
           lesson('u1-cde', 'C, D and E', 'Three keys, three fingers', 'treble', 'R', tune({ hand: 'R', pool: lv => notes(lv < 2 ? 'C4 D4 E4' : 'C4 D4 E4 F4'), home: 60 })),
@@ -161,7 +160,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u2-t', 'The staff', [
-            say('Music is written on a staff: five lines and four spaces.', { pose: 'read', staff: S('C D E F G A B c') }),
+            say('Music is written on a staff: five lines and four spaces.', { staff: S('C D E F G A B c') }),
             say('This curl is the treble clef. It is for the right hand and the higher notes. It wraps around the line for G.', { staff: S('G4') }),
             say('Middle C has its own little line under the staff. D hangs below the staff, E sits on the bottom line.', { staff: S('C D E') }),
             say('Each step up the keyboard is one step up the staff: line, space, line, space.', { staff: S('C D E F G'), keys: K(60, 67, [60, 62, 64, 65, 67], true) }),
@@ -187,7 +186,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u3-t', 'How long is a note?', [
-            say('Music has a beat, like a heartbeat. The shape of a note says how many beats to hold it.', { pose: 'keys' }),
+            say('Music has a beat, like a heartbeat. The shape of a note says how many beats to hold it.'),
             say('A quarter note: one beat.', { staff: S('C C C C', { meter: '4/4' }) }),
             say('A half note: two beats. Hold it down!', { staff: S('C2 C2', { meter: '4/4' }) }),
             say('A whole note: four beats.', { staff: S('C4', { meter: '4/4' }) }),
@@ -214,7 +213,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u4-t', 'The bass clef', [
-            say('Now the left hand! Low notes are written in the bass clef.', { pose: 'wave', staff: S('C, D, E, F, G,', { clef: 'bass' }) }),
+            say('Now the left hand! Low notes are written in the bass clef.', { staff: S('C, D, E, F, G,', { clef: 'bass' }) }),
             say('The two dots of the bass clef sit either side of the line for F.', { staff: S('F,4', { clef: 'bass' }) }),
             say('Put your left little finger on the C below middle C. Your thumb lands on G.', { keys: K(48, 60, [48, 50, 52, 53, 55], true) }),
             ...nameQuiz('u4-q', BASS_C_G(), 'bass'),
@@ -239,7 +238,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u5-t', 'The grand staff', [
-            say('The grand staff: treble on top for the right hand, bass below for the left.', { pose: 'read', staff: S('E2 G2 | c4', { left: 'C,4 | C,4' }) }),
+            say('The grand staff: treble on top for the right hand, bass below for the left.', { staff: S('E2 G2 | c4', { left: 'C,4 | C,4' }) }),
             say('When two notes line up, one above the other, play them together.', { staff: S('E G E G', { left: 'C,2 G,,2' }) }),
             pickC('Two notes line up, one in each clef. You play them…', ['One after the other', 'At the same time'], 1),
             playC('Play C with both hands: middle C and the C below it, together.', [[60, 48]], { keys: K(48, 67, [48, 60]), exact: true }),
@@ -268,7 +267,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u6-t', 'Rests', [
-            say('A rest means: stay quiet, but keep counting.', { pose: 'idle', staff: S('C z E z | G2 z2', { meter: '4/4' }) }),
+            say('A rest means: stay quiet, but keep counting.', { staff: S('C z E z | G2 z2', { meter: '4/4' }) }),
             say('A quarter rest: one beat of silence.', { staff: S('z z z z', { meter: '4/4' }) }),
             say('A half rest sits on the line like a little hat: two beats. A whole rest hangs below the line: a whole bar.', { staff: S('z2 z2 | z4', { meter: '4/4' }) }),
             pickC('How many beats is a half rest?', ['1', '2', '4'], 1, { staff: S('z2') }),
@@ -293,7 +292,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u7-t', 'Eighth notes', [
-            say('Eighth notes are quick: two of them fit in one beat. In pairs they are joined by a beam.', { pose: 'keys', staff: S('C/2D/2 E/2F/2 G2', { meter: '4/4' }) }),
+            say('Eighth notes are quick: two of them fit in one beat. In pairs they are joined by a beam.', { staff: S('C/2D/2 E/2F/2 G2', { meter: '4/4' }) }),
             say('Count them “1 and 2 and”: the numbers fall on the beat, the “and” in between.', { staff: S('C/2C/2 D/2D/2 E/2E/2 F/2F/2', { meter: '4/4' }) }),
             pickC('How many eighth notes make one beat?', ['1', '2', '4'], 1),
             pickC('Two eighths and three quarters: how many beats?', ['3', '4', '5'], 1, { staff: S('C/2D/2 E F G', { meter: '4/4' }) }),
@@ -317,7 +316,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u8-t', 'Intervals', [
-            say('An interval is the distance between two notes. Count both notes: C to E is C-D-E, a 3rd.', { pose: 'read', keys: K(60, 72, [60, 64], true) }),
+            say('An interval is the distance between two notes. Count both notes: C to E is C-D-E, a 3rd.', { keys: K(60, 72, [60, 64], true) }),
             say('A 2nd is a step: line to space, or space to line.', { staff: S('C D E D C2') }),
             say('A 3rd is a skip: line to line, or space to space.', { staff: S('C E G E C2') }),
             say('4ths and 5ths are leaps. C up to G is a 5th.', { staff: S('C F C G C2') }),
@@ -344,7 +343,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u9-t', 'Ledger lines', [
-            say('Notes can go above and below the staff. Little extra lines, ledger lines, help us read them.', { pose: 'read', staff: S('A, B, C D | a b c\' d\'') }),
+            say('Notes can go above and below the staff. Little extra lines, ledger lines, help us read them.', { staff: S('A, B, C D | a b c\' d\'') }),
             say('Middle C sits on a ledger line, right between the two clefs.', { staff: S('C4') }),
             say('Below middle C in the treble clef come B, then A, on and under more ledger lines.', { staff: S('C B, A, B, C4'), keys: K(55, 67, [57, 59, 60], true) }),
             ...nameQuiz('u9-q', notes('A3 B3 C4 A5 B5 C6')),
@@ -368,7 +367,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u10-t', 'Counting in three', [
-            say('Some music counts in threes: ONE two three, ONE two three. That is 3/4 time, the waltz.', { pose: 'cheer', staff: S('C E G | c3', { meter: '3/4' }) }),
+            say('Some music counts in threes: ONE two three, ONE two three. That is 3/4 time, the waltz.', { staff: S('C E G | c3', { meter: '3/4' }) }),
             say('A dot makes a note half as long again. A half note is 2 beats, so a dotted half note is 3.', { staff: S('E3 | G3', { meter: '3/4' }) }),
             say('A dotted quarter and an eighth sound “long, short”.', { staff: S('C3/2 D/2 E2 | E3/2 F/2 G2', { meter: '4/4' }) }),
             pickC('How many beats in a bar of 3/4?', ['2', '3', '4'], 1),
@@ -400,7 +399,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u11-t', 'Sharps, flats and naturals', [
-            say('The black keys have names too! A sharp ♯ means the very next key up.', { pose: 'wink', staff: S('F2 ^F2'), keys: K(60, 72, [65, 66], true) }),
+            say('The black keys have names too! A sharp ♯ means the very next key up.', { staff: S('F2 ^F2'), keys: K(60, 72, [65, 66], true) }),
             say('A flat ♭ means the very next key down. So this black key is F♯, and also G♭.', { staff: S('G2 _G2'), keys: K(60, 72, [66, 67]) }),
             say('From a key to the very next one, black or white, is a half step. Two half steps make a whole step.', { keys: K(60, 72, [64, 65, 66]) }),
             say('A natural ♮ cancels a sharp or flat.', { staff: S('^F2 =F2') }),
@@ -428,7 +427,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u12-t', 'Key signatures', [
-            say('Writing ♯ on every F gets tiring. A key signature says it once, for the whole piece.', { pose: 'read', staff: S('G A B c d2', { key: 'G' }) }),
+            say('Writing ♯ on every F gets tiring. A key signature says it once, for the whole piece.', { staff: S('G A B c d2', { key: 'G' }) }),
             say('One sharp, on the F line: that is G major. Every F is played F♯.', { staff: S('d c B A G2', { key: 'G' }), keys: K(67, 79, [66, 78]) }),
             say('One flat, on the B line: that is F major. Every B is played B♭.', { staff: S('F G A B c2', { key: 'F' }), keys: K(65, 77, [70]) }),
             pickC('One sharp in the key signature. Which key?', ['C major', 'G major', 'F major'], 1, { staff: S('G4', { key: 'G' }) }),
@@ -453,7 +452,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u13-t', 'The major scale', [
-            say('A scale is eight notes in a row, from one note up to the next with the same name.', { pose: 'keys', staff: S('C D E F G A B c') }),
+            say('A scale is eight notes in a row, from one note up to the next with the same name.', { staff: S('C D E F G A B c') }),
             say('Every major scale has the same steps: whole, whole, half, whole, whole, whole, half.', { keys: K(60, 72, [60, 62, 64, 65, 67, 69, 71, 72], true) }),
             say('Five fingers, eight notes? After finger 3 on E, slide your thumb under to F. Then 1 2 3 4 5 to the top.', { keys: K(60, 72, [64, 65]) }),
             pickC('Right hand going up the C scale: where does the thumb pass under?', ['After E, onto F', 'After G, onto A', 'It never does'], 0),
@@ -478,7 +477,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u14-t', 'Triads', [
-            say('A chord is notes played together. A triad stacks three: play one, skip one, play one, skip one, play one.', { pose: 'keys', keys: K(60, 72, [60, 64, 67], true), staff: S('[CEG]4') }),
+            say('A chord is notes played together. A triad stacks three: play one, skip one, play one, skip one, play one.', { keys: K(60, 72, [60, 64, 67], true), staff: S('[CEG]4') }),
             say('It is named after its bottom note, the root. C E G is the C major chord.', { staff: S('[CEG]2 [FAc]2 | [GBd]4') }),
             say('Lower the middle note a half step and it turns minor: C E♭ G. Hear how sad it is?', { staff: S('[CEG]2 [C_EG]2') }),
             pickC('The notes of the G major triad?', ['G B D', 'G A B', 'G C E'], 0),
@@ -504,7 +503,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u15-t', 'I, IV and V', [
-            say('In C major, C is chord I, F is chord IV and G is chord V.', { pose: 'read', staff: S('[CEG]2 [FAc]2 | [GBd]2 [CEG]2') }),
+            say('In C major, C is chord I, F is chord IV and G is chord V.', { staff: S('[CEG]2 [FAc]2 | [GBd]2 [CEG]2') }),
             say('Jumping between chords is hard. Move to the nearest notes instead: C-E-G, then C-F-A, then B-D-G.', { staff: S('[CEG]2 [CFA]2 | [B,DG]2 [CEG]2') }),
             pickC('In C major, chord V is…', ['F', 'G', 'A'], 1),
             pickC('Which is chord IV in C major?', ['F A C', 'G B D', 'D F A'], 0),
@@ -532,7 +531,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u16-t', 'The classical style', [
-            say('Mozart’s trick: break the chord into a pattern. Bottom, top, middle, top. It’s called Alberti bass.', { pose: 'grad', staff: S('C,/2G,/2E,/2G,/2 C,/2G,/2E,/2G,/2 C,/2A,/2F,/2A,/2 C,/2G,/2E,/2G,/2', { clef: 'bass' }) }),
+            say('Mozart’s trick: break the chord into a pattern. Bottom, top, middle, top. It’s called Alberti bass.', { staff: S('C,/2G,/2E,/2G,/2 C,/2G,/2E,/2G,/2 C,/2A,/2F,/2A,/2 C,/2G,/2E,/2G,/2', { clef: 'bass' }) }),
             say('The left hand stays light and even, so the tune can sing on top.'),
             say('In a waltz, the left hand plays the bass note on beat 1 and the chord on 2 and 3: oom-pah-pah!', { staff: S('C, [E,G,] [E,G,] | G,, [B,,F,] [B,,F,]', { clef: 'bass', meter: '3/4' }) }),
             pickC('Alberti bass plays a chord’s notes in which order?', ['Bottom, top, middle, top', 'Top, middle, bottom', 'All together'], 0),
@@ -542,7 +541,7 @@ export const SECTIONS: Section[] = [
           chest('u16-chest'),
           song('u16-sonata', COURSE_SONGS.sonata, 'Mozart, simplified', 'both'),
           lesson('u16-waltz', 'Waltz', 'Oom-pah-pah', 'together', 'both', accompany('waltz', PROGS.waltz)),
-          song('u16-waltz-song', COURSE_SONGS.waltz, 'Written for Pip', 'both'),
+          song('u16-waltz-song', COURSE_SONGS.waltz, 'Written for the course', 'both'),
           song('u16-elise', COURSE_SONGS.elise, 'Beethoven, the opening', 'both'),
         ],
         test: { gen: accompany('alberti', PROGS.hold), hands: 'both', skill: 'together' },
@@ -557,7 +556,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u17-t', 'Four chords', [
-            say('A huge number of pop songs use just four chords: C, G, Am and F.', { pose: 'cheer', staff: S('[CEG]2 [B,DG]2 | [A,CE]2 [A,CF]2') }),
+            say('A huge number of pop songs use just four chords: C, G, Am and F.', { staff: S('[CEG]2 [B,DG]2 | [A,CE]2 [A,CF]2') }),
             say('Am is the minor chord on A: A C E. In C major it’s chord vi.', { keys: K(57, 69, [57, 60, 64], true) }),
             say('The left hand plays the root with its octave. A little push just before beat 3 gives it the groove.', { staff: S('[C,C]3/2 G,/2 [C,C]2 | [G,,G,]3/2 D,/2 [G,,G,]2', { clef: 'bass', meter: '4/4' }) }),
             pickC('The four pop chords in C?', ['C G Am F', 'C D E F', 'C F G C'], 0),
@@ -566,7 +565,7 @@ export const SECTIONS: Section[] = [
           lesson('u17-four', 'Four chords', 'A tune on top', 'chords', 'both', accompany('pop', PROGS.pop)),
           listen('u17-ear', 'Hear the change', 'Listen, then play', 'chords', 'both', accompany('pop', PROGS.pop), 1),
           chest('u17-chest'),
-          song('u17-pop', COURSE_SONGS.pop, 'Written for Pip', 'both'),
+          song('u17-pop', COURSE_SONGS.pop, 'Written for the course', 'both'),
           song('u17-canon', COURSE_SONGS.canon, 'Pachelbel’s chords', 'both'),
         ],
         test: { gen: accompany('pop', PROGS.pop), hands: 'both', skill: 'chords' },
@@ -581,7 +580,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u18-t', 'The blues', [
-            say('The blues has its own scale, with “blue notes”: C E♭ F F♯ G B♭ C.', { pose: 'wink', staff: S('C _E F ^F G _B c2'), keys: K(60, 72, [60, 63, 65, 66, 67, 70, 72]) }),
+            say('The blues has its own scale, with “blue notes”: C E♭ F F♯ G B♭ C.', { staff: S('C _E F ^F G _B c2'), keys: K(60, 72, [60, 63, 65, 66, 67, 70, 72]) }),
             say('The 12-bar blues goes C C C C, F F, C C, G F, C C, and round again.'),
             say('The left hand rocks between the fifth and the sixth: that’s the boogie.', { staff: S('[C,G,] [C,A,] [C,G,] [C,A,]', { clef: 'bass', meter: '4/4' }) }),
             pickC('How many bars in a classic blues?', ['8', '12', '16'], 1),
@@ -592,7 +591,7 @@ export const SECTIONS: Section[] = [
           tech('u18-boogie', 'Boogie left hand', 'Fifth, sixth, fifth, sixth', 'bass', 'L', leftAlone('blues', PROGS.blues)),
           lesson('u18-riffs', 'Riffs', 'Call and answer', 'together', 'both', accompany('blues', PROGS.blues)),
           chest('u18-chest'),
-          song('u18-blues', COURSE_SONGS.blues, 'Twelve bars, written for Pip', 'both'),
+          song('u18-blues', COURSE_SONGS.blues, 'Twelve bars, written for the course', 'both'),
         ],
         test: { gen: accompany('blues', PROGS.blues), hands: 'both', skill: 'together' },
       },
@@ -606,7 +605,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u19-t', 'Arpeggios', [
-            say('An arpeggio is a chord played one note at a time. It ripples.', { pose: 'idle', staff: S('C E G c G E C2') }),
+            say('An arpeggio is a chord played one note at a time. It ripples.', { staff: S('C E G c G E C2') }),
             say('Under a slow tune, flowing arpeggios sound like a film score.', { staff: S('A,/2C/2E/2A/2 E/2C/2A,/2C/2 F,/2A,/2C/2F/2 C/2A,/2F,/2A,/2') }),
             pickC('An arpeggio plays a chord’s notes…', ['All at once', 'One after another'], 1),
             playC('Play a C arpeggio: C, E, G, C.', [60, 64, 67, 72], { keys: K(60, 72), exact: true }),
@@ -629,7 +628,7 @@ export const SECTIONS: Section[] = [
         ],
         nodes: [
           theory('u20-t', 'Seventh chords', [
-            say('Stack one more 3rd on a triad and you get a seventh chord. C E G B is Cmaj7: dreamy.', { pose: 'grad', staff: S('[CEG]2 [CEGB]2') }),
+            say('Stack one more 3rd on a triad and you get a seventh chord. C E G B is Cmaj7: dreamy.', { staff: S('[CEG]2 [CEGB]2') }),
             say('Dm7 is D F A C. G7 is G B D F, and it really wants to go home to C.', { staff: S('[DFAc]2 [GBdf]2 | [CEGB]4') }),
             say('Jazz players love ii-V-I: Dm7, G7, Cmaj7. The left hand plays just root, 3rd and 7th: a shell.', { staff: S('[D,F,C]2 [G,,B,,F,]2 | [C,E,B,]4', { clef: 'bass' }) }),
             pickC('The notes of Cmaj7?', ['C E G B', 'C E G', 'C F A'], 0),
@@ -639,7 +638,7 @@ export const SECTIONS: Section[] = [
           lesson('u20-251', 'ii-V-I', 'Jazz harmony', 'chords', 'both', accompany('jazz', PROGS.jazz)),
           listen('u20-ear', 'Jazz ears', 'Listen, then play', 'chords', 'both', accompany('jazz', PROGS.jazz), 1),
           chest('u20-chest'),
-          song('u20-cool', COURSE_SONGS.cool, 'Written for Pip', 'both'),
+          song('u20-cool', COURSE_SONGS.cool, 'Written for the course', 'both'),
         ],
         test: { gen: accompany('jazz', PROGS.jazz), hands: 'both', skill: 'chords' },
       },

@@ -13,12 +13,15 @@ import { usePracticeClock } from '../lib/practiceClock';
 import { addPractice, streak, xpForStars } from '../lib/stats';
 import type { FingerMode, Settings } from '../lib/types';
 import { addGems, energy, gainEnergy, gemsForStars, spendEnergy, STREAK_FOR_ENERGY, useEconomy } from '../lib/energy';
+import { AnimatePresence, motion } from 'motion/react';
 import { Confetti, CountUp } from './Confetti';
+import { HelpKeys } from './HelpKeys';
+import { AnswerFooter, Bump, ProgressBar, SOFT, SPRING, type Verdict } from './Motion';
 import { EnergySheet } from './Economy';
 import { Energy, Gem } from './GameIcons';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
-import { IconArrowLeft, IconArrowRight, IconFlame, IconHeadphones, IconPause, IconPlay, IconRestart, IconStar } from './Icons';
+import { IconArrowLeft, IconArrowRight, IconFlame, IconHeadphones, IconBolt, IconClose, IconPlay, IconRestart, IconStar } from './Icons';
 import { Keyboard } from './Keyboard';
 import { LessonStaff } from './LessonStaff';
 import type { Section } from './SongScreen';
@@ -103,6 +106,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const [noEnergy, setNoEnergy] = useState(() => energyMode === 'spend' && energy() < 1);
   const [combo, setCombo] = useState(0);
   const [bonus, setBonus] = useState(0);
+  const [bonusOn, setBonusOn] = useState(false);
   const comboRef = useRef(0);
   const heard = useRef(false);
   const [say, setSay] = useState<{ text: string; wrong?: string }>({ text: intro(step) });
@@ -147,6 +151,8 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         if (e.ok && comboRef.current % STREAK_FOR_ENERGY === 0) {
           if (energyMode) gainEnergy(1);
           setBonus(b => b + 1);
+          window.setTimeout(() => setBonusOn(false), 1300);
+          setBonusOn(true);
         }
       }
       if (e.type === 'end') {
@@ -239,106 +245,127 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const next = result && result.stars >= minStars ? (onNext ? { label: `Next: ${stepLabel(section.steps[index + 1])}`, go: onNext } : onNextSection ? { label: nextLabel, go: onNextSection } : null)
     : result && onStop && !onNext ? { label: stopLabel, go: onStop } : null;
 
+  const heading = listen ? 'Listen first' : !step.wait ? 'Play it in tempo' : step.hands === 'R' ? 'Play with your right hand' : step.hands === 'L' ? 'Play with your left hand' : 'Play with both hands';
+  const progress = (index + (flash?.good ? 1 : stats.total ? stats.hit / stats.total : 0)) / section.steps.length;
+  const verdict: Verdict = flash ? (flash.good ? 'right' : 'wrong') : null;
+
   return (
-    <div className={`lesson view-${settings.view}`}>
-      <header className="lesson-bar">
-        <button className="lesson-pause" onClick={engine.playing ? pause : () => setPaused(true)} aria-label="Pause"><IconPause size={26} /></button>
-        {/* Nothing to read but the music: the instruction is for screen readers only. */}
-        <div className="lesson-say" role="status" aria-live="polite">
-          <p className="sr-only">{say.wrong ? `${say.wrong}. ${say.text}` : say.text}</p>
-          {!inputOn && <button className="lesson-noinput" onClick={onSettings}><i />Connect your piano</button>}
-        </div>
-        <div className="lesson-nav">
-          <button className="lesson-arrow" onClick={onPrev} disabled={!onPrev} aria-label="Previous step"><IconArrowLeft size={24} /></button>
-          <div className="lesson-count" aria-label={`${section.title}, step ${index + 1} of ${section.steps.length}: ${stepLabel(step)}`}>
-            <i style={{ width: `${((index + (flash?.good ? 1 : stats.total ? stats.hit / stats.total : 0)) / section.steps.length) * 100}%` }} />
-            <span>{index + (flash?.good ? 1 : 0)}/{section.steps.length}</span>
-          </div>
-          <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label="Next step"><IconArrowRight size={24} /></button>
-        </div>
+    <div className={`lesson duo view-${settings.view}`}>
+      <header className="lesson-top">
+        <button className="icon-btn ghost" onClick={engine.playing ? pause : () => setPaused(true)} aria-label="Pause"><IconClose size={24} /></button>
+        <ProgressBar value={progress} label={`${section.title}, step ${index + 1} of ${section.steps.length}: ${stepLabel(step)}`} />
         <div className="lesson-econ">
-          {combo >= 3 && <span className={`combo ${combo >= 10 ? 'hot' : ''}`} key={Math.floor(combo / 5)} aria-label={`${combo} right in a row`}>{combo} in a row</span>}
+          <AnimatePresence>
+            {combo >= 3 && (
+              <motion.span className={`combo ${combo >= 10 ? 'hot' : ''}`} aria-label={`${combo} right in a row`} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={SPRING}>
+                <Bump value={combo} /> in a row
+              </motion.span>
+            )}
+          </AnimatePresence>
           {energyMode && (
             <span className="lesson-energy" aria-label={econ.premium ? 'Unlimited energy' : `${econ.energy} energy`}>
-              <Energy size={18} />{econ.premium ? '∞' : econ.energy}
-              {bonus > 0 && <b className="energy-plus" key={bonus}>+1</b>}
+              <Energy size={18} />{econ.premium ? '∞' : <Bump value={econ.energy} />}
+              <AnimatePresence>{bonusOn && <motion.b className="energy-plus" key={bonus} initial={{ y: 8, opacity: 0, scale: 0.6 }} animate={{ y: -6, opacity: 1, scale: 1 }} exit={{ y: -18, opacity: 0 }} transition={SPRING}>+1</motion.b>}</AnimatePresence>
             </span>
           )}
         </div>
       </header>
 
+      <div className="lesson-head" role="status" aria-live="polite">
+        <h1>{heading}</h1>
+        <p className="sub">{stepLabel(step)}</p>
+        <p className="sr-only">{say.wrong ? `${say.wrong}. ${say.text}` : say.text}</p>
+      </div>
+
       <main className="lesson-stage">
-        {settings.view === 'notes'
-          ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={0} onTap={pause} />
-          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback fingers={fingers} only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
-        <Countdown engine={engine} />
-        {listen && <p className="lesson-listening" role="status"><IconHeadphones size={18} />Listen first</p>}
-        {flash && (
-          <div className="lesson-flash-wrap" role="status">
-            <p className={`lesson-flash ${flash.good ? 'good' : ''}`}>{flash.text}{flash.xp ? <small className="xp-gain">+{flash.xp} XP{flash.gems ? ` · +${flash.gems} gems` : ''}</small> : null}</p>
-          </div>
-        )}
+        <div className="lesson-paper">
+          {settings.view === 'notes'
+            ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={0} onTap={pause} />
+            : <LessonStaff engine={engine} from={step.from} to={step.to} feedback fingers={fingers} only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
+          <Countdown engine={engine} />
+          <AnimatePresence>
+            {listen && (
+              <motion.p className="lesson-listening" role="status" initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} transition={SPRING}>
+                <IconHeadphones size={18} />Listening
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
       </main>
 
-      <footer className="lesson-keys">
-        <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={fingers} />
-        {!engine.started && !paused && !result && !listen && !step.wait && (
-          <div className="lesson-start">
-            <button className="btn go big" onClick={start}><IconPlay size={18} />Start in tempo</button>
-            <button className="btn" onClick={listenFirst}><IconHeadphones size={18} />Listen first</button>
-          </div>
-        )}
-      </footer>
+      {settings.view === 'notes'
+        ? <div className="lesson-keys"><Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={fingers} /></div>
+        : <HelpKeys engine={engine} naming={settings.naming} fingers={fingers} />}
 
-      {paused && !result && (
-        <div className="veil">
-          <section className="card pause" aria-labelledby="lesson-pause-title">
-            <h2 id="lesson-pause-title">Paused</h2>
-            <div className="actions">
-              <button className="btn go big" onClick={engine.started ? resume : start}><IconPlay size={18} />{engine.started ? 'Resume' : 'Start'}</button>
-              <button className="btn" onClick={() => { setPaused(false); onAgain(); }}><IconRestart size={18} />Restart</button>
-              <button className="btn" onClick={listenFirst}><IconHeadphones size={18} />Listen</button>
-            </div>
-            <div className="pause-rows">
-              {!step.wait && <Segmented label="Speed" value={speed} onChange={setSpeed} options={SPEEDS.map(v => [v, formatSpeed(v)] as [number, string])} />}
-              <Segmented<FingerMode> label="Fingers" value={settings.fingers} onChange={v => update({ fingers: v })} options={[['off', 'Off'], ['some', 'Some'], ['all', 'All']]} />
-              <Segmented label="View" value={settings.view} onChange={v => update({ view: v })} options={[['sheet', 'Score'], ['notes', 'Falling notes']]} />
-            </div>
-            <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
-          </section>
-        </div>
-      )}
+      <AnswerFooter verdict={verdict} title={flash?.text} detail={flash?.xp ? <>+{flash.xp} XP{flash.gems ? `, +${flash.gems} gems` : ''}</> : undefined}>
+        {!inputOn && <button className="connect" onClick={onSettings}><i />Connect your piano</button>}
+        {!engine.started && !paused && !result && !listen && !step.wait ? (
+          <>
+            <motion.button className="btn" whileTap={{ scale: 0.96 }} onClick={listenFirst}><IconHeadphones size={18} />Listen first</motion.button>
+            <motion.button className="btn go big" whileTap={{ scale: 0.96 }} onClick={start}><IconPlay size={18} />Start</motion.button>
+          </>
+        ) : (
+          <p className="lesson-hint">{step.wait ? 'The music waits for you. Need a key? It shows up when you’re stuck.' : 'Keep going through mistakes.'}</p>
+        )}
+      </AnswerFooter>
+
+      <AnimatePresence>
+        {paused && !result && (
+          <motion.div className="veil sheet-veil" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.section className="card pause" aria-labelledby="lesson-pause-title" initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={SOFT}>
+              <h2 id="lesson-pause-title">Paused</h2>
+              <div className="actions">
+                <button className="btn go big" onClick={engine.started ? resume : start}><IconPlay size={18} />{engine.started ? 'Resume' : 'Start'}</button>
+                <button className="btn" onClick={() => { setPaused(false); onAgain(); }}><IconRestart size={18} />Restart</button>
+                <button className="btn" onClick={listenFirst}><IconHeadphones size={18} />Listen</button>
+              </div>
+              <div className="pause-rows">
+                {!step.wait && <Segmented label="Speed" value={speed} onChange={setSpeed} options={SPEEDS.map(v => [v, formatSpeed(v)] as [number, string])} />}
+                <Segmented<FingerMode> label="Fingers" value={settings.fingers} onChange={v => update({ fingers: v })} options={[['off', 'Off'], ['some', 'Some'], ['all', 'All']]} />
+                <Segmented label="View" value={settings.view} onChange={v => update({ view: v })} options={[['sheet', 'Score'], ['notes', 'Falling notes']]} />
+              </div>
+              <div className="pause-steps">
+                {onPrev && <button className="btn small" onClick={onPrev}><IconArrowLeft size={16} />Previous step</button>}
+                {onNext && <button className="btn small" onClick={onNext}>Skip this step<IconArrowRight size={16} /></button>}
+              </div>
+              <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
+            </motion.section>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {noEnergy && (
         <EnergySheet empty onPremium={() => onPremium?.()} onClose={() => { if (energy() >= 1) setNoEnergy(false); else onExit(); }} />
       )}
 
       {result && (
-        <div className="veil">
-          <section className="card result" aria-labelledby="lesson-result-title">
-            {result.stars >= 2 && <Confetti />}
-            <div className="result-stars" aria-label={`${result.stars} of 3 stars`}>
-              {[0, 1, 2].map(i => (
-                <span key={i} className={`big-star ${i < result.stars ? 'won' : ''}`} style={{ animationDelay: `${120 + i * 160}ms` }}><IconStar size={44} /></span>
-              ))}
-            </div>
-            <h2 id="lesson-result-title">{HEADLINE[result.stars]}</h2>
-            {(result.xp > 0 || result.gems > 0 || result.energy > 0) && (
-              <div className="result-loot">
-                {result.xp > 0 && <span className="xp-badge">+<CountUp to={result.xp} /> XP</span>}
-                {result.gems > 0 && <span className="gem-badge"><Gem size={18} />+{result.gems}</span>}
-                {result.energy > 0 && <span className="energy-badge"><Energy size={16} />+{result.energy}</span>}
-              </div>
-            )}
-            <p className="result-line">{section.title} · {stepLabel(step)}: {result.hit} of {result.total} notes · {result.wrong} wrong · {Math.round(result.accuracy * 100)}%</p>
-            {result.streakUp !== undefined && <p className="streak-up"><IconFlame size={18} />{result.streakUp === 1 ? 'Streak started' : `${result.streakUp}-day streak`}</p>}
-            {result.stars === 0 && <p className="fine">You need 70% for a star. {step.wait ? 'Take it one note at a time.' : 'Try it slower: pause and pick a speed.'}</p>}
-            <div className="actions">
-              {next && <button className="btn go big" onClick={next.go}><IconPlay size={18} />{next.label}</button>}
-              <button className={`btn ${next ? '' : 'go big'}`} onClick={onAgain}><IconRestart size={18} />Try again</button>
-              <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
-            </div>
-          </section>
+        <div className="lesson-done" role="dialog" aria-labelledby="lesson-result-title">
+          {result.stars >= 2 && <Confetti />}
+          <div className="result-stars" aria-label={`${result.stars} of 3 stars`}>
+            {[0, 1, 2].map(i => (
+              <motion.span key={i} className={`big-star ${i < result.stars ? 'won' : ''}`} initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ ...SPRING, delay: 0.12 + i * 0.16 }}><IconStar size={56} /></motion.span>
+            ))}
+          </div>
+          <h1 id="lesson-result-title">{HEADLINE[result.stars]}</h1>
+          <p className="sub">{result.hit} of {result.total} notes right first time, {result.wrong} wrong</p>
+          <div className="theory-rewards">
+            {[
+              ['xp', 'Total XP', <><IconBolt size={20} />+<CountUp to={result.xp} /></>],
+              ['acc', 'Accuracy', <>{Math.round(result.accuracy * 100)}%</>],
+              result.gems > 0 ? ['gems', 'Gems', <><Gem size={20} />+{result.gems}</>] : result.energy > 0 ? ['energy', 'Energy', <><Energy size={18} />+{result.energy}</>] : null,
+            ].filter((x): x is [string, string, React.ReactElement] => !!x).map(([k, label, val], n) => (
+              <motion.span key={k} className={`reward ${k}`} initial={{ y: 24, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ ...SPRING, delay: 0.5 + n * 0.12 }}>
+                <small>{label}</small><b>{val}</b>
+              </motion.span>
+            ))}
+          </div>
+          {result.streakUp !== undefined && <p className="streak-up"><IconFlame size={18} />{result.streakUp === 1 ? 'Streak started' : `${result.streakUp}-day streak`}</p>}
+          {result.stars === 0 && <p className="fine">You need 70% for a star. {step.wait ? 'Take it one note at a time.' : 'Try it slower: pause and pick a speed.'}</p>}
+          <div className="lesson-done-actions">
+            {next && <button className="btn go big" onClick={next.go}>{next.label}</button>}
+            <button className={`btn ${next ? '' : 'go big'}`} onClick={onAgain}><IconRestart size={18} />Try again</button>
+            <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
+          </div>
         </div>
       )}
     </div>

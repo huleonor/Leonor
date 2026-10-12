@@ -185,3 +185,19 @@ export function loadSettings(): Settings {
 export function saveSettings(s: Settings) {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch { /* ignore */ }
 }
+
+// ---------- My library: the built-in songs he chose from the marketplace ----------
+
+const LIBRARY = 'hugos-piano:library';
+const libListeners = new Set<() => void>();
+export function myLibrary(): string[] {
+  try { return JSON.parse(localStorage.getItem(LIBRARY) ?? '[]'); } catch { return []; }
+}
+function saveLibrary(ids: string[]) {
+  try { localStorage.setItem(LIBRARY, JSON.stringify(ids)); } catch { /* storage unavailable */ }
+  libListeners.forEach(fn => fn());
+}
+export const inLibrary = (id: string) => myLibrary().includes(id);
+export const addToLibrary = (id: string) => { if (!inLibrary(id)) saveLibrary([...myLibrary(), id]); };
+export const removeFromLibrary = (id: string) => saveLibrary(myLibrary().filter(x => x !== id));
+export const onLibrary = (fn: () => void) => { libListeners.add(fn); return () => { libListeners.delete(fn); }; };

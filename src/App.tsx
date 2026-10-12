@@ -229,7 +229,7 @@ export default function App() {
       ) : (
         <div className="app">
           <nav className="rail" aria-label="Main">
-            <img className="rail-logo" src="/icons/icon.svg" alt="Hugo's Piano" width={36} height={36} />
+            <img className="rail-logo" src="/icons/logo.png" alt="Hugo’s Piano" width={40} height={40} />
             {TABS.map(([id, label, Icon]) => (
               <button key={id} className={`rail-btn ${tab === id ? 'on' : ''}`} aria-current={tab === id ? 'page' : undefined}
                 onClick={() => { setTab(id); setOpenId(null); }}>
@@ -256,7 +256,7 @@ export default function App() {
             ) : tab === 'shop' ? (
               <Shop onPremium={() => setPaywall('upgrade')} />
             ) : tab === 'songs' ? (
-              <Songs infos={infos} entries={entries} ready={ready} onOpen={openSheet} onAdd={() => pickFile()} onEdit={setEditing} />
+              <Songs infos={infos} entries={entries} ready={ready} onOpen={openSheet} onAdd={slot => pickFile(slot)} onEdit={setEditing} />
             ) : (
               <ProgressView settings={settings} update={update} entries={entries} infos={infos} onPractice={practise} />
             )}

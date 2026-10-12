@@ -4,7 +4,8 @@ import { freezes } from '../lib/stats';
 import { useDaily } from './Home';
 import { Chest, Energy, Flame, Gem } from './GameIcons';
 import { IconClose, IconSnow } from './Icons';
-import { Penguin } from './Penguin';
+import { Logo, Spot } from './Brand';
+import { Bump } from './Motion';
 
 /** The game bar, Duolingo style: streak flame, gems and the pink energy battery. */
 export function GameBar({ onEnergy, onGems }: { onEnergy: () => void; onGems: () => void }) {
@@ -14,12 +15,12 @@ export function GameBar({ onEnergy, onGems }: { onEnergy: () => void; onGems: ()
   return (
     <div className="gamebar">
       <span className={`gb-stat flame ${daily.streak.today ? 'lit' : ''}`} aria-label={`${daily.streak.days}-day streak${f ? `, ${f} streak freeze${f > 1 ? 's' : ''}` : ''}`}>
-        <Flame size={26} lit={daily.streak.today} />{daily.streak.days}
+        <Flame size={26} lit={daily.streak.today} /><Bump value={daily.streak.days} />
         {f > 0 && <small className="gb-freeze"><IconSnow size={12} />{f}</small>}
       </span>
-      <button className="gb-stat gem" onClick={onGems} aria-label={`${gems} gems, open the shop`}><Gem size={24} />{gems}</button>
+      <button className="gb-stat gem" onClick={onGems} aria-label={`${gems} gems, open the shop`}><Gem size={24} /><Bump value={gems} /></button>
       <button className={`gb-stat energy ${!premium && energy === 0 ? 'empty' : ''}`} onClick={onEnergy} aria-label={premium ? 'Unlimited energy' : `${energy} of ${MAX_ENERGY} energy`}>
-        <Energy size={22} />{premium ? '∞' : energy}
+        <Energy size={22} />{premium ? '∞' : <Bump value={energy} />}
       </button>
     </div>
   );
@@ -53,7 +54,7 @@ export function EnergySheet({ empty, onClose, onPremium, onPractice }: SheetProp
     <div className="veil sheet-veil" onClick={onClose}>
       <section className="card game-sheet" role="dialog" aria-modal="true" aria-labelledby="energy-title" onClick={e => e.stopPropagation()}>
         <button className="icon-btn ghost game-sheet-close" onClick={onClose} aria-label="Close"><IconClose /></button>
-        <Penguin pose={empty ? 'idle' : 'keys'} size={110} />
+        <Spot tone="energy"><Energy size={46} /></Spot>
         <h2 id="energy-title">{premium ? 'Unlimited energy' : empty ? 'You need energy to do lessons' : 'Energy'}</h2>
         {premium ? <p className="sub">Premium is on: play as much as you like.</p> : (
           <>
@@ -89,7 +90,6 @@ export function ChestOpened({ reward, onClose }: { reward: ChestReward; onClose:
       <section className="card chest-card" role="dialog" aria-modal="true" aria-labelledby="chest-title" onClick={e => e.stopPropagation()}>
         <div className="chest-scene">
           <Chest size={120} open className="chest-pop" />
-          <Penguin pose="cheer" size={110} />
         </div>
         <h2 id="chest-title">You opened a chest!</h2>
         <div className="chest-loot">
@@ -118,7 +118,7 @@ export function Shop({ onPremium }: { onPremium: () => void }) {
             <p className="sub">Learn as long as you like: no waiting, no gems. The first week is free.</p>
             <button className="btn super-cta" onClick={onPremium}>Try 1 week free</button>
           </div>
-          <Penguin pose="cheer" size={130} />
+          <Logo size={110} className="super-logo" />
         </section>
       )}
       <h2 className="shop-h">Energy</h2>

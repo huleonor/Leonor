@@ -9,12 +9,12 @@ import { ChestOpened, GameBar } from './Economy';
 import { Chest, GlyphBook, GlyphCrown, GlyphDumbbell, GlyphHand, GlyphHeadphones, GlyphLock, GlyphNote, GlyphStar, GlyphTrophy, Energy } from './GameIcons';
 import { useDaily } from './Home';
 import { IconArrowLeft, IconBluetooth, IconCheck, IconClose, IconKeys, IconMic } from './Icons';
-import { Penguin, type Pose } from './Penguin';
+import { Logo } from './Brand';
 
 /** Each unit has its own colour, as on Duolingo's path. */
 export const UNIT_COLORS: [string, string, string][] = [
-  // [colour, edge, text on it], Duolingo's unit colours with white text (dark text on gold).
-  ['#58cc02', '#58a700', '#ffffff'], ['#ce82ff', '#a568cc', '#ffffff'], ['#00cd9c', '#00a57d', '#ffffff'], ['#1cb0f6', '#1899d6', '#ffffff'],
+  // [colour, edge, text on it]: the brand blue first, then Duolingo's unit colours, white text (dark on gold).
+  ['#2b93ba', '#1f7395', '#ffffff'], ['#ce82ff', '#a568cc', '#ffffff'], ['#00cd9c', '#00a57d', '#ffffff'], ['#58cc02', '#58a700', '#ffffff'],
   ['#ff9600', '#e08300', '#ffffff'], ['#ff86d0', '#e070b4', '#ffffff'], ['#ff4b4b', '#ea2b2b', '#ffffff'], ['#2b70c9', '#18599e', '#ffffff'],
   ['#cc348d', '#a6206f', '#ffffff'], ['#ffc800', '#e0ad00', '#4a3200'],
 ];
@@ -30,8 +30,6 @@ const XP_HINT: Partial<Record<NodeKind, number>> = { theory: 10, lesson: 25, lis
 
 /** Zig-zag offsets, in px, Duolingo's winding path. */
 const SWAY = [0, 44, 70, 44, 0, -44, -70, -44];
-/** Pip stands beside the path once per unit, in a different pose each time. */
-const POSES: Pose[] = ['wave', 'keys', 'read', 'cheer', 'wink', 'idle', 'grad'];
 
 const SETUP: [Source, string, string, (p: { size?: number }) => React.ReactElement][] = [
   ['midi', 'USB cable', 'Piano plugged into the phone', IconKeys],
@@ -115,7 +113,7 @@ export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest
 
         {fresh && (
           <section className="card placement" aria-labelledby="placement-title">
-            <Penguin pose="wave" size={88} />
+            <Logo size={64} />
             <div>
               <h2 id="placement-title">Already play a little?</h2>
               <p className="sub">One short piece per unit. Each you pass with 2 stars skips that unit.</p>
@@ -155,11 +153,9 @@ export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest
                     {nodes.map((node, k) => {
                       const st = path?.state[node.id];
                       const off = SWAY[k % SWAY.length];
-                      // Pip stands on the open side of the bend, beside the third node.
-                      const pip = k === 2 ? POSES[ui % POSES.length] : null;
                       return (
                         <TrailNode
-                          key={node.id} node={node} unit={unit} st={st} off={off} pip={pip} isOpen={open === node.id}
+                          key={node.id} node={node} unit={unit} st={st} off={off} isOpen={open === node.id}
                           onToggle={() => setOpen(o => (o === node.id ? null : node.id))}
                           onStart={() => { setOpen(null); onNode(node, unit, path?.progs[node.id]); }}
                           onTestOut={() => { setOpen(null); onTest([unitTest(unit)], unit); }}
@@ -174,7 +170,7 @@ export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest
           </div>
         ))}
         <div className="path-end">
-          <Penguin pose="grad" size={120} />
+          <Logo size={72} />
           <p className="sub">More sections are on the way.</p>
         </div>
       </div>
@@ -195,7 +191,7 @@ export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest
         </section>
         {!premium && (
           <section className="card side-card super">
-            <Penguin pose="cheer" size={72} />
+            <Logo size={56} />
             <div>
               <h3>Unlimited energy</h3>
               <p className="sub">Never wait to play. Try Premium free for a week.</p>
@@ -216,7 +212,7 @@ export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest
           <section className="card guide-card" role="dialog" aria-modal="true" aria-labelledby="guide-title" onClick={e => e.stopPropagation()} style={{ '--unit': colorOf(guide)[0], '--unit-edge': colorOf(guide)[1], '--unit-ink': colorOf(guide)[2] } as React.CSSProperties}>
             <button className="icon-btn ghost game-sheet-close" onClick={() => setGuide(null)} aria-label="Close"><IconClose /></button>
             <header className="guide-head">
-              <Penguin pose="read" size={84} />
+              <span className="guide-icon"><GlyphBook /></span>
               <div>
                 <small>{unitLabel(guide)} · Guidebook</small>
                 <h2 id="guide-title">{guide.title}</h2>
@@ -240,11 +236,11 @@ export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest
 }
 
 interface NodeProps {
-  node: PathNode; unit: Unit; st?: NodeState; off: number; pip: Pose | null; isOpen: boolean;
+  node: PathNode; unit: Unit; st?: NodeState; off: number; isOpen: boolean;
   onToggle: () => void; onStart: () => void; onTestOut: () => void; onChest: () => void;
 }
 
-function TrailNode({ node, unit, st, off, pip, isOpen, onToggle, onStart, onTestOut, onChest }: NodeProps) {
+function TrailNode({ node, unit, st, off, isOpen, onToggle, onStart, onTestOut, onChest }: NodeProps) {
   const open = !!st?.open, done = !!st?.done, current = !!st?.current;
   const n = nodesOf(unit).filter(x => x.kind === node.kind).indexOf(node) + 1;
   const of = nodesOf(unit).filter(x => x.kind === node.kind).length;
@@ -277,7 +273,6 @@ function TrailNode({ node, unit, st, off, pip, isOpen, onToggle, onStart, onTest
         )}
         <span className="node-face">{open ? <Glyph /> : node.kind === 'trophy' ? <GlyphTrophy /> : <GlyphLock />}</span>
       </button>
-      {pip && <span className="trail-pip" style={{ '--side': off > 0 ? -1 : 1 } as React.CSSProperties}><Penguin pose={pip} size={110} /></span>}
       {isOpen && (
         <div className={`node-pop ${open ? '' : 'locked'}`} role="dialog" aria-label={node.title}>
           <small>{KIND_NAME[node.kind]}{of > 1 ? ` ${n} of ${of}` : ''}</small>
