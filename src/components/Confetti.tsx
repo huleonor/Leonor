@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-const COLORS = ['#58cc02', '#1cb0f6', '#ffc800', '#ff9600', '#ce82ff', '#ff4b4b'];
+const COLORS = ['#a5ed6e', '#1cb0f6', '#ffc800', '#ff9600', '#ce82ff', '#ff4b4b'];
 
 /** A burst of confetti over a card, for a lesson well played. Same pieces every render. */
 export function Confetti({ n = 36 }: { n?: number }) {

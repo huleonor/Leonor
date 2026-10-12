@@ -60,7 +60,7 @@ export function InputCheck({ links, naming, onClose }: Props) {
         </header>
         <div className="check-live" aria-live="polite">
           <small>{last ? `Heard from ${SOURCE_NAME[last.source]} · ${count} notes` : 'Waiting for a note'}</small>
-          <strong>{heard.length ? heard.map(m => noteName(m, naming, true)).join(' + ') : '—'}</strong>
+          <strong>{heard.length ? heard.map(m => noteName(m, naming, true)).join(' + ') : '-'}</strong>
         </div>
         <div className="check-keys" aria-hidden="true">{keys}</div>
         <dl className="check-list">

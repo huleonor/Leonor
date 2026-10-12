@@ -35,7 +35,7 @@ const pc = (m: number) => ((m % 12) + 12) % 12;
 
 interface Props {
   node: PathNode;
-  color: [string, string];
+  color: readonly string[];
   naming: NoteNaming;
   onExit: () => void;
   onDone: () => void;
@@ -94,7 +94,7 @@ export function TheoryLesson({ node, color, naming, onExit, onDone }: Props) {
 
   if (finished) {
     return (
-      <div className="theory-screen done" style={{ '--unit': color[0], '--unit-edge': color[1] } as React.CSSProperties}>
+      <div className="theory-screen done" style={{ '--unit': color[0], '--unit-edge': color[1], '--unit-ink': color[2] } as React.CSSProperties}>
         <Confetti />
         <Penguin pose="cheer" size={170} />
         <h1>Lesson complete!</h1>
@@ -112,7 +112,7 @@ export function TheoryLesson({ node, color, naming, onExit, onDone }: Props) {
   const progress = (i + (checked === 'right' || card.t === 'say' ? 1 : 0)) / cards.length;
   const want = card.t === 'play' ? card.play[at] : undefined;
   return (
-    <div className="theory-screen" style={{ '--unit': color[0], '--unit-edge': color[1] } as React.CSSProperties}>
+    <div className="theory-screen" style={{ '--unit': color[0], '--unit-edge': color[1], '--unit-ink': color[2] } as React.CSSProperties}>
       <header className="theory-bar">
         <button className="icon-btn ghost" onClick={onExit} aria-label="Quit lesson"><IconClose size={24} /></button>
         <span className="theory-progress" role="progressbar" aria-valuemin={0} aria-valuemax={cards.length} aria-valuenow={i + 1}><i style={{ width: `${Math.max(4, progress * 100)}%` }} /></span>

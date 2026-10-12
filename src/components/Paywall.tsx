@@ -11,7 +11,7 @@ const FEATURES: [string, string | boolean, string | boolean][] = [
   ['Keep going without waiting or gems', false, true],
 ];
 
-const Cell = ({ v }: { v: string | boolean }) => (typeof v === 'string' ? <span className="cell-text">{v}</span> : v ? <IconCheck size={18} className="yes" /> : <span className="no" aria-label="No">–</span>);
+const Cell = ({ v }: { v: string | boolean }) => (typeof v === 'string' ? <span className="cell-text">{v}</span> : v ? <IconCheck size={18} className="yes" /> : <span className="no" aria-label="No">-</span>);
 
 interface Props { reason: PaywallReason; onClose: () => void; onDone: (text: string) => void; }
 
