@@ -33,6 +33,8 @@ export interface CourseStep {
   hands: HandsChoice;
   speed: number;
   wait: boolean;
+  /** Play it to him first, then he plays it back. */
+  listen?: boolean;
 }
 
 export interface Course {

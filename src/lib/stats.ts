@@ -59,6 +59,14 @@ function readFreezes(): Freezes {
 }
 function writeFreezes(f: Freezes) { try { localStorage.setItem(FREEZE, JSON.stringify(f)); } catch { /* ignore */ } }
 export const freezes = () => readFreezes().have;
+/** A freeze bought in the shop (two at most). */
+export function addFreeze() {
+  const f = readFreezes();
+  if (f.have >= 2) return;
+  f.have++;
+  writeFreezes(f);
+  listeners.forEach(fn => fn());
+}
 
 /** Every seven days in a row earns a freeze, two at most. */
 function earnFreeze() {

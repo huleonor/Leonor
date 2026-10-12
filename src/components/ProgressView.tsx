@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { describeCoach } from '../lib/adapt';
 import type { SongInfo } from '../lib/catalog';
 import { LEVEL_NAME, levelFor } from '../lib/exercises';
 import { skillPractice, type Playable } from '../lib/path';
@@ -23,7 +22,7 @@ interface Props {
 const AREAS = ['Reading', 'Rhythm', 'Technique'] as const;
 
 /** The skill map: every skill's level, how it moved since about a week ago, and a practice button. */
-function SkillMap({ onPractice }: { onPractice: (p: Playable) => void }) {
+export function SkillMap({ onPractice }: { onPractice: (p: Playable) => void }) {
   const [, bump] = useState(0);
   useEffect(() => onSkills(() => bump(x => x + 1)), []);
   const p = loadProfile();
@@ -93,21 +92,6 @@ function WeekCard() {
   );
 }
 
-/** What the coach has set, so changes are never a mystery. */
-function CoachCard() {
-  const c = describeCoach();
-  return (
-    <section className="card coach-card" aria-labelledby="coach-title">
-      <h2 id="coach-title">Your coach</h2>
-      <p className="sub">Keeps each lesson hard enough to grow and easy enough to enjoy: about 85% right first time.</p>
-      <dl>
-        <div><dt>Speed</dt><dd>{c.speed}</dd></div>
-        <div><dt>Keys light up</dt><dd>{c.hints}</dd></div>
-        <div><dt>Finger numbers</dt><dd>{c.fingers}</dd></div>
-      </dl>
-    </section>
-  );
-}
 
 export function ProgressView({ settings, update, entries, infos, onPractice }: Props) {
   const daily = useDaily();
@@ -172,8 +156,6 @@ export function ProgressView({ settings, update, entries, infos, onPractice }: P
             })}
           </div>
         </section>
-
-        <CoachCard />
 
         <section className="card totals" aria-label="All time">
           <dl>

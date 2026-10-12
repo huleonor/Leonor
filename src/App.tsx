@@ -2,12 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AddSong } from './components/AddSong';
 import { Celebrate } from './components/Celebrate';
 import { Paywall } from './components/Paywall';
-import { countPractice, FREE_SONGS, isPremium, practicesLeft, type PaywallReason } from './lib/billing';
+import { type PaywallReason } from './lib/billing';
 import { applyFreezes, onStats, sessionComplete, setGoalMinutes } from './lib/stats';
 import { scheduleReminders, startWebReminders } from './lib/reminders';
-import { Home } from './components/Home';
-import { Learn, markSession } from './components/Learn';
-import { IconCap, IconChart, IconGear, IconHome, IconMusic } from './components/Icons';
+import { PathHome, colorOf } from './components/PathHome';
+import { markSession, Practice } from './components/Practice';
+import { EnergySheet, Shop } from './components/Economy';
+import { TheoryLesson } from './components/TheoryLesson';
+import { Gem } from './components/GameIcons';
+import { IconChart, IconDumbbell, IconGear, IconHome, IconMusic } from './components/Icons';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
 import { ProgressView } from './components/ProgressView';
@@ -17,18 +20,21 @@ import { SongScreen, sectionsOf } from './components/SongScreen';
 import { Songs } from './components/Songs';
 import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
-import type { CourseStep } from './lib/course';
 import { I18nContext, makeT } from './lib/i18n';
-import { lessonAfter, lessonPlayable, markPlacementTaken, pathChanged, placedUnits, placeUnit, UNITS, type Playable } from './lib/path';
+import { finishTheory, markPlacementTaken, nodePlayable, pathChanged, placedUnits, placeUnit, UNITS, type Playable } from './lib/path';
+import type { PathNode, Unit } from './lib/curriculum';
+import type { CourseProgress } from './lib/course';
+import { energy } from './lib/energy';
 import { connect, disconnectBle, disconnectMic, linkState, onLinkState, onNote, watchForMidi, type LinkState, type Source } from './lib/input';
 import { loadSettings, removeSong, renameSong, saveSettings } from './lib/library';
 import type { Settings, SongEntry } from './lib/types';
 
-type Tab = 'home' | 'learn' | 'songs' | 'progress';
+type Tab = 'home' | 'practice' | 'songs' | 'shop' | 'progress';
 const TABS: [Tab, string, (p: { size?: number }) => React.ReactElement][] = [
-  ['home', 'Home', IconHome],
-  ['learn', 'Learn', IconCap],
+  ['home', 'Learn', IconHome],
+  ['practice', 'Practice', IconDumbbell],
   ['songs', 'Songs', IconMusic],
+  ['shop', 'Shop', p => <Gem size={p.size} />],
   ['progress', 'Progress', IconChart],
 ];
 
@@ -38,7 +44,9 @@ export default function App() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [lesson, setLesson] = useState<{ id: string; section: string; step?: string; n: number } | null>(null);
   // A course lesson, a skill practice, or today's session (several pieces played one after the other).
-  const [run, setRun] = useState<{ items: Playable[]; i: number; n: number; session: boolean; test?: boolean } | null>(null);
+  const [run, setRun] = useState<{ items: Playable[]; i: number; n: number; session: boolean; test?: boolean; path?: boolean } | null>(null);
+  const [theory, setTheory] = useState<{ node: PathNode; unit: Unit } | null>(null);
+  const [energySheet, setEnergySheet] = useState<'info' | 'empty' | null>(null);
   const [editing, setEditing] = useState<SongEntry | null>(null);
   const [sheet, setSheet] = useState<'settings' | 'check' | null>(null);
   const [adding, setAdding] = useState<{ file: File; slot?: SongEntry } | null>(null);
@@ -112,17 +120,8 @@ export default function App() {
   };
 
   const [paywall, setPaywall] = useState<PaywallReason | null>(null);
-  // Free plan: up to FREE_SONGS songs of your own (filling a built-in slot is always free).
-  const pickFile = (slot?: SongEntry) => {
-    if (!slot && !isPremium() && entries.filter(e => !e.builtIn).length >= FREE_SONGS) { setPaywall('songs'); return; }
-    slotRef.current = slot; fileRef.current?.click();
-  };
-  // Free plan: a few skill practices a day.
-  const practise = (p: Playable) => {
-    if (practicesLeft() <= 0) { setPaywall('practice'); return; }
-    countPractice();
-    play([p], 0, false);
-  };
+  const pickFile = (slot?: SongEntry) => { slotRef.current = slot; fileRef.current?.click(); };
+  const practise = (p: Playable) => play([p], 0, false);
   const openSong = (info: SongInfo) => {
     if (info.entry.missing) { pickFile(info.entry); return; }
     if (info.error || !info.song) { setNotice({ text: i18n.t(info.entry.builtIn ? 'err.loadFailed' : 'err.missing'), error: true }); return; }
@@ -130,27 +129,30 @@ export default function App() {
   };
   // Opening a song shows its sheet music; Teach me opens a section's lesson on top of it.
   const openSheet = (info: SongInfo) => { unlockAudio(); ensureInput(); openSong(info); };
-  const startStep = (info: SongInfo, step: CourseStep) => {
-    unlockAudio();
-    ensureInput();
-    const section = sectionsOf(info).find(sc => sc.steps.some(st => st.id === step.id));
-    setOpenId(info.entry.id);
-    if (section) setLesson({ id: info.entry.id, section: section.id, step: step.id, n: 0 });
-  };
 
   const play = (items: Playable[], from: number, session: boolean) => { unlockAudio(); ensureInput(); setRun({ items, i: from, n: 0, session }); };
+  // A node on the path: theory opens its cards, the trophy is the unit test, the rest are lessons
+  // (each step costs energy, so he needs some to start).
+  const playNode = (node: PathNode, unit: Unit, prog?: CourseProgress) => {
+    if (node.kind === 'theory') { setTheory({ node, unit }); return; }
+    const p = nodePlayable(node, prog);
+    if (!p) return;
+    if (node.kind === 'trophy') { takeTest([p]); return; }
+    if (energy() < 1) { setEnergySheet('empty'); return; }
+    unlockAudio(); ensureInput();
+    setRun({ items: [p], i: 0, n: 0, session: false, path: true });
+  };
   // A test: the placement test (every unit in turn) or one unit's test-out. Each pass skips that unit.
   const takeTest = (items: Playable[]) => { unlockAudio(); ensureInput(); setRun({ items, i: 0, n: 0, session: false, test: true }); };
   const endTest = (passedThrough: number) => {
     markPlacementTaken();
     setRun(null);
     const at = UNITS.findIndex(u => !placedUnits().includes(u.id));
-    setTab('learn');
+    setTab('home');
+    pathChanged();
     setNotice({ text: passedThrough > 0 ? (at < 0 ? 'You passed every unit test.' : `You start at Unit ${at + 1}: ${UNITS[at].title}.`) : 'You start at the beginning: Unit 1.' });
   };
   const runItem = run?.items[run.i];
-  // A course lesson leads on to the next one on the path (a skill practice leads nowhere).
-  const afterRun = run && !run.session && !run.test && runItem?.id && !runItem.id.startsWith('skill-') ? lessonAfter(runItem.id) : undefined;
 
   const open = openId ? infos[openId] : undefined;
   const lessonInfo = lesson && infos[lesson.id];
@@ -172,7 +174,7 @@ export default function App() {
           onExit={() => endTest(run.i)}
           onStop={() => endTest(run.i)}
           onNextSection={() => {
-            placeUnit(runItem.id.replace('test-', ''));
+            placeUnit(runItem.id.replace(/-test$/, ''));
             if (run.i < run.items.length - 1) setRun({ ...run, i: run.i + 1, n: run.n + 1 });
             else endTest(run.i + 1);
           }}
@@ -184,19 +186,27 @@ export default function App() {
           key={`${runItem.id}-${run.i}-${run.n}`}
           info={runItem.info} section={runItem.section}
           settings={settings} update={update} links={links}
-          exitLabel={run.session ? 'Back to today’s session' : 'Back to the course'}
-          nextLabel={run.session ? (run.i < run.items.length - 1 ? `Next: ${run.items[run.i + 1].title}` : 'Finish today’s session') : `Next lesson: ${afterRun?.title}`}
+          energyMode={run.path ? 'spend' : 'earn'}
+          onPremium={() => setPaywall('energy')}
+          exitLabel={run.session ? 'Back to today’s session' : run.path ? 'Back to the path' : 'Back to practice'}
+          nextLabel={run.session ? (run.i < run.items.length - 1 ? `Next: ${run.items[run.i + 1].title}` : 'Finish today’s session') : 'Continue'}
           onExit={() => { setRun(null); pathChanged(); }}
-          onNextSection={run.session || afterRun ? () => {
+          onNextSection={() => {
             if (run.session) markSession(run.i + 1);
             if (run.session && run.i === run.items.length - 1) sessionComplete();
             pathChanged();
             if (run.session && run.i < run.items.length - 1) setRun({ ...run, i: run.i + 1, n: run.n + 1 });
-            else if (!run.session && afterRun) setRun({ items: [lessonPlayable(afterRun)], i: 0, n: run.n + 1, session: false });
             else setRun(null);
-          } : undefined}
+          }}
           onRecorded={() => pathChanged()}
           onSettings={() => setSheet('settings')}
+        />
+      ) : theory ? (
+        <TheoryLesson
+          key={theory.node.id}
+          node={theory.node} color={colorOf(theory.unit)} naming={settings.naming}
+          onExit={() => setTheory(null)}
+          onDone={() => { finishTheory(theory.node); setTheory(null); }}
         />
       ) : lesson && lessonInfo?.song && lessonSection ? (
         <Lesson
@@ -230,17 +240,21 @@ export default function App() {
           </nav>
           <main className="content">
             {tab === 'home' ? (
-              <Home
-                settings={settings} ready={ready} entries={entries} infos={infos} links={links}
+              <PathHome
+                settings={settings} links={links}
                 onSetup={kind => { update({ input: kind, setupDone: true }); connectInput(kind); }}
                 onSkipSetup={() => update({ setupDone: true })}
-                onOpen={openSheet}
-                onPlay={startStep}
-                onBrowse={() => setTab('songs')}
-                onSession={(items, from) => play(items, from, true)}
+                onNode={playNode}
+                onTest={items => takeTest(items)}
+                onEnergy={() => setEnergySheet('info')}
+                onShop={() => setTab('shop')}
+                onPractice={() => setTab('practice')}
+                onPremium={() => setPaywall('upgrade')}
               />
-            ) : tab === 'learn' ? (
-              <Learn settings={settings} onPlay={play} onTest={takeTest} onPaywall={setPaywall} />
+            ) : tab === 'practice' ? (
+              <Practice onSession={(items, from) => play(items, from, true)} onPractice={practise} />
+            ) : tab === 'shop' ? (
+              <Shop onPremium={() => setPaywall('upgrade')} />
             ) : tab === 'songs' ? (
               <Songs infos={infos} entries={entries} ready={ready} onOpen={openSheet} onAdd={() => pickFile()} onEdit={setEditing} />
             ) : (
@@ -273,6 +287,14 @@ export default function App() {
         <SettingsSheet settings={settings} update={update} links={links} connectInput={connectInput} onCheck={() => setSheet('check')} onClose={() => setSheet(null)} onPlan={() => { setSheet(null); setPaywall('upgrade'); }} />
       )}
       {sheet === 'check' && <InputCheck links={links} naming={settings.naming} onClose={() => setSheet('settings')} />}
+      {energySheet && (
+        <EnergySheet
+          empty={energySheet === 'empty'}
+          onClose={() => setEnergySheet(null)}
+          onPremium={() => { setEnergySheet(null); setPaywall('energy'); }}
+          onPractice={() => { setEnergySheet(null); setTab('practice'); }}
+        />
+      )}
       <Celebrate />
       {paywall && <Paywall reason={paywall} onClose={() => setPaywall(null)} onDone={text => { setPaywall(null); pathChanged(); setNotice({ text }); }} />}
       {notice && <div className={`toast ${notice.error ? 'error' : ''}`} role="status">{notice.text}</div>}

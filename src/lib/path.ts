@@ -1,115 +1,59 @@
 /**
- * The main course: units of short lessons, Duolingo style, each unit ending in a song, Simply
- * Piano style. Lessons are pieces written for the course (or made on the spot by the exercise
- * generator); the coach sets how fast and how much help each one gets.
+ * The path through the course (see curriculum.ts): which nodes are done, which is next, and what
+ * to play when he taps one. Generated nodes are written fresh each time, at a level chosen from his
+ * skill profile, so the path quietly bends to him: a skill he keeps getting right comes back
+ * harder, one he keeps missing comes back simpler, and the practice nodes go after what he is
+ * getting wrong. He never sees any of it; he just keeps walking the path.
  *
- * And the daily session: a warm-up on his weakest skill, the next lesson on the path, and a short
- * review, about ten minutes, chosen fresh each day from his skill profile.
+ * Also the daily session: a warm-up on his weakest skill, the next lesson on the path, and a short
+ * review, chosen fresh each day.
  */
 import { useEffect, useState } from 'react';
 import type { SongInfo } from './catalog';
-import { getCourseProgress, type CourseProgress, type CourseStep } from './course';
-import { COURSE_SONGS, EXERCISE_TITLE, LEVEL_NAME, levelFor, line, makeExercise, writeSong } from './exercises';
-import { FREE_UNITS, isPremium } from './billing';
+import { getCourseProgress, recordStep, type CourseProgress, type CourseStep } from './course';
+import { ALL_NODES, nodesOf, sectionOf, UNITS, type NodeHands, type PathNode, type Unit } from './curriculum';
+import { chestOpened } from './energy';
+import { EXERCISE_TITLE, LEVEL_NAME, levelFor, makeExercise } from './exercises';
 import { dueSkills, loadProfile, SKILLS, weakest, type SkillId } from './skills';
 import { dayKey } from './stats';
 import type { Song } from './types';
+
+export { UNITS };
 
 /** What the lesson screen needs: a song and its steps as one section. */
 export interface Playable {
   id: string;
   title: string;
-  /** One line under the title: why this, now. */
+  /** One line under the title. */
   why: string;
   info: SongInfo;
   section: { id: string; title: string; bars: string; from: number; steps: CourseStep[]; learnt: boolean; done: number };
 }
 
-export interface PathLesson {
-  id: string;
-  title: string;
-  sub: string;
-  kind: 'learn' | 'practice' | 'song';
-  make: () => Song;
+// ---------- Steps ----------
+
+interface Plan { id: string; title: string; hands: NodeHands | 'all'; speed: number; wait: boolean; listen?: boolean; }
+const P = (id: string, title: string, hands: Plan['hands'], speed: number, wait: boolean, listen = false): Plan => ({ id, title, hands, speed, wait, listen });
+
+/** The steps of a node, by kind: with help, on your own, in tempo; hand by hand for two hands. */
+export function planFor(n: PathNode): Plan[] {
+  const h = n.hands;
+  const two = h === 'both';
+  switch (n.kind) {
+    case 'trophy': return [P('test', 'Unit test', h, 0.9, true)];
+    case 'practice': return [P('go', 'Slowly', 'all', 0.75, true), P('own', 'On your own', 'all', 0.9, true)];
+    case 'listen': return [P('listen', 'Listen, then play', h, 0.8, true, true), P('own', 'On your own', h, 0.9, true)];
+    case 'technique': return [P('slow', 'Slowly', h, 0.7, true), P('tempo', 'In tempo', h, 0.85, false)];
+    case 'song': return two
+      ? [P('R', 'Right hand', 'R', 0.7, true), P('L', 'Left hand', 'L', 0.7, true), P('both', 'Hands together', 'both', 0.8, true), P('tempo', 'In tempo', 'both', 1, false)]
+      : [P('help', 'Slowly', h, 0.7, true), P('own', 'On your own', h, 0.9, true), P('tempo', 'In tempo', h, 1, false)];
+    case 'lesson': return two
+      ? [P('R', 'Right hand', 'R', 0.7, true), P('L', 'Left hand', 'L', 0.7, true), P('both', 'Hands together', 'both', 0.8, true)]
+      : [P('help', 'Slowly', h, 0.7, true), P('own', 'On your own', h, 0.9, true)];
+    case 'theory': return [P('read', 'Read', h, 1, true)];
+    default: return [];
+  }
 }
-
-export interface Unit {
-  id: string; title: string; sub: string; lessons: PathLesson[];
-  /** A short piece that proves the unit: pass it (2 stars) to skip the unit, in the placement test or by testing out. */
-  test: () => Song;
-}
-
-const drill = (skill: SkillId, level: number, seed: number) => () => makeExercise(skill, level, seed);
-
-export const UNITS: Unit[] = [
-  {
-    id: 'u1', title: 'Middle C, right hand', sub: 'Read the treble clef from C to G',
-    lessons: [
-      { id: 'u1-cde', title: 'Meet C, D and E', sub: 'Three notes, three fingers', kind: 'learn',
-        make: () => writeSong('path:u1-cde', 'Meet C, D and E', [line('C4 D4 E4 D4 C4:2 C4:2 E4 D4 C4 D4 E4:2 E4:2 D4 D4 C4:2 C4 D4 E4 D4 C4:4', 'R')]) },
-      { id: 'u1-five', title: 'Five fingers: C to G', sub: 'The whole hand on its keys', kind: 'learn', make: drill('treble', 0, 101) },
-      { id: 'u1-beat', title: 'Keep the beat', sub: 'Half and whole notes', kind: 'practice', make: drill('rhythm', 0, 102) },
-      { id: 'u1-mary', title: 'Mary Had a Little Lamb', sub: 'Your first song', kind: 'song', make: COURSE_SONGS.mary },
-      { id: 'u1-ode', title: 'Ode to Joy', sub: 'Beethoven, right hand', kind: 'song', make: COURSE_SONGS.ode },
-    ],
-    test: drill('treble', 1, 191),
-  },
-  {
-    id: 'u2', title: 'Bass clef, left hand', sub: 'Read the bass clef from C to G',
-    lessons: [
-      { id: 'u2-cde', title: 'C, D and E in the bass', sub: 'The left hand starts', kind: 'learn',
-        make: () => writeSong('path:u2-cde', 'C, D and E in the bass', [line('C3 D3 E3 D3 C3:2 C3:2 E3 D3 C3 D3 E3:2 E3:2 D3 D3 C3:2 C3 D3 E3 D3 C3:4', 'L')]) },
-      { id: 'u2-five', title: 'Five fingers, left hand', sub: 'C to G in the bass clef', kind: 'learn', make: drill('bass', 0, 201) },
-      { id: 'u2-lune', title: 'Au clair de la lune', sub: 'A French song, left hand', kind: 'song', make: COURSE_SONGS.lune },
-      { id: 'u2-review', title: 'Bass clef review', sub: 'Wider reach, C to C', kind: 'practice', make: drill('bass', 1, 202) },
-    ],
-    test: drill('bass', 1, 291),
-  },
-  {
-    id: 'u3', title: 'Hands together', sub: 'Two clefs at once',
-    lessons: [
-      { id: 'u3-hold', title: 'The left hand holds', sub: 'Melody over a long C', kind: 'learn', make: drill('together', 0, 301) },
-      { id: 'u3-move', title: 'The left hand moves', sub: 'C and G under the tune', kind: 'learn', make: drill('together', 1, 302) },
-      { id: 'u3-ode', title: 'Ode to Joy, both hands', sub: 'Your first two-hand song', kind: 'song', make: COURSE_SONGS.odeBoth },
-    ],
-    test: drill('together', 1, 391),
-  },
-  {
-    id: 'u4', title: 'Eighth notes', sub: 'Two notes to a beat',
-    lessons: [
-      { id: 'u4-pairs', title: 'Pairs of eighths', sub: 'Count “1 and 2 and”', kind: 'learn', make: drill('eighths', 0, 401) },
-      { id: 'u4-frere', title: 'Frère Jacques', sub: 'Eighths in a round', kind: 'song', make: COURSE_SONGS.frere },
-      { id: 'u4-more', title: 'Eighths on the move', sub: 'Wider melodies, faster notes', kind: 'practice', make: drill('eighths', 1, 402) },
-    ],
-    test: drill('eighths', 1, 491),
-  },
-  {
-    id: 'u5', title: 'Chords in the left hand', sub: 'C, F and G',
-    lessons: [
-      { id: 'u5-fifth', title: 'Two notes at once', sub: 'C and G together', kind: 'learn', make: drill('chords', 0, 501) },
-      { id: 'u5-triads', title: 'Three-note chords', sub: 'C, F and G major', kind: 'learn', make: drill('chords', 1, 502) },
-      { id: 'u5-twinkle', title: 'Twinkle, Twinkle, Little Star', sub: 'Melody over chords', kind: 'song', make: COURSE_SONGS.twinkle },
-    ],
-    test: drill('chords', 1, 591),
-  },
-  {
-    id: 'u6', title: 'G major: F sharp', sub: 'Your first key signature',
-    lessons: [
-      { id: 'u6-sharp', title: 'Meet F sharp', sub: 'The black key in G major', kind: 'learn', make: drill('accidentals', 0, 601) },
-      { id: 'u6-minuet', title: 'Minuet in G', sub: 'Petzold, both hands', kind: 'song', make: COURSE_SONGS.minuet },
-    ],
-    test: drill('accidentals', 0, 691),
-  },
-  {
-    id: 'u7', title: 'Dotted rhythms and 3/4', sub: 'Long, short and waltz time',
-    lessons: [
-      { id: 'u7-dotted', title: 'Long, then short', sub: 'Dotted quarter and eighth', kind: 'learn', make: drill('dotted', 0, 701) },
-      { id: 'u7-grace', title: 'Amazing Grace', sub: 'A hymn in three', kind: 'song', make: COURSE_SONGS.grace },
-      { id: 'u7-leaps', title: 'Leaps', sub: 'Jumps across the keyboard', kind: 'practice', make: drill('leaps', 0, 702) },
-    ],
-    test: drill('dotted', 0, 791),
-  },
-];
 
 const barsOf = (song: Song) => {
   const [num, den] = song.timeSig;
@@ -117,24 +61,19 @@ const barsOf = (song: Song) => {
   return Math.max(1, Math.ceil(Math.max(...song.notes.map(n => n.ticks + n.durationTicks)) / measure - 1e-6));
 };
 
-/** The steps of a course lesson: with help, on your own, in tempo (and hand by hand for two hands). */
-function stepsFor(song: Song, kind: PathLesson['kind'] | 'warmup' | 'test'): CourseStep[] {
+function stepsFor(song: Song, plan: Plan[]): CourseStep[] {
   const to = barsOf(song);
-  const at = { from: 1, to };
-  const one = song.hands.length === 1 ? song.hands[0] : 'both';
-  const s = (id: string, title: string, hands: CourseStep['hands'], speed: number, wait: boolean): CourseStep =>
-    ({ id, kind: wait ? 'phrase' : 'tempo', title, short: id, ...at, hands, speed, wait });
-  if (kind === 'warmup') return [s('go', 'Warm-up', one, 0.8, true)];
-  if (kind === 'test') return [s('test', 'Test', song.hands.length === 2 ? 'both' : one, 0.9, true)];
-  if (song.hands.length === 2) {
-    return [s('R', 'Right hand', 'R', 0.7, true), s('L', 'Left hand', 'L', 0.7, true), s('both', 'Hands together', 'both', 0.8, true), ...(kind === 'song' ? [s('tempo', 'In tempo', 'both', 1, false)] : [])];
-  }
-  return [s('help', 'Slowly', one, 0.7, true), s('own', 'On your own', one, 0.9, true), ...(kind === 'song' ? [s('tempo', 'In tempo', one, 1, false)] : [])];
+  const all = song.hands.length === 1 ? song.hands[0] : 'both';
+  return plan.map(p => ({
+    id: p.id, kind: p.wait ? 'phrase' : 'tempo', title: p.title, short: p.id, from: 1, to,
+    hands: p.hands === 'all' || (p.hands === 'both' && song.hands.length === 1) ? all : p.hands,
+    speed: p.speed, wait: p.wait, listen: p.listen,
+  }));
 }
 
-function playable(id: string, title: string, why: string, song: Song, kind: PathLesson['kind'] | 'warmup' | 'test', prog: CourseProgress = {}): Playable {
-  song.entry = { ...song.entry, id: `path:${id}`, title };
-  const steps = stepsFor(song, kind);
+function playable(id: string, title: string, why: string, song: Song, plan: Plan[], prog: CourseProgress = {}): Playable {
+  song.entry = { ...song.entry, id: `path:${id}`, title, composer: song.entry.composer === 'Practice' ? 'Hugo’s Piano' : song.entry.composer };
+  const steps = stepsFor(song, plan);
   const done = steps.filter(st => (prog[st.id]?.stars ?? 0) > 0).length;
   return {
     id, title, why,
@@ -143,9 +82,62 @@ function playable(id: string, title: string, why: string, song: Song, kind: Path
   };
 }
 
+// ---------- The invisible difficulty ----------
+
+const hash = (s: string) => [...s].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 17);
+const clampLv = (n: number) => Math.max(0, Math.min(3, n));
+
+/**
+ * The level a generated node is written at: its base, one up when its skill is strong (or he
+ * already aced this node), one down when the skill is slipping.
+ */
+export function levelOf(n: PathNode, prog: CourseProgress = {}): number {
+  let lv = n.base ?? 0;
+  const s = n.skill ? loadProfile()[n.skill] : undefined;
+  if (s && s.n >= 8) lv += s.m >= 0.82 ? 1 : s.m < 0.42 ? -1 : 0;
+  const results = Object.values(prog);
+  if (results.length && results.every(r => r.stars === 3)) lv += 1;
+  return clampLv(lv);
+}
+
+/** The skill a practice node goes after: the weakest of its skills, or of everything he plays. */
+function practiceSkill(n: PathNode): SkillId {
+  const p = loadProfile();
+  const pool = [...(n.skills ?? ['treble']), ...weakest(p).slice(0, 1)].filter(id => p[id].n >= 4);
+  return pool.sort((a, b) => p[a].m - p[b].m)[0] ?? n.skills?.[0] ?? 'treble';
+}
+
+/** What to play for a node, written now. Theory and chests have no music. */
+export function nodePlayable(n: PathNode, prog: CourseProgress = {}): Playable | null {
+  const seed = hash(n.id) ^ Math.floor(Date.now() / 3_600_000);
+  if (n.kind === 'song' && n.song) return playable(n.id, n.title, n.sub, n.song(), planFor(n), prog);
+  if (n.kind === 'practice') {
+    const skill = practiceSkill(n);
+    const song = makeExercise(skill, levelFor(loadProfile()[skill].m), seed);
+    return playable(n.id, n.title, n.sub, song, planFor(n), prog);
+  }
+  if (n.kind === 'trophy' && n.gen) return playable(n.id, n.title, n.sub, n.gen(1, hash(n.id)), planFor(n), prog);
+  if (n.gen) return playable(n.id, n.title, n.sub, n.gen(levelOf(n, prog), seed), planFor(n), prog);
+  return null;
+}
+
+/** Theory nodes are done once read through. */
+export const finishTheory = async (n: PathNode) => { await recordStep(`path:${n.id}`, 'read', 1); pathChanged(); };
+
 // ---------- Progress on the path ----------
 
-export interface LessonState { stars: number; done: boolean; open: boolean; steps: number; passed: number; /** Skipped by a test. */ tested?: boolean; }
+export interface NodeState {
+  done: boolean;
+  open: boolean;
+  /** The node to play next, with the START bubble. */
+  current: boolean;
+  stars: number;
+  steps: number;
+  passed: number;
+  /** Skipped by a test. */
+  tested?: boolean;
+}
+export type PathState = Record<string, NodeState>;
 
 // ---------- Placement: units proved by a test count as done ----------
 
@@ -165,27 +157,32 @@ export function markPlacementTaken() {
   try { if (localStorage.getItem(PLACED) === null) localStorage.setItem(PLACED, '[]'); } catch { /* ignore */ }
   pathChanged();
 }
-export type PathState = Record<string, LessonState>;
 
 const listeners = new Set<() => void>();
 export const pathChanged = () => listeners.forEach(fn => fn());
 
 export async function loadPath(): Promise<{ state: PathState; progs: Record<string, CourseProgress> }> {
-  const state: PathState = {};
   const progs: Record<string, CourseProgress> = {};
-  let prevDone = true;
+  await Promise.all(ALL_NODES.map(async ({ node }) => { progs[node.id] = await getCourseProgress(`path:${node.id}`); }));
   const placed = new Set(placedUnits());
-  for (const u of UNITS) {
-    for (const l of u.lessons) {
-      const prog = await getCourseProgress(`path:${l.id}`);
-      progs[l.id] = prog;
-      const n = stepsFor(l.make(), l.kind).length;
-      const got = Object.values(prog).filter(r => r.stars > 0);
-      const tested = placed.has(u.id) && got.length < n;
-      const done = got.length >= n || tested;
-      state[l.id] = { stars: got.length >= n ? Math.min(...Object.values(prog).map(r => r.stars)) : 0, done, open: prevDone || tested, steps: n, passed: got.length, tested };
-      prevDone = done;
-    }
+  const state: PathState = {};
+  let prevDone = true, foundCurrent = false;
+  for (const { node, unit } of ALL_NODES) {
+    const prog = progs[node.id];
+    const n = planFor(node).length;
+    const got = Object.values(prog).filter(r => r.stars > 0);
+    const isPlaced = placed.has(unit.id);
+    let done: boolean;
+    if (node.kind === 'chest') done = chestOpened(node.id);
+    else if (node.kind === 'trophy') done = (prog.test?.stars ?? 0) >= 2 || isPlaced;
+    else done = got.length >= n || isPlaced;
+    const open = prevDone || isPlaced;
+    const stars = got.length >= n && got.length ? Math.min(...got.map(r => r.stars)) : 0;
+    const current = !foundCurrent && open && !done && node.kind !== 'chest';
+    if (current) foundCurrent = true;
+    state[node.id] = { done, open, current, stars, steps: n, passed: got.length, tested: isPlaced && got.length < n };
+    // Chests never block the way.
+    if (node.kind !== 'chest') prevDone = done;
   }
   return { state, progs };
 }
@@ -202,20 +199,23 @@ export function usePath() {
   return data;
 }
 
-export function lessonPlayable(l: PathLesson, prog?: CourseProgress): Playable {
-  return playable(l.id, l.title, l.sub, l.make(), l.kind, prog);
+/** The node to play next on the path. */
+export function currentNode(state: PathState): { node: PathNode; unit: Unit } | undefined {
+  return ALL_NODES.find(({ node }) => state[node.id]?.current);
 }
 
-/** The next lesson on the path: the first open one not done yet. */
-export function nextLesson(state: PathState): PathLesson | undefined {
-  return UNITS.flatMap(u => u.lessons).find(l => state[l.id]?.open && !state[l.id]?.done);
+/** Where a unit sits: "Section 2, Unit 7". */
+export function unitLabel(u: Unit) {
+  const s = sectionOf(u);
+  return `Section ${s.id.slice(1)}, Unit ${UNITS.indexOf(u) + 1}`;
 }
 
 // ---------- The daily session ----------
 
 const seedOfDay = (salt: number) => [...dayKey()].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, salt);
+const WARMUP = [P('go', 'Warm-up', 'all', 0.8, true)];
 
-/** Today's session: warm-up on the weakest skill, the next lesson, then a short review. */
+/** Today's session: warm-up on the weakest skill, the next lesson on the path, then a short review. */
 export function dailySession(state: PathState, progs: Record<string, CourseProgress>): Playable[] {
   const profile = loadProfile();
   const weak = weakest(profile);
@@ -225,39 +225,31 @@ export function dailySession(state: PathState, progs: Record<string, CourseProgr
   const lv = levelFor(profile[first].m);
   out.push(playable(`warm-${first}`, EXERCISE_TITLE[first],
     weak[0] ? `Your weakest skill right now: ${name(first)} (${LEVEL_NAME[lv]})` : 'A first look at how you read',
-    makeExercise(first, lv, seedOfDay(1)), 'warmup'));
-  // On the free plan the session's lesson comes from the free units only.
-  const next = nextLesson(state);
-  const nextUnit = next ? UNITS.findIndex(u => u.lessons.includes(next)) : -1;
-  if (next && (isPremium() || nextUnit < FREE_UNITS)) out.push({ ...lessonPlayable(next, progs[next.id]), why: `Next on your path: ${next.sub}` });
+    makeExercise(first, lv, seedOfDay(1)), WARMUP));
+  // The next node on the path that has music to play.
+  const next = ALL_NODES.find(({ node }) => state[node.id]?.open && !state[node.id]?.done && node.kind !== 'theory' && node.kind !== 'chest' && node.kind !== 'trophy');
+  const lesson = next && nodePlayable(next.node, progs[next.node.id]);
+  if (next && lesson) out.push({ ...lesson, why: `Next on your path: ${next.node.sub}` });
   // The review is spaced: a skill whose gap has run out, else the next weakest.
   const due = dueSkills(profile).find(d => d.id !== first);
   const second: SkillId = due?.id ?? weak.find(id => id !== first) ?? (first === 'rhythm' ? 'treble' : 'rhythm');
   const lv2 = levelFor(profile[second].m);
   out.push(playable(`review-${second}`, EXERCISE_TITLE[second],
     due ? `Due for review: last practised ${due.days === 0 ? 'today' : due.days === 1 ? 'yesterday' : `${due.days} days ago`}` : `To keep it fresh: ${name(second)} (${LEVEL_NAME[lv2]})`,
-    makeExercise(second, lv2, seedOfDay(2)), 'warmup'));
+    makeExercise(second, lv2, seedOfDay(2)), WARMUP));
   return out;
 }
 
 /** A practice piece for any skill at his level, for the skill map's "Practise" buttons. */
 export function skillPractice(skill: SkillId): Playable {
-  const m = loadProfile()[skill].m;
-  const lv = levelFor(m);
-  return playable(`skill-${skill}`, EXERCISE_TITLE[skill], `${LEVEL_NAME[lv]} level, made for you just now`, makeExercise(skill, lv), 'warmup');
-}
-
-/** The lesson after this one on the path, if any. */
-export function lessonAfter(id: string): PathLesson | undefined {
-  const all = UNITS.flatMap(u => u.lessons);
-  const i = all.findIndex(l => `path:${l.id}` === id || l.id === id);
-  return i >= 0 ? all[i + 1] : undefined;
+  const lv = levelFor(loadProfile()[skill].m);
+  return playable(`skill-${skill}`, EXERCISE_TITLE[skill], `${LEVEL_NAME[lv]} level, made for you just now`, makeExercise(skill, lv), WARMUP);
 }
 
 /** A unit's test as a one-step piece: passing takes 2 stars (85%). */
 export function unitTest(u: Unit): Playable {
-  const i = UNITS.indexOf(u);
-  return playable(`test-${u.id}`, `Unit ${i + 1} test: ${u.title}`, 'Pass with 2 stars to skip this unit', u.test(), 'test');
+  const trophy = nodesOf(u).find(n => n.kind === 'trophy')!;
+  return nodePlayable(trophy)!;
 }
 
 /** The placement test: each unit's test in order, stopping at the first one he does not pass. */

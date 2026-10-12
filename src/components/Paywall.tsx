@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { annualSaving, price, PLANS, purchase, REASON, restore, type PaywallReason, type PlanId } from '../lib/billing';
 import { IconCheck, IconClose } from './Icons';
+import { Penguin } from './Penguin';
 
-const FEATURES: [string, boolean][] = [
-  ['Daily session made for you', true],
-  ['Difficulty that adapts, and your skill map', true],
-  ['Units 1 and 2 of the course', true],
-  ['All 7 units, and every new one', false],
-  ['Unlimited skill practice', false],
-  ['Unlimited songs of your own', false],
-  ['AI coach: ask anything, a plan every week', false],
+const FEATURES: [string, string | boolean, string | boolean][] = [
+  ['The whole course, every section', true, true],
+  ['Songs, and your own MIDI files', true, true],
+  ['Lessons that adapt to how you play', true, true],
+  ['Energy', '25, refills over time', 'Unlimited'],
+  ['Keep going without waiting or gems', false, true],
 ];
+
+const Cell = ({ v }: { v: string | boolean }) => (typeof v === 'string' ? <span className="cell-text">{v}</span> : v ? <IconCheck size={18} className="yes" /> : <span className="no" aria-label="No">–</span>);
 
 interface Props { reason: PaywallReason; onClose: () => void; onDone: (text: string) => void; }
 
@@ -29,17 +30,18 @@ export function Paywall({ reason, onClose, onDone }: Props) {
       <button className="icon-btn ghost paywall-close" onClick={onClose} aria-label="Not now"><IconClose /></button>
       <div className="paywall-body">
         <p className="paywall-badge">Premium</p>
-        <h1 id="paywall-title">Learn piano faster with Premium</h1>
+        <Penguin pose="cheer" size={120} />
+        <h1 id="paywall-title">Unlimited energy with Premium</h1>
         <p className="sub">{REASON[reason]}</p>
 
         <table className="paywall-compare">
           <thead><tr><th scope="col"><span className="sr-only">Feature</span></th><th scope="col">Free</th><th scope="col">Premium</th></tr></thead>
           <tbody>
-            {FEATURES.map(([f, free]) => (
+            {FEATURES.map(([f, free, premium]) => (
               <tr key={f}>
                 <th scope="row">{f}</th>
-                <td>{free ? <IconCheck size={18} className="yes" /> : <span className="no" aria-label="No">–</span>}</td>
-                <td><IconCheck size={18} className="yes" /></td>
+                <td><Cell v={free} /></td>
+                <td><Cell v={premium} /></td>
               </tr>
             ))}
           </tbody>

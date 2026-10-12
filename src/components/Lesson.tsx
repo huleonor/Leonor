@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { barsToTime } from '../lib/analysis';
 import { loadPiano, unlockAudio } from '../lib/audio';
-import { coachRun, settingsFor, type Change } from '../lib/adapt';
+import { coachRun, settingsFor } from '../lib/adapt';
 import { recordStep, starsFor, type CourseStep } from '../lib/course';
 import { listenForSkills } from '../lib/skills';
-import { logRun } from '../lib/aicoach';
 import type { SongInfo } from '../lib/catalog';
 import { Engine } from '../lib/engine';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
@@ -13,7 +12,10 @@ import { formatSpeed, noteName } from '../lib/names';
 import { usePracticeClock } from '../lib/practiceClock';
 import { addPractice, streak, xpForStars } from '../lib/stats';
 import type { FingerMode, Settings } from '../lib/types';
+import { addGems, energy, gainEnergy, gemsForStars, spendEnergy, STREAK_FOR_ENERGY, useEconomy } from '../lib/energy';
 import { Confetti, CountUp } from './Confetti';
+import { EnergySheet } from './Economy';
+import { Energy, Gem } from './GameIcons';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
 import { IconArrowLeft, IconArrowRight, IconFlame, IconHeadphones, IconPause, IconPlay, IconRestart, IconStar } from './Icons';
@@ -54,6 +56,9 @@ interface Props {
   stopLabel?: string;
   onSettings: () => void;
   onRecorded: () => void;
+  /** Path lessons spend energy (1 a step); practice earns it (+2 a piece). */
+  energyMode?: 'spend' | 'earn';
+  onPremium?: () => void;
 }
 
 /** Teach me: one section, step by step (right hand, left hand, together, in tempo), Simply Piano style. */
@@ -84,19 +89,25 @@ interface RunProps extends Props {
   onAgain: () => void;
 }
 
-function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onSettings, onRecorded, onPrev, onNext, onAgain }: RunProps) {
+function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onSettings, onRecorded, onPrev, onNext, onAgain, energyMode, onPremium }: RunProps) {
   const song = info.song!;
   // The coach sets this step's speed, how soon help comes and how many finger numbers show.
   const coach = useMemo(() => settingsFor(step.speed, step.wait), [step.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const fingers: FingerMode = settings.fingers === 'off' ? 'off' : settings.fingers === 'some' && coach.fingers === 'all' ? 'some' : coach.fingers;
   const [speed, setSpeed] = useState(coach.speed);
-  const [change, setChange] = useState<Change | null>(null);
   const [listen, setListen] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; stars: number; xp: number; streakUp?: number } | null>(null);
+  const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; stars: number; xp: number; gems: number; energy: number; streakUp?: number } | null>(null);
+  // Energy: a path step needs 1 to start. Notes right in a row earn it back, 1 for every 10.
+  const econ = useEconomy();
+  const [noEnergy, setNoEnergy] = useState(() => energyMode === 'spend' && energy() < 1);
+  const [combo, setCombo] = useState(0);
+  const [bonus, setBonus] = useState(0);
+  const comboRef = useRef(0);
+  const heard = useRef(false);
   const [say, setSay] = useState<{ text: string; wrong?: string }>({ text: intro(step) });
   // A short step that went well moves on by itself, like Simply Piano; one that did not, starts again.
-  const [flash, setFlash] = useState<{ text: string; good: boolean; xp?: number } | null>(null);
+  const [flash, setFlash] = useState<{ text: string; good: boolean; xp?: number; gems?: number } | null>(null);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   usePracticeClock();
 
@@ -108,11 +119,18 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
 
   useEffect(() => { engine.setSegment(barsToTime(engine.measureTimes, step.from, step.to)); bump(); }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
   // Wait steps start by themselves, like Simply Piano: the run-up plays, then the music waits for him.
+  // A listening step plays the piece to him first.
   useEffect(() => {
-    if (!step.wait) return;
-    const id = window.setTimeout(() => { if (!engine.started) { unlockAudio(); engine.play(0); bump(); } }, 700);
+    if (!step.wait || noEnergy) return;
+    const id = window.setTimeout(() => {
+      if (engine.started) return;
+      unlockAudio();
+      if (step.listen && !heard.current) { heard.current = true; setListen(true); engine.setOptions({ listen: true }); engine.restart(); engine.play(1); }
+      else engine.play(0);
+      bump();
+    }, 700);
     return () => window.clearTimeout(id);
-  }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [engine, noEnergy]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setMicRange(song.range[0], song.range[1]); loadPiano().catch(() => {}); }, [song]);
   useEffect(() => { if (import.meta.env.DEV) (window as unknown as { __engine: Engine }).__engine = engine; }, [engine]);
   useEffect(() => { engine.setOptions({ speed, listen, accompaniment: settings.accompaniment, lenient: settings.input === 'mic' }); }, [engine, speed, listen, settings.accompaniment, settings.input]);
@@ -122,33 +140,52 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
     let skills = listenForSkills(engine);
     const off = engine.on(e => {
       if (e.type === 'state' || e.type === 'status') bump();
+      if (e.type === 'press') {
+        if (e.ok && e.id === undefined) return;
+        comboRef.current = e.ok ? comboRef.current + 1 : 0;
+        setCombo(comboRef.current);
+        if (e.ok && comboRef.current % STREAK_FOR_ENERGY === 0) {
+          if (energyMode) gainEnergy(1);
+          setBonus(b => b + 1);
+        }
+      }
       if (e.type === 'end') {
-        if (engine.opts.listen) { setListen(false); engine.setOptions({ listen: false }); engine.restart(); engine.started = false; skills.stop(); skills = listenForSkills(engine); bump(); return; }
+        if (engine.opts.listen) {
+          setListen(false); engine.setOptions({ listen: false }); engine.restart(); engine.started = false; skills.stop(); skills = listenForSkills(engine); bump();
+          // Heard it: now his turn.
+          if (step.wait) window.setTimeout(() => { if (!engine.started) { engine.play(0); bump(); } }, 900);
+          return;
+        }
         const run = skills.stop();
-        const made = coachRun(run, !step.wait);
-        logRun(`${section.title} · ${stepLabel(step)}`, run, !step.wait);
-        setChange(made);
+        // The coach quietly tunes the next steps; the learner just keeps going.
+        coachRun(run, !step.wait);
         const s = engine.stats();
         const stars = starsFor(s.accuracy);
         const before = streak();
         const quick = step.wait && !!onNext;
         if (quick && stars === 0) {
           setFlash({ text: 'Let’s try that again', good: false });
-          window.setTimeout(onAgain, made ? 2600 : 1300);
+          window.setTimeout(onAgain, 1300);
           return;
         }
         recordStep(song.entry.id, step.id, s.accuracy).then(() => {
-          // A finished step earns XP and counts for the streak.
+          // A finished step earns XP and counts for the streak; on the path it costs energy and earns
+          // gems, in practice it earns energy.
           const xp = xpForStars(stars);
           if (stars > 0) addPractice(0, 1, xp);
+          if (energyMode === 'spend') spendEnergy(1);
+          const gems = energyMode !== 'earn' && stars > 0 ? gemsForStars(stars) : 0;
+          if (gems) addGems(gems);
+          const earned = energyMode === 'earn' && stars > 0 ? 2 : 0;
+          if (earned) gainEnergy(earned);
           const after = streak();
           onRecorded();
           if (quick) {
-            setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true, xp });
-            window.setTimeout(onNext!, made ? 2600 : 1100);
+            setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true, xp, gems });
+            window.setTimeout(onNext!, 1100);
             return;
           }
-          setResult({ ...s, stars, xp, streakUp: !before.today && after.today ? after.days : undefined });
+          setResult({ ...s, stars, xp, gems, energy: earned, streakUp: !before.today && after.today ? after.days : undefined });
         });
       }
     });
@@ -219,6 +256,15 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
           </div>
           <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label="Next step"><IconArrowRight size={24} /></button>
         </div>
+        <div className="lesson-econ">
+          {combo >= 3 && <span className={`combo ${combo >= 10 ? 'hot' : ''}`} key={Math.floor(combo / 5)} aria-label={`${combo} right in a row`}>{combo} in a row</span>}
+          {energyMode && (
+            <span className="lesson-energy" aria-label={econ.premium ? 'Unlimited energy' : `${econ.energy} energy`}>
+              <Energy size={18} />{econ.premium ? '∞' : econ.energy}
+              {bonus > 0 && <b className="energy-plus" key={bonus}>+1</b>}
+            </span>
+          )}
+        </div>
       </header>
 
       <main className="lesson-stage">
@@ -226,10 +272,10 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
           ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={0} onTap={pause} />
           : <LessonStaff engine={engine} from={step.from} to={step.to} feedback fingers={fingers} only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
         <Countdown engine={engine} />
+        {listen && <p className="lesson-listening" role="status"><IconHeadphones size={18} />Listen first</p>}
         {flash && (
           <div className="lesson-flash-wrap" role="status">
-            <p className={`lesson-flash ${flash.good ? 'good' : ''}`}>{flash.text}{flash.xp ? <small className="xp-gain">+{flash.xp} XP</small> : null}</p>
-            {change && <p className="coach-note">{change.why}</p>}
+            <p className={`lesson-flash ${flash.good ? 'good' : ''}`}>{flash.text}{flash.xp ? <small className="xp-gain">+{flash.xp} XP{flash.gems ? ` · +${flash.gems} gems` : ''}</small> : null}</p>
           </div>
         )}
       </main>
@@ -263,6 +309,10 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         </div>
       )}
 
+      {noEnergy && (
+        <EnergySheet empty onPremium={() => onPremium?.()} onClose={() => { if (energy() >= 1) setNoEnergy(false); else onExit(); }} />
+      )}
+
       {result && (
         <div className="veil">
           <section className="card result" aria-labelledby="lesson-result-title">
@@ -273,10 +323,15 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
               ))}
             </div>
             <h2 id="lesson-result-title">{HEADLINE[result.stars]}</h2>
-            {result.xp > 0 && <p className="xp-badge">+<CountUp to={result.xp} /> XP</p>}
+            {(result.xp > 0 || result.gems > 0 || result.energy > 0) && (
+              <div className="result-loot">
+                {result.xp > 0 && <span className="xp-badge">+<CountUp to={result.xp} /> XP</span>}
+                {result.gems > 0 && <span className="gem-badge"><Gem size={18} />+{result.gems}</span>}
+                {result.energy > 0 && <span className="energy-badge"><Energy size={16} />+{result.energy}</span>}
+              </div>
+            )}
             <p className="result-line">{section.title} · {stepLabel(step)}: {result.hit} of {result.total} notes · {result.wrong} wrong · {Math.round(result.accuracy * 100)}%</p>
             {result.streakUp !== undefined && <p className="streak-up"><IconFlame size={18} />{result.streakUp === 1 ? 'Streak started' : `${result.streakUp}-day streak`}</p>}
-            {change && <p className="coach-note inline">{change.why}</p>}
             {result.stars === 0 && <p className="fine">You need 70% for a star. {step.wait ? 'Take it one note at a time.' : 'Try it slower: pause and pick a speed.'}</p>}
             <div className="actions">
               {next && <button className="btn go big" onClick={next.go}><IconPlay size={18} />{next.label}</button>}

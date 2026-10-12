@@ -63,6 +63,7 @@ export const IconEdit = (p: P) => <svg {...base(p)}><path d="M12.8 3.8 16.2 7.2 
 export const IconHand = (p: P) => <svg {...base(p)}><path d="M6.5 10.5V5.2a1.2 1.2 0 0 1 2.4 0v4.3M8.9 9V3.8a1.2 1.2 0 0 1 2.4 0V9M11.3 9V4.6a1.2 1.2 0 0 1 2.4 0v6.6M13.7 9.5a1.2 1.2 0 0 1 2.4 0v1.8a5.7 5.7 0 0 1-5.7 5.7H9.6a5 5 0 0 1-4-2l-2-2.8a1.2 1.2 0 0 1 1.9-1.4l1 1.3" /></svg>;
 export const IconSpeed = (p: P) => <svg {...base(p)}><path d="M3.5 14a6.5 6.5 0 1 1 13 0" /><path d="m10 14 3.2-4.2" strokeWidth={2} /></svg>;
 export const IconSpeaker = (p: P) => <svg {...base(p)}><path d="M3.5 7.5h3l4-3.5v12l-4-3.5h-3z" /><path d="M13.5 7.2a4 4 0 0 1 0 5.6M15.8 5a7 7 0 0 1 0 10" /></svg>;
+export const IconDumbbell = (p: P) => <svg {...base(p)}><path d="M2.5 8v4M5 6v8M15 6v8M17.5 8v4M5 10h10" strokeWidth={2.2} /></svg>;
 export const IconCap = (p: P) => <svg {...base(p)}><path d="m10 3.5 8 4-8 4-8-4z" /><path d="M5.5 9.3v4.2c1.2 1.4 2.8 2 4.5 2s3.3-.6 4.5-2V9.3M18 7.5v4.5" /></svg>;
 export const IconNotes = (p: P) => <svg {...base(p)}><path d="M2.5 5h6M2.5 8.5h6M2.5 12h4" /><path d="M10.5 15V5.5l7-1.5v9.5" /><circle cx="8.8" cy="15.2" r="1.8" /><circle cx="15.8" cy="13.6" r="1.8" /></svg>;
 export const IconFeedback = (p: P) => <svg {...base(p)}><circle cx="6.5" cy="6.5" r="3.5" /><path d="m4.9 6.6 1.2 1.2 2-2.2" /><path d="M10.5 16V8l6.5-1.5v8" /><circle cx="8.8" cy="16" r="1.7" /><circle cx="15.3" cy="14.6" r="1.7" /></svg>;
