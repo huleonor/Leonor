@@ -15,13 +15,12 @@ import type { FingerMode, Settings } from '../lib/types';
 import { addGems, energy, gainEnergy, gemsForStars, spendEnergy, STREAK_FOR_ENERGY, useEconomy } from '../lib/energy';
 import { AnimatePresence, motion } from 'motion/react';
 import { Confetti, CountUp } from './Confetti';
-import { HelpKeys } from './HelpKeys';
-import { AnswerFooter, Bump, ProgressBar, SOFT, SPRING, type Verdict } from './Motion';
+import { Bump, Cheer, SOFT, SPRING } from './Motion';
 import { EnergySheet } from './Economy';
 import { Energy, Gem } from './GameIcons';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
-import { IconArrowLeft, IconArrowRight, IconFlame, IconHeadphones, IconBolt, IconClose, IconPlay, IconRestart, IconStar } from './Icons';
+import { IconArrowLeft, IconArrowRight, IconBolt, IconCheck, IconFlame, IconHeadphones, IconKeys, IconPause, IconPlay, IconRestart, IconStar } from './Icons';
 import { Keyboard } from './Keyboard';
 import { LessonStaff } from './LessonStaff';
 import type { Section } from './SongScreen';
@@ -130,9 +129,9 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
       if (engine.started) return;
       unlockAudio();
       if (step.listen && !heard.current) { heard.current = true; setListen(true); engine.setOptions({ listen: true }); engine.restart(); engine.play(1); }
-      else engine.play(0);
+      else { engine.toFirstNote(); engine.play(0); }
       bump();
-    }, 700);
+    }, 500);
     return () => window.clearTimeout(id);
   }, [engine, noEnergy]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setMicRange(song.range[0], song.range[1]); loadPiano().catch(() => {}); }, [song]);
@@ -159,7 +158,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         if (engine.opts.listen) {
           setListen(false); engine.setOptions({ listen: false }); engine.restart(); engine.started = false; skills.stop(); skills = listenForSkills(engine); bump();
           // Heard it: now his turn.
-          if (step.wait) window.setTimeout(() => { if (!engine.started) { engine.play(0); bump(); } }, 900);
+          if (step.wait) window.setTimeout(() => { if (!engine.started) { engine.toFirstNote(); engine.play(0); bump(); } }, 900);
           return;
         }
         const run = skills.stop();
@@ -245,20 +244,22 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const next = result && result.stars >= minStars ? (onNext ? { label: `Next: ${stepLabel(section.steps[index + 1])}`, go: onNext } : onNextSection ? { label: nextLabel, go: onNextSection } : null)
     : result && onStop && !onNext ? { label: stopLabel, go: onStop } : null;
 
-  const heading = listen ? 'Listen first' : !step.wait ? 'Play it in tempo' : step.hands === 'R' ? 'Play with your right hand' : step.hands === 'L' ? 'Play with your left hand' : 'Play with both hands';
   const progress = (index + (flash?.good ? 1 : stats.total ? stats.hit / stats.total : 0)) / section.steps.length;
-  const verdict: Verdict = flash ? (flash.good ? 'right' : 'wrong') : null;
 
   return (
-    <div className={`lesson duo view-${settings.view}`}>
-      <header className="lesson-top">
-        <button className="icon-btn ghost" onClick={engine.playing ? pause : () => setPaused(true)} aria-label="Pause"><IconClose size={24} /></button>
-        <ProgressBar value={progress} label={`${section.title}, step ${index + 1} of ${section.steps.length}: ${stepLabel(step)}`} />
+    <div className={`lesson simply view-${settings.view}`}>
+      <header className="lesson-bar">
+        <motion.button className="lesson-pause" whileTap={{ scale: 0.9 }} onClick={engine.playing ? pause : () => setPaused(true)} aria-label="Pause"><IconPause size={24} /></motion.button>
+        {/* The instruction is for screen readers; the music says what to play. */}
+        <div className="lesson-say" role="status" aria-live="polite">
+          <p className="sr-only">{say.wrong ? `${say.wrong}. ${say.text}` : say.text}</p>
+          <span className="lesson-step">{stepLabel(step)}</span>
+        </div>
         <div className="lesson-econ">
           <AnimatePresence>
             {combo >= 3 && (
               <motion.span className={`combo ${combo >= 10 ? 'hot' : ''}`} aria-label={`${combo} right in a row`} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={SPRING}>
-                <Bump value={combo} /> in a row
+                <IconFlame size={14} /><Bump value={combo} />
               </motion.span>
             )}
           </AnimatePresence>
@@ -268,46 +269,50 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
               <AnimatePresence>{bonusOn && <motion.b className="energy-plus" key={bonus} initial={{ y: 8, opacity: 0, scale: 0.6 }} animate={{ y: -6, opacity: 1, scale: 1 }} exit={{ y: -18, opacity: 0 }} transition={SPRING}>+1</motion.b>}</AnimatePresence>
             </span>
           )}
+          {!inputOn && <button className="piano-chip" onClick={onSettings} aria-label="Connect your piano"><IconKeys size={20} /><i /></button>}
+        </div>
+        <div className="lesson-nav">
+          <button className="lesson-arrow" onClick={onPrev} disabled={!onPrev} aria-label="Previous step"><IconArrowLeft size={20} /></button>
+          <div className="lesson-count" aria-label={`${section.title}, step ${index + 1} of ${section.steps.length}: ${stepLabel(step)}`}>
+            <motion.i animate={{ width: `${Math.max(0.04, progress) * 100}%` }} transition={SOFT} />
+            <span><Bump value={index + (flash?.good ? 1 : 0)} />/{section.steps.length}</span>
+          </div>
+          <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label="Next step"><IconArrowRight size={20} /></button>
         </div>
       </header>
 
-      <div className="lesson-head" role="status" aria-live="polite">
-        <h1>{heading}</h1>
-        <p className="sub">{stepLabel(step)}</p>
-        <p className="sr-only">{say.wrong ? `${say.wrong}. ${say.text}` : say.text}</p>
-      </div>
-
       <main className="lesson-stage">
-        <div className="lesson-paper">
-          {settings.view === 'notes'
-            ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={0} onTap={pause} />
-            : <LessonStaff engine={engine} from={step.from} to={step.to} feedback fingers={fingers} only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
-          <Countdown engine={engine} />
-          <AnimatePresence>
-            {listen && (
-              <motion.p className="lesson-listening" role="status" initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} transition={SPRING}>
-                <IconHeadphones size={18} />Listening
+        {settings.view === 'notes'
+          ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={0} onTap={pause} />
+          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback fingers={fingers} only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
+        <Countdown engine={engine} />
+        <Cheer combo={combo} />
+        <AnimatePresence>
+          {listen && (
+            <motion.p className="lesson-listening" role="status" initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} transition={SPRING}>
+              <IconHeadphones size={18} />Listen first
+            </motion.p>
+          )}
+          {flash && (
+            <motion.div className="lesson-flash-wrap" role="status" key="flash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.p className={`lesson-flash ${flash.good ? 'good' : ''}`} initial={{ scale: 0.6, y: 20 }} animate={{ scale: 1, y: 0 }} transition={SPRING}>
+                {flash.good ? <IconCheck size={22} /> : <IconRestart size={20} />}{flash.text}
+                {flash.xp ? <small className="xp-gain">+{flash.xp} XP{flash.gems ? `, +${flash.gems} gems` : ''}</small> : null}
               </motion.p>
-            )}
-          </AnimatePresence>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
-      {settings.view === 'notes'
-        ? <div className="lesson-keys"><Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={fingers} /></div>
-        : <HelpKeys engine={engine} naming={settings.naming} fingers={fingers} />}
-
-      <AnswerFooter verdict={verdict} title={flash?.text} detail={flash?.xp ? <>+{flash.xp} XP{flash.gems ? `, +${flash.gems} gems` : ''}</> : undefined}>
-        {!inputOn && <button className="connect" onClick={onSettings}><i />Connect your piano</button>}
-        {!engine.started && !paused && !result && !listen && !step.wait ? (
-          <>
-            <motion.button className="btn" whileTap={{ scale: 0.96 }} onClick={listenFirst}><IconHeadphones size={18} />Listen first</motion.button>
-            <motion.button className="btn go big" whileTap={{ scale: 0.96 }} onClick={start}><IconPlay size={18} />Start</motion.button>
-          </>
-        ) : (
-          <p className="lesson-hint">{step.wait ? 'The music waits for you. Need a key? It shows up when you’re stuck.' : 'Keep going through mistakes.'}</p>
+      <footer className="lesson-keys">
+        <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={fingers} />
+        {!engine.started && !paused && !result && !listen && !step.wait && (
+          <div className="lesson-start">
+            <motion.button className="btn go big" whileTap={{ scale: 0.95 }} onClick={start}><IconPlay size={18} />Start in tempo</motion.button>
+            <motion.button className="btn" whileTap={{ scale: 0.95 }} onClick={listenFirst}><IconHeadphones size={18} />Listen first</motion.button>
+          </div>
         )}
-      </AnswerFooter>
+      </footer>
 
       <AnimatePresence>
         {paused && !result && (
