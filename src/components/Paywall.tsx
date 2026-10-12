@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { annualSaving, price, PLANS, purchase, REASON, restore, type PaywallReason, type PlanId } from '../lib/billing';
 import { IconCheck, IconClose } from './Icons';
-import { Penguin } from './Penguin';
+import { Logo } from './Brand';
 
 const FEATURES: [string, string | boolean, string | boolean][] = [
   ['The whole course, every section', true, true],
@@ -11,7 +11,7 @@ const FEATURES: [string, string | boolean, string | boolean][] = [
   ['Keep going without waiting or gems', false, true],
 ];
 
-const Cell = ({ v }: { v: string | boolean }) => (typeof v === 'string' ? <span className="cell-text">{v}</span> : v ? <IconCheck size={18} className="yes" /> : <span className="no" aria-label="No">–</span>);
+const Cell = ({ v }: { v: string | boolean }) => (typeof v === 'string' ? <span className="cell-text">{v}</span> : v ? <IconCheck size={18} className="yes" /> : <span className="no" aria-label="No">-</span>);
 
 interface Props { reason: PaywallReason; onClose: () => void; onDone: (text: string) => void; }
 
@@ -30,7 +30,7 @@ export function Paywall({ reason, onClose, onDone }: Props) {
       <button className="icon-btn ghost paywall-close" onClick={onClose} aria-label="Not now"><IconClose /></button>
       <div className="paywall-body">
         <p className="paywall-badge">Premium</p>
-        <Penguin pose="cheer" size={120} />
+        <Logo size={96} />
         <h1 id="paywall-title">Unlimited energy with Premium</h1>
         <p className="sub">{REASON[reason]}</p>
 

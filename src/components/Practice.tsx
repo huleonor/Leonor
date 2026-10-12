@@ -3,7 +3,8 @@ import { dailySession, usePath, type Playable } from '../lib/path';
 import { dayKey } from '../lib/stats';
 import { Energy } from './GameIcons';
 import { IconCheck, IconPlay } from './Icons';
-import { Penguin } from './Penguin';
+import { Spot } from './Brand';
+import { IconDumbbell } from './Icons';
 import { SkillMap } from './ProgressView';
 
 const SESSION_KEY = 'hugos-piano:session';
@@ -27,7 +28,7 @@ function DailyCard({ items, onStart }: { items: Playable[] | null; onStart: (ite
   return (
     <section className="card daily" aria-labelledby="daily-title">
       <div className="daily-head">
-        <Penguin pose={all ? 'cheer' : 'keys'} size={84} />
+        <Spot tone={all ? 'ok' : 'blue'} size={64}>{all ? <IconCheck size={30} /> : <IconDumbbell size={30} />}</Spot>
         <div>
           <h2 id="daily-title">Today’s session</h2>
           <p className="sub">{all ? 'Done for today. Come back tomorrow for a new one.' : 'About 10 minutes, made for you from how you played.'}</p>

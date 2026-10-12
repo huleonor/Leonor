@@ -33,7 +33,7 @@ colors:
   lesson-grey-band: "#ecebe7"
   lesson-count: "#4a3f61"
 typography:
-  display: { fontFamily: "Fredoka", weight: 700, use: "page titles, card titles, unit names, plan names, celebration titles" }
+  display: { fontFamily: "Nunito", weight: 700, use: "page titles, card titles, unit names, plan names, celebration titles" }
   body: { fontFamily: "Nunito", weight: "600 body, 800 labels, 900 numbers" }
   button: { fontFamily: "Nunito", weight: 800, size: 14.5px, transform: uppercase, letterSpacing: 0.06em }
   scale: "12 / 13 / 14.5 / 16 / 19 / 21 / 28 / 30"
@@ -44,11 +44,15 @@ edges: { button: "0 4px 0 <edge>", node: "0 8px 0 <edge>", card: "2px solid swan
 
 # Design System: Hugo's Piano
 
+## Tokens
+
+White ground like the Duolingo app, in the logo's blue: cards and dialogs white with a 2px #e5e5e5 border, wells #f7f7f7; primary brand blue #2b93ba (edge #1f7395) with white bold uppercase text on 3D buttons, also the interactive accent; green #58cc02 only for right answers, red #ff4b4b only for wrong ones; text #3c3c3c, muted #777777 for hints. One family, Nunito bold: body 700, headings 900 with 0.8px tracking. Radius 12px for every control, card and dialog. Spacing unit 10px. State-driven motion with springs (see CLAUDE.md); CSS transitions 300ms ease. Focus ring 2px accent, 2px offset. A dark theme mirrors every token (ground #0f1c24, surfaces #172630). Icons are Phosphor, bold. The logo is the penguin with round glasses; no characters in the UI for now. No em or en dashes in visible text. See CLAUDE.md for the full rule list.
+
 ## Overview
 
 Around the piano the app is Duolingo: white, friendly, bold, gamified, every screen one obvious green action. At the piano it is Simply Piano: the score, the keys and nothing else. The two meet in the lesson's result card, which is pure Duolingo (stars, confetti, XP counting up) floating over the Simply Piano lesson.
 
-Pip, the app's penguin, is the guide everywhere Duolingo has its owl: beside the path, in every theory lesson, on chests, the shop, the energy sheet and the Practice tab. Seven poses (wave, read, keys, cheer, wink, idle, graduate), each with its own small loop: bob, sway, wave, jump.
+The logo, a penguin with round glasses on the brand blue, is the app's face: the sidebar, the icon, the placement card, the Premium card. There are no characters in the UI for now; big Phosphor icons on tinted discs stand in for illustrations.
 
 The feel comes from three things more than colour: chunky buttons that sit on a darker 4px edge and press down into it; grey 2px borders instead of shadows; and motion that bounces (the "Start" bubble bobbing over the next lesson, celebrations popping in, confetti on a good result).
 
@@ -68,7 +72,7 @@ White text on owl green is Duolingo's choice and is kept on large bold uppercase
 
 ## Typography
 
-- **Fredoka** (self-hosted, `/fonts/fredoka-latin.woff2`) stands in for Duolingo's Feather Bold: rounded, chunky, for titles only.
+- **Nunito** (self-hosted, `/fonts/fredoka-latin.woff2`) stands in for Duolingo's Feather Bold: rounded, chunky, for titles only.
 - **Nunito** (self-hosted) stands in for DIN Round: rounded body text at 600, labels at 800, numbers at 900 with tabular figures.
 - Buttons and links are uppercase with 0.06em tracking. Section labels (WARM-UP, UNIT 3) are uppercase 12–13px.
 
@@ -84,31 +88,31 @@ White, 2px swan border, 16px radius (20 for dialogs, which also get a 6px swan e
 White with a 2px swan line on its right. The current page: pale blue fill, 2px blue line, blue icon and label.
 
 ### Game bar
-No boxes, Fredoka numbers beside chunky filled icons: the flame and streak (grey until today counts, then orange; a blue snowflake chip shows streak freezes), the blue gem and its count (opens the shop), the pink battery and energy (opens the energy sheet; it blinks grey at zero, shows ∞ with Premium). On phones it is sticky at the top of the path; on wide screens it heads the right-hand column over the daily goal, today's practice and the Premium card.
+No boxes, Nunito numbers beside chunky filled icons: the flame and streak (grey until today counts, then orange; a blue snowflake chip shows streak freezes), the blue gem and its count (opens the shop), the pink battery and energy (opens the energy sheet; it blinks grey at zero, shows ∞ with Premium). On phones it is sticky at the top of the path; on wide screens it heads the right-hand column over the daily goal, today's practice and the Premium card.
 
 ### Progress bars
 12px, swan track, green fill with a light 3px highlight along its top; song and unit meters fill gold or white on a banner.
 
 ### The path (signature)
-Home is the path. Sections are separated by a centred label (SECTION 2, a Fredoka title, one line) between two swan rules. A unit is a sticky coloured banner (16px radius, 4px darker edge, white text): SECTION 1, UNIT 2 and its name, with an outlined GUIDEBOOK button. Nodes are 70×62 discs on an 8px edge with a small white glint, winding left and right (0, 44, 70, 44, 0, −44, −70, −44 px). Each kind has its glyph: book (theory), star (lesson; a crown once aced), headphones (listening), hand (technique), dumbbell (personal practice), note (song), trophy (unit test). Open and done nodes take the unit colour, songs and tests turn gold when done, locked nodes are swan grey with a grey lock. The current node gets a swan progress ring that fills in the unit colour and a white START bubble that bobs above it. Chests are gold and wiggle when they can be opened, grey when locked, faded once opened. Pip stands on the open side of each unit's bend. Tapping a node opens a card in the unit colour under it (kind and number, title, one line, a white START button with the XP it earns); a locked node's card is grey. A floating white arrow button brings the current node back into view.
+Home is the path. Sections are separated by a centred label (SECTION 2, a Nunito title, one line) between two swan rules. A unit is a sticky coloured banner (16px radius, 4px darker edge, white text): SECTION 1, UNIT 2 and its name, with an outlined GUIDEBOOK button. Nodes are 70×62 discs on an 8px edge with a small white glint, winding left and right (0, 44, 70, 44, 0, −44, −70, −44 px). Each kind has its glyph: book (theory), star (lesson; a crown once aced), headphones (listening), hand (technique), dumbbell (personal practice), note (song), trophy (unit test). Open and done nodes take the unit colour, songs and tests turn gold when done, locked nodes are swan grey with a grey lock. The current node gets a swan progress ring that fills in the unit colour and a white START bubble that bobs above it. Chests are gold and wiggle when they can be opened, grey when locked, faded once opened. Tapping a node opens a card in the unit colour under it (kind and number, title, one line, a white START button with the XP it earns); a locked node's card is grey. A floating white arrow button brings the current node back into view.
 
 ### Theory lesson
-Duolingo's lesson frame: a close X and a thick green progress bar; Pip with a speech bubble; an engraved staff on a white card and a small tappable keyboard (marked keys gold, right ones green, a wrong one red); answers as big bordered option buttons that turn blue when chosen; a footer that turns green (✓ Nice!) or red (✗ Correct answer: …) with CONTINUE. The finish screen: Pip cheering, LESSON COMPLETE in gold, and three reward tiles (XP gold, gems blue, mistakes green).
+Duolingo's lesson frame: a close X and a thick brand-blue progress bar that springs forward; a heading (NEW IDEA, CHOOSE THE ANSWER, PLAY IT) and the idea in plain text; an engraved staff on a white card and a small tappable keyboard (marked keys gold, right ones green, a wrong one red); answers as big bordered option buttons that turn blue when chosen; a footer whose verdict sheet slides up green (✓ Nice!) or red (✗ Correct answer: …) with CONTINUE, a wrong answer shaking once. The finish screen: a gold star popping in, LESSON COMPLETE (or PERFECT LESSON) in gold, and three reward tiles (XP gold, gems blue, mistakes green).
 
 ### Energy, chests and the shop
-The energy sheet rises from the bottom on phones: Pip, a title ("You need energy to do lessons" when empty), a pink battery bar with n / 25, the refill timer, three ways to earn energy, then REFILL (white, gem price in blue), UNLIMITED ENERGY (purple-blue gradient, PREMIUM chip) and a way to the Practice tab. A chest opens to a dialog with the open chest, Pip cheering and loot chips (pink energy, blue gems). The shop has a purple-to-blue Premium card with Pip, then rows of white cards with a big icon and a white price button.
+The energy sheet rises from the bottom on phones: a battery icon on a pink disc, a title ("You need energy to do lessons" when empty), a pink battery bar with n / 25, the refill timer, three ways to earn energy, then REFILL (white, gem price in blue), UNLIMITED ENERGY (navy, PREMIUM chip) and a way to the Practice tab. A chest opens to a dialog with the open chest and loot chips that pop in (pink energy, blue gems). The shop has a navy Premium card with the logo, then rows of white cards with a big icon and a white price button.
 
 ### Today's session
-On the Practice tab, with Pip at the keys. A card with a green Start and three tiles (Warm-up, Lesson, Review); the current tile is pale green with a green border, done tiles go quiet with a green check.
+On the Practice tab. A card with a blue Start and three tiles (Warm-up, Lesson, Review); the current tile is pale green with a green border, done tiles go quiet with a green check.
 
 ### Paywall
-A full white page: PREMIUM badge, a Fredoka title, the reason it opened, a Free/Premium comparison table (Premium column tinted purple), three plan cards (12 months chosen by default with a gold "best value" flag, 1 month, family), one full-width green button ("Start my free week"), plain test-mode fine print, Restore and Not now.
+A full white page: PREMIUM badge, a Nunito title, the reason it opened, a Free/Premium comparison table (Premium column tinted purple), three plan cards (12 months chosen by default with a gold "best value" flag, 1 month, family), one full-width green button ("Start my free week"), plain test-mode fine print, Restore and Not now.
 
 ### Result card
-White dialog with three stars that pop in, a Fredoka headline, a gold XP badge that counts up, blue gems and pink energy chips, confetti from the top on two stars or more, the green next button, Try again, and a quiet way out.
+White dialog with three stars that pop in, a Nunito headline, a gold XP badge that counts up, blue gems and pink energy chips, confetti from the top on two stars or more, the green next button, Try again, and a quiet way out.
 
 ### Celebrations
-A white card that bounces in at the top: a coloured round icon (flame for the goal, gold star for the session, blue snowflake for freezes), a Fredoka title and one line.
+A white card that bounces in at the top: a coloured round icon (flame for the goal, gold star for the session, blue snowflake for freezes), a Nunito title and one line.
 
 ### Piano screens (kept)
 The song sheet keeps Misolla's layout (score card over a full keyboard) with blue modes; the Teach me lesson keeps Simply Piano's grey page, big single-line staff, now-line and light beam, plain n/N bar and cream keyboard. Path lessons add only a pink energy chip (with a +1 that floats up) and an orange "n in a row" chip in the top bar, and a blue LISTEN FIRST pill while a listening step plays.
@@ -136,3 +140,9 @@ Don't:
 - Put small text on green or white text on gold below 14px bold.
 - Animate anything without a reason: motion rewards, guides or confirms.
 - Hide what Premium costs, or make the course itself Premium: energy is the only limit.
+
+### Lessons at the piano
+The same frame as theory: close, progress bar, energy and "n in a row" chips; a heading saying what to do (PLAY WITH YOUR RIGHT HAND, LISTEN FIRST, PLAY IT IN TEMPO); the single-line staff on a white card; a footer with the action, where a step's verdict slides up. The keyboard is hidden: when he stalls or plays a wrong note, a short stretch of keys rises over the footer with the keys to play lit in gold, and it sinks away again a moment after he plays right. Finishing shows stars popping in and reward tiles.
+
+### Songs and the marketplace
+My songs: square covers (the song's photo on a collection tint: purple film, teal modern, gold classical, blue mine), title and composer, stars once started, no difficulty, three across on phones; an "Add songs" tile. The marketplace slides up from the bottom: songs by collection, each with ADD that flips to ADDED with a pop. A song opens in the lesson frame: close, progress, gear for options (hands, waits or in tempo, speed, colours, keyboard on screen, loop), the score on a card, and LISTEN plus LEARN STEP BY STEP below; the keyboard rises only when needed.

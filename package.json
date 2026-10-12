@@ -16,9 +16,11 @@
     "@capacitor/core": "^8.5.2",
     "@capacitor/ios": "^8.5.2",
     "@capacitor/local-notifications": "^8.3.1",
+    "@phosphor-icons/react": "^2.1.10",
     "@tonejs/midi": "^2.0.28",
     "abcjs": "^6.7.1",
     "idb-keyval": "^6.3.0",
+    "motion": "^14.1.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "smplr": "^1.0.0"

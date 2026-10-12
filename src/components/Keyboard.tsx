@@ -4,9 +4,9 @@ import { keyLayout } from '../lib/keys';
 import { noteName } from '../lib/names';
 import { AUTO, HIT, type FingerMode, type NoteNaming } from '../lib/types';
 
-interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; fingers: FingerMode; }
+interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; fingers: FingerMode; /** Light the keys to play even before the engine's own hint delay (the help keyboard). */ showNext?: boolean; }
 
-export function Keyboard({ engine, lo, hi, naming, fingers }: Props) {
+export function Keyboard({ engine, lo, hi, naming, fingers, showNext = false }: Props) {
   const layout = useMemo(() => keyLayout(lo, hi), [lo, hi]);
   const refs = useRef<Record<number, HTMLDivElement | null>>({});
 
@@ -18,7 +18,7 @@ export function Keyboard({ engine, lo, hi, naming, fingers }: Props) {
       const now = performance.now();
       const t = engine.time;
       // The keys to press show only as a hint, and go away once he plays them.
-      const expected = new Set(engine.hintVisible() ? engine.expected() : []);
+      const expected = new Set(showNext || engine.hintVisible() ? engine.expected() : []);
       const groupNotes = (engine.groups[engine.gi]?.ids ?? []).map(id => notes[id]);
       const sounding: Record<number, string> = {};
       // Binary search the first note that could still be sounding.
@@ -55,7 +55,7 @@ export function Keyboard({ engine, lo, hi, naming, fingers }: Props) {
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [engine, lo, hi, layout, fingers]);
+  }, [engine, lo, hi, layout, fingers, showNext]);
 
   const keys = [];
   for (let m = lo; m <= hi; m++) {

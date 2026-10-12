@@ -5,11 +5,13 @@ import { addGems } from '../lib/energy';
 import { onNote } from '../lib/input';
 import { addPractice } from '../lib/stats';
 import type { NoteNaming } from '../lib/types';
+import { motion } from 'motion/react';
+import { Spot } from './Brand';
 import { Confetti, CountUp } from './Confetti';
 import { Gem } from './GameIcons';
-import { IconCheck, IconClose } from './Icons';
+import { IconBolt, IconClose, IconStar } from './Icons';
 import { MiniKeys } from './MiniKeys';
-import { Penguin } from './Penguin';
+import { AnswerFooter, ProgressBar, Shake, Slide, SPRING } from './Motion';
 
 const XP = 10;
 const GEMS = 3;
@@ -35,19 +37,20 @@ const pc = (m: number) => ((m % 12) + 12) % 12;
 
 interface Props {
   node: PathNode;
-  color: [string, string];
+  color: readonly string[];
   naming: NoteNaming;
   onExit: () => void;
   onDone: () => void;
 }
 
-/** A theory lesson: Pip explains with the staff and the keys, then asks, Duolingo style. */
+/** A theory lesson, Duolingo style: one idea per card with the staff and the keys, then questions. */
 export function TheoryLesson({ node, color, naming, onExit, onDone }: Props) {
   const cards = node.cards ?? [];
   const [i, setI] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [checked, setChecked] = useState<'right' | 'wrong' | null>(null);
   const [mistakes, setMistakes] = useState(0);
+  const [wrongs, setWrongs] = useState(0);
   const [finished, setFinished] = useState(false);
   const card: Card | undefined = cards[i];
 
@@ -67,7 +70,7 @@ export function TheoryLesson({ node, color, naming, onExit, onDone }: Props) {
     const want = card.play[at];
     const same = (a: number, b: number) => (card.exact ? a === b : pc(a) === pc(b));
     const chord = Array.isArray(want) ? want : [want];
-    if (!chord.some(w => same(midi, w))) { setBad(midi); window.setTimeout(() => setBad(null), 500); return; }
+    if (!chord.some(w => same(midi, w))) { setBad(midi); setWrongs(n => n + 1); window.setTimeout(() => setBad(null), 500); return; }
     setGood(g => new Set([...g, midi]));
     const all = chord.every(w => [...heldRef.current].some(h => same(h, w)));
     if (!all) return;
@@ -89,19 +92,29 @@ export function TheoryLesson({ node, color, naming, onExit, onDone }: Props) {
     if (!card || card.t !== 'pick' || picked === null) return;
     const ok = picked === card.answer;
     setChecked(ok ? 'right' : 'wrong');
-    if (!ok) setMistakes(m => m + 1);
+    if (!ok) { setMistakes(m => m + 1); setWrongs(n => n + 1); }
   };
 
   if (finished) {
+    const perfect = mistakes === 0;
     return (
-      <div className="theory-screen done" style={{ '--unit': color[0], '--unit-edge': color[1] } as React.CSSProperties}>
+      <div className="theory-screen done" style={{ '--unit': color[0], '--unit-edge': color[1], '--unit-ink': color[2] } as React.CSSProperties}>
         <Confetti />
-        <Penguin pose="cheer" size={170} />
-        <h1>Lesson complete!</h1>
+        <motion.div initial={{ scale: 0.4, rotate: -12, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={SPRING}>
+          <Spot tone="star" size={128}><IconStar size={64} /></Spot>
+        </motion.div>
+        <h1>{perfect ? 'Perfect lesson!' : 'Lesson complete!'}</h1>
+        <p className="sub">{perfect ? 'You made no mistakes in this lesson.' : 'Every question answered.'}</p>
         <div className="theory-rewards">
-          <span className="reward xp"><small>Total XP</small><b>+<CountUp to={XP} /></b></span>
-          <span className="reward gems"><small>Gems</small><b><Gem size={22} />+{GEMS}</b></span>
-          <span className="reward acc"><small>Mistakes</small><b>{mistakes}</b></span>
+          {[
+            ['xp', 'Total XP', <><IconBolt size={20} />+<CountUp to={XP} /></>],
+            ['gems', 'Gems', <><Gem size={20} />+{GEMS}</>],
+            ['acc', perfect ? 'Amazing' : 'Mistakes', <>{perfect ? '100%' : mistakes}</>],
+          ].map(([k, label, val], n) => (
+            <motion.span key={k as string} className={`reward ${k}`} initial={{ y: 24, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ ...SPRING, delay: 0.25 + n * 0.12 }}>
+              <small>{label}</small><b>{val}</b>
+            </motion.span>
+          ))}
         </div>
         <button className="btn go big" onClick={onDone}>Continue</button>
       </div>
@@ -111,33 +124,36 @@ export function TheoryLesson({ node, color, naming, onExit, onDone }: Props) {
 
   const progress = (i + (checked === 'right' || card.t === 'say' ? 1 : 0)) / cards.length;
   const want = card.t === 'play' ? card.play[at] : undefined;
+  const heading = card.t === 'pick' ? 'Choose the answer' : card.t === 'play' ? 'Play it' : 'New idea';
   return (
-    <div className="theory-screen" style={{ '--unit': color[0], '--unit-edge': color[1] } as React.CSSProperties}>
+    <div className="theory-screen" style={{ '--unit': color[0], '--unit-edge': color[1], '--unit-ink': color[2] } as React.CSSProperties}>
       <header className="theory-bar">
         <button className="icon-btn ghost" onClick={onExit} aria-label="Quit lesson"><IconClose size={24} /></button>
-        <span className="theory-progress" role="progressbar" aria-valuemin={0} aria-valuemax={cards.length} aria-valuenow={i + 1}><i style={{ width: `${Math.max(4, progress * 100)}%` }} /></span>
+        <ProgressBar value={progress} label={`Card ${i + 1} of ${cards.length}`} />
       </header>
 
-      <main className="theory-body" key={i}>
-        {card.t !== 'say' && <p className="theory-kind">{card.t === 'pick' ? 'Choose the answer' : 'Play it'}</p>}
-        <div className="theory-pip">
-          <Penguin pose={card.t === 'say' ? card.pose ?? (i === 0 ? 'wave' : 'read') : card.t === 'play' ? 'keys' : 'wink'} size={card.t === 'say' ? 116 : 92} />
-          <p className="bubble">{card.text}</p>
-        </div>
+      <Slide id={i} className="theory-body">
+        <h1 className="theory-kind">{heading}</h1>
+        <p className="theory-text">{card.text}</p>
         {card.staff && <StaffView staff={card.staff} />}
         {card.t === 'pick' && (
-          <div className="theory-options" role="radiogroup">
-            {card.options.map((o, k) => (
-              <button key={o} role="radio" aria-checked={picked === k} disabled={!!checked}
-                className={`option ${picked === k ? 'on' : ''} ${checked && k === card.answer ? 'right' : ''} ${checked === 'wrong' && picked === k ? 'wrong' : ''}`}
-                onClick={() => setPicked(k)}>
-                <span className="option-n">{k + 1}</span>{o}
-              </button>
-            ))}
-          </div>
+          <Shake on={checked === 'wrong' ? wrongs : 0} className="theory-options" >
+            <div role="radiogroup" className="theory-options-in">
+              {card.options.map((o, k) => (
+                <motion.button key={o} role="radio" aria-checked={picked === k} disabled={!!checked}
+                  whileTap={{ scale: 0.96, y: 2 }}
+                  animate={checked === 'right' && k === card.answer ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+                  transition={SPRING}
+                  className={`option ${picked === k ? 'on' : ''} ${checked && k === card.answer ? 'right' : ''} ${checked === 'wrong' && picked === k ? 'wrong' : ''}`}
+                  onClick={() => setPicked(k)}>
+                  <span className="option-n">{k + 1}</span>{o}
+                </motion.button>
+              ))}
+            </div>
+          </Shake>
         )}
         {(card.keys || card.t === 'play') && (
-          <div className="theory-keys">
+          <Shake on={card.t === 'play' ? bad : 0} className="theory-keys">
             <MiniKeys
               lo={card.keys?.lo ?? 48} hi={card.keys?.hi ?? 72}
               mark={card.t === 'say' ? card.keys?.mark : card.t === 'pick' ? card.keys?.mark : []}
@@ -147,22 +163,17 @@ export function TheoryLesson({ node, color, naming, onExit, onDone }: Props) {
             {card.t === 'play' && want !== undefined && card.play.length > 1 && (
               <p className="fine theory-count">{at + 1} of {card.play.length}</p>
             )}
-          </div>
+          </Shake>
         )}
-      </main>
+      </Slide>
 
-      <footer className={`theory-foot ${checked ?? ''}`}>
+      <AnswerFooter
+        verdict={checked}
+        title={checked === 'right' ? ['Nice!', 'Great job!', 'Correct!', 'Brilliant!'][i % 4] : 'Not quite'}
+        detail={checked === 'wrong' && card.t === 'pick' ? <>Correct answer: {card.options[card.answer]}</> : undefined}
+      >
         {checked ? (
-          <>
-            <div className="theory-verdict">
-              <span className="verdict-mark">{checked === 'right' ? <IconCheck size={30} /> : <IconClose size={30} />}</span>
-              <div>
-                <b>{checked === 'right' ? ['Nice!', 'Great job!', 'Correct!', 'Brilliant!'][i % 4] : 'Not quite'}</b>
-                {checked === 'wrong' && card.t === 'pick' && <p>Correct answer: {card.options[card.answer]}</p>}
-              </div>
-            </div>
-            <button className={`btn big ${checked === 'right' ? 'go' : 'danger'}`} onClick={next}>Continue</button>
-          </>
+          <button className={`btn big ${checked === 'right' ? 'go' : 'danger'}`} onClick={next}>Continue</button>
         ) : card.t === 'say' ? (
           <button className="btn go big" onClick={next}>Continue</button>
         ) : card.t === 'pick' ? (
@@ -173,7 +184,7 @@ export function TheoryLesson({ node, color, naming, onExit, onDone }: Props) {
             <p className="fine theory-hint">Play it on your piano, or tap the keys.</p>
           </>
         )}
-      </footer>
+      </AnswerFooter>
     </div>
   );
 }
