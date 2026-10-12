@@ -3,17 +3,15 @@ import { AddSong } from './components/AddSong';
 import { Celebrate } from './components/Celebrate';
 import { Paywall } from './components/Paywall';
 import { type PaywallReason } from './lib/billing';
-import { applyFreezes, onStats, sessionComplete, setGoalMinutes } from './lib/stats';
+import { applyFreezes, onStats, setGoalMinutes } from './lib/stats';
 import { scheduleReminders, startWebReminders } from './lib/reminders';
 import { PathHome, colorOf } from './components/PathHome';
-import { markSession, Practice } from './components/Practice';
 import { EnergySheet, Shop } from './components/Economy';
 import { TheoryLesson } from './components/TheoryLesson';
 import { Gem } from './components/GameIcons';
-import { IconChart, IconDumbbell, IconGear, IconHome, IconMusic } from './components/Icons';
+import { IconGear, IconHome, IconMusic } from './components/Icons';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
-import { ProgressView } from './components/ProgressView';
 import { SettingsSheet } from './components/SettingsSheet';
 import { EditSong } from './components/EditSong';
 import { SongScreen, sectionsOf } from './components/SongScreen';
@@ -29,13 +27,11 @@ import { connect, disconnectBle, disconnectMic, linkState, onLinkState, onNote, 
 import { loadSettings, removeSong, renameSong, saveSettings } from './lib/library';
 import type { Settings, SongEntry } from './lib/types';
 
-type Tab = 'home' | 'practice' | 'songs' | 'shop' | 'progress';
+type Tab = 'home' | 'songs' | 'shop';
 const TABS: [Tab, string, (p: { size?: number }) => React.ReactElement][] = [
   ['home', 'Learn', IconHome],
-  ['practice', 'Practice', IconDumbbell],
   ['songs', 'Songs', IconMusic],
   ['shop', 'Shop', p => <Gem size={p.size} />],
-  ['progress', 'Progress', IconChart],
 ];
 
 export default function App() {
@@ -121,7 +117,6 @@ export default function App() {
 
   const [paywall, setPaywall] = useState<PaywallReason | null>(null);
   const pickFile = (slot?: SongEntry) => { slotRef.current = slot; fileRef.current?.click(); };
-  const practise = (p: Playable) => play([p], 0, false);
   const openSong = (info: SongInfo) => {
     if (info.entry.missing) { pickFile(info.entry); return; }
     if (info.error || !info.song) { setNotice({ text: i18n.t(info.entry.builtIn ? 'err.loadFailed' : 'err.missing'), error: true }); return; }
@@ -130,7 +125,6 @@ export default function App() {
   // Opening a song shows its sheet music; Teach me opens a section's lesson on top of it.
   const openSheet = (info: SongInfo) => { unlockAudio(); ensureInput(); openSong(info); };
 
-  const play = (items: Playable[], from: number, session: boolean) => { unlockAudio(); ensureInput(); setRun({ items, i: from, n: 0, session }); };
   // A node on the path: theory opens its cards, the trophy is the unit test, the rest are lessons
   // (each step costs energy, so he needs some to start).
   const playNode = (node: PathNode, unit: Unit, prog?: CourseProgress) => {
@@ -192,8 +186,6 @@ export default function App() {
           nextLabel={run.session ? (run.i < run.items.length - 1 ? `Next: ${run.items[run.i + 1].title}` : 'Finish today’s session') : 'Continue'}
           onExit={() => { setRun(null); pathChanged(); }}
           onNextSection={() => {
-            if (run.session) markSession(run.i + 1);
-            if (run.session && run.i === run.items.length - 1) sessionComplete();
             pathChanged();
             if (run.session && run.i < run.items.length - 1) setRun({ ...run, i: run.i + 1, n: run.n + 1 });
             else setRun(null);
@@ -242,24 +234,18 @@ export default function App() {
             {tab === 'home' ? (
               <PathHome
                 settings={settings} links={links}
-                onSetup={kind => { update({ input: kind, setupDone: true }); connectInput(kind); }}
-                onSkipSetup={() => update({ setupDone: true })}
+                onPiano={() => setSheet('settings')}
                 onNode={playNode}
                 onTest={items => takeTest(items)}
                 onEnergy={() => setEnergySheet('info')}
                 onShop={() => setTab('shop')}
-                onPractice={() => setTab('practice')}
                 onPremium={() => setPaywall('upgrade')}
               />
-            ) : tab === 'practice' ? (
-              <Practice onSession={(items, from) => play(items, from, true)} onPractice={practise} />
             ) : tab === 'shop' ? (
               <Shop onPremium={() => setPaywall('upgrade')} />
             ) : tab === 'songs' ? (
               <Songs infos={infos} entries={entries} ready={ready} onOpen={openSheet} onAdd={slot => pickFile(slot)} onEdit={setEditing} />
-            ) : (
-              <ProgressView settings={settings} update={update} entries={entries} infos={infos} onPractice={practise} />
-            )}
+            ) : null}
           </main>
         </div>
       )}
@@ -292,7 +278,6 @@ export default function App() {
           empty={energySheet === 'empty'}
           onClose={() => setEnergySheet(null)}
           onPremium={() => { setEnergySheet(null); setPaywall('energy'); }}
-          onPractice={() => { setEnergySheet(null); setTab('practice'); }}
         />
       )}
       <Celebrate />

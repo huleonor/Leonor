@@ -3,17 +3,22 @@ import { buyFreeze, buyRefill, formatWait, MAX_ENERGY, PRICES, refillIn, useEcon
 import { freezes } from '../lib/stats';
 import { useDaily } from './Home';
 import { Chest, Energy, Flame, Gem } from './GameIcons';
-import { IconClose, IconSnow } from './Icons';
+import { IconClose, IconKeys, IconSnow } from './Icons';
 import { Logo, Spot } from './Brand';
 import { Bump } from './Motion';
 
 /** The game bar, Duolingo style: streak flame, gems and the pink energy battery. */
-export function GameBar({ onEnergy, onGems }: { onEnergy: () => void; onGems: () => void }) {
+export function GameBar({ onEnergy, onGems, piano }: { onEnergy: () => void; onGems: () => void; piano?: { on: boolean; onClick: () => void } }) {
   const { energy, gems, premium } = useEconomy();
   const daily = useDaily();
   const f = freezes();
   return (
     <div className="gamebar">
+      {piano && (
+        <button className={`gb-stat piano ${piano.on ? 'on' : ''}`} onClick={piano.onClick} aria-label={piano.on ? 'Piano connected' : 'Connect your piano'}>
+          <IconKeys size={24} /><i className="piano-dot" />
+        </button>
+      )}
       <span className={`gb-stat flame ${daily.streak.today ? 'lit' : ''}`} aria-label={`${daily.streak.days}-day streak${f ? `, ${f} streak freeze${f > 1 ? 's' : ''}` : ''}`}>
         <Flame size={26} lit={daily.streak.today} /><Bump value={daily.streak.days} />
         {f > 0 && <small className="gb-freeze"><IconSnow size={12} />{f}</small>}
@@ -41,11 +46,10 @@ interface SheetProps {
   empty?: boolean;
   onClose: () => void;
   onPremium: () => void;
-  onPractice?: () => void;
 }
 
 /** Energy: how much is left, when it refills, and the ways to get more. */
-export function EnergySheet({ empty, onClose, onPremium, onPractice }: SheetProps) {
+export function EnergySheet({ empty, onClose, onPremium }: SheetProps) {
   const { energy, gems, premium } = useEconomy();
   const [note, setNote] = useState('');
   const wait = refillIn();
@@ -65,14 +69,12 @@ export function EnergySheet({ empty, onClose, onPremium, onPractice }: SheetProp
             <ul className="energy-tips">
               <li><Energy size={16} />Play 10 notes right in a row: +1</li>
               <li><Chest size={20} />Chests on the path: up to +10</li>
-              <li><Energy size={16} />Practice tab: free, and +2 each time</li>
             </ul>
             <div className="game-sheet-actions">
               <button className="btn offer" disabled={full || gems < PRICES.refill} onClick={() => { if (buyRefill()) { setNote('Energy full!'); if (empty) window.setTimeout(onClose, 700); } }}>
                 <Energy size={18} /><span>Refill</span><b><Gem size={16} />{PRICES.refill}</b>
               </button>
               <button className="btn super" onClick={onPremium}><span>Unlimited energy</span><b>Premium</b></button>
-              {empty && onPractice && <button className="btn" onClick={onPractice}>Practise to earn energy</button>}
             </div>
             {gems < PRICES.refill && !full && <p className="fine">You have {gems} gems. Finish lessons and open chests to earn more.</p>}
             {note && <p className="game-note" role="status">{note}</p>}

@@ -78,3 +78,26 @@ export function Slide({ id, children, className }: { id: string | number; childr
     </AnimatePresence>
   );
 }
+
+const CHEERS: [number, string][] = [[5, 'Nice!'], [10, '10 in a row!'], [15, 'Great streak!'], [20, 'On fire!'], [30, 'Unstoppable!']];
+
+/** A word of praise that pops up when a run of right notes reaches a milestone, then floats away. */
+export function Cheer({ combo }: { combo: number }) {
+  const [shown, setShown] = useState<{ text: string; n: number } | null>(null);
+  useEffect(() => {
+    const hit = CHEERS.find(([n]) => n === combo) ?? (combo > 30 && combo % 10 === 0 ? [combo, `${combo} in a row!`] as [number, string] : undefined);
+    if (!hit) return;
+    setShown({ text: hit[1], n: combo });
+    const id = window.setTimeout(() => setShown(null), 1100);
+    return () => window.clearTimeout(id);
+  }, [combo]);
+  return (
+    <AnimatePresence>
+      {shown && (
+        <motion.p key={shown.n} className="cheer" role="status" initial={{ scale: 0.4, y: 20, opacity: 0, rotate: -6 }} animate={{ scale: 1, y: 0, opacity: 1, rotate: 0 }} exit={{ y: -30, opacity: 0 }} transition={SPRING}>
+          {shown.text}
+        </motion.p>
+      )}
+    </AnimatePresence>
+  );
+}
