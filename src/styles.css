@@ -1718,3 +1718,5 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .help-keys .klabel { display: block; color: var(--ink-3); font-size: 10px; font-weight: 900; }
 /* The endless lines replace the engraved ones, so they never sit a pixel apart. */
 .lesson-line g.abcjs-staff, .clef-panel g.abcjs-staff { opacity: 0; }
+/* The staff's layers stay inside the stage, under sheets and dialogs. */
+.lesson.simply .lesson-stage, .lesson-staff { isolation: isolate; }

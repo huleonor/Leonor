@@ -50,7 +50,7 @@ npm run dev
 vercel deploy --prod
 ```
 
-The bundled Hans Zimmer pieces are fan transcriptions for personal practice (bitmidi.com, midisfree.com). Keep the link private.
+For now the app ships one piece, Gymnopédie No. 1 (Satie, public domain), and its lessons are built to teach it well.
 
-Cover photos are from Unsplash (free license): Quaritsch Photography, Raimond Klavins, Ash Amplifies, BoliviaInteligente, Alina Chernovolova, Susann Schuster, Ian Keefe, Bogdan Arhipov.
+Cover photos are from Unsplash (free license): Fernando Jorge, Bogdan Arhipov.
 # Leonor

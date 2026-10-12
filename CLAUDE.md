@@ -34,4 +34,6 @@ Read DESIGN.md before touching any UI. These rules are fixed unless the user cha
 - Life comes from state, Duolingo style: a streak chip that counts right notes, praise popping at milestones (5, 10, 15, 20, 30 in a row), the step pill springing forward, a step's verdict popping green or red.
 - The piano connection is never a banner: a small piano-keys icon with an orange dot (green when connected) in the game bar and the lesson bars opens Settings.
 - Tabs: Learn (the path), Songs, Shop. There is no Practice or Progress tab.
-- Songs: the Songs tab shows only his library (small square covers); everything else lives in the marketplace, where one tap adds a song.
+- Songs: for now the app teaches one piece, Gymnopédie No. 1 (Satie), and teaches it well; it is in the library from the start. The Songs tab shows only his library (small square covers); the marketplace adds songs, and he can upload his own MIDI.
+- Free play is the follow mode: the cursor jumps to the next notes and waits, no bars or rests to sit through. Most steps are free; only the last steps of a part or level go "With the beat".
+- The MIDI reader writes clean notation: accompaniment chords found in the right-hand track go to the left hand, and slightly short performed notes snap to plain note values.
