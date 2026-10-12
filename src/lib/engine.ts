@@ -111,6 +111,13 @@ export class Engine {
     this.emit({ type: 'state' });
   }
 
+  /** Puts the cursor just before the first note to play, so nothing moves until he plays it. */
+  toFirstNote() {
+    const from = this.segment?.from ?? this.startTime;
+    const g = this.groups.find(x => x.time >= from - 1e-3);
+    if (g) this.seek(Math.max(this.startTime, g.time - 0.04));
+  }
+
   seek(t: number, emit = true) {
     this.time = Math.max(this.startTime, Math.min(t, this.song.duration));
     const notes = this.song.notes;

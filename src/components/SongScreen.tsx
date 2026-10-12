@@ -14,9 +14,9 @@ import type { HandsChoice, Settings } from '../lib/types';
 import { AnimatePresence, motion } from 'motion/react';
 import { HelpKeys } from './HelpKeys';
 import {
-  IconCap, IconCheck, IconClose, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconStop,
+  IconCap, IconCheck, IconClose, IconFlame, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconStop,
 } from './Icons';
-import { ProgressBar, SOFT, SPRING } from './Motion';
+import { Bump, Cheer, ProgressBar, SOFT, SPRING } from './Motion';
 import { ScoreView } from './ScoreView';
 import { byLine } from './Songs';
 import { Segmented } from './ui';
@@ -74,6 +74,8 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
   const [hands, setHands] = useState<HandsChoice>('both');
   const [loop, setLoop] = useState<{ n: number; from: number; to: number } | null>(null);
   const [result, setResult] = useState<ReturnType<Engine['stats']> | null>(null);
+  // A run of right notes, for the streak chip and the praise.
+  const [combo, setCombo] = useState(0);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   usePracticeClock();
 
@@ -95,6 +97,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
     let skills = listenForSkills(engine);
     const off = engine.on(e => {
       if (e.type === 'state') bump();
+      if (e.type === 'press' && !(e.ok && e.id === undefined)) setCombo(c => (e.ok ? c + 1 : 0));
       if (e.type === 'end') {
         skills.stop();
         skills = listenForSkills(engine);
@@ -117,7 +120,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
     const follow = !listen && scroll === 'magic';
     engine.pause();
     engine.setOptions({ listen, follow, wait: false, hands: song.hands.length === 1 ? song.hands[0] : hands, speed: listen ? 1 : follow ? 1 : speed, lenient: settings.input === 'mic' });
-    if (follow && !engine.finished) engine.play(0);
+    if (follow && !engine.finished) { if (!engine.stats().hit) engine.toFirstNote(); engine.play(0); }
     if (listen) { unlockAudio(); engine.play(1); }
     bump();
   }, [engine, mode, scroll, speed, hands, settings.input]);
@@ -136,7 +139,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
     if (part) setLoop({ n: part.sameAs ?? part.n, from: part.from, to: part.to });
   };
 
-  const restart = () => { setResult(null); engine.restart(); if (engine.opts.follow) engine.play(0); bump(); };
+  const restart = () => { setResult(null); engine.restart(); if (engine.opts.follow) { engine.toFirstNote(); engine.play(0); } setCombo(0); bump(); };
   const seek = (t: number) => {
     setResult(null);
     engine.seek(t - 0.05);
@@ -156,6 +159,14 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
       <header className="song-top">
         <button className="icon-btn ghost" onClick={onExit} aria-label="Back to my songs"><IconClose size={24} /></button>
         <ProgressBar value={stats.total ? stats.hit / stats.total : 0} label={`${stats.hit} of ${stats.total} notes`} />
+        <AnimatePresence>
+          {combo >= 3 && (
+            <motion.span className={`combo ${combo >= 10 ? 'hot' : ''}`} aria-label={`${combo} right in a row`} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={SPRING}>
+              <IconFlame size={14} /><Bump value={combo} />
+            </motion.span>
+          )}
+        </AnimatePresence>
+        {!inputOn && <button className="piano-chip" onClick={onSettings} aria-label="Connect your piano"><IconKeys size={20} /><i /></button>}
         <button className="icon-btn ghost" onClick={() => setOptions(true)} aria-label="Options"><IconGear size={22} /></button>
       </header>
       <div className="song-head">
@@ -166,6 +177,14 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
       <main className="sheet">
         <div className="sheet-card">
           <ScoreView engine={engine} fingers={settings.fingers} feedback={feedback} follow title={song.entry.title} composer={byLine(song.entry) || undefined} sections={labels} onSeek={seek} />
+          <Cheer combo={combo} />
+          <AnimatePresence>
+            {mode === 'play' && !tempoMode && !result && stats.hit === 0 && (
+              <motion.p className="ready-pill" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0, scale: 0.9 }} transition={SPRING}>
+                <IconKeys size={18} />Play the first note to start
+              </motion.p>
+            )}
+          </AnimatePresence>
           <AnimatePresence>
             {result && (
               <motion.div className="sheet-result card" role="dialog" aria-labelledby="sheet-result-title" initial={{ scale: 0.85, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }} transition={SPRING}>
@@ -184,7 +203,6 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
       <HelpKeys engine={engine} naming={settings.naming} fingers={settings.fingers} always={alwaysKeys} />
 
       <footer className="song-foot">
-        {!inputOn && <button className="connect" onClick={onSettings}><i />Connect your piano</button>}
         <motion.button className={`btn ${mode === 'listen' ? 'on' : ''}`} whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMode(m => (m === 'listen' ? 'play' : 'listen')); }} aria-pressed={mode === 'listen'}>
           {mode === 'listen' ? <><IconStop size={18} />Stop</> : <><IconSpeaker size={18} />Listen</>}
         </motion.button>

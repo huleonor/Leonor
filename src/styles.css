@@ -2,7 +2,7 @@
    Duolingo's app look in the logo's blue: a white ground, cards with a 2px grey border, brand blue
    (#2b93ba) with white text on chunky buttons, green only for a right answer, one blue accent (#1cb0f6) for interactive things, charcoal
    text, one family (Nunito, bold), 12px corners, a 10px spacing unit, 300ms ease for every transition.
-   Light and dark themes come from the same tokens. The piano screens keep their Simply Piano look. */
+   The piano screens keep their Simply Piano look. */
 
 @font-face {
   font-family: 'Nunito Variable';
@@ -99,41 +99,7 @@
   color-scheme: light;
 }
 
-/* Dark theme: same roles, night colours. Brand lime, blue and the game colours stay. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1c24;
-    --bg-deep: #1a2b35;
-    --surface: #172630;
-    --surface-2: #1f323d;
-    --raised: #1f323d;
-    --raised-edge: #0b151b;
-    --line: #2c4250;
-    --line-2: #3d5666;
-    --shadow: 0 0 5px rgba(0, 0, 0, .55);
-    --heading: #f1f7fb;
-    --ink: #e3edf2;
-    --ink-2: #b6c5cd;
-    --ink-3: #8fa2ad;
-    --go-soft: #123445;
-    --go-text: #7cc8e6;
-    --ok-soft: #22381a;
-    --ok-text: #8ee04f;
-    --blue-soft: #123445;
-    --blue-line: #1f5a72;
-    --blue-text: #7cc8e6;
-    --star-off: #2c4250;
-    --star-text: #ffd84d;
-    --flame-text: #ffad40;
-    --energy-soft: #45203a;
-    --energy-text: #ff9be3;
-    --miss-soft: #4a1f22;
-    --miss-text: #ff8a8a;
-    --premium: #0b2233;
-    --premium-2: #12364f;
-    color-scheme: dark;
-  }
-}
+
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
@@ -1502,7 +1468,7 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .spot-star { background: #fff4c2; color: var(--star); }
 .spot-flame { background: #ffe7c7; color: var(--flame); }
 .spot-ok { background: var(--ok-soft); color: var(--ok); }
-@media (prefers-color-scheme: dark) { .spot-star { background: #3a3215; } .spot-flame { background: #3d2a12; } }
+
 .guide-icon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(255, 255, 255, .2); color: var(--unit-ink); flex: none; }
 .super-logo { border-radius: 24px; }
 
@@ -1650,12 +1616,7 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .cover.c-modern { background: linear-gradient(135deg, #d6f7ee, #9ee6d2); color: #00876a; }
 .cover.c-classical { background: linear-gradient(135deg, #fff4c2, #ffe07a); color: #8a6500; }
 .cover.c-mine { background: linear-gradient(135deg, var(--blue-soft), #b9e2f1); color: var(--blue); }
-@media (prefers-color-scheme: dark) {
-  .cover.c-film { background: linear-gradient(135deg, #34234a, #4a2f6b); color: #d9b8ff; }
-  .cover.c-modern { background: linear-gradient(135deg, #12382f, #18513f); color: #9ee6d2; }
-  .cover.c-classical { background: linear-gradient(135deg, #3a3215, #54461a); color: #ffe07a; }
-  .cover.c-mine { background: linear-gradient(135deg, #123445, #18465c); color: #7cc8e6; }
-}
+
 @media (max-width: 640px) {
   .song-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
   .song-text b { font-size: 13.5px; }
@@ -1667,3 +1628,67 @@ button.gb-stat:hover { background: var(--bg-deep); }
   --line: #e5e5e5; --blue-soft: #ddf1f9; --blue-line: #9fd2e6; --blue-text: #1d6c8c; background: #fff;
 }
 .score .abcjs-title, .score svg text { fill: var(--lesson-ink); }
+
+/* =====================================================================
+   Round 4: always white. The lesson is Simply Piano's page in Duolingo's colours.
+   ===================================================================== */
+/* Piano status: a small key icon with a dot, instead of a "connect" banner */
+.gb-stat.piano { position: relative; color: var(--ink-3); }
+.gb-stat.piano.on { color: var(--blue); }
+.piano-dot, .piano-chip i { position: absolute; top: 8px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--flame); border: 2px solid var(--surface); }
+.gb-stat.piano.on .piano-dot { background: var(--ok); }
+.piano-chip { position: relative; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; color: var(--ink-3); background: var(--surface); border: 2px solid var(--line); }
+.piano-chip i { top: 4px; right: 4px; }
+
+.lesson.simply {
+  height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) clamp(78px, 21vh, 130px);
+  background: var(--surface); color: var(--ink); padding: 0 var(--safe-r) var(--safe-b) var(--safe-l);
+}
+.lesson.simply.view-notes { background: #100d24; }
+.lesson.simply .lesson-bar { padding: 12px 20px 6px; gap: 12px; }
+.lesson.simply .lesson-pause { width: 46px; height: 46px; border-radius: 12px; background: var(--surface); color: var(--ink-2); border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); display: grid; place-items: center; }
+.lesson.simply .lesson-say { display: flex; align-items: center; }
+.lesson-step { font-weight: 900; font-size: 16px; color: var(--heading); letter-spacing: .8px; }
+.lesson.simply .lesson-econ { position: static; display: flex; align-items: center; gap: 8px; }
+.lesson.simply .lesson-arrow { width: 40px; height: 40px; border-radius: 12px; background: var(--surface); color: var(--ink-2); border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); display: grid; place-items: center; }
+.lesson.simply .lesson-arrow:disabled { opacity: .4; box-shadow: none; background: var(--surface-2); color: var(--ink-3); }
+.lesson.simply .lesson-count { position: relative; height: 40px; min-width: 170px; border-radius: 999px; background: var(--line); color: var(--heading); overflow: hidden; display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-weight: 900; font-size: 15px; }
+.lesson.simply .lesson-count i { position: absolute; inset: 0 auto 0 0; background: var(--go); border-radius: 999px; transition: none; }
+.lesson.simply .lesson-count span { position: relative; color: var(--heading); }
+/* The staff sits on a white band between two soft rules */
+.lesson.simply .lesson-stage { position: relative; background: var(--surface); border-top: 2px solid var(--line); border-bottom: 2px solid var(--line); }
+.lesson.simply .lesson-staff { color: var(--lesson-ink); }
+.lesson.simply .lesson-start { background: rgba(255, 255, 255, .88); inset: 0; }
+.lesson.simply .lesson-flash { display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 16px; background: var(--danger); color: #fff; box-shadow: 0 5px 0 #9e1f1f; font-size: 22px; flex-wrap: wrap; justify-content: center; }
+.lesson.simply .lesson-flash.good { background: var(--ok); box-shadow: 0 5px 0 var(--ok-edge); }
+.lesson.simply .lesson-flash-wrap { animation: none; }
+.lesson.simply .xp-gain { width: 100%; text-align: center; font-size: 14px; }
+/* Keyboard: white keys, gold for the next key, blue once played, red for a wrong one */
+.lesson.simply .lesson-keys { background: var(--line); padding-top: 3px; }
+.lesson.simply .key.w { background: #fff; border-right: 1px solid #d5d5d5; border-radius: 0 0 6px 6px; box-shadow: inset 0 -5px 0 #ececec; }
+.lesson.simply .key.b { background: #3c3c3c; box-shadow: inset 0 -4px 0 #1f1f1f; border-radius: 0 0 5px 5px; }
+.lesson.simply .key.w.next, .lesson.simply .key.b.next { background: var(--star); box-shadow: inset 0 -5px 0 var(--star-edge); }
+.lesson.simply .key.down, .lesson.simply .key.hitR, .lesson.simply .key.hitL { background: var(--go); box-shadow: inset 0 -5px 0 var(--go-edge); }
+.lesson.simply .key.wrong { background: var(--miss); }
+.lesson.simply .klabel { display: block; color: var(--ink-3); font-size: 11px; font-weight: 900; }
+.lesson.simply .lesson-listening { top: 12px; }
+@media (max-width: 640px) {
+  .lesson.simply .lesson-bar { flex-wrap: wrap; padding: 10px 12px 6px; }
+  .lesson.simply .lesson-count { min-width: 110px; }
+  .lesson-step { font-size: 14px; }
+}
+
+/* Praise that pops over the music at a streak milestone */
+.cheer {
+  position: absolute; left: 50%; top: 18%; z-index: 6; translate: -50% 0; pointer-events: none;
+  padding: 10px 22px; border-radius: 16px; background: var(--flame); color: #111; font-weight: 900; font-size: 22px; letter-spacing: .8px;
+  box-shadow: 0 5px 0 var(--flame-edge); white-space: nowrap;
+}
+.combo { display: inline-flex; align-items: center; gap: 4px; }
+.song-top .combo { flex: none; }
+/* Song: the start prompt */
+.ready-pill {
+  position: absolute; left: 50%; bottom: 18px; z-index: 4; translate: -50% 0;
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px;
+  background: var(--go); color: #fff; font-weight: 900; box-shadow: 0 4px 0 var(--go-edge); white-space: nowrap;
+}

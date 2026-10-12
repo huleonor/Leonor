@@ -8,7 +8,7 @@ import type { Settings } from '../lib/types';
 import { ChestOpened, GameBar } from './Economy';
 import { Chest, GlyphBook, GlyphCrown, GlyphDumbbell, GlyphHand, GlyphHeadphones, GlyphLock, GlyphNote, GlyphStar, GlyphTrophy, Energy } from './GameIcons';
 import { useDaily } from './Home';
-import { IconArrowLeft, IconBluetooth, IconCheck, IconClose, IconKeys, IconMic } from './Icons';
+import { IconArrowLeft, IconCheck, IconClose } from './Icons';
 import { Logo } from './Brand';
 
 /** Each unit has its own colour, as on Duolingo's path. */
@@ -31,27 +31,21 @@ const XP_HINT: Partial<Record<NodeKind, number>> = { theory: 10, lesson: 25, lis
 /** Zig-zag offsets, in px, Duolingo's winding path. */
 const SWAY = [0, 44, 70, 44, 0, -44, -70, -44];
 
-const SETUP: [Source, string, string, (p: { size?: number }) => React.ReactElement][] = [
-  ['midi', 'USB cable', 'Piano plugged into the phone', IconKeys],
-  ['ble', 'Bluetooth', 'Piano with Bluetooth MIDI', IconBluetooth],
-  ['mic', 'Microphone', 'Any piano, the phone listens', IconMic],
-];
 
 interface Props {
   settings: Settings;
   links: Record<Source, LinkState>;
-  onSetup: (kind: Source) => void;
-  onSkipSetup: () => void;
+  onPiano: () => void;
   onNode: (node: PathNode, unit: Unit, prog?: CourseProgress) => void;
   onTest: (items: Playable[], unit?: Unit) => void;
   onEnergy: () => void;
   onShop: () => void;
-  onPractice: () => void;
   onPremium: () => void;
 }
 
 /** Home is the path: sections, units with their banners, and the winding trail of nodes. */
-export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest, onEnergy, onShop, onPractice, onPremium }: Props) {
+export function PathHome({ settings, links, onPiano, onNode, onTest, onEnergy, onShop, onPremium }: Props) {
+  const pianoOn = settings.input !== 'none' && links[settings.input as Source]?.status === 'on';
   const path = usePath();
   const { premium } = useEconomy();
   const daily = useDaily();
@@ -90,26 +84,7 @@ export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest
   return (
     <div className="path-page" ref={scroller}>
       <div className="path-main">
-        <div className="path-top"><GameBar onEnergy={onEnergy} onGems={onShop} /></div>
-
-        {!settings.setupDone && (
-          <section className="card setup" aria-labelledby="setup-title">
-            <div>
-              <h2 id="setup-title">How is your piano connected?</h2>
-              <p>The app listens to what you play and waits for the right notes. You can change this later in Settings.</p>
-            </div>
-            <div className="setup-choices">
-              {SETUP.map(([kind, label, sub, Icon]) => (
-                <button key={kind} className={`choice ${links[kind].status === 'on' ? 'on' : ''}`} onClick={() => onSetup(kind)}>
-                  <Icon size={22} />
-                  <b>{label}</b>
-                  <small>{links[kind].status === 'connecting' ? 'Connecting…' : links[kind].status === 'on' ? 'Connected' : sub}</small>
-                </button>
-              ))}
-            </div>
-            <button className="link" onClick={onSkipSetup}>Later</button>
-          </section>
-        )}
+        <div className="path-top"><GameBar onEnergy={onEnergy} onGems={onShop} piano={{ on: pianoOn, onClick: onPiano }} /></div>
 
         {fresh && (
           <section className="card placement" aria-labelledby="placement-title">
@@ -176,18 +151,13 @@ export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest
       </div>
 
       <aside className="path-side">
-        <GameBar onEnergy={onEnergy} onGems={onShop} />
+        <GameBar onEnergy={onEnergy} onGems={onShop} piano={{ on: pianoOn, onClick: onPiano }} />
         <section className="card side-card">
           <h3>Daily goal</h3>
           <div className="side-goal">
             <span className="meter"><i style={{ width: `${Math.min(100, (daily.today.sec / 60 / settings.dailyGoal) * 100)}%` }} /></span>
             <b>{Math.floor(daily.today.sec / 60)}/{settings.dailyGoal} min</b>
           </div>
-        </section>
-        <section className="card side-card">
-          <h3>Today’s practice</h3>
-          <p className="sub">A warm-up on your weakest skill and a review. Free, and it earns energy.</p>
-          <button className="btn outline" onClick={onPractice}>Practise</button>
         </section>
         {!premium && (
           <section className="card side-card super">
