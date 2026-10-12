@@ -1,7 +1,6 @@
 /**
- * Plans and what they unlock. Free keeps the habit going (the first two units, the daily session,
- * the difficulty coach, your skill map, up to three songs of your own); Premium opens the whole
- * course, unlimited skill practice, unlimited songs, and the AI coach with a weekly plan.
+ * Plans, Duolingo's way: the whole course is free, paced by energy (see energy.ts); Premium makes
+ * energy unlimited, so the only limit is how long he wants to play.
  *
  * Prices follow the business plan (9.99 a month, 59.99 a year with a free week, 89.99 a year for a
  * family) and are set per region. No store is connected yet: purchases run in test mode and unlock
@@ -9,7 +8,6 @@
  * checkout plug in behind `purchase` and `restore` later.
  */
 import { useEffect, useState } from 'react';
-import { dayKey } from './stats';
 
 export type PlanId = 'monthly' | 'annual' | 'family';
 
@@ -85,37 +83,9 @@ export function usePlan() {
   return entitlement();
 }
 
-// ---------- Free plan limits ----------
-
-/** Units the free plan includes (1 and 2). */
-export const FREE_UNITS = 2;
-/** Own songs the free plan holds. */
-export const FREE_SONGS = 3;
-/** Skill practices a day on the free plan (the daily session does not count). */
-export const FREE_PRACTICE = 3;
-
-const PRACTICE = 'hugos-piano:practice-count';
-export function practicesLeft(): number {
-  if (isPremium()) return Infinity;
-  try {
-    const s = JSON.parse(localStorage.getItem(PRACTICE) ?? '{}') as { day?: string; n?: number };
-    return FREE_PRACTICE - (s.day === dayKey() ? s.n ?? 0 : 0);
-  } catch { return FREE_PRACTICE; }
-}
-export function countPractice() {
-  if (isPremium()) return;
-  try {
-    const s = JSON.parse(localStorage.getItem(PRACTICE) ?? '{}') as { day?: string; n?: number };
-    localStorage.setItem(PRACTICE, JSON.stringify({ day: dayKey(), n: (s.day === dayKey() ? s.n ?? 0 : 0) + 1 }));
-  } catch { /* ignore */ }
-}
-
 /** Why the paywall opened, in one line on top of it. */
-export type PaywallReason = 'unit' | 'practice' | 'songs' | 'coach' | 'upgrade';
+export type PaywallReason = 'energy' | 'upgrade';
 export const REASON: Record<PaywallReason, string> = {
-  unit: 'Units 3 to 7 are part of Premium.',
-  practice: `The free plan includes ${FREE_PRACTICE} skill practices a day.`,
-  songs: `The free plan holds ${FREE_SONGS} songs of your own.`,
-  coach: 'The AI coach and your weekly plan are part of Premium.',
-  upgrade: 'Learn faster with everything unlocked.',
+  energy: 'Out of energy? With Premium it never runs out.',
+  upgrade: 'Learn as long as you like, every day.',
 };

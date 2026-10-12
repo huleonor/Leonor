@@ -10,7 +10,7 @@ import type { Hand, Song, SongNote } from './types';
 const PPQ = 480;
 
 /** A note to write: pitch (or several, a chord), length in beats, hand. */
-interface W { midi: number | number[]; beats: number; hand: Hand; }
+export interface W { midi: number | number[]; beats: number; hand: Hand; }
 
 /** Builds a playable song from written notes; each hand is laid out on its own, from beat 0. */
 export function writeSong(id: string, title: string, voices: W[][], opts: { bpm?: number; fifths?: number; timeSig?: [number, number]; ceiling?: number } = {}): Song {
@@ -48,7 +48,7 @@ export function writeSong(id: string, title: string, voices: W[][], opts: { bpm?
 
 // ---------- Random, but the same exercise for the same seed ----------
 
-function rng(seed: number) {
+export function rng(seed: number) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -61,22 +61,27 @@ function rng(seed: number) {
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 /** The keys of a major scale between lo and hi. */
-function scale(lo: number, hi: number, fifths = 0) {
+export function scale(lo: number, hi: number, fifths = 0) {
   const tonic = (((fifths * 7) % 12) + 12) % 12;
   const out: number[] = [];
   for (let m = lo; m <= hi; m++) if (MAJOR.includes((((m - tonic) % 12) + 12) % 12)) out.push(m);
   return out;
 }
 
-const RHYTHMS: Record<'basic' | 'eighths' | 'dotted' | 'long', number[][]> = {
+export const RHYTHMS: Record<'basic' | 'eighths' | 'dotted' | 'long' | 'waltz' | 'waltzDotted', number[][]> = {
+  waltz: [[2, 1], [1, 1, 1], [3], [1, 2]],
+  waltzDotted: [[1.5, 0.5, 1], [2, 1], [1, 1.5, 0.5], [1, 1, 1]],
   long: [[2, 2], [4], [2, 2]],
   basic: [[1, 1, 1, 1], [2, 1, 1], [1, 1, 2], [2, 2], [1, 1, 1, 1]],
   eighths: [[0.5, 0.5, 1, 1, 1], [1, 0.5, 0.5, 1, 1], [0.5, 0.5, 0.5, 0.5, 2], [1, 1, 0.5, 0.5, 1]],
   dotted: [[1.5, 0.5, 1, 1], [1, 1, 1.5, 0.5], [3, 1], [1.5, 0.5, 2]],
 };
 
-/** A melody on `pool`: mostly steps, some skips (more at higher `skip`), ending on the home note. */
-function melody(r: () => number, pool: number[], bars: number, rhythm: number[][], hand: Hand, skip: number, home: number): W[] {
+/**
+ * A melody on `pool`: mostly steps, some skips (more at higher `skip`), ending on the home note.
+ * `barBeats` is the bar's length in quarter notes; `rests` the chance a beat inside the bar rests.
+ */
+export function melody(r: () => number, pool: number[], bars: number, rhythm: number[][], hand: Hand, skip: number, home: number, barBeats = 4, rests = 0): W[] {
   const out: W[] = [];
   let i = Math.max(0, pool.indexOf(home));
   for (let b = 0; b < bars; b++) {
@@ -85,7 +90,7 @@ function melody(r: () => number, pool: number[], bars: number, rhythm: number[][
     if (last) {
       // The last bar lands on the home note, held to the end of the bar.
       const head = beats.length > 1 ? beats.slice(0, Math.ceil(beats.length / 2)) : [];
-      beats = [...head, 4 - head.reduce((t, x) => t + x, 0)];
+      beats = [...head, barBeats - head.reduce((t, x) => t + x, 0)];
     }
     beats.forEach((d, k) => {
       const end = last && k === beats.length - 1;
@@ -98,7 +103,9 @@ function melody(r: () => number, pool: number[], bars: number, rhythm: number[][
         if (j < 0 || j >= pool.length) j = i - dir * size;
         i = Math.max(0, Math.min(pool.length - 1, j));
       }
-      out.push({ midi: pool[i], beats: d, hand });
+      // A rest now and then, never on the first beat of the piece or the final note.
+      const rest = rests > 0 && out.length > 0 && !end && k > 0 && r() < rests;
+      out.push({ midi: rest ? 0 : pool[i], beats: d, hand });
     });
   }
   return out;
@@ -215,6 +222,39 @@ const MINUET = 'D5 G4:0.5 A4:0.5 B4:0.5 C5:0.5 D5 G4 G4 E5 C5:0.5 D5:0.5 E5:0.5 
 const MINUET_LH = 'G3:2 A3 B3:3 C4:3 B3:3 A3:3 G3:3 D4 B3 G3 D4:2 D3';
 const GRACE = 'r:2 G3 C4:2 E4:0.5 C4:0.5 E4:2 D4 C4:2 A3 G3:2 G3 C4:2 E4:0.5 C4:0.5 E4:2 D4:0.5 E4:0.5 G4:3 G4:2 r';
 
+const HOT = 'E4 D4 C4:2 E4 D4 C4:2 C4:0.5 C4:0.5 C4:0.5 C4:0.5 D4:0.5 D4:0.5 D4:0.5 D4:0.5 E4 D4 C4:2';
+const LIGHTLY = 'G4 E4 E4:2 F4 D4 D4:2 C4 D4 E4 F4 G4 G4 G4:2 G4 E4 E4:2 F4 D4 D4:2 C4 E4 G4 G4 C4:4';
+const SAINTS = 'r C4 E4 F4 G4:4 r C4 E4 F4 G4:4 r C4 E4 F4 G4:2 E4:2 C4:2 E4:2 D4:4 r E4 E4 D4 C4:3 C4 E4:2 G4:2 G4 F4:3 r E4 F4 G4 E4:2 C4:2 D4:4 C4:4';
+const SAINTS_LH = 'C3+G3:4 C3+G3:4 C3+G3:4 C3+G3:4 C3+G3:4 C3+G3:4 C3+G3:4 G2+G3:4 C3+G3:4 C3+G3:4 C3+G3:4 F2+C3:4 C3+G3:4 C3+G3:4 G2+D3:4 C3+G3:4';
+const JINGLE = 'E4 E4 E4:2 E4 E4 E4:2 E4 G4 C4:1.5 D4:0.5 E4:4 F4 F4 F4:1.5 F4:0.5 F4 E4 E4 E4:0.5 E4:0.5 E4 D4 D4 E4 D4:2 G4:2 E4 E4 E4:2 E4 E4 E4:2 E4 G4 C4:1.5 D4:0.5 E4:4 F4 F4 F4 F4 F4 E4 E4 E4:0.5 E4:0.5 G4 G4 F4 D4 C4:4';
+const JINGLE_LH = [`${C}:4`, `${C}:4`, `${C}:4`, `${C}:4`, `${F}:4`, `${C}:4`, `${G}:4`, `${G}:4`, `${C}:4`, `${C}:4`, `${C}:4`, `${C}:4`, `${F}:4`, `${C}:4`, `${G}:4`, `${C}:4`].join(' ');
+const BIRTHDAY = 'r:2 G4:0.5 G4:0.5 A4 G4 C5 B4:2 G4:0.5 G4:0.5 A4 G4 D5 C5:2 G4:0.5 G4:0.5 G5 E5 C5 B4 A4 F5:0.5 F5:0.5 E5 C5 D5 C5:3';
+const LONDON = 'G4:1.5 A4:0.5 G4 F4 E4 F4 G4:2 D4 E4 F4:2 E4 F4 G4:2 G4:1.5 A4:0.5 G4 F4 E4 F4 G4:2 D4:2 G4:2 E4 C4:3';
+const GREENSLEEVES = 'r:2 A4 C5:2 D5 E5:1.5 F5:0.5 E5 D5:2 B4 G4:1.5 A4:0.5 B4 C5:2 A4 A4:1.5 G#4:0.5 A4 B4:2 G#4 E4:2 A4 C5:2 D5 E5:1.5 F5:0.5 E5 D5:2 B4 G4:1.5 A4:0.5 B4 C5:1.5 B4:0.5 A4 G#4:1.5 F#4:0.5 G#4 A4:3';
+const MACDONALD = 'G4 G4 G4 D4 E4 E4 D4:2 B4 B4 A4 A4 G4:3 D4 G4 G4 G4 D4 E4 E4 D4:2 B4 B4 A4 A4 G4:4';
+const JOY = 'C5:2 B4:1.5 A4:0.5 G4:3 F4 E4:2 D4:2 C4:3 G4 A4:3 A4 B4:3 B4 C5:4';
+const JOY_LH = 'C3:4 E3:4 G2:4 C3:4 F2:4 G2:4 C3:4';
+const ELISE = 'r E5 D#5 E5 D#5 E5 B4 D5 C5 A4 r:0.5 C4:0.5 E4:0.5 A4:0.5 B4 r:0.5 E4:0.5 G#4:0.5 B4:0.5 C5 r:0.5 E4:0.5 E5:0.5 D#5:0.5 E5 D#5 E5 B4 D5 C5 A4 r:0.5 C4:0.5 E4:0.5 A4:0.5 B4 r:0.5 E4:0.5 C5:0.5 B4:0.5 A4:3';
+const ELISE_LH = 'r:3 r:3 r:3 A2:0.5 E3:0.5 A3:0.5 r:1.5 E2:0.5 E3:0.5 G#3:0.5 r:1.5 A2:0.5 E3:0.5 A3:0.5 r:1.5 r:3 r:3 A2:0.5 E3:0.5 A3:0.5 r:1.5 E2:0.5 E3:0.5 G#3:0.5 r:1.5 A2:3';
+const SONATA = 'C5:2 E5 G5 B4:1.5 C5:0.25 D5:0.25 C5:2 A5:2 G5 C6 G5 F5:0.5 E5:0.5 F5 E5 C5:4';
+const SONATA_LH = 'C3:0.5 G3:0.5 E3:0.5 G3:0.5 C3:0.5 G3:0.5 E3:0.5 G3:0.5 D3:0.5 G3:0.5 F3:0.5 G3:0.5 C3:0.5 G3:0.5 E3:0.5 G3:0.5 C3:0.5 A3:0.5 F3:0.5 A3:0.5 C3:0.5 G3:0.5 E3:0.5 G3:0.5 B2:0.5 G3:0.5 D3:0.5 G3:0.5 C3:0.5 G3:0.5 E3:0.5 G3:0.5 C3+G3:4';
+const CANON = 'E5:2 D5:2 C5:2 B4:2 A4:2 G4:2 A4:2 B4:2 E4 G4 C5 G4 D4 G4 B4 G4 C4 E4 A4 E4 B3 E4 G4 E4 A3 C4 F4 C4 G3 C4 E4 C4 A3 C4 F4 C4 B3 D4 G4 D4 C4+E4+G4+C5:4';
+const CANON_LH = 'C3:2 G2:2 A2:2 E2:2 F2:2 C2:2 F2:2 G2:2 C3:4 G2:4 A2:4 E2:4 F2:4 C3:4 F2:4 G2:4 C2+C3:4';
+const RISING = ['A3 C4 E4 A4 E4 C4', 'C4 E4 G4 C5 G4 E4', 'D4 F#4 A4 D5 A4 F#4', 'F3 A3 C4 F4 C4 A3', 'A3 C4 E4 A4 E4 C4', 'C4 E4 G4 C5 G4 E4', 'E3 G#3 B3 E4 B3 G#3', 'E3 G#3 B3 E4 B3 G#3', 'A3 C4 E4 A4:1.5']
+  .map(b => b.split(' ').map(n => (n.includes(':') ? n : `${n}:0.5`)).join(' ')).join(' ');
+const RISING_LH = 'A2:3 C3:3 D3:3 F2:3 A2:3 C3:3 E2:3 E2:3 A2:3';
+const BLUES = 'C5 Eb5 C5 G4 r:4 C5 Eb5 F5 F#5 G5:2 r:2 F5 Eb5 C5 r C5:2 r:2 C5 Eb5 C5 G4 r:4 G5 F5 Eb5 C5 F5 Eb5 C5 Bb4 C5:2 r:2 C5:4';
+const BLUES_LH = ['C', 'C', 'C', 'C', 'F', 'F', 'C', 'C', 'G', 'F', 'C'].map(c => {
+  const r = { C: 'C3', F: 'F2', G: 'G2' }[c]!; const f = { C: 'G3', F: 'C3', G: 'D3' }[c]!; const s = { C: 'A3', F: 'D3', G: 'E3' }[c]!;
+  return `${r}+${f} ${r}+${s} ${r}+${f} ${r}+${s}`;
+}).join(' ') + ' C3+G3:4';
+const COOL = 'r F4 A4 C5 B4:4 r D4 F4 A4 G4:2 F4:2 E4 G4 B4 D5 C5:4 r A4 G4 E4 D4:2 G4:2 E4:4';
+const COOL_LH = 'D3+F3+C4:4 G2+B2+F3:4 D3+F3+C4:4 G2+B2+F3:4 C3+E3+B3:4 C3+E3+B3:4 D3+F3+C4:4 G2+B2+F3:4 C3+E3+B3:4';
+const POP = 'E5:2 D5 C5 D5:2 B4:2 C5:2 A4 G4 A4:2 r:2 E5:2 D5 C5 D5:2 G5:2 E5:4 C5:4';
+const POP_LH = 'C3+G3:1.5 G3:0.5 C3+G3:2 G2+D3:1.5 D3:0.5 G2+D3:2 A2+E3:1.5 E3:0.5 A2+E3:2 F2+C3:1.5 C3:0.5 F2+C3:2 C3+G3:1.5 G3:0.5 C3+G3:2 G2+D3:1.5 D3:0.5 G2+D3:2 F2+C3:2 G2+D3:2 C3+G3:4';
+const WALTZ = 'E4:2 G4 C5:3 B4:2 A4 G4:3 F4:2 A4 G4:2 E4 D4:3 C4:3';
+const WALTZ_LH = 'C3 E3+G3 E3+G3 C3 E3+G3 E3+G3 G2 B2+F3 B2+F3 G2 B2+F3 B2+F3 F2 A2+C3 A2+C3 C3 E3+G3 E3+G3 G2 B2+F3 B2+F3 C3+E3+G3:3';
+
 export const COURSE_SONGS = {
   mary: () => writeSong('path:mary', 'Mary Had a Little Lamb', [line(MARY, 'R')], { bpm: 90, ceiling: 0.65 }),
   ode: () => writeSong('path:ode', 'Ode to Joy', [line(ODE, 'R')], { bpm: 90, ceiling: 0.7 }),
@@ -224,4 +264,27 @@ export const COURSE_SONGS = {
   twinkle: () => writeSong('path:twinkle', 'Twinkle, Twinkle, Little Star', [line(TWINKLE, 'R'), line(TWINKLE_LH, 'L')], { bpm: 88, ceiling: 0.8 }),
   minuet: () => writeSong('path:minuet', 'Minuet in G', [line(MINUET, 'R'), line(MINUET_LH, 'L')], { bpm: 92, fifths: 1, timeSig: [3, 4], ceiling: 0.88 }),
   grace: () => writeSong('path:grace', 'Amazing Grace', [line(GRACE, 'R')], { bpm: 80, timeSig: [3, 4], ceiling: 0.8 }),
+  hot: () => writeSong('path:hot', 'Hot Cross Buns', [line(HOT, 'R')], { bpm: 92, ceiling: 0.65 }),
+  lightly: () => writeSong('path:lightly', 'Lightly Row', [line(LIGHTLY, 'R')], { bpm: 92, ceiling: 0.65 }),
+  twinkleRH: () => writeSong('path:twinkle-rh', 'Twinkle, Twinkle, Little Star', [line(TWINKLE, 'R')], { bpm: 92, ceiling: 0.7 }),
+  saints: () => writeSong('path:saints', 'When the Saints Go Marching In', [line(SAINTS, 'R')], { bpm: 100, ceiling: 0.72 }),
+  saintsBoth: () => writeSong('path:saints-both', 'When the Saints, both hands', [line(SAINTS, 'R'), line(SAINTS_LH, 'L')], { bpm: 96, ceiling: 0.8 }),
+  jingle: () => writeSong('path:jingle', 'Jingle Bells', [line(JINGLE, 'R')], { bpm: 104, ceiling: 0.75 }),
+  jingleBoth: () => writeSong('path:jingle-both', 'Jingle Bells, with chords', [line(JINGLE, 'R'), line(JINGLE_LH, 'L')], { bpm: 100, ceiling: 0.85 }),
+  birthday: () => writeSong('path:birthday', 'Happy Birthday', [line(BIRTHDAY, 'R')], { bpm: 96, timeSig: [3, 4], ceiling: 0.78 }),
+  london: () => writeSong('path:london', 'London Bridge', [line(LONDON, 'R')], { bpm: 96, ceiling: 0.75 }),
+  greensleeves: () => writeSong('path:greensleeves', 'Greensleeves', [line(GREENSLEEVES, 'R')], { bpm: 88, timeSig: [3, 4], ceiling: 0.85 }),
+  macdonald: () => writeSong('path:macdonald', 'Old MacDonald', [line(MACDONALD, 'R')], { bpm: 100, fifths: 1, ceiling: 0.75 }),
+  joy: () => writeSong('path:joy', 'Joy to the World', [line(JOY, 'R'), line(JOY_LH, 'L')], { bpm: 88, ceiling: 0.85 }),
+  elise: () => writeSong('path:elise', 'Für Elise (opening)', [line(ELISE, 'R'), line(ELISE_LH, 'L')], { bpm: 72, timeSig: [3, 4], ceiling: 0.95 }),
+  sonata: () => writeSong('path:sonata', 'Sonata in C (opening)', [line(SONATA, 'R'), line(SONATA_LH, 'L')], { bpm: 76, ceiling: 0.95 }),
+  canon: () => writeSong('path:canon', 'Canon in C', [line(CANON, 'R'), line(CANON_LH, 'L')], { bpm: 72, ceiling: 0.9 }),
+  rising: () => writeSong('path:rising', 'House of the Rising Sun', [line(RISING, 'R'), line(RISING_LH, 'L')], { bpm: 84, timeSig: [3, 4], ceiling: 0.92 }),
+  blues: () => writeSong('path:blues', 'Penguin Blues', [line(BLUES, 'R'), line(BLUES_LH, 'L')], { bpm: 96, ceiling: 0.95 }),
+  cool: () => writeSong('path:cool', 'Cool Sevenths', [line(COOL, 'R'), line(COOL_LH, 'L')], { bpm: 80, ceiling: 1 }),
+  pop: () => writeSong('path:pop', 'Four Chords', [line(POP, 'R'), line(POP_LH, 'L')], { bpm: 88, ceiling: 0.9 }),
+  waltz: () => writeSong('path:waltz', 'Penguin Waltz', [line(WALTZ, 'R'), line(WALTZ_LH, 'L')], { bpm: 108, timeSig: [3, 4], ceiling: 0.85 }),
 };
+
+/** Song lengths in beats per hand, to check every bar adds up. */
+export const SONG_TEXTS = { HOT, LIGHTLY, SAINTS, SAINTS_LH, JINGLE, JINGLE_LH, BIRTHDAY, LONDON, GREENSLEEVES, MACDONALD, JOY, JOY_LH, ELISE, ELISE_LH, SONATA, SONATA_LH, CANON, CANON_LH, RISING, RISING_LH, BLUES, BLUES_LH, COOL, COOL_LH, POP, POP_LH, WALTZ, WALTZ_LH, TWINKLE, MINUET, MINUET_LH, GRACE };

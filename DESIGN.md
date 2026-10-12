@@ -48,6 +48,8 @@ edges: { button: "0 4px 0 <edge>", node: "0 8px 0 <edge>", card: "2px solid swan
 
 Around the piano the app is Duolingo: white, friendly, bold, gamified, every screen one obvious green action. At the piano it is Simply Piano: the score, the keys and nothing else. The two meet in the lesson's result card, which is pure Duolingo (stars, confetti, XP counting up) floating over the Simply Piano lesson.
 
+Pip, the app's penguin, is the guide everywhere Duolingo has its owl: beside the path, in every theory lesson, on chests, the shop, the energy sheet and the Practice tab. Seven poses (wave, read, keys, cheer, wink, idle, graduate), each with its own small loop: bob, sway, wave, jump.
+
 The feel comes from three things more than colour: chunky buttons that sit on a darker 4px edge and press down into it; grey 2px borders instead of shadows; and motion that bounces (the "Start" bubble bobbing over the next lesson, celebrations popping in, confetti on a good result).
 
 ## Colors
@@ -58,7 +60,8 @@ The feel comes from three things more than colour: chunky buttons that sit on a 
 - **Fox orange** is the streak flame and the daily-goal celebration.
 - **Cardinal red** is a wrong note and a failed step.
 - **Beetle purple** marks Premium (with blue in the badge's gradient) and is unit 2's colour.
-- Each unit has its own colour for its banner and its open nodes: green, purple, blue, orange, pink, teal, red, in course order.
+- **Energy pink** (#ff7ad9, edge #e05bbd) is the energy battery and everything that gives or costs energy. **Gem blue** is gems.
+- Each unit has its own colour for its banner, its open nodes and its node cards, in a cycle of ten: green, purple, teal, blue, orange, pink, red, navy, magenta, gold.
 - Neutrals: white pages, polar for wells and the song screen's ground, swan for every border and edge, eel for text, wolf for secondary text, heading grey for titles.
 
 White text on owl green is Duolingo's choice and is kept on large bold uppercase buttons only; small text is never set on green.
@@ -80,29 +83,35 @@ White, 2px swan border, 16px radius (20 for dialogs, which also get a 6px swan e
 ### Navigation rail
 White with a 2px swan line on its right. The current page: pale blue fill, 2px blue line, blue icon and label.
 
-### Header stats
-No boxes: a bolt and today's XP in gold, the flame and streak (grey until today counts, then orange; a blue snowflake chip shows streak freezes), and the daily-goal pill with a green bar.
+### Game bar
+No boxes, Fredoka numbers beside chunky filled icons: the flame and streak (grey until today counts, then orange; a blue snowflake chip shows streak freezes), the blue gem and its count (opens the shop), the pink battery and energy (opens the energy sheet; it blinks grey at zero, shows ∞ with Premium). On phones it is sticky at the top of the path; on wide screens it heads the right-hand column over the daily goal, today's practice and the Premium card.
 
 ### Progress bars
 12px, swan track, green fill with a light 3px highlight along its top; song and unit meters fill gold or white on a banner.
 
-### Learn path (signature)
-A unit is a coloured banner (16px radius, 4px darker edge, white text) with its number, name, one line, a white meter, and Test out; Premium units carry a purple-blue PREMIUM tag. Lessons are round nodes, 72×66 with an 8px edge, swaying left and right down the page. Open nodes take the unit colour; the next one also gets a white and swan ring and a white "START" (or "CONTINUE") bubble that bobs above it; done nodes are gold with a star; locked nodes are swan with a grey lock. Names sit under the nodes in Fredoka.
+### The path (signature)
+Home is the path. Sections are separated by a centred label (SECTION 2, a Fredoka title, one line) between two swan rules. A unit is a sticky coloured banner (16px radius, 4px darker edge, white text): SECTION 1, UNIT 2 and its name, with an outlined GUIDEBOOK button. Nodes are 70×62 discs on an 8px edge with a small white glint, winding left and right (0, 44, 70, 44, 0, −44, −70, −44 px). Each kind has its glyph: book (theory), star (lesson; a crown once aced), headphones (listening), hand (technique), dumbbell (personal practice), note (song), trophy (unit test). Open and done nodes take the unit colour, songs and tests turn gold when done, locked nodes are swan grey with a grey lock. The current node gets a swan progress ring that fills in the unit colour and a white START bubble that bobs above it. Chests are gold and wiggle when they can be opened, grey when locked, faded once opened. Pip stands on the open side of each unit's bend. Tapping a node opens a card in the unit colour under it (kind and number, title, one line, a white START button with the XP it earns); a locked node's card is grey. A floating white arrow button brings the current node back into view.
+
+### Theory lesson
+Duolingo's lesson frame: a close X and a thick green progress bar; Pip with a speech bubble; an engraved staff on a white card and a small tappable keyboard (marked keys gold, right ones green, a wrong one red); answers as big bordered option buttons that turn blue when chosen; a footer that turns green (✓ Nice!) or red (✗ Correct answer: …) with CONTINUE. The finish screen: Pip cheering, LESSON COMPLETE in gold, and three reward tiles (XP gold, gems blue, mistakes green).
+
+### Energy, chests and the shop
+The energy sheet rises from the bottom on phones: Pip, a title ("You need energy to do lessons" when empty), a pink battery bar with n / 25, the refill timer, three ways to earn energy, then REFILL (white, gem price in blue), UNLIMITED ENERGY (purple-blue gradient, PREMIUM chip) and a way to the Practice tab. A chest opens to a dialog with the open chest, Pip cheering and loot chips (pink energy, blue gems). The shop has a purple-to-blue Premium card with Pip, then rows of white cards with a big icon and a white price button.
 
 ### Today's session
-A card with a green Start and three tiles (Warm-up, Lesson, Review); the current tile is pale green with a green border, done tiles go quiet with a green check.
+On the Practice tab, with Pip at the keys. A card with a green Start and three tiles (Warm-up, Lesson, Review); the current tile is pale green with a green border, done tiles go quiet with a green check.
 
 ### Paywall
 A full white page: PREMIUM badge, a Fredoka title, the reason it opened, a Free/Premium comparison table (Premium column tinted purple), three plan cards (12 months chosen by default with a gold "best value" flag, 1 month, family), one full-width green button ("Start my free week"), plain test-mode fine print, Restore and Not now.
 
 ### Result card
-White dialog with three stars that pop in, a Fredoka headline, a gold XP badge that counts up, the coach's one-line reason, confetti from the top on two stars or more, the green next button, Try again, and a quiet way out.
+White dialog with three stars that pop in, a Fredoka headline, a gold XP badge that counts up, blue gems and pink energy chips, confetti from the top on two stars or more, the green next button, Try again, and a quiet way out.
 
 ### Celebrations
 A white card that bounces in at the top: a coloured round icon (flame for the goal, gold star for the session, blue snowflake for freezes), a Fredoka title and one line.
 
 ### Piano screens (kept)
-The song sheet keeps Misolla's layout (score card over a full keyboard) with blue modes; the Teach me lesson keeps Simply Piano's grey page, big single-line staff, now-line and light beam, plain n/N bar and cream keyboard.
+The song sheet keeps Misolla's layout (score card over a full keyboard) with blue modes; the Teach me lesson keeps Simply Piano's grey page, big single-line staff, now-line and light beam, plain n/N bar and cream keyboard. Path lessons add only a pink energy chip (with a +1 that floats up) and an orange "n in a row" chip in the top bar, and a blue LISTEN FIRST pill while a listening step plays.
 
 ## Motion
 
@@ -118,11 +127,12 @@ The song sheet keeps Misolla's layout (score card over a full keyboard) with blu
 Do:
 - Keep one green action per screen; everything else is white or quiet.
 - Use borders and edges for depth, not drop shadows.
-- Say why the coach changed something, in one line.
+- Keep the difficulty invisible: the path just gets a little harder or easier, never a setting or a note about it.
+- Give every screen a little life with Pip, but only one Pip per screen.
 - Keep the piano screens free of chrome: the score and the keys.
 
 Don't:
 - Use Duolingo's mascot, logo, name or proprietary fonts.
 - Put small text on green or white text on gold below 14px bold.
 - Animate anything without a reason: motion rewards, guides or confirms.
-- Hide what Premium costs or what the free plan includes.
+- Hide what Premium costs, or make the course itself Premium: energy is the only limit.
