@@ -16,6 +16,8 @@ import { addGems, energy, gainEnergy, gemsForStars, spendEnergy, STREAK_FOR_ENER
 import { AnimatePresence, motion } from 'motion/react';
 import { Confetti, CountUp } from './Confetti';
 import { Bump, Cheer, SOFT, SPRING } from './Motion';
+import { HelpKeys } from './HelpKeys';
+import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
 import { EnergySheet } from './Economy';
 import { Energy, Gem } from './GameIcons';
 import { Countdown } from './Countdown';
@@ -30,12 +32,11 @@ const HEADLINE = ['Almost there', 'Passed', 'Great job!', 'Perfect!'];
 const SPEEDS = [0.6, 0.8, 1, 1.2];
 
 function stepLabel(s: CourseStep) {
-  if (s.kind === 'song') return s.wait ? 'Whole song' : 'Final performance';
   return s.title;
 }
 
 function intro(s: CourseStep): string {
-  if (!s.wait) return 'In tempo: keep going through mistakes';
+  if (!s.wait) return 'With the beat: keep going through mistakes';
   if (s.id.endsWith('x')) return 'The tricky bit once more, slowly';
   return s.hands === 'R' ? 'Right hand: the music waits for you' : s.hands === 'L' ? 'Left hand: the music waits for you' : 'Both hands: the music waits for you';
 }
@@ -113,12 +114,16 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const [flash, setFlash] = useState<{ text: string; good: boolean; xp?: number; gems?: number } | null>(null);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   usePracticeClock();
+  const [metro, setMetro] = useState(metronomeOn);
+  const [alwaysKeys, setAlwaysKeys] = useState(() => { try { return localStorage.getItem('hugos-piano:keys') === 'always'; } catch { return false; } });
+  const toggleKeys = () => setAlwaysKeys(a => { try { localStorage.setItem('hugos-piano:keys', a ? 'help' : 'always'); } catch { /* ignore */ } return !a; });
 
   const engine = useMemo(() => new Engine(song, {
     speed: coach.speed, wait: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter,
     accompaniment: settings.accompaniment, lenient: settings.input === 'mic',
   }), [song, step.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // (Keyed by id: refreshed progress hands down new step objects for the same step.)
+  useMetronome(engine, !step.wait && metro);
 
   useEffect(() => { engine.setSegment(barsToTime(engine.measureTimes, step.from, step.to)); bump(); }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
   // Wait steps start by themselves, like Simply Piano: the run-up plays, then the music waits for him.
@@ -304,11 +309,13 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         </AnimatePresence>
       </main>
 
-      <footer className="lesson-keys">
-        <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={fingers} />
+      {settings.view === 'notes'
+        ? <footer className="lesson-keys"><Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={fingers} /></footer>
+        : <HelpKeys engine={engine} naming={settings.naming} fingers={fingers} lo={lo} hi={hi} wide always={alwaysKeys} />}
+      <footer className="lesson-actions">
         {!engine.started && !paused && !result && !listen && !step.wait && (
           <div className="lesson-start">
-            <motion.button className="btn go big" whileTap={{ scale: 0.95 }} onClick={start}><IconPlay size={18} />Start in tempo</motion.button>
+            <motion.button className="btn go big" whileTap={{ scale: 0.95 }} onClick={start}><IconPlay size={18} />Start with the beat</motion.button>
             <motion.button className="btn" whileTap={{ scale: 0.95 }} onClick={listenFirst}><IconHeadphones size={18} />Listen first</motion.button>
           </div>
         )}
@@ -328,6 +335,8 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
                 {!step.wait && <Segmented label="Speed" value={speed} onChange={setSpeed} options={SPEEDS.map(v => [v, formatSpeed(v)] as [number, string])} />}
                 <Segmented<FingerMode> label="Fingers" value={settings.fingers} onChange={v => update({ fingers: v })} options={[['off', 'Off'], ['some', 'Some'], ['all', 'All']]} />
                 <Segmented label="View" value={settings.view} onChange={v => update({ view: v })} options={[['sheet', 'Score'], ['notes', 'Falling notes']]} />
+                <Segmented<'on' | 'off'> label="Metronome" value={metro ? 'on' : 'off'} onChange={v => { setMetro(v === 'on'); setMetronome(v === 'on'); }} options={[['on', 'On'], ['off', 'Off']]} />
+                <Segmented<'help' | 'always'> label="Keyboard" value={alwaysKeys ? 'always' : 'help'} onChange={v => { if ((v === 'always') !== alwaysKeys) toggleKeys(); }} options={[['help', 'When I need it'], ['always', 'Always']]} />
               </div>
               <div className="pause-steps">
                 {onPrev && <button className="btn small" onClick={onPrev}><IconArrowLeft size={16} />Previous step</button>}

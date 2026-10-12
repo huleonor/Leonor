@@ -17,6 +17,7 @@ import {
   IconCap, IconCheck, IconClose, IconFlame, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconStop,
 } from './Icons';
 import { Bump, Cheer, ProgressBar, SOFT, SPRING } from './Motion';
+import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
 import { ScoreView } from './ScoreView';
 import { byLine } from './Songs';
 import { Segmented } from './ui';
@@ -76,6 +77,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
   const [result, setResult] = useState<ReturnType<Engine['stats']> | null>(null);
   // A run of right notes, for the streak chip and the praise.
   const [combo, setCombo] = useState(0);
+  const [metro, setMetro] = useState(metronomeOn);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   usePracticeClock();
 
@@ -83,6 +85,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
     speed: 1, wait: false, follow: true, hands: 'both', listen: false, accompaniment: false, lenient: settings.input === 'mic',
   }), [song]); // eslint-disable-line react-hooks/exhaustive-deps
   const sections = useMemo(() => sectionsOf(info), [info]);
+  useMetronome(engine, scroll === 'auto' && mode === 'play' && metro);
   // The parts, labelled on the score where each one begins (a repeat is labelled with the part it repeats).
   const labels = useMemo(() => info.course!.parts.map(p => ({ bar: p.from, label: p.sameAs ? `Part ${p.sameAs}` : `Part ${p.n}` })), [info.course]);
   // The section he should open next: the first one not learnt yet.
@@ -223,6 +226,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
               <div className="option-rows">
                 <button className={`option-row ${feedback ? 'on' : ''}`} onClick={() => setFeedback(f => !f)} aria-pressed={feedback}><IconCheck size={18} /><span>Colour right and wrong notes</span><i className="switch-dot" /></button>
                 <button className={`option-row ${alwaysKeys ? 'on' : ''}`} onClick={toggleKeys} aria-pressed={alwaysKeys}><IconKeys size={18} /><span>Keep the keyboard on screen</span><i className="switch-dot" /></button>
+                {tempoMode && <button className={`option-row ${metro ? 'on' : ''}`} onClick={() => { setMetro(!metro); setMetronome(!metro); }} aria-pressed={metro}><IconSpeaker size={18} /><span>Metronome</span><i className="switch-dot" /></button>}
                 <button className={`option-row ${loop ? 'on' : ''}`} onClick={toggleLoop} aria-pressed={!!loop}><IconLoop size={18} /><span>{loop ? `Looping part ${loop.n}` : 'Loop the part I’m on'}</span><i className="switch-dot" /></button>
               </div>
               <div className="actions">
