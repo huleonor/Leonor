@@ -5,19 +5,21 @@ import { barsToTime } from '../lib/analysis';
 import { partLearnt, type CourseStep } from '../lib/course';
 import { Engine } from '../lib/engine';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
-import { pickRange } from '../lib/keys';
 import { recordRun } from '../lib/library';
 import { listenForSkills } from '../lib/skills';
 import { addPractice } from '../lib/stats';
-import { formatSpeed, formatTime } from '../lib/names';
+import { formatSpeed } from '../lib/names';
 import { usePracticeClock } from '../lib/practiceClock';
 import type { HandsChoice, Settings } from '../lib/types';
+import { AnimatePresence, motion } from 'motion/react';
+import { HelpKeys } from './HelpKeys';
 import {
-  IconAutoScroll, IconBack, IconCap, IconCheck, IconChevronDown, IconChevronUp, IconHand, IconKeys, IconLoop, IconMagic, IconNotes, IconPlay, IconRestart, IconSpeaker, IconStop,
+  IconCap, IconCheck, IconClose, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconStop,
 } from './Icons';
-import { Keyboard } from './Keyboard';
+import { ProgressBar, SOFT, SPRING } from './Motion';
 import { ScoreView } from './ScoreView';
 import { byLine } from './Songs';
+import { Segmented } from './ui';
 
 const SPEEDS = [0.6, 0.8, 1];
 type Mode = 'play' | 'listen';
@@ -55,9 +57,9 @@ interface Props {
 }
 
 /**
- * The song as sheet music, the way Simply Piano shows it: a tool bar of modes over the printed score.
- * Play follows him note by note (Magic scroll) or runs in tempo (Auto scroll); Listen plays it to him;
- * Teach me opens the song's sections as lessons.
+ * A song, Duolingo style: a close button and a progress bar, the score, and one row of actions.
+ * The music waits for him (or runs in tempo); the keyboard only rises when he needs help; the
+ * other choices live in a small options sheet; "Learn step by step" opens the song's sections.
  */
 export function SongScreen({ info, settings, links, onExit, onTeach, onSettings }: Props) {
   const song = info.song!;
@@ -66,10 +68,9 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
   const [feedback, setFeedback] = useState(true);
   const [speed, setSpeed] = useState(0.8);
   const [teach, setTeach] = useState(false);
-  const [keysHidden, setKeysHidden] = useState(false);
-  // The tool bar folds away for more score; the choice is remembered.
-  const [barOpen, setBarOpen] = useState(() => { try { return localStorage.getItem('hugos-piano:bar') !== 'closed'; } catch { return true; } });
-  const toggleBar = () => setBarOpen(o => { try { localStorage.setItem('hugos-piano:bar', o ? 'closed' : 'open'); } catch { /* ignore */ } return !o; });
+  const [options, setOptions] = useState(false);
+  const [alwaysKeys, setAlwaysKeys] = useState(() => { try { return localStorage.getItem('hugos-piano:keys') === 'always'; } catch { return false; } });
+  const toggleKeys = () => setAlwaysKeys(a => { try { localStorage.setItem('hugos-piano:keys', a ? 'help' : 'always'); } catch { /* ignore */ } return !a; });
   const [hands, setHands] = useState<HandsChoice>('both');
   const [loop, setLoop] = useState<{ n: number; from: number; to: number } | null>(null);
   const [result, setResult] = useState<ReturnType<Engine['stats']> | null>(null);
@@ -84,7 +85,6 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
   const labels = useMemo(() => info.course!.parts.map(p => ({ bar: p.from, label: p.sameAs ? `Part ${p.sameAs}` : `Part ${p.n}` })), [info.course]);
   // The section he should open next: the first one not learnt yet.
   const nextSection = sections.find(s => !s.learnt);
-  const [lo, hi] = useMemo(() => pickRange(song.range[0], song.range[1], 36), [song]);
 
   useEffect(() => { setMicRange(song.range[0], song.range[1]); }, [song]);
   useEffect(() => { loadPiano().catch(() => {}); }, []);
@@ -149,103 +149,91 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
   const atStart = engine.gi === 0;
 
   const stats = engine.stats();
-  const position = Math.max(0, engine.time - song.firstNoteTime);
   const twoHands = song.hands.length === 2;
 
   return (
-    <div className={`song-screen ${barOpen ? '' : 'bar-closed'}`}>
-      {!barOpen && (
-        <button className="bar-handle" onClick={toggleBar} aria-label="Show the tool bar" aria-expanded={false}><IconChevronDown size={18} /></button>
-      )}
-      {barOpen && <header className="sheet-bar">
-        <button className="icon-btn ghost" onClick={onExit} aria-label="Back to the songs"><IconBack /></button>
-        <div className="sheet-modes" role="toolbar" aria-label="Song modes">
-          {twoHands && (
-            <div className="hands" role="radiogroup" aria-label="Hands">
-              {(['L', 'both', 'R'] as HandsChoice[]).map(h => (
-                <button key={h} role="radio" aria-checked={hands === h} className={hands === h ? 'on' : ''} onClick={() => setHands(h)}
-                  aria-label={h === 'both' ? 'Both hands' : h === 'L' ? 'Left hand' : 'Right hand'}>
-                  {h === 'L' ? <IconHand size={18} className="mirror" /> : h === 'R' ? <IconHand size={18} /> : <><IconHand size={16} className="mirror" /><IconHand size={16} /></>}
-                </button>
-              ))}
-            </div>
-          )}
-          <button className={`mode ${mode === 'listen' ? 'on' : ''}`} onClick={() => { setTeach(false); setMode(m => (m === 'listen' ? 'play' : 'listen')); }} aria-pressed={mode === 'listen'}>
-            {mode === 'listen' ? <IconStop size={18} /> : <IconSpeaker size={18} />}{mode === 'listen' ? 'Stop' : 'Listen'}
-          </button>
-          <button className={`mode ${mode === 'play' && !teach ? 'on' : ''}`} onClick={() => { setTeach(false); setMode('play'); }} aria-pressed={mode === 'play' && !teach}>
-            <IconNotes size={18} />Play
-          </button>
-          <button className={`mode ${teach ? 'on' : ''}`} onClick={() => setTeach(t => !t)} aria-pressed={teach}>
-            <IconCap size={18} />Teach me
-          </button>
-          <span className="bar-sep" aria-hidden="true" />
-          <div className="seg small scroll-mode" role="radiogroup" aria-label="How the music moves">
-            <button role="radio" aria-checked={scroll === 'magic'} className={scroll === 'magic' ? 'on' : ''} onClick={() => setScroll('magic')}><IconMagic size={16} /><span>Waits for you</span></button>
-            <button role="radio" aria-checked={scroll === 'auto'} className={scroll === 'auto' ? 'on' : ''} onClick={() => setScroll('auto')}><IconAutoScroll size={16} /><span>In tempo</span></button>
-          </div>
-          <button className={`chip ${feedback ? 'on' : ''}`} onClick={() => setFeedback(f => !f)} aria-pressed={feedback}><i className="dot" /><span>Feedback</span></button>
-        </div>
-        <p className="sheet-meta" aria-live="off">
-          Notes: <b>{stats.hit}</b> / {stats.total}<span>{formatTime(position)}</span>
-        </p>
-        {!inputOn && <button className="connect" onClick={onSettings}><i />Connect<span>&nbsp;piano</span></button>}
-        <button className="icon-btn ghost" onClick={toggleBar} aria-label="Hide the tool bar" aria-expanded><IconChevronUp size={18} /></button>
-      </header>}
-
-      {teach && barOpen && (
-        <nav className="sections" aria-label="Sections to learn">
-          {sections.map(s => (
-            <button key={s.id} className={`section ${s.learnt ? 'learnt' : ''} ${s === nextSection ? 'next' : ''}`} onClick={() => onTeach(s)}>
-              <span className="section-icon">{s.learnt ? <IconCheck size={18} /> : <IconCap size={20} />}</span>
-              <span className="section-text">
-                <b>{s.title}</b>
-                <small>{s.bars} · {s.done}/{s.steps.length} steps</small>
-              </span>
-            </button>
-          ))}
-        </nav>
-      )}
+    <div className="song-screen">
+      <header className="song-top">
+        <button className="icon-btn ghost" onClick={onExit} aria-label="Back to my songs"><IconClose size={24} /></button>
+        <ProgressBar value={stats.total ? stats.hit / stats.total : 0} label={`${stats.hit} of ${stats.total} notes`} />
+        <button className="icon-btn ghost" onClick={() => setOptions(true)} aria-label="Options"><IconGear size={22} /></button>
+      </header>
+      <div className="song-head">
+        <h1>{song.entry.title}</h1>
+        <p className="sub">{mode === 'listen' ? 'Listen first, then play it yourself' : tempoMode ? 'In tempo: keep going through mistakes' : 'Play when you’re ready: the music waits for you'}</p>
+      </div>
 
       <main className="sheet">
         <div className="sheet-card">
           <ScoreView engine={engine} fingers={settings.fingers} feedback={feedback} follow title={song.entry.title} composer={byLine(song.entry) || undefined} sections={labels} onSeek={seek} />
-
-          <div className="sheet-float left">
-            {!result && tempoMode && (
-              <>
-                <button className="btn go" onClick={startTempo}>{engine.playing ? <><IconStop size={16} />Stop</> : <><IconPlay size={16} />{engine.started ? 'Go on' : 'Start'}</>}</button>
-                <div className="seg small" role="radiogroup" aria-label="Speed">
-                  {SPEEDS.map(v => <button key={v} role="radio" aria-checked={speed === v} className={speed === v ? 'on' : ''} onClick={() => setSpeed(v)}>{formatSpeed(v)}</button>)}
+          <AnimatePresence>
+            {result && (
+              <motion.div className="sheet-result card" role="dialog" aria-labelledby="sheet-result-title" initial={{ scale: 0.85, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }} transition={SPRING}>
+                <h2 id="sheet-result-title">{result.accuracy >= 0.95 ? 'Beautifully played' : result.accuracy >= 0.7 ? 'You played it through' : 'Keep at it'}</h2>
+                <p className="result-line">{result.hit} of {result.total} notes, {Math.round(result.accuracy * 100)}% right</p>
+                <div className="actions">
+                  <button className="btn go" onClick={restart}><IconRestart size={16} />Play again</button>
+                  <button className="btn" onClick={() => { setResult(null); setTeach(true); }}><IconCap size={16} />Learn step by step</button>
                 </div>
-              </>
+              </motion.div>
             )}
-          </div>
-          <div className="sheet-float right">
-            {mode === 'play' && !atStart && <button className="float-btn" onClick={restart} aria-label="From the start"><IconRestart size={18} /><span>Restart</span></button>}
-            <button className={`float-btn ${loop ? 'on' : ''}`} onClick={toggleLoop} aria-pressed={!!loop} aria-label={loop ? `Looping part ${loop.n}, tap to stop` : 'Loop this part'}><IconLoop size={18} /><span>{loop ? `Looping Part ${loop.n}` : 'Loop'}</span></button>
-            <button className="float-btn" onClick={() => setKeysHidden(h => !h)} aria-pressed={keysHidden} aria-label={keysHidden ? 'Show the keyboard' : 'Hide the keyboard'}><IconKeys size={18} /><span>{keysHidden ? 'Show keys' : 'Hide keys'}</span></button>
-          </div>
-
-          {result && (
-            <div className="sheet-result card" role="dialog" aria-labelledby="sheet-result-title">
-              <h2 id="sheet-result-title">{result.accuracy >= 0.95 ? 'Beautifully played' : result.accuracy >= 0.7 ? 'You played it through' : 'Keep at it'}</h2>
-              <p className="result-line">{result.hit} of {result.total} notes · {result.wrong} wrong · {Math.round(result.accuracy * 100)}%</p>
-              <div className="actions">
-                <button className="btn go" onClick={restart}><IconRestart size={16} />Play again</button>
-                <button className="btn" onClick={() => { setResult(null); setTeach(true); }}><IconCap size={16} />Teach me</button>
-              </div>
-            </div>
-          )}
+          </AnimatePresence>
         </div>
       </main>
 
-      {/* While he picks a section the keyboard steps aside, so the score stays readable. */}
-      {!keysHidden && !teach && (
-        <footer className="sheet-keys">
-          <Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} />
-        </footer>
-      )}
+      <HelpKeys engine={engine} naming={settings.naming} fingers={settings.fingers} always={alwaysKeys} />
+
+      <footer className="song-foot">
+        {!inputOn && <button className="connect" onClick={onSettings}><i />Connect your piano</button>}
+        <motion.button className={`btn ${mode === 'listen' ? 'on' : ''}`} whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMode(m => (m === 'listen' ? 'play' : 'listen')); }} aria-pressed={mode === 'listen'}>
+          {mode === 'listen' ? <><IconStop size={18} />Stop</> : <><IconSpeaker size={18} />Listen</>}
+        </motion.button>
+        {tempoMode && !result && (
+          <motion.button className="btn go" whileTap={{ scale: 0.96 }} onClick={startTempo}>{engine.playing ? <><IconStop size={16} />Stop</> : <><IconPlay size={16} />{engine.started ? 'Go on' : 'Start'}</>}</motion.button>
+        )}
+        <motion.button className="btn go big" whileTap={{ scale: 0.96 }} onClick={() => setTeach(true)}><IconCap size={18} />Learn step by step</motion.button>
+      </footer>
+
+      <AnimatePresence>
+        {options && (
+          <motion.div className="veil sheet-veil" onClick={() => setOptions(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.section className="card options-sheet" role="dialog" aria-modal="true" aria-labelledby="options-title" onClick={e => e.stopPropagation()} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={SOFT}>
+              <h2 id="options-title">Options</h2>
+              {twoHands && <Segmented<HandsChoice> label="Hands" value={hands} onChange={setHands} options={[['L', 'Left'], ['both', 'Both'], ['R', 'Right']]} />}
+              <Segmented<Scroll> label="The music" value={scroll} onChange={setScroll} options={[['magic', 'Waits for you'], ['auto', 'In tempo']]} />
+              {tempoMode && <Segmented label="Speed" value={speed} onChange={setSpeed} options={SPEEDS.map(v => [v, formatSpeed(v)] as [number, string])} />}
+              <div className="option-rows">
+                <button className={`option-row ${feedback ? 'on' : ''}`} onClick={() => setFeedback(f => !f)} aria-pressed={feedback}><IconCheck size={18} /><span>Colour right and wrong notes</span><i className="switch-dot" /></button>
+                <button className={`option-row ${alwaysKeys ? 'on' : ''}`} onClick={toggleKeys} aria-pressed={alwaysKeys}><IconKeys size={18} /><span>Keep the keyboard on screen</span><i className="switch-dot" /></button>
+                <button className={`option-row ${loop ? 'on' : ''}`} onClick={toggleLoop} aria-pressed={!!loop}><IconLoop size={18} /><span>{loop ? `Looping part ${loop.n}` : 'Loop the part I’m on'}</span><i className="switch-dot" /></button>
+              </div>
+              <div className="actions">
+                {!atStart && <button className="btn" onClick={() => { restart(); setOptions(false); }}><IconRestart size={16} />From the start</button>}
+                <button className="btn go" onClick={() => setOptions(false)}>Done</button>
+              </div>
+            </motion.section>
+          </motion.div>
+        )}
+        {teach && (
+          <motion.div className="veil sheet-veil" onClick={() => setTeach(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.section className="card sections-sheet" role="dialog" aria-modal="true" aria-labelledby="sections-title" onClick={e => e.stopPropagation()} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={SOFT}>
+              <h2 id="sections-title">Learn step by step</h2>
+              <p className="sub">One part at a time: right hand, left hand, together, then in tempo.</p>
+              <ol className="section-list">
+                {sections.map((sc, n) => (
+                  <motion.li key={sc.id} initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...SOFT, delay: n * 0.04 }}>
+                    <button className={`section-row ${sc.learnt ? 'learnt' : ''} ${sc === nextSection ? 'next' : ''}`} onClick={() => onTeach(sc)}>
+                      <span className="section-icon">{sc.learnt ? <IconCheck size={18} /> : sc.id === 'song' ? <IconMagic size={18} /> : n + 1}</span>
+                      <span className="section-text"><b>{sc.title}</b><small>{sc.bars}, {sc.done} of {sc.steps.length} steps</small></span>
+                      {sc === nextSection && <span className="section-go">Start</span>}
+                    </button>
+                  </motion.li>
+                ))}
+              </ol>
+            </motion.section>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

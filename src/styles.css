@@ -1,6 +1,6 @@
 /* Hugo's Piano. Design rules live in DESIGN.md and CLAUDE.md; read them before changing anything here.
-   Duolingo's app look: a white ground, cards with a 2px grey border, the Duolingo green (#58cc02)
-   with white text on chunky buttons, one blue accent (#1cb0f6) for interactive things, charcoal
+   Duolingo's app look in the logo's blue: a white ground, cards with a 2px grey border, brand blue
+   (#2b93ba) with white text on chunky buttons, green only for a right answer, one blue accent (#1cb0f6) for interactive things, charcoal
    text, one family (Nunito, bold), 12px corners, a 10px spacing unit, 300ms ease for every transition.
    Light and dark themes come from the same tokens. The piano screens keep their Simply Piano look. */
 
@@ -29,19 +29,24 @@
   --ink-2: #5c5c5c;
   --ink-3: #777777;
   /* Primary: lime with near-black text */
-  --go: #58cc02;
-  --go-hi: #61e002;
-  --go-edge: #58a700;
+  --go: #2b93ba;
+  --go-hi: #36a3cc;
+  --go-edge: #1f7395;
   --go-ink: #ffffff;
-  --go-soft: #d7ffb8;
-  --go-text: #3b8a00;
-  /* Accent: the one interactive blue */
-  --blue: #1cb0f6;
-  --blue-edge: #1899d6;
-  --blue-soft: #ddf4ff;
-  --blue-line: #84d8ff;
+  --go-soft: #ddf1f9;
+  --go-text: #1d6c8c;
+  /* Correct answers stay green, as everywhere */
+  --ok: #58cc02;
+  --ok-edge: #58a700;
+  --ok-soft: #d7ffb8;
+  --ok-text: #3b8a00;
+  /* Accent: the brand blue from the logo */
+  --blue: #2b93ba;
+  --blue-edge: #1f7395;
+  --blue-soft: #ddf1f9;
+  --blue-line: #9fd2e6;
   --on-blue: #ffffff;
-  --blue-text: #0a6fa3;
+  --blue-text: #1d6c8c;
   /* Game colours, each with a text shade that passes AA */
   --star: #ffc800;
   --star-edge: #e0ad00;
@@ -110,11 +115,13 @@
     --ink: #e3edf2;
     --ink-2: #b6c5cd;
     --ink-3: #8fa2ad;
-    --go-soft: #22381a;
-    --go-text: #a5ed6e;
-    --blue-soft: #12364a;
-    --blue-line: #1e5d80;
-    --blue-text: #5cc8fa;
+    --go-soft: #123445;
+    --go-text: #7cc8e6;
+    --ok-soft: #22381a;
+    --ok-text: #8ee04f;
+    --blue-soft: #123445;
+    --blue-line: #1f5a72;
+    --blue-text: #7cc8e6;
     --star-off: #2c4250;
     --star-text: #ffd84d;
     --flame-text: #ffad40;
@@ -1344,8 +1351,8 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .mk.w.mark span { color: var(--hint-ink); }
 .mk.b.mark { background: var(--hint-edge); box-shadow: inset 0 -5px 0 #b07f12; }
 .mk.down { filter: brightness(.9); }
-.mk.w.good { background: var(--go-soft); box-shadow: inset 0 -6px 0 var(--go); }
-.mk.b.good { background: var(--go); }
+.mk.w.good { background: var(--ok-soft); box-shadow: inset 0 -6px 0 var(--ok); }
+.mk.b.good { background: var(--ok); }
 .mk.w.bad { background: var(--miss-soft); box-shadow: inset 0 -6px 0 var(--miss); }
 .mk.b.bad { background: var(--miss); }
 .mk:disabled { cursor: default; }
@@ -1467,9 +1474,9 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .bubble::before { background: var(--surface); }
 .option { background: var(--surface); }
 .option.on { color: var(--blue-text); }
-.option.right { color: var(--go-text); border-color: var(--go-edge); box-shadow: 0 4px 0 var(--go-edge); }
+.option.right { color: var(--ok-text); border-color: var(--ok); background: var(--ok-soft); box-shadow: 0 4px 0 var(--ok); }
 .option.wrong { color: var(--miss-text); }
-.theory-foot.right { background: var(--go-soft); color: var(--go-text); }
+.theory-foot.right { background: var(--ok-soft); color: var(--ok-text); }
 .theory-foot.wrong { background: var(--miss-soft); color: var(--miss-text); }
 .verdict-mark { background: var(--surface); }
 .theory-kind { font-size: 20px; }
@@ -1477,9 +1484,186 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .theory-screen.done h1 { font-size: 26px; color: var(--star-text); }
 .reward.xp { color: var(--star-text); }
 .reward.gems { color: var(--blue-text); }
-.reward.acc { color: var(--go-text); }
+.reward.acc { color: var(--ok-text); }
 .paywall h1 { font-size: 24px; }
 .combo { background: #fff; color: #b35500; }
 .combo.hot { background: var(--flame); color: #111111; }
 .lesson-listening { background: var(--blue); color: #fff; }
 .toast { background: var(--heading); color: var(--surface); }
+
+/* =====================================================================
+   Round 3: logo blue, Duolingo lesson frame, help-only keyboard, library.
+   ===================================================================== */
+.logo { display: block; border-radius: 22%; flex: none; }
+.rail-logo { width: 40px; height: 40px; border-radius: 10px; }
+.spot { display: grid; place-items: center; border-radius: 50%; flex: none; }
+.spot-blue { background: var(--blue-soft); color: var(--blue); }
+.spot-energy { background: var(--energy-soft); color: var(--energy); }
+.spot-star { background: #fff4c2; color: var(--star); }
+.spot-flame { background: #ffe7c7; color: var(--flame); }
+.spot-ok { background: var(--ok-soft); color: var(--ok); }
+@media (prefers-color-scheme: dark) { .spot-star { background: #3a3215; } .spot-flame { background: #3d2a12; } }
+.guide-icon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(255, 255, 255, .2); color: var(--unit-ink); flex: none; }
+.super-logo { border-radius: 24px; }
+
+/* Progress bar shared by lessons and songs */
+.progress { position: relative; flex: 1; height: 16px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.progress > i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--go); overflow: hidden; }
+.progress > i::after { content: ''; position: absolute; left: 8px; right: 8px; top: 4px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .35); }
+.progress > i > b { position: absolute; inset: 0; background: #fff; border-radius: inherit; }
+
+/* Answer footer: the verdict sheet slides up behind the button */
+.answer-foot { position: relative; flex: none; border-top: 2px solid var(--line); background: var(--surface); }
+.answer-foot.right, .answer-foot.wrong { border-top-color: transparent; }
+.answer-sheet { position: absolute; inset: 0; z-index: 0; padding: 18px var(--pad, 20px) 0; }
+.answer-sheet.right { background: var(--ok-soft); color: var(--ok-text); }
+.answer-sheet.wrong { background: var(--miss-soft); color: var(--miss-text); }
+.answer-verdict { display: flex; align-items: center; gap: 14px; }
+.answer-verdict b { font-size: 20px; font-weight: 900; letter-spacing: .8px; }
+.answer-verdict p { font-weight: 700; }
+.answer-actions { position: relative; z-index: 1; display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; min-height: 104px; padding: 20px var(--pad, 20px) calc(20px + var(--safe-b)); }
+.answer-foot.right .answer-actions, .answer-foot.wrong .answer-actions { padding-top: 70px; }
+.answer-actions .btn { min-width: 160px; }
+.answer-actions .connect { margin-right: auto; }
+.btn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.answer-foot.right .btn.go { background: var(--ok); border-color: var(--ok-edge); box-shadow: 0 4px 0 var(--ok-edge); }
+
+/* Theory lesson body */
+.theory-screen { display: flex; flex-direction: column; }
+.theory-screen > .theory-body { flex: 1; min-height: 0; }
+.theory-bar .progress { height: 16px; }
+.theory-kind { font-size: 22px; color: var(--heading); }
+.theory-text { font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.45; max-width: 60ch; }
+.theory-options-in { display: grid; gap: 10px; }
+.theory-hint { margin-right: auto; }
+.reward small { color: #fff; }
+.reward.energy { border-color: var(--energy); color: var(--energy-text); }
+.reward.energy small { background: var(--energy); }
+@media (max-width: 560px) { .answer-actions .btn { width: 100%; } .answer-foot.right .answer-actions, .answer-foot.wrong .answer-actions { padding-top: 76px; } }
+
+/* Lesson, Duolingo frame: white page, close + progress, a heading, the staff on a card, help keys */
+.lesson.duo {
+  --pad: max(16px, calc((100vw - 900px) / 2));
+  height: 100dvh; display: flex; flex-direction: column; background: var(--surface); color: var(--ink);
+  padding: 0 var(--safe-r) 0 var(--safe-l);
+}
+.lesson.duo.view-notes { background: var(--surface); }
+.lesson-top { display: flex; align-items: center; gap: 14px; padding: 16px var(--pad) 6px; }
+.lesson-top .lesson-econ { position: static; }
+.lesson-head { padding: 6px var(--pad) 10px; }
+.lesson-head h1 { font-size: 22px; }
+.lesson-head .sub { margin-top: 2px; }
+.lesson.duo .lesson-stage { flex: 1; min-height: 0; padding: 0 var(--pad) 10px; overflow: visible; }
+.lesson-paper { position: relative; height: 100%; min-height: 160px; border-radius: 12px; border: 2px solid var(--line); background: #fff; overflow: hidden; color: var(--lesson-ink); }
+.lesson.duo.view-notes .lesson-paper { background: #100d24; border-color: #100d24; }
+.lesson.duo .lesson-keys { flex: none; height: clamp(80px, 20vh, 140px); background: #1a1719; }
+.lesson-hint { color: var(--ink-2); font-size: 14px; margin-right: auto; max-width: 52ch; }
+.lesson.duo .lesson-listening { top: 10px; }
+.lesson.duo .combo { background: var(--surface); box-shadow: inset 0 0 0 2px var(--line); }
+.lesson.duo .combo.hot { background: var(--flame); box-shadow: none; }
+.lesson.duo .lesson-energy { background: var(--surface); box-shadow: inset 0 0 0 2px var(--line); color: var(--energy-text); }
+.energy-plus { animation: none; bottom: auto; top: -14px; }
+.pause-steps { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.lesson-done {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-content: center; justify-items: center; gap: 16px; padding: 24px;
+  background: var(--surface); text-align: center; overflow-y: auto;
+}
+.lesson-done h1 { font-size: 26px; color: var(--star-text); }
+.lesson-done .result-stars { display: flex; gap: 6px; }
+.lesson-done .big-star { color: var(--star-off); animation: none; }
+.lesson-done .big-star.won { color: var(--star); }
+.lesson-done-actions { display: grid; gap: 10px; width: min(380px, 100%); margin-top: 8px; }
+@media (max-width: 640px) { .lesson-econ { position: static; } .lesson.duo .combo { display: none; } }
+
+/* Help keyboard: a short stretch of keys that rises over the footer only when needed */
+.help-keys {
+  position: fixed; left: 50%; bottom: calc(112px + var(--safe-b)); z-index: 8; translate: -50% 0;
+  width: min(560px, calc(100vw - 32px)); height: clamp(96px, 18vh, 150px);
+  padding: 8px; border-radius: 12px; background: var(--surface); border: 2px solid var(--line); box-shadow: 0 6px 0 var(--line);
+}
+.help-keys .keyboard { height: 100%; border-radius: 8px; overflow: hidden; }
+.help-keys .key.w { background: #fff; border: 1px solid #d5d5d5; border-radius: 0 0 6px 6px; }
+.help-keys .key.b { background: #3c3c3c; }
+.help-keys .key.w.next, .help-keys .key.b.next { background: var(--hint); box-shadow: inset 0 -5px 0 var(--hint-edge); }
+.help-keys .key.wrong { background: var(--miss); }
+.help-keys .key.hitR, .help-keys .key.hitL { background: var(--ok); }
+
+/* Song screen, minimal */
+.song-screen { --pad: max(12px, calc((100vw - 1100px) / 2)); background: var(--surface); padding: 0 0 0 0; gap: 0; }
+.song-top { flex: none; display: flex; align-items: center; gap: 14px; padding: 14px var(--pad) 4px; }
+.song-head { flex: none; padding: 4px var(--pad) 10px; }
+.song-head h1 { font-size: 22px; }
+.song-screen .sheet { padding: 0 var(--pad) 10px; }
+.song-screen .sheet-card { position: relative; height: 100%; inset: auto; }
+.song-foot { flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; padding: 16px var(--pad) calc(16px + var(--safe-b)); border-top: 2px solid var(--line); }
+.song-foot .connect { margin-right: auto; }
+.song-foot .btn.on { background: var(--blue-soft); color: var(--blue-text); border-color: var(--blue-line); }
+.options-sheet, .sections-sheet { width: min(480px, 100%); display: grid; gap: 14px; text-align: left; justify-items: stretch; }
+.option-rows { display: grid; gap: 8px; }
+.option-row { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 800; text-align: left; transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.option-row span { flex: 1; }
+.switch-dot { width: 40px; height: 24px; border-radius: 999px; background: var(--line); position: relative; flex: none; transition: background var(--dur) var(--ease); }
+.switch-dot::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform var(--dur) var(--ease); }
+.option-row.on { border-color: var(--blue-line); background: var(--blue-soft); }
+.option-row.on .switch-dot { background: var(--go); }
+.option-row.on .switch-dot::after { transform: translateX(16px); }
+.section-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 55dvh; overflow-y: auto; }
+.section-row { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); text-align: left; box-shadow: 0 3px 0 var(--line); }
+.section-row .section-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); font-weight: 900; flex: none; }
+.section-row.learnt .section-icon { background: var(--ok); color: #fff; }
+.section-row.next { border-color: var(--go); box-shadow: 0 3px 0 var(--go-edge); }
+.section-row.next .section-icon { background: var(--go); color: #fff; }
+.section-row .section-text { flex: 1; display: grid; }
+.section-row .section-text small { color: var(--ink-3); font-weight: 700; }
+.section-go { color: var(--blue-text); font-weight: 900; text-transform: uppercase; letter-spacing: .06em; font-size: 13px; }
+@media (max-width: 640px) { .song-foot .btn.big { flex: 1; } .help-keys { bottom: calc(150px + var(--safe-b)); } }
+
+/* Songs: my library, small covers */
+.song-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+.song-card { position: relative; }
+.song-card.skeleton { aspect-ratio: 1 / 1.3; border-radius: 12px; background: var(--surface-2); animation: blink 1.4s ease-in-out infinite; }
+.song-open, .add-tile { width: 100%; display: grid; gap: 8px; text-align: left; }
+.cover { position: relative; display: grid; place-items: center; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--blue-soft); color: var(--blue); border: 2px solid var(--line); }
+.cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cover.add { background: var(--surface); border-style: dashed; border-color: var(--line-2); color: var(--blue); }
+.song-text { display: grid; gap: 1px; min-width: 0; }
+.song-text b { font-size: 15px; font-weight: 900; color: var(--heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.song-text span { font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.song-stars { display: inline-flex; align-items: center; gap: 3px; color: var(--star-text) !important; font-weight: 900; }
+.song-stars svg { color: var(--star); }
+.song-card .card-more { position: absolute; top: 6px; right: 6px; }
+.empty-library { display: grid; justify-items: center; gap: 12px; padding: 50px 20px; text-align: center; }
+.empty-library h2 { font-size: 20px; }
+.empty-library .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.market { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; background: var(--surface); }
+.market-head { display: flex; align-items: center; gap: 12px; padding: 14px max(16px, calc((100vw - 900px) / 2)); border-bottom: 2px solid var(--line); }
+.market-head h1 { flex: 1; font-size: 20px; }
+.market-body { flex: 1; overflow-y: auto; padding: 10px max(16px, calc((100vw - 900px) / 2)) 40px; }
+.market-shelf h2 { font-size: 17px; margin: 20px 0 10px; }
+.market-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.market-list li { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 8px; border-radius: 12px; border: 2px solid var(--line); }
+.market-list li.have { border-color: var(--blue-line); background: var(--blue-soft); }
+.market-list .cover { width: 64px; border-width: 0; }
+.btn.added { background: var(--surface); color: var(--blue-text); border-color: var(--blue-line); }
+.add-label { display: inline-flex; align-items: center; gap: 6px; }
+.cover.c-film { background: linear-gradient(135deg, #f2e3ff, #d9b8ff); color: #8a4fd1; }
+.cover.c-modern { background: linear-gradient(135deg, #d6f7ee, #9ee6d2); color: #00876a; }
+.cover.c-classical { background: linear-gradient(135deg, #fff4c2, #ffe07a); color: #8a6500; }
+.cover.c-mine { background: linear-gradient(135deg, var(--blue-soft), #b9e2f1); color: var(--blue); }
+@media (prefers-color-scheme: dark) {
+  .cover.c-film { background: linear-gradient(135deg, #34234a, #4a2f6b); color: #d9b8ff; }
+  .cover.c-modern { background: linear-gradient(135deg, #12382f, #18513f); color: #9ee6d2; }
+  .cover.c-classical { background: linear-gradient(135deg, #3a3215, #54461a); color: #ffe07a; }
+  .cover.c-mine { background: linear-gradient(135deg, #123445, #18465c); color: #7cc8e6; }
+}
+@media (max-width: 640px) {
+  .song-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .song-text b { font-size: 13.5px; }
+  .song-text span { font-size: 12px; }
+}
+/* Sheet music is printed on white paper in both themes: inside it, the light tokens apply. */
+.sheet-card, .lesson-paper, .theory-staff {
+  color-scheme: light; --surface: #ffffff; --surface-2: #f7f7f7; --heading: #3c3c3c; --ink: #3c3c3c; --ink-2: #5c5c5c; --ink-3: #777777;
+  --line: #e5e5e5; --blue-soft: #ddf1f9; --blue-line: #9fd2e6; --blue-text: #1d6c8c; background: #fff;
+}
+.score .abcjs-title, .score svg text { fill: var(--lesson-ink); }

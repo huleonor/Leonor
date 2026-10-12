@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { annualSaving, price, PLANS, purchase, REASON, restore, type PaywallReason, type PlanId } from '../lib/billing';
 import { IconCheck, IconClose } from './Icons';
-import { Penguin } from './Penguin';
+import { Logo } from './Brand';
 
 const FEATURES: [string, string | boolean, string | boolean][] = [
   ['The whole course, every section', true, true],
@@ -30,7 +30,7 @@ export function Paywall({ reason, onClose, onDone }: Props) {
       <button className="icon-btn ghost paywall-close" onClick={onClose} aria-label="Not now"><IconClose /></button>
       <div className="paywall-body">
         <p className="paywall-badge">Premium</p>
-        <Penguin pose="cheer" size={120} />
+        <Logo size={96} />
         <h1 id="paywall-title">Unlimited energy with Premium</h1>
         <p className="sub">{REASON[reason]}</p>
 
