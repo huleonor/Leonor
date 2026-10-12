@@ -116,7 +116,8 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
     // The now line sits where the first note already is, so nothing jumps at the start.
     const firstX = eg.stops[0]?.x ?? size.w * 0.3;
     const anchor = Math.max(clefW + 70 * scale, Math.min(size.w * 0.42, firstX));
-    extras.forEach(x => { if (x.className === 'past-fade') x.style.width = `${Math.max(0, anchor - clefW - 10 * scale - 30)}px`; });
+    // Played notes stay clear until they reach the clef, then fade out under it.
+    extras.forEach(x => { if (x.className === 'past-fade') x.style.width = `${Math.min(46 * scale, Math.max(0, anchor - clefW - 10 * scale - 30))}px`; });
     glow.style.transform = `translateX(${anchor - 40}px)`;
     // The "now" line, like Simply Piano's: across the staff, where the notes to play arrive.
     const box = eg.lines[0];
