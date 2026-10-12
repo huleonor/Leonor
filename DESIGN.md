@@ -44,9 +44,9 @@ edges: { button: "0 4px 0 <edge>", node: "0 8px 0 <edge>", card: "2px solid swan
 
 # Design System: Hugo's Piano
 
-## Tokens (the rules, measured from Duolingo)
+## Tokens
 
-Ground #ddf4ff; surfaces white with shadow 0 0 5px rgba(28,90,128,.2); primary #a5ed6e with text #111111; accent #1cb0f6 for everything interactive; text #3c3c3c, muted #777777 (hints on white only). One family, Nunito bold: body 700, headings 900 with 0.8px tracking. Radius 12px for every control, card and dialog. Spacing unit 10px. Every transition 300ms ease. Focus ring 2px accent, 2px offset. A dark theme mirrors every token (ground #0f1c24, surfaces #172630). Icons are Phosphor, bold. No em or en dashes in visible text. See CLAUDE.md for the full rule list.
+White ground like the Duolingo app; cards and dialogs white with a 2px #e5e5e5 border (dialogs add a 6px edge), wells #f7f7f7; primary Duolingo green #58cc02 with white bold uppercase text on 3D buttons; accent #1cb0f6 for everything interactive; text #3c3c3c, muted #777777 for hints. One family, Nunito bold: body 700, headings 900 with 0.8px tracking. Radius 12px for every control, card and dialog. Spacing unit 10px. Every transition 300ms ease. Focus ring 2px accent, 2px offset. A dark theme mirrors every token (ground #0f1c24, surfaces #172630). Icons are Phosphor, bold. No em or en dashes in visible text. See CLAUDE.md for the full rule list.
 
 ## Overview
 

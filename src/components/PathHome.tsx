@@ -13,10 +13,10 @@ import { Penguin, type Pose } from './Penguin';
 
 /** Each unit has its own colour, as on Duolingo's path. */
 export const UNIT_COLORS: [string, string, string][] = [
-  // [colour, edge, text on it]: bright colours take near-black text, deep ones white, so all pass contrast.
-  ['#a5ed6e', '#7fc94c', '#111111'], ['#ce82ff', '#a568cc', '#111111'], ['#00cd9c', '#00a57d', '#111111'], ['#1cb0f6', '#1593cf', '#111111'],
-  ['#ff9600', '#e08300', '#111111'], ['#ff86d0', '#e070b4', '#111111'], ['#ff6b6b', '#e04848', '#111111'], ['#2b70c9', '#18599e', '#ffffff'],
-  ['#cc348d', '#a6206f', '#ffffff'], ['#ffc800', '#e0ad00', '#111111'],
+  // [colour, edge, text on it], Duolingo's unit colours with white text (dark text on gold).
+  ['#58cc02', '#58a700', '#ffffff'], ['#ce82ff', '#a568cc', '#ffffff'], ['#00cd9c', '#00a57d', '#ffffff'], ['#1cb0f6', '#1899d6', '#ffffff'],
+  ['#ff9600', '#e08300', '#ffffff'], ['#ff86d0', '#e070b4', '#ffffff'], ['#ff4b4b', '#ea2b2b', '#ffffff'], ['#2b70c9', '#18599e', '#ffffff'],
+  ['#cc348d', '#a6206f', '#ffffff'], ['#ffc800', '#e0ad00', '#4a3200'],
 ];
 export const colorOf = (u: Unit) => UNIT_COLORS[UNITS.indexOf(u) % UNIT_COLORS.length];
 

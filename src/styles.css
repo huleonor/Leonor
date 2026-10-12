@@ -1,6 +1,6 @@
 /* Hugo's Piano. Design rules live in DESIGN.md and CLAUDE.md; read them before changing anything here.
-   Duolingo's measured system: sky-blue ground (#ddf4ff), white cards with a soft tinted shadow, lime
-   primary (#a5ed6e) with near-black text, one blue accent (#1cb0f6) for interactive things, charcoal
+   Duolingo's app look: a white ground, cards with a 2px grey border, the Duolingo green (#58cc02)
+   with white text on chunky buttons, one blue accent (#1cb0f6) for interactive things, charcoal
    text, one family (Nunito, bold), 12px corners, a 10px spacing unit, 300ms ease for every transition.
    Light and dark themes come from the same tokens. The piano screens keep their Simply Piano look. */
 
@@ -13,39 +13,39 @@
 
 :root {
   /* Ground and surfaces */
-  --bg: #ddf4ff;
-  --bg-deep: #eef8fe;
+  --bg: #ffffff;
+  --bg-deep: #f7f7f7;
   --surface: #ffffff;
-  --surface-2: #f2f9fd;
+  --surface-2: #f7f7f7;
   --raised: #ffffff;
-  --raised-edge: #cfe0ea;
-  --line: #d5e3ec;
-  --line-2: #b8cbd6;
+  --raised-edge: #e5e5e5;
+  --line: #e5e5e5;
+  --line-2: #cecece;
   --paper: #ffffff;
-  --shadow: 0 0 5px rgba(28, 90, 128, .2);
+  --shadow: none;
   /* Text */
   --heading: #3c3c3c;
   --ink: #3c3c3c;
   --ink-2: #5c5c5c;
   --ink-3: #777777;
   /* Primary: lime with near-black text */
-  --go: #a5ed6e;
-  --go-hi: #b3f282;
-  --go-edge: #7fc94c;
-  --go-ink: #111111;
-  --go-soft: #e8fbd9;
-  --go-text: #2e7d0f;
+  --go: #58cc02;
+  --go-hi: #61e002;
+  --go-edge: #58a700;
+  --go-ink: #ffffff;
+  --go-soft: #d7ffb8;
+  --go-text: #3b8a00;
   /* Accent: the one interactive blue */
   --blue: #1cb0f6;
-  --blue-edge: #1593cf;
-  --blue-soft: #e3f5ff;
-  --blue-line: #9ad9fb;
-  --on-blue: #111111;
+  --blue-edge: #1899d6;
+  --blue-soft: #ddf4ff;
+  --blue-line: #84d8ff;
+  --on-blue: #ffffff;
   --blue-text: #0a6fa3;
   /* Game colours, each with a text shade that passes AA */
   --star: #ffc800;
   --star-edge: #e0ad00;
-  --star-off: #d5e3ec;
+  --star-off: #e5e5e5;
   --star-text: #8a6500;
   --flame: #ff9600;
   --flame-edge: #e08300;
@@ -941,7 +941,7 @@ h1, h2, h3 { font-weight: 900; letter-spacing: .8px; color: var(--heading); }
 .icon-btn.ghost { border: 0; box-shadow: none; }
 
 /* Cards: white, a 2px grey border, a soft edge. */
-.card { background: var(--surface); border: 0; border-radius: 12px; box-shadow: var(--shadow); }
+.card { background: var(--surface); border: 2px solid var(--line); border-radius: 12px; box-shadow: none; }
 .veil .card { border-radius: 12px; border: 0; box-shadow: var(--shadow); }
 
 /* Shell: a white sidebar; the current page sits in a pale blue pill. */
@@ -1391,8 +1391,8 @@ button.gb-stat:hover { background: var(--bg-deep); }
 /* =====================================================================
    System layer: the measured design rules (DESIGN.md). Last, so it wins.
    ===================================================================== */
-.veil .card { border: 0; box-shadow: var(--shadow); }
-.rail { background: var(--surface); border-right: 0; box-shadow: var(--shadow); }
+.veil .card { border: 2px solid var(--line); box-shadow: 0 6px 0 var(--line); }
+.rail { background: var(--surface); border-right: 2px solid var(--line); box-shadow: none; }
 .rail-btn.on { color: var(--blue-text); background: var(--blue-soft); box-shadow: inset 0 0 0 2px var(--blue-line); }
 .content { background: var(--bg); }
 .page-head h1, .shop .page-head h1 { font-size: 22px; letter-spacing: .8px; }
@@ -1412,7 +1412,7 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .lesson-energy { color: #a8307f; background: #fff; }
 
 /* Path: unit colours carry their own text colour (--unit-ink) so every banner, node and card passes contrast */
-.path-unit, .guide-card, .theory-screen { --unit-ink: #111111; }
+.path-unit, .guide-card, .theory-screen { --unit-ink: #ffffff; }
 .unit-banner { color: var(--unit-ink); }
 .unit-banner::before { background: var(--bg); }
 .unit-banner h2 { color: var(--unit-ink); font-size: 20px; }
@@ -1444,7 +1444,7 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .btn.super b { background: rgba(255, 255, 255, .18); color: #fff; }
 .super-card, .side-card.super { background: var(--premium); color: #fff; border: 0; }
 .super-card h2, .super-card .sub, .side-card.super h3, .side-card.super .sub { color: #fff; }
-.super-card .btn.super-cta, .side-card.super .btn.super-cta { background: var(--go); color: var(--go-ink); box-shadow: 0 4px 0 var(--go-edge); }
+.super-card .btn.super-cta, .side-card.super .btn.super-cta { background: var(--go); color: var(--go-ink); border: 0; box-shadow: 0 4px 0 var(--go-edge); }
 .super-card .paywall-badge { background: rgba(255, 255, 255, .16); }
 .paywall-compare td:last-child { background: var(--blue-soft); }
 .paywall-compare thead th:last-child, .paywall-compare td:last-child .cell-text { color: var(--blue-text); }
@@ -1481,5 +1481,5 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .paywall h1 { font-size: 24px; }
 .combo { background: #fff; color: #b35500; }
 .combo.hot { background: var(--flame); color: #111111; }
-.lesson-listening { background: var(--blue); color: #111111; }
+.lesson-listening { background: var(--blue); color: #fff; }
 .toast { background: var(--heading); color: var(--surface); }
