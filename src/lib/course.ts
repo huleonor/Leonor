@@ -129,7 +129,7 @@ export function buildCourse(song: Song): Course {
     const hardest = [...phrases].sort((a, b) => pScore(b) - pScore(a))[0];
     if (hardest && pScore(hardest) > median * 1.15) hardest.hard = true;
     const has = (h: 'R' | 'L', ph: { from: number; to: number }) => bars.slice(ph.from - 1, ph.to).some(b => b.notes.some(x => x.hand === h));
-    const span = (ph: { from: number; to: number }) => (ph.from === ph.to ? `bar ${ph.from}` : `bars ${ph.from}–${ph.to}`);
+    const span = (ph: { from: number; to: number }) => (ph.from === ph.to ? `bar ${ph.from}` : `bars ${ph.from}-${ph.to}`);
     const many = phrases.length > 1;
 
     const drill = (key: string, label: string, hands: HandsChoice, speed: number, h?: 'R' | 'L') => {

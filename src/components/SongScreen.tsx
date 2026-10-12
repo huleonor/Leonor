@@ -33,7 +33,7 @@ export function sectionsOf(info: SongInfo): Section[] {
     if (p.sameAs) continue;
     const steps = course.steps.filter(s => s.part === p.n);
     out.push({
-      id: `p${p.n}`, title: `Part ${p.n}`, bars: `Bars ${p.from}–${p.to}`, from: p.from, steps,
+      id: `p${p.n}`, title: `Part ${p.n}`, bars: `Bars ${p.from}-${p.to}`, from: p.from, steps,
       learnt: partLearnt(course, info.prog, p.n), done: steps.filter(s => (info.prog[s.id]?.stars ?? 0) > 0).length,
     });
   }

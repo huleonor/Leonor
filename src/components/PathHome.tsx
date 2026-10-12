@@ -12,9 +12,11 @@ import { IconArrowLeft, IconBluetooth, IconCheck, IconClose, IconKeys, IconMic }
 import { Penguin, type Pose } from './Penguin';
 
 /** Each unit has its own colour, as on Duolingo's path. */
-export const UNIT_COLORS: [string, string][] = [
-  ['#58cc02', '#58a700'], ['#ce82ff', '#a568cc'], ['#00cd9c', '#00a57d'], ['#1cb0f6', '#1899d6'], ['#ff9600', '#e58700'],
-  ['#ff86d0', '#e070b4'], ['#ff4b4b', '#ea2b2b'], ['#2b70c9', '#18599e'], ['#cc348d', '#a6206f'], ['#ffc800', '#e5a800'],
+export const UNIT_COLORS: [string, string, string][] = [
+  // [colour, edge, text on it], Duolingo's unit colours with white text (dark text on gold).
+  ['#58cc02', '#58a700', '#ffffff'], ['#ce82ff', '#a568cc', '#ffffff'], ['#00cd9c', '#00a57d', '#ffffff'], ['#1cb0f6', '#1899d6', '#ffffff'],
+  ['#ff9600', '#e08300', '#ffffff'], ['#ff86d0', '#e070b4', '#ffffff'], ['#ff4b4b', '#ea2b2b', '#ffffff'], ['#2b70c9', '#18599e', '#ffffff'],
+  ['#cc348d', '#a6206f', '#ffffff'], ['#ffc800', '#e0ad00', '#4a3200'],
 ];
 export const colorOf = (u: Unit) => UNIT_COLORS[UNITS.indexOf(u) % UNIT_COLORS.length];
 
@@ -136,12 +138,12 @@ export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest
               </div>
             )}
             {section.units.map(unit => {
-              const [c, edge] = colorOf(unit);
+              const [c, edge, ink] = colorOf(unit);
               const nodes = nodesOf(unit);
               const ui = UNITS.indexOf(unit);
               const locked = !!path && !path.state[nodes[0].id]?.open;
               return (
-                <section key={unit.id} className={`path-unit ${locked ? 'locked' : ''}`} aria-labelledby={`${unit.id}-title`} style={{ '--unit': c, '--unit-edge': edge } as React.CSSProperties}>
+                <section key={unit.id} className={`path-unit ${locked ? 'locked' : ''}`} aria-labelledby={`${unit.id}-title`} style={{ '--unit': c, '--unit-edge': edge, '--unit-ink': ink } as React.CSSProperties}>
                   <header className="unit-banner">
                     <div>
                       <small>{unitLabel(unit)}</small>
@@ -211,7 +213,7 @@ export function PathHome({ settings, links, onSetup, onSkipSetup, onNode, onTest
 
       {guide && (
         <div className="veil" onClick={() => setGuide(null)}>
-          <section className="card guide-card" role="dialog" aria-modal="true" aria-labelledby="guide-title" onClick={e => e.stopPropagation()} style={{ '--unit': colorOf(guide)[0], '--unit-edge': colorOf(guide)[1] } as React.CSSProperties}>
+          <section className="card guide-card" role="dialog" aria-modal="true" aria-labelledby="guide-title" onClick={e => e.stopPropagation()} style={{ '--unit': colorOf(guide)[0], '--unit-edge': colorOf(guide)[1], '--unit-ink': colorOf(guide)[2] } as React.CSSProperties}>
             <button className="icon-btn ghost game-sheet-close" onClick={() => setGuide(null)} aria-label="Close"><IconClose /></button>
             <header className="guide-head">
               <Penguin pose="read" size={84} />

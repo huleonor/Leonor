@@ -498,7 +498,7 @@ export const SECTIONS: Section[] = [
         id: 'u15', title: 'Chord progressions', sub: 'I, IV and V',
         guide: [
           'Chords are numbered by the scale note they start on. In C: C is I, F is IV, G is V.',
-          'I–IV–V–I is in thousands of songs.',
+          'I-IV-V-I is in thousands of songs.',
           'Move to the nearest notes: C-E-G, C-F-A, B-D-G.',
           'The left hand plays the chords, the right hand the tune.',
         ],
@@ -550,7 +550,7 @@ export const SECTIONS: Section[] = [
       {
         id: 'u17', title: 'Pop', sub: 'Four chords and a groove',
         guide: [
-          'So many pop songs use the same four chords: C, G, Am and F (I–V–vi–IV).',
+          'So many pop songs use the same four chords: C, G, Am and F (I-V-vi-IV).',
           'Am is the minor chord on A: A C E.',
           'Left hand: the root with its octave, on the beat.',
           'A little push before beat 3 gives the groove.',
@@ -620,23 +620,23 @@ export const SECTIONS: Section[] = [
         test: { gen: arpeggio(['C', 'G', 'Am', 'F'], 'R'), hands: 'R', skill: 'leaps' },
       },
       {
-        id: 'u20', title: 'Jazz', sub: 'Seventh chords and ii–V–I',
+        id: 'u20', title: 'Jazz', sub: 'Seventh chords and ii-V-I',
         guide: [
           'A seventh chord stacks one more 3rd on a triad: C E G B is Cmaj7.',
           'Dm7 is D F A C. G7 is G B D F: it wants to go home to C.',
-          'ii–V–I (Dm7, G7, Cmaj7) is the most played progression in jazz.',
+          'ii-V-I (Dm7, G7, Cmaj7) is the most played progression in jazz.',
           'Left-hand shells: just the root, 3rd and 7th.',
         ],
         nodes: [
           theory('u20-t', 'Seventh chords', [
             say('Stack one more 3rd on a triad and you get a seventh chord. C E G B is Cmaj7: dreamy.', { pose: 'grad', staff: S('[CEG]2 [CEGB]2') }),
             say('Dm7 is D F A C. G7 is G B D F, and it really wants to go home to C.', { staff: S('[DFAc]2 [GBdf]2 | [CEGB]4') }),
-            say('Jazz players love ii–V–I: Dm7, G7, Cmaj7. The left hand plays just root, 3rd and 7th: a shell.', { staff: S('[D,F,C]2 [G,,B,,F,]2 | [C,E,B,]4', { clef: 'bass' }) }),
+            say('Jazz players love ii-V-I: Dm7, G7, Cmaj7. The left hand plays just root, 3rd and 7th: a shell.', { staff: S('[D,F,C]2 [G,,B,,F,]2 | [C,E,B,]4', { clef: 'bass' }) }),
             pickC('The notes of Cmaj7?', ['C E G B', 'C E G', 'C F A'], 0),
-            pickC('In C major, ii–V–I is…', ['Dm7 G7 Cmaj7', 'C F G', 'Am F C'], 0),
+            pickC('In C major, ii-V-I is…', ['Dm7 G7 Cmaj7', 'C F G', 'Am F C'], 0),
           ]),
           lesson('u20-shells', 'Shell chords', 'Root, 3rd, 7th', 'chords', 'L', triads(['Dm7', 'G7', 'Cmaj7', 'Cmaj7'], 'L')),
-          lesson('u20-251', 'ii–V–I', 'Jazz harmony', 'chords', 'both', accompany('jazz', PROGS.jazz)),
+          lesson('u20-251', 'ii-V-I', 'Jazz harmony', 'chords', 'both', accompany('jazz', PROGS.jazz)),
           listen('u20-ear', 'Jazz ears', 'Listen, then play', 'chords', 'both', accompany('jazz', PROGS.jazz), 1),
           chest('u20-chest'),
           song('u20-cool', COURSE_SONGS.cool, 'Written for Pip', 'both'),

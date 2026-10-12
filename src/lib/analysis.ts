@@ -35,7 +35,7 @@ const CHORDS: { suffix: string; tones: number[] }[] = [
 ];
 
 const pcName = (pc: number, flats: boolean) => (flats ? FLAT_NAMES : SHARP_NAMES)[((pc % 12) + 12) % 12];
-const range = (a: number, b: number) => (a === b ? `bar ${a}` : `bars ${a}–${b}`);
+const range = (a: number, b: number) => (a === b ? `bar ${a}` : `bars ${a}-${b}`);
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const plural = (n: number, one: string, many = one + 's') => `${n} ${n === 1 ? one : many}`;
 
@@ -253,7 +253,7 @@ export function analyseSong(song: Song): Analysis {
     const steps = [...new Set(sample.map(n => n.midi - low))].sort((a, b) => a - b);
     const shapeText = stacked
       ? `the same chord shape (${steps.map(degree).join(' + ')})`
-      : `the same pattern (${sample.slice(0, 8).map(n => degree(n.midi - low)).join(' – ')}${sample.length > 8 ? ' …' : ''})`;
+      : `the same pattern (${sample.slice(0, 8).map(n => degree(n.midi - low)).join(', ')}${sample.length > 8 ? ' …' : ''})`;
     const hand = h === 'L' ? 'Left hand' : 'Right hand';
     tips.push({
       kind: 'left',
@@ -278,7 +278,7 @@ export function analyseSong(song: Song): Analysis {
       kind: 'chords',
       title: period ? `The chords go round every ${plural(period, 'bar')}` : 'The main chords',
       body: period
-        ? `${loop.join(' – ')}, over and over. Say the chord names as you play; when you get lost, find the next chord and carry on.`
+        ? `${loop.join(', ')}, over and over. Say the chord names as you play; when you get lost, find the next chord and carry on.`
         : `${loop.join(', ')} carry most of the song. Knowing them helps you hear where each hand is going.`,
     });
   }
