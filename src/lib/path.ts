@@ -35,21 +35,24 @@ export interface Playable {
 interface Plan { id: string; title: string; hands: NodeHands | 'all'; speed: number; wait: boolean; listen?: boolean; }
 const P = (id: string, title: string, hands: Plan['hands'], speed: number, wait: boolean, listen = false): Plan => ({ id, title, hands, speed, wait, listen });
 
-/** The steps of a node, by kind: with help, on your own, in tempo; hand by hand for two hands. */
+/**
+ * The steps of a node, by kind, the way Simply Piano teaches: first free play (the music waits for
+ * every note, no rhythm to keep, so he learns the notes), hand by hand for two hands, then the
+ * same music with the beat and the metronome ticking, so the rhythm comes last.
+ */
 export function planFor(n: PathNode): Plan[] {
   const h = n.hands;
   const two = h === 'both';
+  const free = two
+    ? [P('R', 'Free play: right hand', 'R', 0.7, true), P('L', 'Free play: left hand', 'L', 0.7, true), P('both', 'Free play: hands together', 'both', 0.8, true)]
+    : [P('free', 'Free play', h, 0.7, true), P('own', 'Free play, on your own', h, 0.9, true)];
   switch (n.kind) {
     case 'trophy': return [P('test', 'Unit test', h, 0.9, true)];
-    case 'practice': return [P('go', 'Slowly', 'all', 0.75, true), P('own', 'On your own', 'all', 0.9, true)];
-    case 'listen': return [P('listen', 'Listen, then play', h, 0.8, true, true), P('own', 'On your own', h, 0.9, true)];
-    case 'technique': return [P('slow', 'Slowly', h, 0.7, true), P('tempo', 'In tempo', h, 0.85, false)];
-    case 'song': return two
-      ? [P('R', 'Right hand', 'R', 0.7, true), P('L', 'Left hand', 'L', 0.7, true), P('both', 'Hands together', 'both', 0.8, true), P('tempo', 'In tempo', 'both', 1, false)]
-      : [P('help', 'Slowly', h, 0.7, true), P('own', 'On your own', h, 0.9, true), P('tempo', 'In tempo', h, 1, false)];
-    case 'lesson': return two
-      ? [P('R', 'Right hand', 'R', 0.7, true), P('L', 'Left hand', 'L', 0.7, true), P('both', 'Hands together', 'both', 0.8, true)]
-      : [P('help', 'Slowly', h, 0.7, true), P('own', 'On your own', h, 0.9, true)];
+    case 'practice': return [P('go', 'Free play', 'all', 0.75, true), P('beat', 'With the beat', 'all', 0.8, false)];
+    case 'listen': return [P('listen', 'Listen, then play', h, 0.8, true, true), P('own', 'Free play, on your own', h, 0.9, true), P('beat', 'With the beat', h, 0.85, false)];
+    case 'technique': return [P('slow', 'Free play', h, 0.7, true), P('tempo', 'With the beat', h, 0.85, false)];
+    case 'song': return [...free, P('slowbeat', 'With the beat, slowly', two ? 'both' : h, 0.75, false), P('tempo', 'With the beat, full speed', two ? 'both' : h, 1, false)];
+    case 'lesson': return [...free, P('beat', 'With the beat', two ? 'both' : h, 0.8, false)];
     case 'theory': return [P('read', 'Read', h, 1, true)];
     default: return [];
   }
@@ -213,7 +216,7 @@ export function unitLabel(u: Unit) {
 // ---------- The daily session ----------
 
 const seedOfDay = (salt: number) => [...dayKey()].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, salt);
-const WARMUP = [P('go', 'Warm-up', 'all', 0.8, true)];
+const WARMUP = [P('go', 'Free play', 'all', 0.8, true), P('beat', 'With the beat', 'all', 0.8, false)];
 
 /** Today's session: warm-up on the weakest skill, the next lesson on the path, then a short review. */
 export function dailySession(state: PathState, progs: Record<string, CourseProgress>): Playable[] {

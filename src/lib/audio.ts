@@ -63,3 +63,21 @@ export function stopAll() {
   piano?.stop();
   held.clear();
 }
+
+/** A metronome tick: a short woodblock-like blip, higher on the first beat of the bar. */
+export function playClick(accent = false) {
+  try {
+    const ctx = audioContext();
+    const t = ctx.currentTime + 0.005;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(accent ? 1760 : 1175, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(accent ? 0.22 : 0.14, t + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.06);
+  } catch { /* audio unavailable */ }
+}

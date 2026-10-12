@@ -27,6 +27,9 @@ export function pressDots(engine: Engine, eg: Engraved, layer: HTMLElement): () 
     const hand = e.id !== undefined ? engine.song.notes[e.id].hand : near?.hand;
     const p = eg.pitchY(at.line, e.midi, hand);
     if (!p) return;
+    // A key far off the staff stays near it, at the edge, instead of floating away.
+    const box = eg.lines[at.line];
+    if (box) p.y = Math.max(box.top - p.gap * 2, Math.min(box.bottom + p.gap * 2, p.y));
     fade(e.midi);
     const d = document.createElement('span');
     d.className = `press-dot ${e.ok ? 'ok' : 'bad'}`;
