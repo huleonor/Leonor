@@ -32,12 +32,29 @@ export type EngineEvent =
   /** A note hit in tempo: how early (negative) or late it was, in real seconds. */
   | { type: 'judge'; offset: number }
   /** A slip in tempo sent him back: `bar` is where it happened, `from` where he starts again (1-based). */
-  | { type: 'rewind'; bar: number; from: number };
+  | { type: 'rewind'; bar: number; from: number }
+  /** A key touched by accident (a brush, a bounce, a ghost touch): not counted. */
+  | { type: 'stray'; midi: number };
 
 const CHORD_WINDOW = 0.045; // seconds: notes closer than this form one chord
 const LEAD_IN = 2.2; // seconds of song time before the first note
 /** Slips a tempo run takes before it stops: past this the passage is too fast for now. */
 const MAX_REWINDS = 4;
+/**
+ * Accidental touches on a keyboard are not mistakes. A wrong key waits this long (ms) before it
+ * counts, so the touches around it can show what it was.
+ */
+const SETTLE_MS = 90;
+/** Softer than this (MIDI velocity) is a ghost touch: a finger resting on a key. */
+const GHOST = 12;
+/** A wrong key this close (semitones, ms) to a right one played with it is a brushed neighbour. */
+const NEIGHBOUR = 2, TOGETHER_MS = 60;
+/** The same key again this soon (ms) is the key bouncing. */
+const BOUNCE_MS = 120;
+/** Let go this soon (ms), and softly, is a key grazed in passing. */
+const GRAZE_MS = 80, GRAZE_VELOCITY = 50;
+/** Wrong keys this close together (ms) are one slip of the hand, counted once. */
+const CLUSTER_MS = 40;
 
 export class Engine {
   readonly song: Song;
@@ -60,6 +77,13 @@ export class Engine {
   rewinds = 0;
   /** The run stopped early: too many slips. */
   cutShort = false;
+  /** Keys touched by accident and left out of the score. */
+  strays = 0;
+  /** Wrong keys waiting to be confirmed as mistakes or let off as accidents. */
+  private suspects: { midi: number; at: number; velocity: number }[] = [];
+  /** Recent key presses, to tell a brush or a bounce from a mistake. */
+  private recent: { midi: number; at: number; ok: boolean }[] = [];
+  private deferred = false;
   lastWrong = { midi: -1, at: 0 };
   measureTimes: number[] = [];
   /** When the current wait began, and wrong notes played during it (for the hint). */
@@ -149,7 +173,7 @@ export class Engine {
     this.seek(this.segmentStart());
   }
 
-  private resetCounts() { this.wrong = 0; this.slipped = 0; this.rewinds = 0; this.cutShort = false; }
+  private resetCounts() { this.wrong = 0; this.slipped = 0; this.rewinds = 0; this.cutShort = false; this.strays = 0; this.suspects = []; }
 
   /** The bar (0-based) that holds a moment of the song. */
   barAt(t: number) {
@@ -256,6 +280,8 @@ export class Engine {
   private tick(now: number) {
     const dt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
+    if (!this.playing) return;
+    this.settleSuspects(now);
     if (!this.playing) return;
     if (this.countdown > 0) {
       this.countdown -= dt;
@@ -372,6 +398,50 @@ export class Engine {
     this.lastGroupAt = performance.now();
   }
 
+  /** A key not touched by accident, counted. */
+  private stray(midi: number) {
+    this.strays++;
+    this.emit({ type: 'stray', midi });
+  }
+
+  /**
+   * A wrong key. From the microphone it counts at once (it has its own filters). From a keyboard
+   * it is let off straight away when it is plainly an accident (a ghost touch, the key bouncing,
+   * a neighbour brushed with the right key) and otherwise waits a moment: let go at once and
+   * softly, or followed by the right key next to it, it was an accident too.
+   */
+  private wrongKey(e: NoteEvent, now: number) {
+    if (e.source === 'mic') { this.confirmWrong(e.midi); return; }
+    this.deferred = true;
+    if (e.velocity > 0 && e.velocity < GHOST) { this.stray(e.midi); return; }
+    if (this.recent.some(p => p.midi === e.midi && now - p.at < BOUNCE_MS)) { this.stray(e.midi); return; }
+    if (this.recent.some(p => p.ok && Math.abs(p.midi - e.midi) <= NEIGHBOUR && now - p.at < TOGETHER_MS)) { this.stray(e.midi); return; }
+    this.suspects.push({ midi: e.midi, at: now, velocity: e.velocity });
+  }
+
+  /** Suspects old enough count as mistakes; several at once are one slip of the hand. */
+  private settleSuspects(now: number) {
+    if (!this.suspects.length) return;
+    const due = this.suspects.filter(x => now - x.at >= SETTLE_MS);
+    if (!due.length) return;
+    this.suspects = this.suspects.filter(x => now - x.at < SETTLE_MS);
+    let lastAt = -Infinity;
+    for (const x of due) {
+      if (x.at - lastAt < CLUSTER_MS) { this.stray(x.midi); continue; }
+      lastAt = x.at;
+      this.confirmWrong(x.midi);
+      if (!this.playing) return;
+    }
+  }
+
+  /** A real mistake: counted, shown, and with the beat it sends him back a bar. */
+  private confirmWrong(midi: number) {
+    this.registerWrong(midi);
+    this.emit({ type: 'press', midi, ok: false });
+    // The mic can mishear a key: only a keyboard's wrong note sends him back.
+    if (this.opts.fixSlips && !this.opts.lenient && !this.opts.wait && !this.opts.follow && !this.opts.listen) this.rewind(this.time);
+  }
+
   private registerWrong(midi: number) {
     this.wrong++;
     if (this.waiting) this.wrongInWait++;
@@ -380,17 +450,39 @@ export class Engine {
   }
 
   input(e: NoteEvent) {
-    if (e.type === 'off') { this.held.delete(e.midi); return; }
+    const now = performance.now();
+    if (e.type === 'off') {
+      this.held.delete(e.midi);
+      // Grazed: let go at once and softly.
+      const i = this.suspects.findIndex(x => x.midi === e.midi && now - x.at < GRAZE_MS && x.velocity < GRAZE_VELOCITY);
+      if (i >= 0) { this.suspects.splice(i, 1); this.stray(e.midi); }
+      return;
+    }
     this.held.add(e.midi);
     if (!this.playing || this.countdown > 0 || this.opts.listen) return;
+    this.settleSuspects(now);
     // The note it matches, judged before the press can move the cursor on.
     const g = this.groups[this.gi];
     const wrongBefore = this.wrong;
+    this.deferred = false;
     const id = this.judgeInput(e);
-    const ok = this.wrong === wrongBefore;
+    const deferred = this.deferred;
+    const ok = !deferred && this.wrong === wrongBefore;
+    this.recent.push({ midi: e.midi, at: now, ok });
+    if (this.recent.length > 16) this.recent.splice(0, this.recent.length - 16);
+    if (deferred) return;
+    if (ok) {
+      // The right key: a wrong neighbour pressed with it a moment ago was a brush.
+      this.suspects = this.suspects.filter(x => {
+        const brush = Math.abs(x.midi - e.midi) <= NEIGHBOUR && now - x.at < TOGETHER_MS;
+        if (brush) this.stray(x.midi);
+        return !brush;
+      });
+    }
     const match = ok ? id ?? g?.ids.find(i => this.matches(e.midi, this.song.notes[i].midi)) : undefined;
     // A stray overtone the mic heard in a strike is neither right nor wrong: leave it off the staff.
     if (ok && match === undefined && e.chord) return;
+    if (!ok) return; // a mistake is shown when it is confirmed
     this.emit({ type: 'press', midi: e.midi, ok, id: match });
   }
 
@@ -411,7 +503,7 @@ export class Engine {
     // In a strike the mic heard several notes: a stray overtone next to a right note is not a mistake.
     const strikeOk = e.chord ? e.chord.some(relevantNote) : false;
     if (this.opts.wait || this.opts.follow) {
-      if (!relevantNote(e.midi)) { if (!strikeOk) this.registerWrong(e.midi); return undefined; }
+      if (!relevantNote(e.midi)) { if (!strikeOk) this.wrongKey(e, now); return undefined; }
       if (g && this.waiting && this.trySatisfy(g, now)) {
         this.markHit(g, changed);
         this.waiting = false;
@@ -428,14 +520,7 @@ export class Engine {
           if (this.status[id] === PENDING && d <= tol && d < bestDt && this.matches(e.midi, n.midi)) { best = id; bestDt = d; }
         }
       }
-      if (best < 0) {
-        if (!strikeOk) {
-          this.registerWrong(e.midi);
-          // The mic can mishear a key: only a keyboard's wrong note sends him back.
-          if (this.opts.fixSlips && !this.opts.lenient) this.rewind(this.time);
-        }
-        return undefined;
-      }
+      if (best < 0) { if (!strikeOk) this.wrongKey(e, now); return undefined; }
       this.status[best] = HIT;
       changed.push(best);
       this.emit({ type: 'judge', offset: (t - this.song.notes[best].time) / this.opts.speed });
@@ -453,7 +538,7 @@ export class Engine {
       else if (this.status[i] === MISS) miss++;
     }
     const attempts = hit + miss + this.wrong + this.slipped;
-    return { hit, miss, wrong: this.wrong, total, accuracy: attempts ? hit / attempts : 0 };
+    return { hit, miss, wrong: this.wrong, total, strays: this.strays, accuracy: attempts ? hit / attempts : 0 };
   }
 
   progress() {

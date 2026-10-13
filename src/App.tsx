@@ -186,6 +186,7 @@ export default function App() {
           info={runItem.info} section={runItem.section}
           settings={settings} update={update} links={links}
           energyMode={run.path ? 'spend' : 'earn'}
+          adaptive
           onPremium={() => setPaywall('energy')}
           exitLabel={run.session ? 'Back to today’s session' : run.path ? 'Back to the path' : 'Back to practice'}
           nextLabel={run.session ? (run.i < run.items.length - 1 ? `Next: ${run.items[run.i + 1].title}` : 'Finish today’s session') : 'Continue'}
