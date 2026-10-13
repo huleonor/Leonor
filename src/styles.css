@@ -1792,3 +1792,18 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .lesson-line g.abcjs-bar { fill: var(--staff-line); }
 .lesson-line .abcjs-annotation { fill: var(--note-ink) !important; font-family: 'Nunito Variable', Nunito, system-ui, sans-serif; font-weight: 800; font-size: 15px; }
 .lesson-line .abcjs-time-signature, .clef-panel .abcjs-time-signature { visibility: hidden; }
+
+/* The lesson bar, Simply Piano's: pause on the left, the step count with its arrows on the right,
+   nothing else; compact so the staff has the room. */
+.lesson.simply .lesson-bar { padding: 12px 24px 4px; gap: 10px; flex-wrap: nowrap; justify-content: space-between; }
+.lesson.simply .lesson-say { flex: 1; min-width: 0; }
+.lesson.simply .lesson-pause { width: 44px; height: 44px; }
+.lesson.simply .lesson-nav { gap: 10px; }
+.lesson.simply .lesson-arrow { width: 34px; height: 34px; }
+.lesson.simply .lesson-count { height: 34px; min-width: 132px; width: 132px; padding: 0 14px; font-size: 16px; }
+.lesson.simply .rep-dots { right: 44px; width: 132px; justify-content: center; }
+@media (max-width: 640px) {
+  .lesson.simply .lesson-bar { padding: 10px 14px 4px; }
+  .lesson.simply .lesson-count { min-width: 110px; width: 110px; }
+  .lesson.simply .rep-dots { width: 110px; }
+}

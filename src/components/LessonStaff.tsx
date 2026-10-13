@@ -49,7 +49,7 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
     // as the stage's height allows. Engraved once, measured, and engraved again at the size that fits.
     const perBar = Math.max(170, density(song) * 34 + 60);
     const tallest = Math.min(3.4, (size.h - 70) / 125);
-    const score = buildScore(song, bars, fingers, { from, to, only, staffSep: 62 });
+    const score = buildScore(song, bars, fingers, { from, to, only, staffSep: 20 });
     const draw = (sc: number) => engrave(line, paper, engine, score, { staffwidth: bars * perBar, scale: sc, stretch: true, feedback: () => feedbackRef.current });
     let scale = Math.max(0.8, Math.min(tallest, (size.w * 0.9) / (perBar * Math.min(4, bars))));
     let eg = draw(scale);

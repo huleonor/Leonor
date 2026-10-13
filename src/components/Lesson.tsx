@@ -14,7 +14,7 @@ import { formatSpeed, noteName } from '../lib/names';
 import { usePracticeClock } from '../lib/practiceClock';
 import { addPractice, streak, xpForStars } from '../lib/stats';
 import type { FingerMode, Settings } from '../lib/types';
-import { addGems, energy, gainEnergy, gemsForStars, spendEnergy, STREAK_FOR_ENERGY, useEconomy } from '../lib/energy';
+import { addGems, energy, gainEnergy, gemsForStars, spendEnergy, STREAK_FOR_ENERGY } from '../lib/energy';
 import { AnimatePresence, motion } from 'motion/react';
 import { Confetti, CountUp } from './Confetti';
 import { Bump, Cheer, SOFT, SPRING } from './Motion';
@@ -24,7 +24,7 @@ import { EnergySheet } from './Economy';
 import { Energy, Gem } from './GameIcons';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
-import { IconArrowLeft, IconArrowRight, IconBolt, IconCheck, IconFlame, IconHeadphones, IconKeys, IconMoon, IconPause, IconPlay, IconRestart, IconStar, IconTarget } from './Icons';
+import { IconArrowLeft, IconArrowRight, IconBolt, IconCheck, IconFlame, IconHeadphones, IconMoon, IconPause, IconPlay, IconRestart, IconStar, IconTarget } from './Icons';
 import { Keyboard } from './Keyboard';
 import { LessonStaff } from './LessonStaff';
 import type { Section } from './SongScreen';
@@ -138,7 +138,7 @@ interface RunProps extends Props {
   onGo: (i: number) => void;
 }
 
-function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onSettings, onRecorded, onPrev, onNext, onAgain, energyMode, onPremium, session, onPace, onPerfect, onStruggle, onGo }: RunProps) {
+function LessonRun({ info, section, step, index, settings, update, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onRecorded, onPrev, onNext, onAgain, energyMode, onPremium, session, onPace, onPerfect, onStruggle, onGo }: RunProps) {
   const song = info.song!;
   // The coach sets this step's speed, how soon help comes and how many finger numbers show.
   // A Mastery step comes with its own speed: the planner climbs the tempo ladder itself.
@@ -153,11 +153,8 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   // Mastery: how the last run went (a tick, or again), and a line when a smaller stretch comes first.
   const [rep, setRep] = useState<{ pass: boolean; line?: string; n: number } | null>(null);
   // Energy: a path step needs 1 to start. Notes right in a row earn it back, 1 for every 10.
-  const econ = useEconomy();
   const [noEnergy, setNoEnergy] = useState(() => energyMode === 'spend' && energy() < 1);
   const [combo, setCombo] = useState(0);
-  const [bonus, setBonus] = useState(0);
-  const [bonusOn, setBonusOn] = useState(false);
   const comboRef = useRef(0);
   const heard = useRef(false);
   const [say, setSay] = useState<{ text: string; wrong?: string }>({ text: intro(step) });
@@ -220,9 +217,6 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         setCombo(comboRef.current);
         if (e.ok && comboRef.current % STREAK_FOR_ENERGY === 0) {
           if (energyMode) gainEnergy(1);
-          setBonus(b => b + 1);
-          window.setTimeout(() => setBonusOn(false), 1300);
-          setBonusOn(true);
         }
       }
       if (e.type === 'end') {
@@ -344,7 +338,6 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const pause = () => { engine.pause(); setPaused(true); bump(); };
   const resume = () => { unlockAudio(); setPaused(false); engine.play(1); bump(); };
   const listenFirst = () => { unlockAudio(); setPaused(false); setListen(true); engine.setOptions({ listen: true }); engine.restart(); engine.play(1); };
-  const inputOn = settings.input !== 'none' && links[settings.input as Source]?.status === 'on';
   const next = result && result.stars >= minStars ? (onNext ? { label: `Next: ${stepLabel(section.steps[index + 1])}`, go: onNext } : onNextSection ? { label: nextLabel, go: onNextSection } : null)
     : result && onStop && !onNext ? { label: stopLabel, go: onStop } : null;
 
@@ -354,26 +347,10 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
     <div className={`lesson simply view-${settings.view}`}>
       <header className="lesson-bar">
         <motion.button className="lesson-pause" whileTap={{ scale: 0.9 }} onClick={engine.playing ? pause : () => setPaused(true)} aria-label="Pause"><IconPause size={24} /></motion.button>
-        {/* The instruction is for screen readers; the music says what to play. */}
+        {/* Like Simply Piano the bar holds only pause and the step count: the music says what to
+            play, and the instruction is for screen readers. The piano connection lives in Settings. */}
         <div className="lesson-say" role="status" aria-live="polite">
-          <p className="sr-only">{say.wrong ? `${say.wrong}. ${say.text}` : say.text}</p>
-          <span className="lesson-step">{stepLabel(step)}</span>
-        </div>
-        <div className="lesson-econ">
-          <AnimatePresence>
-            {combo >= 3 && (
-              <motion.span className={`combo ${combo >= 10 ? 'hot' : ''}`} aria-label={`${combo} right in a row`} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={SPRING}>
-                <IconFlame size={14} /><Bump value={combo} />
-              </motion.span>
-            )}
-          </AnimatePresence>
-          {energyMode && (
-            <span className="lesson-energy" aria-label={econ.premium ? 'Unlimited energy' : `${econ.energy} energy`}>
-              <Energy size={18} />{econ.premium ? '∞' : <Bump value={econ.energy} />}
-              <AnimatePresence>{bonusOn && <motion.b className="energy-plus" key={bonus} initial={{ y: 8, opacity: 0, scale: 0.6 }} animate={{ y: -6, opacity: 1, scale: 1 }} exit={{ y: -18, opacity: 0 }} transition={SPRING}>+1</motion.b>}</AnimatePresence>
-            </span>
-          )}
-          {!inputOn && <button className="piano-chip" onClick={onSettings} aria-label="Connect your piano"><IconKeys size={20} /><i /></button>}
+          <p className="sr-only">{stepLabel(step)}. {say.wrong ? `${say.wrong}. ${say.text}` : say.text}</p>
         </div>
         <div className="lesson-nav">
           <button className="lesson-arrow" onClick={onPrev} disabled={!onPrev} aria-label="Previous step"><IconArrowLeft size={20} /></button>
