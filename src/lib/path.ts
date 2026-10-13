@@ -11,7 +11,7 @@
 import { useEffect, useState } from 'react';
 import type { SongInfo } from './catalog';
 import { getCourseProgress, recordStep, type CourseProgress, type CourseStep } from './course';
-import { ALL_NODES, nodesOf, sectionOf, UNITS, type NodeHands, type PathNode, type Unit } from './curriculum';
+import { addExtra, allNodes, extraCount, MAX_EXTRAS, nodesOf, sectionOf, SECTIONS, unitSkills, UNITS, type NodeHands, type PathNode, type Unit } from './curriculum';
 import { chestOpened } from './energy';
 import { EXERCISE_TITLE, LEVEL_NAME, levelFor, makeExercise } from './exercises';
 import { dueSkills, loadProfile, SKILLS, weakest, type SkillId } from './skills';
@@ -106,6 +106,8 @@ export function levelOf(n: PathNode, prog: CourseProgress = {}): number {
 /** The skill a practice node goes after: the weakest of its skills, or of everything he plays. */
 function practiceSkill(n: PathNode): SkillId {
   const p = loadProfile();
+  // Extra practice stays on its unit's skills.
+  if (n.focus && n.skills?.length) return [...n.skills].sort((a, b) => p[a].m - p[b].m)[0];
   const pool = [...(n.skills ?? ['treble']), ...weakest(p).slice(0, 1)].filter(id => p[id].n >= 4);
   return pool.sort((a, b) => p[a].m - p[b].m)[0] ?? n.skills?.[0] ?? 'treble';
 }
@@ -139,6 +141,8 @@ export interface NodeState {
   passed: number;
   /** Skipped by a test. */
   tested?: boolean;
+  /** A practice lesson he did not need: the unit's skills were already sure. */
+  breezed?: boolean;
 }
 export type PathState = Record<string, NodeState>;
 
@@ -161,31 +165,80 @@ export function markPlacementTaken() {
   pathChanged();
 }
 
+// ---------- The adaptive course: each unit asks for its skills to be sure, not for a lesson count ----------
+
+/** How sure a unit's skills must be before its test, rising section by section. */
+const GOAL = [0.55, 0.6, 0.65, 0.7];
+const goalOf = (u: Unit) => GOAL[Math.min(GOAL.length - 1, SECTIONS.indexOf(sectionOf(u)))];
+
+/** Every skill the unit teaches has enough evidence and is at the goal. */
+export function unitReady(u: Unit, p = loadProfile()) {
+  const g = goalOf(u);
+  return unitSkills(u).every(id => p[id].n >= 6 && p[id].m >= g);
+}
+/** Comfortably past the goal: the unit's practice lessons can be let go. */
+function unitStrong(u: Unit, p = loadProfile()) {
+  const g = goalOf(u) + 0.08;
+  return unitSkills(u).every(id => p[id].n >= 12 && p[id].m >= g);
+}
+
+const BREEZED = 'hugos-piano:breezed';
+function readBreezed(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(BREEZED) ?? '[]')); } catch { return new Set(); }
+}
+
+/** First tries at free play, newest last: mostly perfect means he learns fast. */
+const PACE = 'hugos-piano:pace';
+export function recordPace(perfect: boolean) {
+  let xs: boolean[] = [];
+  try { xs = JSON.parse(localStorage.getItem(PACE) ?? '[]'); } catch { /* none yet */ }
+  xs = [...xs, perfect].slice(-10);
+  try { localStorage.setItem(PACE, JSON.stringify(xs)); } catch { /* storage unavailable */ }
+}
+export function fastLearner() {
+  let xs: boolean[] = [];
+  try { xs = JSON.parse(localStorage.getItem(PACE) ?? '[]'); } catch { return false; }
+  return xs.length >= 3 && xs.filter(Boolean).length / xs.length >= 0.6;
+}
+
 const listeners = new Set<() => void>();
 export const pathChanged = () => listeners.forEach(fn => fn());
 
 export async function loadPath(): Promise<{ state: PathState; progs: Record<string, CourseProgress> }> {
   const progs: Record<string, CourseProgress> = {};
-  await Promise.all(ALL_NODES.map(async ({ node }) => { progs[node.id] = await getCourseProgress(`path:${node.id}`); }));
+  await Promise.all(allNodes().map(async ({ node }) => { progs[node.id] = await getCourseProgress(`path:${node.id}`); }));
   const placed = new Set(placedUnits());
+  const profile = loadProfile();
+  const breezed = readBreezed();
+  const breezedBefore = breezed.size;
   const state: PathState = {};
   let prevDone = true, foundCurrent = false;
-  for (const { node, unit } of ALL_NODES) {
+  for (const { node, unit } of allNodes()) {
     const prog = progs[node.id];
     const n = planFor(node).length;
     const got = Object.values(prog).filter(r => r.stars > 0);
     const isPlaced = placed.has(unit.id);
+    const open = prevDone || isPlaced;
     let done: boolean;
     if (node.kind === 'chest') done = chestOpened(node.id);
     else if (node.kind === 'trophy') done = (prog.test?.stars ?? 0) >= 2 || isPlaced;
     else done = got.length >= n || isPlaced;
-    const open = prevDone || isPlaced;
+    // A practice lesson he does not need: the unit's skills are already well past its goal.
+    const breeze = node.kind === 'practice' && !node.focus && !done && (breezed.has(node.id) || (open && unitStrong(unit, profile)));
+    if (breeze) { done = true; breezed.add(node.id); }
     const stars = got.length >= n && got.length ? Math.min(...got.map(r => r.stars)) : 0;
     const current = !foundCurrent && open && !done && node.kind !== 'chest';
     if (current) foundCurrent = true;
-    state[node.id] = { done, open, current, stars, steps: n, passed: got.length, tested: isPlaced && got.length < n };
+    state[node.id] = { done, open, current, stars, steps: n, passed: got.length, tested: isPlaced && got.length < n, breezed: breeze };
     // Chests never block the way.
     if (node.kind !== 'chest') prevDone = done;
+  }
+  if (breezed.size !== breezedBefore) try { localStorage.setItem(BREEZED, JSON.stringify([...breezed])); } catch { /* storage unavailable */ }
+  // At a unit's test with its skills not sure yet: one more lesson made from how he plays them.
+  const cur = allNodes().find(({ node }) => state[node.id]?.current);
+  if (cur?.node.kind === 'trophy' && !placed.has(cur.unit.id) && extraCount(cur.unit) < MAX_EXTRAS && !unitReady(cur.unit, profile)) {
+    addExtra(cur.unit);
+    return loadPath();
   }
   return { state, progs };
 }
@@ -204,7 +257,7 @@ export function usePath() {
 
 /** The node to play next on the path. */
 export function currentNode(state: PathState): { node: PathNode; unit: Unit } | undefined {
-  return ALL_NODES.find(({ node }) => state[node.id]?.current);
+  return allNodes().find(({ node }) => state[node.id]?.current);
 }
 
 /** Where a unit sits: "Section 2, Unit 7". */
@@ -230,7 +283,7 @@ export function dailySession(state: PathState, progs: Record<string, CourseProgr
     weak[0] ? `Your weakest skill right now: ${name(first)} (${LEVEL_NAME[lv]})` : 'A first look at how you read',
     makeExercise(first, lv, seedOfDay(1)), WARMUP));
   // The next node on the path that has music to play.
-  const next = ALL_NODES.find(({ node }) => state[node.id]?.open && !state[node.id]?.done && node.kind !== 'theory' && node.kind !== 'chest' && node.kind !== 'trophy');
+  const next = allNodes().find(({ node }) => state[node.id]?.open && !state[node.id]?.done && node.kind !== 'theory' && node.kind !== 'chest' && node.kind !== 'trophy');
   const lesson = next && nodePlayable(next.node, progs[next.node.id]);
   if (next && lesson) out.push({ ...lesson, why: `Next on your path: ${next.node.sub}` });
   // The review is spaced: a skill whose gap has run out, else the next weakest.

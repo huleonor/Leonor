@@ -4,8 +4,10 @@ import { loadPiano, unlockAudio } from '../lib/audio';
 import { coachRun, settingsFor } from '../lib/adapt';
 import { recordStep, starsFor, type CourseStep } from '../lib/course';
 import { listenForSkills } from '../lib/skills';
+import { fastLearner, recordPace } from '../lib/path';
 import type { SongInfo } from '../lib/catalog';
 import { Engine } from '../lib/engine';
+import type { MasteryVerdict } from '../lib/mastery';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
 import { pickRange } from '../lib/keys';
 import { formatSpeed, noteName } from '../lib/names';
@@ -22,7 +24,7 @@ import { EnergySheet } from './Economy';
 import { Energy, Gem } from './GameIcons';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
-import { IconArrowLeft, IconArrowRight, IconBolt, IconCheck, IconFlame, IconHeadphones, IconKeys, IconPause, IconPlay, IconRestart, IconStar } from './Icons';
+import { IconArrowLeft, IconArrowRight, IconBolt, IconCheck, IconFlame, IconHeadphones, IconKeys, IconMoon, IconPause, IconPlay, IconRestart, IconStar, IconTarget } from './Icons';
 import { Keyboard } from './Keyboard';
 import { LessonStaff } from './LessonStaff';
 import type { Section } from './SongScreen';
@@ -36,7 +38,7 @@ function stepLabel(s: CourseStep) {
 }
 
 function intro(s: CourseStep): string {
-  if (!s.wait) return 'With the beat: keep going through mistakes';
+  if (!s.wait) return 'With the beat: a slip takes you back a bar';
   if (s.id.endsWith('x')) return 'The tricky bit once more, slowly';
   return s.hands === 'R' ? 'Right hand: the music waits for you' : s.hands === 'L' ? 'Left hand: the music waits for you' : 'Both hands: the music waits for you';
 }
@@ -61,16 +63,42 @@ interface Props {
   onRecorded: () => void;
   /** Path lessons spend energy (1 a step); practice earns it (+2 a piece). */
   energyMode?: 'spend' | 'earn';
+  /**
+   * Path lessons adapt: a perfect free-play run passes the free-play steps it proves and goes on
+   * to the beat, and a fast learner starts with both hands (back to one at a time if that is hard).
+   */
+  adaptive?: boolean;
+  /** Mastery: follows each run note by note and plans the next lesson from it. */
+  track?: (engine: Engine) => { stop: () => void; finish: () => MasteryVerdict };
   onPremium?: () => void;
 }
 
 /** Teach me: one section, step by step (right hand, left hand, together, in tempo), Simply Piano style. */
 export function Lesson(props: Props) {
-  const { section, startAt } = props;
-  const [index, setIndex] = useState(() => Math.max(0, section.steps.findIndex(s => s.id === startAt)));
+  const { section, startAt, adaptive, info } = props;
+  const steps = section.steps;
+  const stars = (id: string) => info.prog[id]?.stars ?? 0;
+  // A fast learner new to this lesson starts with both hands together.
+  const [fast] = useState(() => {
+    if (!adaptive || startAt || steps.some(s => stars(s.id) > 0) || !fastLearner()) return -1;
+    const b = steps.findIndex(s => s.wait && !s.listen && s.hands === 'both');
+    return b > 0 ? b : -1;
+  });
+  const [index, setIndex] = useState(() => (fast >= 0 ? fast : Math.max(0, steps.findIndex(s => s.id === startAt))));
   const [run, setRun] = useState(0);
-  const step = section.steps[index];
-  const go = (i: number) => { setIndex(Math.max(0, Math.min(section.steps.length - 1, i))); setRun(r => r + 1); };
+  const tried = useRef(new Set<string>());
+  const step = steps[index];
+  const go = (i: number) => { setIndex(Math.max(0, Math.min(steps.length - 1, i))); setRun(r => r + 1); };
+  // What a perfect free-play run proves: the other free-play steps on the same hands (both hands
+  // prove each hand alone). Those pass with it, and the lesson goes on to the next thing it has not.
+  const proves = (k: number) => steps.filter((st, j) => j !== k && st.wait && (steps[k].hands === 'both' || st.hands === steps[k].hands));
+  const leap = (k: number) => {
+    const ids = new Set(proves(k).map(st => st.id));
+    const j = steps.findIndex((st, i) => i > k && !ids.has(st.id));
+    return ids.size && j > k ? { j, ids } : null;
+  };
+  const target = adaptive && step.wait ? leap(index) : null;
+  const firstTry = !tried.current.has(step.id);
   return (
     <LessonRun
       key={`${step.id}-${run}`}
@@ -78,8 +106,15 @@ export function Lesson(props: Props) {
       step={step}
       index={index}
       onPrev={index > 0 ? () => go(index - 1) : undefined}
-      onNext={index < section.steps.length - 1 ? () => go(index + 1) : undefined}
+      onNext={index < steps.length - 1 ? () => go(index + 1) : undefined}
       onAgain={() => setRun(r => r + 1)}
+      onPace={adaptive && step.wait ? perfect => { if (firstTry) recordPace(perfect); tried.current.add(step.id); } : undefined}
+      onPerfect={target ? async acc => {
+        for (const st of steps) if (target.ids.has(st.id) && stars(st.id) === 0) await recordStep(info.song!.entry.id, st.id, acc);
+        props.onRecorded();
+        go(target.j);
+      } : undefined}
+      onStruggle={fast >= 0 && index === fast ? () => go(0) : undefined}
     />
   );
 }
@@ -90,17 +125,26 @@ interface RunProps extends Props {
   onPrev?: () => void;
   onNext?: () => void;
   onAgain: () => void;
+  /** A free-play run ended: perfect or not (for how fast he learns). */
+  onPace?: (perfect: boolean) => void;
+  /** A perfect free-play run: pass what it proves and move on. */
+  onPerfect?: (accuracy: number) => void;
+  /** Both hands first did not go well: back to one hand at a time. */
+  onStruggle?: () => void;
 }
 
-function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onSettings, onRecorded, onPrev, onNext, onAgain, energyMode, onPremium }: RunProps) {
+function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onSettings, onRecorded, onPrev, onNext, onAgain, energyMode, onPremium, track, onPace, onPerfect, onStruggle }: RunProps) {
   const song = info.song!;
   // The coach sets this step's speed, how soon help comes and how many finger numbers show.
-  const coach = useMemo(() => settingsFor(step.speed, step.wait), [step.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  const fingers: FingerMode = settings.fingers === 'off' ? 'off' : settings.fingers === 'some' && coach.fingers === 'all' ? 'some' : coach.fingers;
+  // A Mastery step comes with its own speed: the planner climbs the tempo ladder itself.
+  const coach = useMemo(() => { const c = settingsFor(step.speed, step.wait); return step.exact ? { ...c, speed: step.speed } : c; }, [step.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const fingers: FingerMode = settings.fingers === 'off' ? 'off' : step.fingers === 'all' ? 'all' : settings.fingers === 'some' && coach.fingers === 'all' ? 'some' : coach.fingers;
   const [speed, setSpeed] = useState(coach.speed);
   const [listen, setListen] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; stars: number; xp: number; gems: number; energy: number; streakUp?: number } | null>(null);
+  const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; strays: number; stars: number; xp: number; gems: number; energy: number; streakUp?: number; verdict?: MasteryVerdict } | null>(null);
+  // With the beat, a slip sends him back: say where from, briefly.
+  const [slip, setSlip] = useState<{ from: number; n: number } | null>(null);
   // Energy: a path step needs 1 to start. Notes right in a row earn it back, 1 for every 10.
   const econ = useEconomy();
   const [noEnergy, setNoEnergy] = useState(() => energyMode === 'spend' && energy() < 1);
@@ -120,7 +164,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
 
   const engine = useMemo(() => new Engine(song, {
     // Free play: the cursor jumps to the next notes and waits there, no bars to sit through.
-    speed: coach.speed, wait: false, follow: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter,
+    speed: coach.speed, wait: false, follow: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter, fixSlips: !step.wait,
     accompaniment: settings.accompaniment, lenient: settings.input === 'mic',
   }), [song, step.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // (Keyed by id: refreshed progress hands down new step objects for the same step.)
@@ -147,8 +191,16 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   useEffect(() => {
     // Every chord he plays teaches the app about his skills; a whole run also tunes the coach.
     let skills = listenForSkills(engine);
+    let tracker = track?.(engine);
+    let slipTimer = 0;
     const off = engine.on(e => {
       if (e.type === 'state' || e.type === 'status') bump();
+      if (e.type === 'rewind') {
+        comboRef.current = 0; setCombo(0);
+        setSlip(sl => ({ from: e.from, n: (sl?.n ?? 0) + 1 }));
+        window.clearTimeout(slipTimer);
+        slipTimer = window.setTimeout(() => setSlip(null), 1800);
+      }
       if (e.type === 'press') {
         if (e.ok && e.id === undefined) return;
         comboRef.current = e.ok ? comboRef.current + 1 : 0;
@@ -162,7 +214,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
       }
       if (e.type === 'end') {
         if (engine.opts.listen) {
-          setListen(false); engine.setOptions({ listen: false }); engine.restart(); engine.started = false; skills.stop(); skills = listenForSkills(engine); bump();
+          setListen(false); engine.setOptions({ listen: false }); engine.restart(); engine.started = false; skills.stop(); skills = listenForSkills(engine); tracker?.stop(); tracker = track?.(engine); bump();
           // Heard it: now his turn.
           if (step.wait) window.setTimeout(() => { if (!engine.started) { engine.toFirstNote(); engine.play(0); bump(); } }, 900);
           return;
@@ -170,10 +222,20 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         const run = skills.stop();
         // The coach quietly tunes the next steps; the learner just keeps going.
         coachRun(run, !step.wait);
+        const verdict = tracker?.finish();
+        tracker = undefined;
+        setSlip(null);
         const s = engine.stats();
         const stars = starsFor(s.accuracy);
         const before = streak();
         const quick = step.wait && !!onNext;
+        const perfect = step.wait && s.wrong === 0 && s.accuracy >= 0.999;
+        onPace?.(perfect);
+        if (quick && onStruggle && s.accuracy < 0.85) {
+          setFlash({ text: 'One hand at a time first', good: false });
+          window.setTimeout(onStruggle, 1300);
+          return;
+        }
         if (quick && stars === 0) {
           setFlash({ text: 'Let’s try that again', good: false });
           window.setTimeout(onAgain, 1300);
@@ -191,17 +253,22 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
           if (earned) gainEnergy(earned);
           const after = streak();
           onRecorded();
+          if (quick && perfect && onPerfect) {
+            setFlash({ text: 'Perfect! On to the beat', good: true, xp, gems });
+            window.setTimeout(() => onPerfect(s.accuracy), 1100);
+            return;
+          }
           if (quick) {
             setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true, xp, gems });
             window.setTimeout(onNext!, 1100);
             return;
           }
-          setResult({ ...s, stars, xp, gems, energy: earned, streakUp: !before.today && after.today ? after.days : undefined });
+          setResult({ ...s, stars, xp, gems, energy: earned, streakUp: !before.today && after.today ? after.days : undefined, verdict });
         });
       }
     });
     const offNote = onNote(e => engine.input(e));
-    return () => { off(); offNote(); skills.stop(); engine.destroy(); };
+    return () => { off(); offNote(); skills.stop(); tracker?.stop(); window.clearTimeout(slipTimer); engine.destroy(); };
   }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The instruction line says what to play now, and what he played instead.
@@ -294,6 +361,11 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         <Countdown engine={engine} />
         <Cheer combo={combo} />
         <AnimatePresence>
+          {slip && !listen && (
+            <motion.p className="lesson-listening slip" role="status" key={`slip-${slip.n}`} initial={{ y: -10, opacity: 0, scale: 0.8 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: -10, opacity: 0 }} transition={SPRING}>
+              <IconRestart size={18} />From bar {slip.from} again
+            </motion.p>
+          )}
           {listen && (
             <motion.p className="lesson-listening" role="status" initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} transition={SPRING}>
               <IconHeadphones size={18} />Listen first
@@ -361,8 +433,19 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
               <motion.span key={i} className={`big-star ${i < result.stars ? 'won' : ''}`} initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ ...SPRING, delay: 0.12 + i * 0.16 }}><IconStar size={56} /></motion.span>
             ))}
           </div>
-          <h1 id="lesson-result-title">{HEADLINE[result.stars]}</h1>
-          <p className="sub">{result.hit} of {result.total} notes right first time, {result.wrong} wrong</p>
+          {/* "Perfect" only when not a single note went wrong. */}
+          <h1 id="lesson-result-title">{HEADLINE[result.stars === 3 && result.wrong > 0 ? 2 : result.stars]}</h1>
+          <p className="sub">{result.hit} of {result.total} notes right first time, {result.wrong} wrong{result.strays > 0 ? `, ${result.strays} accidental ${result.strays === 1 ? 'touch' : 'touches'} not counted` : ''}</p>
+          {result.verdict && (
+            <motion.div className="mastery-gain" initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...SPRING, delay: 0.4 }}>
+              <span className="mastery-gain-head"><IconTarget size={18} />Mastery<b><CountUp from={Math.floor(result.verdict.before * 100)} to={Math.floor(result.verdict.after * 100)} ms={1100} />%</b></span>
+              <span className="mastery-track" role="progressbar" aria-label="Mastery" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.floor(result.verdict.after * 100)}>
+                <motion.i initial={{ width: `${Math.max(2, result.verdict.before * 100)}%` }} animate={{ width: `${Math.max(2, result.verdict.after * 100)}%` }} transition={{ ...SOFT, delay: 0.7 }} />
+              </span>
+              <p>{result.verdict.line}</p>
+            </motion.div>
+          )}
+          {result.verdict?.rest && <p className="rest-note"><IconMoon size={18} />{result.verdict.rest}</p>}
           <div className="theory-rewards">
             {[
               ['xp', 'Total XP', <><IconBolt size={20} />+<CountUp to={result.xp} /></>],
@@ -375,12 +458,21 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
             ))}
           </div>
           {result.streakUp !== undefined && <p className="streak-up"><IconFlame size={18} />{result.streakUp === 1 ? 'Streak started' : `${result.streakUp}-day streak`}</p>}
-          {result.stars === 0 && <p className="fine">You need 70% for a star. {step.wait ? 'Take it one note at a time.' : 'Try it slower: pause and pick a speed.'}</p>}
-          <div className="lesson-done-actions">
-            {next && <button className="btn go big" onClick={next.go}>{next.label}</button>}
-            <button className={`btn ${next ? '' : 'go big'}`} onClick={onAgain}><IconRestart size={18} />Try again</button>
-            <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
-          </div>
+          {result.stars === 0 && !result.verdict && <p className="fine">You need 70% for a star. {step.wait ? 'Take it one note at a time.' : 'Try it slower: pause and pick a speed.'}</p>}
+          {result.verdict ? (
+            // Mastery: the plan moves on by itself; when he has levelled off, stopping comes first.
+            <div className="lesson-done-actions">
+              {result.verdict.rest && <button className="btn go big" onClick={onExit}>Done for today</button>}
+              {next && <button className={`btn ${result.verdict.rest ? '' : 'go big'}`} onClick={next.go}>{result.verdict.rest ? 'Keep going' : 'Next lesson'}</button>}
+              {!result.verdict.rest && <button className="btn quiet" onClick={onExit}>{exitLabel}</button>}
+            </div>
+          ) : (
+            <div className="lesson-done-actions">
+              {next && <button className="btn go big" onClick={next.go}>{next.label}</button>}
+              <button className={`btn ${next ? '' : 'go big'}`} onClick={onAgain}><IconRestart size={18} />Try again</button>
+              <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
+            </div>
+          )}
         </div>
       )}
     </div>

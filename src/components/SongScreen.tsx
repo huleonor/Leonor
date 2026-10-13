@@ -6,6 +6,7 @@ import { partLearnt, type CourseStep } from '../lib/course';
 import { Engine } from '../lib/engine';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
 import { recordRun } from '../lib/library';
+import { useMastery } from '../lib/mastery';
 import { listenForSkills } from '../lib/skills';
 import { addPractice } from '../lib/stats';
 import { formatSpeed } from '../lib/names';
@@ -14,7 +15,7 @@ import type { HandsChoice, Settings } from '../lib/types';
 import { AnimatePresence, motion } from 'motion/react';
 import { HelpKeys } from './HelpKeys';
 import {
-  IconCap, IconCheck, IconClose, IconFlame, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconStop,
+  IconCap, IconCheck, IconClose, IconFlame, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconStop, IconTarget,
 } from './Icons';
 import { Bump, Cheer, ProgressBar, SOFT, SPRING } from './Motion';
 import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
@@ -54,6 +55,8 @@ interface Props {
   links: Record<Source, LinkState>;
   onExit: () => void;
   onTeach: (section: Section) => void;
+  /** Starts the next lesson Mastery planned. */
+  onMastery: () => void;
   onSettings: () => void;
 }
 
@@ -62,13 +65,16 @@ interface Props {
  * The music waits for him (or runs in tempo); the keyboard only rises when he needs help; the
  * other choices live in a small options sheet; "Learn step by step" opens the song's sections.
  */
-export function SongScreen({ info, settings, links, onExit, onTeach, onSettings }: Props) {
+export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, onSettings }: Props) {
   const song = info.song!;
   const [mode, setMode] = useState<Mode>('play');
   const [scroll, setScroll] = useState<Scroll>('magic');
   const [feedback, setFeedback] = useState(true);
   const [speed, setSpeed] = useState(0.8);
   const [teach, setTeach] = useState(false);
+  const [masterySheet, setMasterySheet] = useState(false);
+  const mastery = useMastery(song)!;
+  const pct = Math.floor(mastery.meter.value * 100);
   const [options, setOptions] = useState(false);
   const [alwaysKeys, setAlwaysKeys] = useState(() => { try { return localStorage.getItem('hugos-piano:keys') === 'always'; } catch { return false; } });
   const toggleKeys = () => setAlwaysKeys(a => { try { localStorage.setItem('hugos-piano:keys', a ? 'help' : 'always'); } catch { /* ignore */ } return !a; });
@@ -212,7 +218,11 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
         {tempoMode && !result && (
           <motion.button className="btn go" whileTap={{ scale: 0.96 }} onClick={startTempo}>{engine.playing ? <><IconStop size={16} />Stop</> : <><IconPlay size={16} />{engine.started ? 'Go on' : 'Start'}</>}</motion.button>
         )}
-        <motion.button className="btn go big" whileTap={{ scale: 0.96 }} onClick={() => setTeach(true)}><IconCap size={18} />Learn step by step</motion.button>
+        <motion.button className="btn" whileTap={{ scale: 0.96 }} onClick={() => setTeach(true)}><IconCap size={18} />Learn step by step</motion.button>
+        <motion.button className="btn big mastery-btn" whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMasterySheet(true); }} aria-label={`Mastery, ${pct}%`}>
+          <motion.span className="mastery-fill" initial={false} animate={{ width: `${pct}%` }} transition={SOFT} />
+          <IconTarget size={18} />Mastery<b>{pct}%</b>
+        </motion.button>
       </footer>
 
       <AnimatePresence>
@@ -233,6 +243,33 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onSettings 
                 {!atStart && <button className="btn" onClick={() => { restart(); setOptions(false); }}><IconRestart size={16} />From the start</button>}
                 <button className="btn go" onClick={() => setOptions(false)}>Done</button>
               </div>
+            </motion.section>
+          </motion.div>
+        )}
+        {masterySheet && (
+          <motion.div className="veil sheet-veil" onClick={() => setMasterySheet(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.section className="card mastery-sheet" role="dialog" aria-modal="true" aria-labelledby="mastery-title" onClick={e => e.stopPropagation()} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={SOFT}>
+              <div className="mastery-head">
+                <h2 id="mastery-title">Mastery</h2>
+                <b className="mastery-pct"><Bump value={pct} />%</b>
+              </div>
+              <span className="mastery-track big" role="progressbar" aria-label="Mastery" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+                <motion.i initial={{ width: 0 }} animate={{ width: `${Math.max(2, pct)}%` }} transition={SOFT} />
+              </span>
+              <ol className="mastery-parts" aria-label="The parts of the song">
+                {mastery.meter.parts.map(p => (
+                  <li key={p.n} className={p.value >= 0.999 ? 'done' : ''} style={{ flexGrow: p.weight }} aria-label={`Part ${p.n}, bars ${p.from}-${p.to}: ${Math.floor(p.value * 100)}%`}>
+                    <motion.i initial={{ width: 0 }} animate={{ width: `${p.value * 100}%` }} transition={SOFT} />
+                  </li>
+                ))}
+              </ol>
+              <div className="mastery-next">
+                <small>Next lesson</small>
+                <b>{mastery.next.title}</b>
+                {mastery.next.why && <p>{mastery.next.why}</p>}
+              </div>
+              <button className="btn go big" onClick={() => { setMasterySheet(false); onMastery(); }}><IconPlay size={18} />Start</button>
+              <p className="fine">100% is the whole song with the beat at full speed, 95% right, on two different days.</p>
             </motion.section>
           </motion.div>
         )}

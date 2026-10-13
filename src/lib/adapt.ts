@@ -1,7 +1,8 @@
 /**
  * The difficulty coach: keeps every lesson in his zone of ideal effort, never so easy it bores
- * him, never so hard it frustrates him. Learning is fastest at roughly 85% success (Wilson et al.,
- * 2019), so the coach aims for 75–92% of chords right first time.
+ * him, never so hard it frustrates him. At the piano every wrong note is a repetition of the wrong
+ * movement, so the coach keeps him accurate: it aims for 88-97% of notes right, and eases off as
+ * soon as he drops below that.
  *
  * It turns three knobs, one step at a time and only after two runs agree (hysteresis), so the
  * difficulty never jumps about:
@@ -56,8 +57,8 @@ export function settingsFor(baseSpeed: number, wait: boolean, s = loadCoach()) {
 export function zone(r: RunSummary): 'easy' | 'good' | 'hard' {
   if (r.groups < 4) return 'good';
   const firstTime = r.clean / r.groups;
-  if (r.accuracy < 0.75 || firstTime < 0.6 || r.hesitation > 3) return 'hard';
-  if (r.accuracy >= 0.92 && firstTime >= 0.85 && r.hesitation < 1.2) return 'easy';
+  if (r.accuracy < 0.88 || firstTime < 0.75 || r.hesitation > 3) return 'hard';
+  if (r.accuracy >= 0.97 && firstTime >= 0.92 && r.hesitation < 1.2) return 'easy';
   return 'good';
 }
 

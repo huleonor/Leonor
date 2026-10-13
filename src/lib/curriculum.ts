@@ -78,6 +78,8 @@ export interface PathNode {
   skill?: SkillId;
   /** Practice nodes: the skills to choose the weakest from. */
   skills?: SkillId[];
+  /** Extra practice added to a unit: only its own skills, never the weakest of everything. */
+  focus?: boolean;
   /** Level before adapting, 0–3. */
   base?: number;
   gen?: Gen;
@@ -651,5 +653,27 @@ export const sectionOf = (u: Unit) => SECTIONS.find(s => s.units.includes(u))!;
 
 /** The trophy at the end of every unit is its test. */
 export const trophyOf = (u: Unit): PathNode => ({ id: `${u.id}-test`, kind: 'trophy', title: `${u.title}: unit test`, sub: 'Pass with 2 stars to finish the unit', hands: u.test.hands, skill: u.test.skill, gen: u.test.gen, base: 1 });
-export const nodesOf = (u: Unit): PathNode[] => [...u.nodes, trophyOf(u)];
-export const ALL_NODES: { node: PathNode; unit: Unit }[] = UNITS.flatMap(u => nodesOf(u).map(node => ({ node, unit: u })));
+/** The skills a unit teaches: what its lessons train and what its test checks. */
+export const unitSkills = (u: Unit): SkillId[] => [...new Set([...u.nodes.flatMap(n => (n.skill ? [n.skill] : [])), u.test.skill])];
+
+// ---------- Extra practice: lessons the path adds while a unit's skills are not sure yet ----------
+
+const EXTRAS = 'hugos-piano:extras';
+/** At most this many extra lessons a unit: past them the unit test decides. */
+export const MAX_EXTRAS = 3;
+function readExtras(): Record<string, number> {
+  try { return JSON.parse(localStorage.getItem(EXTRAS) ?? '{}'); } catch { return {}; }
+}
+export const extraCount = (u: Unit) => readExtras()[u.id] ?? 0;
+export function addExtra(u: Unit) {
+  const all = readExtras();
+  all[u.id] = Math.min(MAX_EXTRAS, (all[u.id] ?? 0) + 1);
+  try { localStorage.setItem(EXTRAS, JSON.stringify(all)); } catch { /* storage unavailable */ }
+}
+const extrasOf = (u: Unit): PathNode[] => Array.from({ length: extraCount(u) }, (_, k) => ({
+  id: `${u.id}-extra${k + 1}`, kind: 'practice', title: 'Extra practice', sub: 'Made from how you play', hands: 'R', skills: unitSkills(u), focus: true,
+}));
+
+/** A unit's nodes as the path shows them now: its lessons, any extra practice, then the test. */
+export const nodesOf = (u: Unit): PathNode[] => [...u.nodes, ...extrasOf(u), trophyOf(u)];
+export const allNodes = (): { node: PathNode; unit: Unit }[] => UNITS.flatMap(u => nodesOf(u).map(node => ({ node, unit: u })));
