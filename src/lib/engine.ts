@@ -15,6 +15,8 @@ export interface EngineOptions {
   lenient: boolean;
   /** Score following: no clock, the cursor sits on the next notes until he plays them. */
   follow?: boolean;
+  /** In tempo, a slip (a wrong or missed note) takes him back to beat 1 of the bar before it. */
+  fixSlips?: boolean;
 }
 
 interface Group { time: number; ids: number[]; midis: number[]; }
@@ -28,10 +30,14 @@ export type EngineEvent =
   /** A key went down while playing: right or wrong, and the written note it matched, if known. */
   | { type: 'press'; midi: number; ok: boolean; id?: number }
   /** A note hit in tempo: how early (negative) or late it was, in real seconds. */
-  | { type: 'judge'; offset: number };
+  | { type: 'judge'; offset: number }
+  /** A slip in tempo sent him back: `bar` is where it happened, `from` where he starts again (1-based). */
+  | { type: 'rewind'; bar: number; from: number };
 
 const CHORD_WINDOW = 0.045; // seconds: notes closer than this form one chord
 const LEAD_IN = 2.2; // seconds of song time before the first note
+/** Slips a tempo run takes before it stops: past this the passage is too fast for now. */
+const MAX_REWINDS = 4;
 
 export class Engine {
   readonly song: Song;
@@ -49,6 +55,11 @@ export class Engine {
   gi = 0;
   held = new Set<number>();
   wrong = 0;
+  /** Notes missed in tempo before a rewind replayed them (they still count against the run). */
+  slipped = 0;
+  rewinds = 0;
+  /** The run stopped early: too many slips. */
+  cutShort = false;
   lastWrong = { midi: -1, at: 0 };
   measureTimes: number[] = [];
   /** When the current wait began, and wrong notes played during it (for the hint). */
@@ -134,8 +145,33 @@ export class Engine {
   }
 
   restart() {
-    this.wrong = 0;
+    this.resetCounts();
     this.seek(this.segmentStart());
+  }
+
+  private resetCounts() { this.wrong = 0; this.slipped = 0; this.rewinds = 0; this.cutShort = false; }
+
+  /** The bar (0-based) that holds a moment of the song. */
+  barAt(t: number) {
+    let bar = 0;
+    while (bar + 1 < this.measureTimes.length && this.measureTimes[bar + 1] <= t + 1e-3) bar++;
+    return bar;
+  }
+
+  /**
+   * A slip in tempo: stop and start again from beat 1 of the bar before it, after a short count-in,
+   * so the mistake is never practised. Too many slips end the run: it is too fast for now.
+   */
+  private rewind(at: number, missed = 0) {
+    this.slipped += missed;
+    this.rewinds++;
+    if (this.rewinds > MAX_REWINDS) { this.cutShort = true; this.finish(); return; }
+    const bar = this.barAt(at);
+    const first = this.segment ? this.barAt(this.segment.from) : 0;
+    const back = Math.max(first, bar - 1);
+    this.seek(this.measureTimes[back] - 1e-3);
+    this.countdown = 2;
+    this.emit({ type: 'rewind', bar: bar + 1, from: back + 1 });
   }
 
   /** A little run-up before the segment's first note (the app plays it). */
@@ -153,7 +189,7 @@ export class Engine {
   setSegment(segment: { from: number; to: number } | null, loop = false) {
     this.segment = segment;
     this.segmentLoop = loop;
-    this.wrong = 0;
+    this.resetCounts();
     this.configure();
     this.seek(this.segmentStart());
   }
@@ -260,9 +296,16 @@ export class Engine {
       }
     } else {
       const tol = this.tolerance();
+      let slipAt = -1;
       while (this.gi < this.groups.length && next > this.groups[this.gi].time + tol) {
-        for (const id of this.groups[this.gi].ids) if (this.status[id] === PENDING) { this.status[id] = MISS; changed.push(id); }
+        for (const id of this.groups[this.gi].ids) if (this.status[id] === PENDING) { this.status[id] = MISS; changed.push(id); if (slipAt < 0) slipAt = this.groups[this.gi].time; }
         this.gi++;
+      }
+      if (slipAt >= 0 && this.opts.fixSlips && !this.opts.listen) {
+        // Let listeners see the miss before it is replayed.
+        this.emit({ type: 'status', ids: changed });
+        this.rewind(slipAt, changed.length);
+        return;
       }
     }
     setExpected(this.expected());
@@ -385,7 +428,14 @@ export class Engine {
           if (this.status[id] === PENDING && d <= tol && d < bestDt && this.matches(e.midi, n.midi)) { best = id; bestDt = d; }
         }
       }
-      if (best < 0) { if (!strikeOk) this.registerWrong(e.midi); return undefined; }
+      if (best < 0) {
+        if (!strikeOk) {
+          this.registerWrong(e.midi);
+          // The mic can mishear a key: only a keyboard's wrong note sends him back.
+          if (this.opts.fixSlips && !this.opts.lenient) this.rewind(this.time);
+        }
+        return undefined;
+      }
       this.status[best] = HIT;
       changed.push(best);
       this.emit({ type: 'judge', offset: (t - this.song.notes[best].time) / this.opts.speed });
@@ -402,7 +452,7 @@ export class Engine {
       if (this.status[i] === HIT) hit++;
       else if (this.status[i] === MISS) miss++;
     }
-    const attempts = hit + miss + this.wrong;
+    const attempts = hit + miss + this.wrong + this.slipped;
     return { hit, miss, wrong: this.wrong, total, accuracy: attempts ? hit / attempts : 0 };
   }
 

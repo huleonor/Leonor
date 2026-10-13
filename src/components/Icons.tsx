@@ -5,8 +5,8 @@
 import {
   ArrowCounterClockwise, ArrowLeft, ArrowRight, ArrowsDownUp, Barbell, Bell, Bluetooth, CaretDown, CaretLeft, CaretUp, ChartBar,
   Check, Checks, DotsThree, DownloadSimple, Equalizer, Fire, Gauge, Gear, GraduationCap, HandPalm, Headphones, House, Lightning,
-  Lock, MagicWand, Microphone, MusicNote, MusicNotesSimple, Notepad, Pause, PencilSimple, PianoKeys, Play, Plus, Repeat, Rewind,
-  SignOut, Snowflake, SpeakerHigh, Star, Stop, Trash, X, type Icon as PhIcon, type IconProps,
+  Lock, MagicWand, Microphone, Moon, MusicNote, MusicNotesSimple, Notepad, Pause, PencilSimple, PianoKeys, Play, Plus, Repeat, Rewind,
+  SignOut, Snowflake, SpeakerHigh, Star, Stop, Target, Trash, X, type Icon as PhIcon, type IconProps,
 } from '@phosphor-icons/react';
 
 type P = Omit<IconProps, 'weight'> & { size?: number };
@@ -58,3 +58,5 @@ export const IconLoop = make(Repeat);
 export const IconBolt = make(Lightning, 'fill');
 export const IconSnow = make(Snowflake);
 export const IconBell = make(Bell);
+export const IconTarget = make(Target);
+export const IconMoon = make(Moon, 'fill');

@@ -15,18 +15,18 @@ export function Confetti({ n = 36 }: { n?: number }) {
 }
 
 /** A number that counts up from 0, Duolingo's XP tally. */
-export function CountUp({ to, ms = 700 }: { to: number; ms?: number }) {
-  const [v, setV] = useState(0);
+export function CountUp({ to, from = 0, ms = 700 }: { to: number; from?: number; ms?: number }) {
+  const [v, setV] = useState(from);
   useEffect(() => {
     let raf = 0;
     const t0 = performance.now();
     const step = (t: number) => {
       const k = Math.min(1, (t - t0) / ms);
-      setV(Math.round(to * (1 - Math.pow(1 - k, 3))));
+      setV(Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3))));
       if (k < 1) raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [to, ms]);
+  }, [to, from, ms]);
   return <>{v}</>;
 }

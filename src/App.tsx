@@ -23,6 +23,7 @@ import { finishTheory, markPlacementTaken, nodePlayable, pathChanged, placedUnit
 import type { PathNode, Unit } from './lib/curriculum';
 import type { CourseProgress } from './lib/course';
 import { energy } from './lib/energy';
+import { masteryPlayable, planNext, type MLesson } from './lib/mastery';
 import { connect, disconnectBle, disconnectMic, linkState, onLinkState, onNote, watchForMidi, type LinkState, type Source } from './lib/input';
 import { loadSettings, removeSong, renameSong, saveSettings } from './lib/library';
 import type { Settings, SongEntry } from './lib/types';
@@ -42,6 +43,8 @@ export default function App() {
   // A course lesson, a skill practice, or today's session (several pieces played one after the other).
   const [run, setRun] = useState<{ items: Playable[]; i: number; n: number; session: boolean; test?: boolean; path?: boolean } | null>(null);
   const [theory, setTheory] = useState<{ node: PathNode; unit: Unit } | null>(null);
+  // A song's Mastery: the lesson the planner chose, replanned after every run.
+  const [mastery, setMastery] = useState<{ id: string; n: number; lesson: MLesson } | null>(null);
   const [energySheet, setEnergySheet] = useState<'info' | 'empty' | null>(null);
   const [editing, setEditing] = useState<SongEntry | null>(null);
   const [sheet, setSheet] = useState<'settings' | 'check' | null>(null);
@@ -153,6 +156,8 @@ export default function App() {
   const lessonSections = lessonInfo?.course ? sectionsOf(lessonInfo) : [];
   const lessonSection = lessonSections.find(sc => sc.id === lesson?.section);
   const nextSection = lessonSection && lessonSections[lessonSections.indexOf(lessonSection) + 1];
+  const masteryInfo = mastery ? infos[mastery.id] : undefined;
+  const masteryRun = useMemo(() => (mastery && masteryInfo?.song ? masteryPlayable(masteryInfo, mastery.lesson) : null), [mastery?.id, mastery?.n]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <I18nContext.Provider value={i18n}>
@@ -200,6 +205,17 @@ export default function App() {
           onExit={() => setTheory(null)}
           onDone={() => { finishTheory(theory.node); setTheory(null); }}
         />
+      ) : mastery && masteryRun ? (
+        <Lesson
+          key={`mastery-${mastery.id}-${mastery.n}`}
+          info={masteryRun.info} section={masteryRun.section} track={masteryRun.track}
+          settings={settings} update={update} links={links}
+          minStars={0}
+          onExit={() => setMastery(null)}
+          onNextSection={() => { const s = infos[mastery.id]?.song; if (s) setMastery(m => m && { ...m, n: m.n + 1, lesson: planNext(s) }); }}
+          onRecorded={() => refreshSong(mastery.id)}
+          onSettings={() => setSheet('settings')}
+        />
       ) : lesson && lessonInfo?.song && lessonSection ? (
         <Lesson
           key={`${lesson.id}-${lesson.section}-${lesson.n}`}
@@ -216,6 +232,7 @@ export default function App() {
           info={open} settings={settings} links={links}
           onExit={() => setOpenId(null)}
           onTeach={section => { unlockAudio(); ensureInput(); setLesson({ id: open.entry.id, section: section.id, n: 0 }); }}
+          onMastery={() => { unlockAudio(); ensureInput(); setMastery({ id: open.entry.id, n: 0, lesson: planNext(open.song!) }); }}
           onSettings={() => setSheet('settings')}
         />
       ) : (
