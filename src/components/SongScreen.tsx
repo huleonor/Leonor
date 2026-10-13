@@ -264,9 +264,10 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
                 ))}
               </ol>
               <div className="mastery-next">
-                <small>Next lesson</small>
+                <small>Next</small>
                 <b>{mastery.next.title}</b>
                 {mastery.next.why && <p>{mastery.next.why}</p>}
+                <small className="mastery-count">{mastery.next.lessons.length === 1 ? 'One step' : `${mastery.next.lessons.length} steps`}, one after the other</small>
               </div>
               <button className="btn go big" onClick={() => { setMasterySheet(false); onMastery(); }}><IconPlay size={18} />Start</button>
               <p className="fine">100% is the whole song with the beat at full speed, 95% right, on two different days.</p>

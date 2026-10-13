@@ -45,8 +45,9 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
     const bars = to - from + 1;
     // Big, like Simply Piano: the grand staff (about 125 units from the treble's top line to the
     // bass's bottom line) fills the stage, a few notes to the screen.
-    const scale = Math.max(1, Math.min(3.2, (size.h - 60) / 125, size.w / 300));
+    // Like Simply Piano: about four bars across the screen, as big as the stage's height allows.
     const perBar = Math.max(170, density(song) * 34 + 60);
+    const scale = Math.max(0.9, Math.min(2.4, (size.h - 60) / 125, (size.w * 0.9) / (perBar * 4)));
     const score = buildScore(song, bars, fingers, { from, to, only });
     const eg = engrave(line, paper, engine, score, {
       staffwidth: bars * perBar,

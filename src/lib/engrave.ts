@@ -4,7 +4,13 @@ import type { Engine } from './engine';
 import { AUTO, HIT, MISS } from './types';
 
 /** Colours on the white score. */
-export const INK = { ink: '#1b1640', hit: '#178a48', miss: '#d92d45', other: '#b9b4d8', next: '#0e9fb0' };
+/** The staff's colours, from the tokens in styles.css (the fallbacks match them). */
+export const INK = { ink: '#262626', hit: '#11a097', miss: '#e5484d', other: '#b8b5ab', next: '#2b93ba' };
+function inkColors(): typeof INK {
+  const css = getComputedStyle(document.documentElement);
+  const v = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+  return { ink: v('--note-ink', INK.ink), hit: v('--note-hit', INK.hit), miss: v('--note-miss', INK.miss), other: v('--note-other', INK.other), next: v('--note-next', INK.next) };
+}
 
 /** A place the cursor can stop: one per onset, at the notehead. */
 export interface Stop { time: number; x: number; line: number; ids: number[]; }
@@ -58,6 +64,7 @@ interface Options {
  * to the song's notes, so the engine's state can colour them and drive a cursor.
  */
 export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, score: AbcScore, o: Options): Engraved {
+  const C = inkColors();
   const [tune] = abcjs.renderAbc(paper, score.abc, {
     add_classes: true,
     staffwidth: o.staffwidth,
@@ -67,7 +74,7 @@ export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, s
     paddingright: 8,
     paddingtop: 6,
     paddingbottom: 16,
-    foregroundColor: INK.ink,
+    foregroundColor: C.ink,
     clickListener: el => o.onClickNote?.((el as { startChar?: number }).startChar),
   });
 
@@ -95,13 +102,13 @@ export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, s
   const paint = (tk: AbcToken) => {
     const st = tk.ids.map(id => engine.status[id]);
     const mine = tk.ids.some(id => engine.user[id]) || engine.opts.listen;
-    let color = mine ? INK.ink : INK.other;
+    let color = mine ? C.ink : C.other;
     const reached = !tk.cont || tk.time <= engine.time + 0.01;
     if (reached && o.feedback()) {
-      if (st.some(s => s === MISS)) color = INK.miss;
-      else if (st.every(s => s === HIT || s === AUTO) && mine) color = INK.hit;
+      if (st.some(s => s === MISS)) color = C.miss;
+      else if (st.every(s => s === HIT || s === AUTO) && mine) color = C.hit;
     }
-    if (o.highlightNext?.() && mine && color === INK.ink && engine.groups[engine.gi]?.ids.some(id => tk.ids.includes(id))) color = INK.next;
+    if (o.highlightNext?.() && mine && color === C.ink && engine.groups[engine.gi]?.ids.some(id => tk.ids.includes(id))) color = C.next;
     for (const el of elsOf(tk)) {
       el.style.fill = color;
       el.querySelectorAll?.('path').forEach(p => ((p as SVGElement).style.fill = color));
