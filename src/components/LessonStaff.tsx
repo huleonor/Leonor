@@ -49,7 +49,7 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
     // as the stage's height allows. Engraved once, measured, and engraved again at the size that fits.
     const perBar = Math.max(170, density(song) * 34 + 60);
     const tallest = Math.min(3.4, (size.h - 70) / 125);
-    const score = buildScore(song, bars, fingers, { from, to, only });
+    const score = buildScore(song, bars, fingers, { from, to, only, staffSep: 62 });
     const draw = (sc: number) => engrave(line, paper, engine, score, { staffwidth: bars * perBar, scale: sc, stretch: true, feedback: () => feedbackRef.current });
     let scale = Math.max(0.8, Math.min(tallest, (size.w * 0.9) / (perBar * Math.min(4, bars))));
     let eg = draw(scale);
@@ -82,7 +82,7 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
     const lineTop = parseFloat(line.style.top) || 0;
     const paperBox = paper.getBoundingClientRect();
     const extras: HTMLElement[] = [];
-    const thick = Math.max(1, scale * 0.75);
+    const thick = Math.max(1, scale * 0.5);
     paper.querySelectorAll<SVGGElement>('g.abcjs-staff').forEach(g => {
       const b = g.getBoundingClientRect();
       const ext = document.createElement('div');
@@ -152,6 +152,10 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
       eg.paintTies(engine.time);
       if (engine.hintVisible() !== hint) { hint = !hint; repaintNext(); }
       const c = cursorAt(eg.stops, engine.time);
+      // Free play has no cursor, like Simply Piano: he reads on from the last note he played.
+      // With the beat the now line shows where the music is.
+      const showNow = !engine.opts.follow;
+      if (now.style.opacity !== (showNow ? '' : '0')) now.style.opacity = showNow ? '' : '0';
       if (c && fits) {
         // Still music: the now line and its glow move to the notes.
         const x = c.x + shift;

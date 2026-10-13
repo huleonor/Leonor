@@ -26,7 +26,7 @@ import { useEffect, useReducer } from 'react';
 import { buildCourse, type CourseStep } from './course';
 import type { Engine } from './engine';
 import { dayKey } from './stats';
-import { HIT, MISS, type Hand, type HandsChoice, type Song, type SongNote } from './types';
+import { HIT, MISS, type FingerMode, type Hand, type HandsChoice, type Song, type SongNote } from './types';
 
 /** The tempo ladder, as a share of the written speed. */
 export const RUNGS = [0.6, 0.7, 0.8, 0.9, 1];
@@ -161,7 +161,7 @@ export interface MLesson {
   /** Rung on the tempo ladder (with the beat). */
   rung: number;
   speed: number;
-  fingers?: 'all';
+  fingers?: FingerMode;
   /** Good runs it takes, in a row, before the lesson moves on (the dots under the step count). */
   reps: number;
 }
@@ -260,9 +260,16 @@ const REPS: Record<LessonKind, number> = { hand: 1, together: 3, beat: 3, spot: 
 /** A good run: 90% right, at most one slip. */
 const PASS = 0.9;
 
-function lesson(st: MasteryState, o: { kind: LessonKind; from: number; to: number; hands: HandsChoice; wait: boolean; rung?: number; title: string; reps?: number; fingers?: 'all' }): MLesson {
+/**
+ * Finger numbers fade as he learns, the way a teacher pencils them in and then rubs them out:
+ * every note while he learns the notes, only where the hand moves once he plays with the beat,
+ * none once the part is learnt and he is getting it up to speed or playing the whole song.
+ */
+const FINGERS: Record<LessonKind, FingerMode> = { hand: 'all', together: 'all', spot: 'all', move: 'all', beat: 'some', join: 'some', song: 'off', review: 'off' };
+
+function lesson(st: MasteryState, o: { kind: LessonKind; from: number; to: number; hands: HandsChoice; wait: boolean; rung?: number; title: string; reps?: number; fingers?: FingerMode }): MLesson {
   const rung = o.wait ? 0 : o.rung ?? Math.max(0, st.rung[ladderKey(o.from, o.to, o.hands)] ?? 0);
-  return { why: '', ...o, rung, reps: o.reps ?? REPS[o.kind], chunk: chunkKey(o.from, o.to, o.hands, o.wait, rung), speed: o.wait ? FREE_SPEED : RUNGS[rung] };
+  return { why: '', fingers: FINGERS[o.kind], ...o, rung, reps: o.reps ?? REPS[o.kind], chunk: chunkKey(o.from, o.to, o.hands, o.wait, rung), speed: o.wait ? FREE_SPEED : RUNGS[rung] };
 }
 const withRung = (l: MLesson, rung: number): MLesson => ({ ...l, rung, speed: RUNGS[rung], chunk: chunkKey(l.from, l.to, l.hands, l.wait, rung) });
 
@@ -300,7 +307,7 @@ function partSection(song: Song, m: Model, st: MasteryState, p: Part): MSection 
     if (m.two && !fast) for (const h of m.hands) if (!known(st, f.from, f.to, h, true)) out.push(lesson(st, { kind: 'hand', from: f.from, to: f.to, hands: h, wait: true, title: `${at}, ${handName(h)}` }));
     if (!known(st, f.from, f.to, m.all, true)) out.push(lesson(st, { kind: m.two ? 'together' : 'hand', from: f.from, to: f.to, hands: m.all, wait: true, reps: 3, title: m.two ? `${at}, both hands` : `${at}, free play` }));
   }
-  if (ph.length > 1 && !known(st, p.from, p.to, m.all, true)) out.push(lesson(st, { kind: 'together', from: p.from, to: p.to, hands: m.all, wait: true, reps: 1, title: `${Bars(p.from, p.to)}, free play` }));
+  if (ph.length > 1 && !known(st, p.from, p.to, m.all, true)) out.push(lesson(st, { kind: 'together', from: p.from, to: p.to, hands: m.all, wait: true, reps: 1, fingers: 'some', title: `${Bars(p.from, p.to)}, free play` }));
   // With the beat once the notes are known: at 70%, slower only if it keeps going wrong.
   out.push(lesson(st, { kind: 'beat', from: p.from, to: p.to, hands: m.all, wait: false, rung: 1, title: `${Bars(p.from, p.to)}, with the beat` }));
   return { title: `Part ${p.n}`, why: ph.length > 1 || m.two ? 'Phrase by phrase without the beat, then the part with the metronome.' : 'Notes first, then with the metronome.', lessons: out, done: `Part ${p.n} learnt, with the beat.` };
@@ -365,8 +372,8 @@ export function planSection(song: Song, st = loadMastery(song.entry.id), now = D
   if (slow) {
     const lk = ladderKey(slow.p.from, slow.p.to, m.all);
     const r = Math.min(TOP, Math.max(slow.t + 1, st.rung[lk] ?? 0));
-    const steps = [lesson(st, { kind: 'beat', from: slow.p.from, to: slow.p.to, hands: m.all, wait: false, rung: r, title: `${Bars(slow.p.from, slow.p.to)}, with the beat` })];
-    if (r < TOP) steps.push(lesson(st, { kind: 'beat', from: slow.p.from, to: slow.p.to, hands: m.all, wait: false, rung: r + 1, title: `${Bars(slow.p.from, slow.p.to)}, with the beat` }));
+    const steps = [lesson(st, { kind: 'beat', from: slow.p.from, to: slow.p.to, hands: m.all, wait: false, rung: r, fingers: 'off', title: `${Bars(slow.p.from, slow.p.to)}, with the beat` })];
+    if (r < TOP) steps.push(lesson(st, { kind: 'beat', from: slow.p.from, to: slow.p.to, hands: m.all, wait: false, rung: r + 1, fingers: 'off', title: `${Bars(slow.p.from, slow.p.to)}, with the beat` }));
     return { title: `Part ${slow.p.n}`, why: 'With the metronome, a little faster each time.', lessons: steps, done: `Part ${slow.p.n}, faster.` };
   }
   const wholeLk = ladderKey(m.first, m.last, m.all);

@@ -143,7 +143,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   // The coach sets this step's speed, how soon help comes and how many finger numbers show.
   // A Mastery step comes with its own speed: the planner climbs the tempo ladder itself.
   const coach = useMemo(() => { const c = settingsFor(step.speed, step.wait); return step.exact ? { ...c, speed: step.speed } : c; }, [step.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  const fingers: FingerMode = settings.fingers === 'off' ? 'off' : step.fingers === 'all' ? 'all' : settings.fingers === 'some' && coach.fingers === 'all' ? 'some' : coach.fingers;
+  const fingers: FingerMode = settings.fingers === 'off' ? 'off' : step.fingers ?? (settings.fingers === 'some' && coach.fingers === 'all' ? 'some' : coach.fingers);
   const [speed, setSpeed] = useState(coach.speed);
   const [listen, setListen] = useState(false);
   const [paused, setPaused] = useState(false);

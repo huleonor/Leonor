@@ -87,6 +87,7 @@
   --note-miss: #e5484d;
   --note-other: #b8b5ab;
   --note-next: #2b93ba;
+  --staff-line: #8e8c85;
   --lesson-chip: #a9a1bb;
   --hit-paper: #178a48;
   --miss-paper: #d92d45;
@@ -1741,8 +1742,8 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .lesson.simply.view-notes { grid-template-rows: auto minmax(0, 1fr) clamp(78px, 21vh, 130px); }
 .staff-ext {
   position: absolute; left: 0; right: 0; z-index: 5; pointer-events: none;
-  background-image: linear-gradient(to bottom, var(--note-ink) 0, var(--note-ink) var(--thick, 1.5px), transparent var(--thick, 1.5px));
-  background-repeat: repeat-y; opacity: .85;
+  background-image: linear-gradient(to bottom, var(--staff-line) 0, var(--staff-line) var(--thick, 1px), transparent var(--thick, 1px));
+  background-repeat: repeat-y;
 }
 .clef-panel { position: absolute; left: 0; z-index: 4; overflow: hidden; background: var(--staff-ground); pointer-events: none; }
 .clef-panel svg { display: block; overflow: visible; }
@@ -1785,3 +1786,9 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .btn.auto-next i { position: absolute; inset: 0 auto 0 0; z-index: -1; background: var(--go-edge); }
 .mastery-next .mastery-count { text-transform: none; letter-spacing: 0; font-size: 13px; }
 @media (max-width: 640px) { .rep-dots { right: 46px; } }
+
+/* The lesson staff drawn the way Simply Piano draws it: thin grey staff and bar lines, black
+   notes, finger numbers in a clean bold sans that stay black, nothing else on the page. */
+.lesson-line g.abcjs-bar { fill: var(--staff-line); }
+.lesson-line .abcjs-annotation { fill: var(--note-ink) !important; font-family: 'Nunito Variable', Nunito, system-ui, sans-serif; font-weight: 800; font-size: 15px; }
+.lesson-line .abcjs-time-signature, .clef-panel .abcjs-time-signature { visibility: hidden; }
