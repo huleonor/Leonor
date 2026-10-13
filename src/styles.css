@@ -1807,3 +1807,6 @@ button.gb-stat:hover { background: var(--bg-deep); }
   .lesson.simply .lesson-count { min-width: 110px; width: 110px; }
   .lesson.simply .rep-dots { width: 110px; }
 }
+/* The step count stays readable as its fill grows past the number. */
+.lesson.simply .lesson-count i { background: var(--go-soft); }
+.lesson.simply .lesson-count { box-shadow: inset 0 0 0 2px var(--blue-line); }
