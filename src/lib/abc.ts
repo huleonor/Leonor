@@ -78,6 +78,8 @@ export interface ScoreOptions {
   sections?: { bar: number; label: string }[];
   /** A one-hand lesson step: the other staff stays empty, as in Simply Piano. */
   only?: Hand;
+  /** Space between the two staves of the grand staff (abcjs units): Simply Piano keeps them well apart. */
+  staffSep?: number;
 }
 
 export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' | 'some' | 'all' = 'off', opts: ScoreOptions = {}): AbcScore {
@@ -136,9 +138,11 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
           let text: string;
           if (ev) {
             const pitches = ev.notes.map(n => spell(n.midi, song.fifths, keyAcc, bars[m]));
-            // Fingering over a single note's first written segment (abcjs prints !1!…!5! above it).
+            // Fingering on a single note's first written segment: above the note for the right hand,
+            // below it for the left, as piano music prints it, so a left-hand number never sits
+            // up among the chords that follow it.
             const fn = ev.notes.length === 1 && first ? ev.notes[0] : null;
-            const fingerMark = fn?.finger && (fingers === 'all' || (fingers === 'some' && fn.fingerCue)) ? `!${fn.finger}!` : '';
+            const fingerMark = fn?.finger && (fingers === 'all' || (fingers === 'some' && fn.fingerCue)) ? `"${hand === 'L' ? '_' : '^'}${fn.finger}"` : '';
             text = fingerMark + (pitches.length > 1 ? `[${pitches.join('')}]` : pitches[0]) + durStr + (last ? '' : '-');
           } else {
             text = (opts.only && opts.only !== hand ? 'x' : 'z') + durStr;
@@ -177,6 +181,7 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
 
   let abc = `X:1\n${opts.title ? `T:${opts.title.replace(/\n/g, ' ')}\n` : ''}${opts.composer ? `C:${opts.composer.replace(/\n/g, ' ')}\n` : ''}M:${num}/${den}\nL:1/16\n`;
   if (opts.sections?.length) abc += '%%partsbox true\n';
+  if (opts.staffSep) abc += `%%sysstaffsep ${opts.staffSep}\n`;
   if (hands.length === 2) abc += '%%score {R | L}\n';
   if (hands.includes('R')) abc += `V:R clef=${rClef}\n`;
   if (hands.includes('L')) abc += `V:L clef=${lClef}\n`;

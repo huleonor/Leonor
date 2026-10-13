@@ -57,6 +57,8 @@ interface Options {
   /** Colour the notes he has to play next, while this says so. */
   highlightNext?: () => boolean;
   onClickNote?: (startChar: number | undefined) => void;
+  /** Spread the (last) line over the whole staff width, so a short step fills the screen. */
+  stretch?: boolean;
 }
 
 /**
@@ -70,6 +72,7 @@ export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, s
     staffwidth: o.staffwidth,
     scale: o.fit ? 1 : o.scale,
     ...(o.fit ? { responsive: 'resize' as const } : {}),
+    ...(o.stretch ? { format: { stretchlast: 'true' } } : {}),
     paddingleft: 4,
     paddingright: 8,
     paddingtop: 6,
