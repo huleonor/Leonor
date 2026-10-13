@@ -80,6 +80,13 @@
   --key-black: #3c3c3c;
   --lesson-bg: #f0eee9;
   --lesson-ink: #1b1640;
+  /* The lesson staff, Simply Piano's way: a warm light ground, black notes, teal once played */
+  --staff-ground: #efeee9;
+  --note-ink: #262626;
+  --note-hit: #11a097;
+  --note-miss: #e5484d;
+  --note-other: #b8b5ab;
+  --note-next: #2b93ba;
   --lesson-chip: #a9a1bb;
   --hit-paper: #178a48;
   --miss-paper: #d92d45;
@@ -1688,9 +1695,10 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .lesson.simply .lesson-count { position: relative; height: 40px; min-width: 170px; border-radius: 999px; background: var(--line); color: var(--heading); overflow: hidden; display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-weight: 900; font-size: 15px; }
 .lesson.simply .lesson-count i { position: absolute; inset: 0 auto 0 0; background: var(--go); border-radius: 999px; transition: none; }
 .lesson.simply .lesson-count span { position: relative; color: var(--heading); }
-/* The staff sits on a white band between two soft rules */
-.lesson.simply .lesson-stage { position: relative; background: var(--surface); border-top: 2px solid var(--line); border-bottom: 2px solid var(--line); }
-.lesson.simply .lesson-staff { color: var(--lesson-ink); }
+/* The whole lesson page sits on the staff's warm light ground, like Simply Piano */
+.lesson.simply:not(.view-notes) { background: var(--staff-ground); }
+.lesson.simply .lesson-stage { position: relative; background: var(--staff-ground); }
+.lesson.simply .lesson-staff { color: var(--note-ink); }
 .lesson.simply .lesson-start { background: rgba(255, 255, 255, .88); inset: 0; }
 .lesson.simply .lesson-flash { display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 16px; background: var(--danger); color: #fff; box-shadow: 0 5px 0 #9e1f1f; font-size: 22px; flex-wrap: wrap; justify-content: center; }
 .lesson.simply .lesson-flash.good { background: var(--ok); box-shadow: 0 5px 0 var(--ok-edge); }
@@ -1733,12 +1741,12 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .lesson.simply.view-notes { grid-template-rows: auto minmax(0, 1fr) clamp(78px, 21vh, 130px); }
 .staff-ext {
   position: absolute; left: 0; right: 0; z-index: 5; pointer-events: none;
-  background-image: linear-gradient(to bottom, var(--lesson-ink) 0, var(--lesson-ink) var(--thick, 1.5px), transparent var(--thick, 1.5px));
-  background-repeat: repeat-y; opacity: .9;
+  background-image: linear-gradient(to bottom, var(--note-ink) 0, var(--note-ink) var(--thick, 1.5px), transparent var(--thick, 1.5px));
+  background-repeat: repeat-y; opacity: .85;
 }
-.clef-panel { position: absolute; left: 0; z-index: 4; overflow: hidden; background: #fff; pointer-events: none; }
+.clef-panel { position: absolute; left: 0; z-index: 4; overflow: hidden; background: var(--staff-ground); pointer-events: none; }
 .clef-panel svg { display: block; overflow: visible; }
-.past-fade { position: absolute; top: 0; bottom: 0; z-index: 4; pointer-events: none; background: linear-gradient(to right, rgba(255, 255, 255, .94), rgba(255, 255, 255, .55) 60%, rgba(255, 255, 255, 0)); }
+.past-fade { position: absolute; top: 0; bottom: 0; z-index: 4; pointer-events: none; background: linear-gradient(to right, color-mix(in srgb, var(--staff-ground) 94%, transparent), color-mix(in srgb, var(--staff-ground) 55%, transparent) 60%, transparent); }
 .lesson.simply .now-line { z-index: 5; }
 .lesson-actions { position: absolute; left: 0; right: 0; bottom: calc(24px + var(--safe-b)); z-index: 6; display: flex; justify-content: center; pointer-events: none; }
 .lesson-actions > * { pointer-events: auto; }
@@ -1753,3 +1761,27 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .lesson-line g.abcjs-staff, .clef-panel g.abcjs-staff { opacity: 0; }
 /* The staff's layers stay inside the stage, under sheets and dialogs. */
 .lesson.simply .lesson-stage, .lesson-staff { isolation: isolate; }
+
+/* =====================================================================
+   Mastery, Simply Piano style: dots for the good runs a step needs, a tick
+   or "again" after each run, the next section after three seconds.
+   ===================================================================== */
+.lesson-nav { position: relative; }
+.rep-dots { position: absolute; right: 52px; top: calc(100% + 6px); z-index: 7; display: flex; gap: 6px; }
+.rep-dots i {
+  display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--line-2); color: var(--surface); font-style: normal; font-size: 12px; font-weight: 900;
+}
+.rep-dots i.on { background: var(--ok); }
+.rep-mark {
+  position: absolute; top: 14px; right: 20px; z-index: 8; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%;
+  pointer-events: none;
+}
+.rep-mark.good { background: var(--ok); color: var(--surface); box-shadow: 0 4px 0 var(--ok-edge); }
+.rep-mark.again { background: var(--surface); color: var(--miss-text); border: 2px solid var(--miss); }
+.lesson-listening.zoom { max-width: min(560px, calc(100% - 32px)); white-space: normal; text-align: center; background: var(--surface); color: var(--ink); border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); }
+.lesson.simply .now-line { background: var(--go); opacity: .9; box-shadow: 0 0 14px 3px color-mix(in srgb, var(--go) 45%, transparent); }
+.btn.auto-next { position: relative; overflow: hidden; isolation: isolate; }
+.btn.auto-next i { position: absolute; inset: 0 auto 0 0; z-index: -1; background: var(--go-edge); }
+.mastery-next .mastery-count { text-transform: none; letter-spacing: 0; font-size: 13px; }
+@media (max-width: 640px) { .rep-dots { right: 46px; } }
