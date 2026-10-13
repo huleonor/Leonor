@@ -39,6 +39,8 @@ export interface CourseStep {
   exact?: boolean;
   /** Finger numbers on every note for this step. */
   fingers?: FingerMode;
+  /** Good runs the step takes before it moves on (shown as dots). */
+  reps?: number;
 }
 
 export interface Course {

@@ -7,7 +7,7 @@ import { listenForSkills } from '../lib/skills';
 import { fastLearner, recordPace } from '../lib/path';
 import type { SongInfo } from '../lib/catalog';
 import { Engine } from '../lib/engine';
-import type { MasteryVerdict } from '../lib/mastery';
+import type { MasterySession, MasteryVerdict } from '../lib/mastery';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
 import { pickRange } from '../lib/keys';
 import { formatSpeed, noteName } from '../lib/names';
@@ -68,8 +68,11 @@ interface Props {
    * to the beat, and a fast learner starts with both hands (back to one at a time if that is hard).
    */
   adaptive?: boolean;
-  /** Mastery: follows each run note by note and plans the next lesson from it. */
-  track?: (engine: Engine) => { stop: () => void; finish: () => MasteryVerdict };
+  /**
+   * Mastery, Simply Piano style: each step repeats until it has its good runs (the dots) and the
+   * next one starts by itself; the section's result shows for three seconds, then the next section.
+   */
+  session?: MasterySession;
   onPremium?: () => void;
 }
 
@@ -115,6 +118,7 @@ export function Lesson(props: Props) {
         go(target.j);
       } : undefined}
       onStruggle={fast >= 0 && index === fast ? () => go(0) : undefined}
+      onGo={go}
     />
   );
 }
@@ -131,9 +135,10 @@ interface RunProps extends Props {
   onPerfect?: (accuracy: number) => void;
   /** Both hands first did not go well: back to one hand at a time. */
   onStruggle?: () => void;
+  onGo: (i: number) => void;
 }
 
-function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onSettings, onRecorded, onPrev, onNext, onAgain, energyMode, onPremium, track, onPace, onPerfect, onStruggle }: RunProps) {
+function LessonRun({ info, section, step, index, settings, update, links, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onSettings, onRecorded, onPrev, onNext, onAgain, energyMode, onPremium, session, onPace, onPerfect, onStruggle, onGo }: RunProps) {
   const song = info.song!;
   // The coach sets this step's speed, how soon help comes and how many finger numbers show.
   // A Mastery step comes with its own speed: the planner climbs the tempo ladder itself.
@@ -145,6 +150,8 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; strays: number; stars: number; xp: number; gems: number; energy: number; streakUp?: number; verdict?: MasteryVerdict } | null>(null);
   // With the beat, a slip sends him back: say where from, briefly.
   const [slip, setSlip] = useState<{ from: number; n: number } | null>(null);
+  // Mastery: how the last run went (a tick, or again), and a line when a smaller stretch comes first.
+  const [rep, setRep] = useState<{ pass: boolean; line?: string; n: number } | null>(null);
   // Energy: a path step needs 1 to start. Notes right in a row earn it back, 1 for every 10.
   const econ = useEconomy();
   const [noEnergy, setNoEnergy] = useState(() => energyMode === 'spend' && energy() < 1);
@@ -173,6 +180,12 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   useEffect(() => { engine.setSegment(barsToTime(engine.measureTimes, step.from, step.to)); bump(); }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
   // Wait steps start by themselves, like Simply Piano: the run-up plays, then the music waits for him.
   // A listening step plays the piece to him first.
+  // Mastery: with the beat, the count-in starts by itself.
+  useEffect(() => {
+    if (!session || step.wait) return;
+    const id = window.setTimeout(() => { if (!engine.started) { unlockAudio(); engine.play(3); bump(); } }, 700);
+    return () => window.clearTimeout(id);
+  }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!step.wait || noEnergy) return;
     const id = window.setTimeout(() => {
@@ -191,7 +204,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
   useEffect(() => {
     // Every chord he plays teaches the app about his skills; a whole run also tunes the coach.
     let skills = listenForSkills(engine);
-    let tracker = track?.(engine);
+    let tracker = session?.track(engine, index);
     let slipTimer = 0;
     const off = engine.on(e => {
       if (e.type === 'state' || e.type === 'status') bump();
@@ -214,7 +227,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
       }
       if (e.type === 'end') {
         if (engine.opts.listen) {
-          setListen(false); engine.setOptions({ listen: false }); engine.restart(); engine.started = false; skills.stop(); skills = listenForSkills(engine); tracker?.stop(); tracker = track?.(engine); bump();
+          setListen(false); engine.setOptions({ listen: false }); engine.restart(); engine.started = false; skills.stop(); skills = listenForSkills(engine); tracker?.stop(); tracker = session?.track(engine, index); bump();
           // Heard it: now his turn.
           if (step.wait) window.setTimeout(() => { if (!engine.started) { engine.toFirstNote(); engine.play(0); bump(); } }, 900);
           return;
@@ -226,6 +239,24 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         tracker = undefined;
         setSlip(null);
         const s = engine.stats();
+        if (session && verdict) {
+          // Mastery: no screens between runs. A tick or "again", then the same step, the next, or a smaller stretch.
+          const out = session.after(index, verdict);
+          if (out.kind === 'done') {
+            const sum = session.summary();
+            const stars = starsFor(sum.accuracy);
+            const xp = xpForStars(Math.max(1, stars)) * 2;
+            const before = streak();
+            addPractice(0, 1, xp);
+            const after = streak();
+            onRecorded();
+            setResult({ ...s, accuracy: sum.accuracy, stars, xp, gems: 0, energy: 0, streakUp: !before.today && after.today ? after.days : undefined, verdict: sum });
+            return;
+          }
+          setRep({ pass: out.pass, line: out.line, n: Date.now() });
+          window.setTimeout(() => { setRep(null); if (out.kind === 'again') onAgain(); else if (out.kind === 'next') onNext?.(); else onGo(index); }, out.line ? 2200 : 900);
+          return;
+        }
         const stars = starsFor(s.accuracy);
         const before = streak();
         const quick = step.wait && !!onNext;
@@ -263,7 +294,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
             window.setTimeout(onNext!, 1100);
             return;
           }
-          setResult({ ...s, stars, xp, gems, energy: earned, streakUp: !before.today && after.today ? after.days : undefined, verdict });
+          setResult({ ...s, stars, xp, gems, energy: earned, streakUp: !before.today && after.today ? after.days : undefined });
         });
       }
     });
@@ -351,6 +382,14 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
             <span><Bump value={index + (flash?.good ? 1 : 0)} />/{section.steps.length}</span>
           </div>
           <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label="Next step"><IconArrowRight size={20} /></button>
+          {session && (step.reps ?? 1) > 1 && (
+            <span className="rep-dots" aria-label={`${Math.min(session.good[index], step.reps ?? 1)} of ${step.reps} good runs`}>
+              {Array.from({ length: step.reps ?? 1 }, (_, k) => {
+                const on = k < session.good[index];
+                return <motion.i key={`${k}-${on}`} className={on ? 'on' : ''} initial={on ? { scale: 0.4 } : false} animate={{ scale: 1 }} transition={SPRING}>{on ? <IconCheck size={11} /> : k + 1}</motion.i>;
+              })}
+            </span>
+          )}
         </div>
       </header>
 
@@ -361,6 +400,13 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         <Countdown engine={engine} />
         <Cheer combo={combo} />
         <AnimatePresence>
+          {rep && (
+            rep.line
+              ? <motion.p className="lesson-listening zoom" role="status" key={`rep-${rep.n}`} initial={{ y: -10, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={SPRING}>{rep.line}</motion.p>
+              : <motion.span className={`rep-mark ${rep.pass ? 'good' : 'again'}`} role="status" aria-label={rep.pass ? 'Good' : 'Again'} key={`rep-${rep.n}`} initial={{ scale: 0.3, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }} transition={SPRING}>
+                  {rep.pass ? <IconCheck size={30} /> : <IconRestart size={26} />}
+                </motion.span>
+          )}
           {slip && !listen && (
             <motion.p className="lesson-listening slip" role="status" key={`slip-${slip.n}`} initial={{ y: -10, opacity: 0, scale: 0.8 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: -10, opacity: 0 }} transition={SPRING}>
               <IconRestart size={18} />From bar {slip.from} again
@@ -386,7 +432,7 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         ? <footer className="lesson-keys"><Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={fingers} /></footer>
         : <HelpKeys engine={engine} naming={settings.naming} fingers={fingers} lo={lo} hi={hi} wide always={alwaysKeys} />}
       <footer className="lesson-actions">
-        {!engine.started && !paused && !result && !listen && !step.wait && (
+        {!session && !engine.started && !paused && !result && !listen && !step.wait && (
           <div className="lesson-start">
             <motion.button className="btn go big" whileTap={{ scale: 0.95 }} onClick={start}><IconPlay size={18} />Start with the beat</motion.button>
             <motion.button className="btn" whileTap={{ scale: 0.95 }} onClick={listenFirst}><IconHeadphones size={18} />Listen first</motion.button>
@@ -460,12 +506,19 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
           {result.streakUp !== undefined && <p className="streak-up"><IconFlame size={18} />{result.streakUp === 1 ? 'Streak started' : `${result.streakUp}-day streak`}</p>}
           {result.stars === 0 && !result.verdict && <p className="fine">You need 70% for a star. {step.wait ? 'Take it one note at a time.' : 'Try it slower: pause and pick a speed.'}</p>}
           {result.verdict ? (
-            // Mastery: the plan moves on by itself; when he has levelled off, stopping comes first.
-            <div className="lesson-done-actions">
-              {result.verdict.rest && <button className="btn go big" onClick={onExit}>Done for today</button>}
-              {next && <button className={`btn ${result.verdict.rest ? '' : 'go big'}`} onClick={next.go}>{result.verdict.rest ? 'Keep going' : 'Next lesson'}</button>}
-              {!result.verdict.rest && <button className="btn quiet" onClick={onExit}>{exitLabel}</button>}
-            </div>
+            // Mastery: the next section starts by itself after three seconds; when he has levelled
+            // off, stopping comes first and nothing starts on its own.
+            result.verdict.rest ? (
+              <div className="lesson-done-actions">
+                <button className="btn go big" onClick={onExit}>Done for today</button>
+                {onNextSection && <button className="btn" onClick={onNextSection}>Keep going</button>}
+              </div>
+            ) : (
+              <div className="lesson-done-actions">
+                {onNextSection && <AutoNext go={onNextSection} />}
+                <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
+              </div>
+            )
           ) : (
             <div className="lesson-done-actions">
               {next && <button className="btn go big" onClick={next.go}>{next.label}</button>}
@@ -476,5 +529,16 @@ function LessonRun({ info, section, step, index, settings, update, links, onExit
         </div>
       )}
     </div>
+  );
+}
+
+/** The next section starts by itself after three seconds; the bar shows it coming. */
+function AutoNext({ go }: { go: () => void }) {
+  useEffect(() => { const id = window.setTimeout(go, 3000); return () => window.clearTimeout(id); }, [go]);
+  return (
+    <button className="btn go big auto-next" onClick={go}>
+      <motion.i initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: 3, ease: 'linear' }} />
+      <span>Next section</span>
+    </button>
   );
 }
