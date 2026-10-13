@@ -5,7 +5,7 @@
  */
 import { createStore, del, get, set } from 'idb-keyval';
 import { scoreBar, splitBars } from './analysis';
-import type { HandsChoice, Song } from './types';
+import type { FingerMode, HandsChoice, Song } from './types';
 
 export interface CoursePart {
   n: number;
@@ -35,6 +35,10 @@ export interface CourseStep {
   wait: boolean;
   /** Play it to him first, then he plays it back. */
   listen?: boolean;
+  /** Planned by Mastery: play at exactly this speed (the coach does not scale it). */
+  exact?: boolean;
+  /** Finger numbers on every note for this step. */
+  fingers?: FingerMode;
 }
 
 export interface Course {
