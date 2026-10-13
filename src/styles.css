@@ -87,6 +87,7 @@
   --note-miss: #e5484d;
   --note-other: #b8b5ab;
   --note-next: #2b93ba;
+  --staff-line: #8e8c85;
   --lesson-chip: #a9a1bb;
   --hit-paper: #178a48;
   --miss-paper: #d92d45;
@@ -1741,8 +1742,8 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .lesson.simply.view-notes { grid-template-rows: auto minmax(0, 1fr) clamp(78px, 21vh, 130px); }
 .staff-ext {
   position: absolute; left: 0; right: 0; z-index: 5; pointer-events: none;
-  background-image: linear-gradient(to bottom, var(--note-ink) 0, var(--note-ink) var(--thick, 1.5px), transparent var(--thick, 1.5px));
-  background-repeat: repeat-y; opacity: .85;
+  background-image: linear-gradient(to bottom, var(--staff-line) 0, var(--staff-line) var(--thick, 1px), transparent var(--thick, 1px));
+  background-repeat: repeat-y;
 }
 .clef-panel { position: absolute; left: 0; z-index: 4; overflow: hidden; background: var(--staff-ground); pointer-events: none; }
 .clef-panel svg { display: block; overflow: visible; }
@@ -1785,3 +1786,27 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .btn.auto-next i { position: absolute; inset: 0 auto 0 0; z-index: -1; background: var(--go-edge); }
 .mastery-next .mastery-count { text-transform: none; letter-spacing: 0; font-size: 13px; }
 @media (max-width: 640px) { .rep-dots { right: 46px; } }
+
+/* The lesson staff drawn the way Simply Piano draws it: thin grey staff and bar lines, black
+   notes, finger numbers in a clean bold sans that stay black, nothing else on the page. */
+.lesson-line g.abcjs-bar { fill: var(--staff-line); }
+.lesson-line .abcjs-annotation { fill: var(--note-ink) !important; font-family: 'Nunito Variable', Nunito, system-ui, sans-serif; font-weight: 800; font-size: 15px; }
+.lesson-line .abcjs-time-signature, .clef-panel .abcjs-time-signature { visibility: hidden; }
+
+/* The lesson bar, Simply Piano's: pause on the left, the step count with its arrows on the right,
+   nothing else; compact so the staff has the room. */
+.lesson.simply .lesson-bar { padding: 12px 24px 4px; gap: 10px; flex-wrap: nowrap; justify-content: space-between; }
+.lesson.simply .lesson-say { flex: 1; min-width: 0; }
+.lesson.simply .lesson-pause { width: 44px; height: 44px; }
+.lesson.simply .lesson-nav { gap: 10px; }
+.lesson.simply .lesson-arrow { width: 34px; height: 34px; }
+.lesson.simply .lesson-count { height: 34px; min-width: 132px; width: 132px; padding: 0 14px; font-size: 16px; }
+.lesson.simply .rep-dots { right: 44px; width: 132px; justify-content: center; }
+@media (max-width: 640px) {
+  .lesson.simply .lesson-bar { padding: 10px 14px 4px; }
+  .lesson.simply .lesson-count { min-width: 110px; width: 110px; }
+  .lesson.simply .rep-dots { width: 110px; }
+}
+/* The step count stays readable as its fill grows past the number. */
+.lesson.simply .lesson-count i { background: var(--go-soft); }
+.lesson.simply .lesson-count { box-shadow: inset 0 0 0 2px var(--blue-line); }

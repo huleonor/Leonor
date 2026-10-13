@@ -16,12 +16,16 @@ import type { RunSummary } from './skills';
 import type { FingerMode } from './types';
 
 export const SPEED_STEPS = [0.7, 0.8, 0.9, 1, 1.1, 1.2];
-/** Hints, easiest first: [wrong notes, ms stuck] before the keys light up; the last is never. */
+/**
+ * Hints, easiest first: [wrong notes, ms stuck] before the keys light up; the last is never.
+ * The keyboard is never there from the start: he learns to read the staff, and the keys come
+ * only after a wrong note or a real stall, then go again once he plays right.
+ */
 export const HINT_STEPS: { wrongs: number; ms: number }[] = [
-  { wrongs: 0, ms: 0 },
-  { wrongs: 1, ms: 2500 },
-  { wrongs: 2, ms: 5000 },
-  { wrongs: 3, ms: 8000 },
+  { wrongs: 1, ms: 4000 },
+  { wrongs: 1, ms: 6000 },
+  { wrongs: 2, ms: 8000 },
+  { wrongs: 3, ms: 10000 },
   { wrongs: 99, ms: 1e9 },
 ];
 export const FINGER_STEPS: FingerMode[] = ['all', 'some', 'off'];
@@ -109,7 +113,7 @@ export function describeCoach(s = loadCoach()) {
   const h = HINT_STEPS[s.hints];
   return {
     speed: `${Math.round(SPEED_STEPS[s.speed] * 100)}%`,
-    hints: h.wrongs >= 99 ? 'Never' : h.wrongs === 0 ? 'Right away' : `After ${h.wrongs} wrong ${h.wrongs === 1 ? 'note' : 'notes'} or ${Math.round(h.ms / 1000)} s`,
+    hints: h.wrongs >= 99 ? 'Never' : `After ${h.wrongs} wrong ${h.wrongs === 1 ? 'note' : 'notes'} or ${Math.round(h.ms / 1000)} s`,
     fingers: s.fingers === 0 ? 'Every note' : s.fingers === 1 ? 'Where the hand moves' : 'None',
   };
 }

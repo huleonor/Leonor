@@ -265,7 +265,8 @@ export class Engine {
   hintVisible() {
     return this.playing && this.waiting && this.countdown === 0 && (this.opts.wait || !!this.opts.follow) && !this.opts.listen
       // Like Simply Piano: help only after a few wrong notes, or a long stall (the coach sets how many).
-      && (this.wrongInWait >= (this.opts.hintAfter?.wrongs ?? 2) || performance.now() - this.waitSince > (this.opts.hintAfter?.ms ?? 5000));
+      // A stall counts only once he has started: before his first note he is still reading.
+      && (this.wrongInWait >= (this.opts.hintAfter?.wrongs ?? 2) || (this.lastGroupAt > 0 && performance.now() - this.waitSince > (this.opts.hintAfter?.ms ?? 5000)));
   }
 
   /** The group the player is stuck on, with the hand of each note (for the hint keyboard). */
