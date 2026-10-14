@@ -88,6 +88,12 @@
   --note-other: #b8b5ab;
   --note-next: #2b93ba;
   --staff-line: #8e8c85;
+  /* Locked things on the path: their own picture in a soft grey, as on Duolingo */
+  --locked-ink: #afafaf;
+  /* The tab bar's marks, each with its own colour */
+  --tab-learn: var(--flame);
+  --tab-songs: var(--purple);
+  --tab-settings: var(--ink-3);
   --lesson-chip: #a9a1bb;
   --hit-paper: #178a48;
   --miss-paper: #d92d45;
@@ -1816,3 +1822,164 @@ button.gb-stat:hover { background: var(--bg-deep); }
 /* The step count stays readable as its fill grows past the number. */
 .lesson.simply .lesson-count i { background: var(--go-soft); }
 .lesson.simply .lesson-count { box-shadow: inset 0 0 0 2px var(--blue-line); }
+
+/* =====================================================================
+   A livelier path: pictures beside the trail, greyed node icons ahead,
+   stars under finished lessons, the sections page, coloured tab marks.
+   ===================================================================== */
+.path-unit { position: relative; }
+.trail { position: relative; z-index: 1; }
+.unit-art { position: absolute; z-index: 0; pointer-events: none; top: 210px; }
+.unit-art.left { left: calc(50% - 300px); }
+.unit-art.right { right: calc(50% - 300px); top: 600px; }
+@media (max-width: 640px) {
+  .unit-art.left { left: -6px; }
+  .unit-art.right { right: -6px; }
+  .unit-art .spot-art { --art: 118px !important; }
+}
+
+.spot-art { position: relative; display: block; width: var(--art); height: var(--art); color: var(--unit); transition: filter var(--dur) var(--ease), opacity var(--dur) var(--ease); }
+.spot-art::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: -2%; height: 8%; border-radius: 50%; background: var(--line); }
+.spot-disc {
+  position: absolute; inset: 12%; z-index: 1; display: grid; place-items: center; border-radius: 50%;
+  background: color-mix(in srgb, var(--unit) 16%, var(--surface)); box-shadow: 0 8px 0 color-mix(in srgb, var(--unit) 30%, var(--surface));
+}
+.spot-disc svg { width: 54%; height: 54%; }
+.spot-bit { position: absolute; z-index: 2; width: 17%; height: 17%; }
+.spot-bit.b1 { top: 0; left: 4%; transform: rotate(-14deg); }
+.spot-bit.b2 { top: 8%; right: 2%; width: 14%; height: 14%; color: var(--star); }
+.spot-bit.b3 { bottom: 6%; right: 0; transform: rotate(10deg); }
+.spot-art:not(.lit) { filter: grayscale(1); opacity: .5; }
+
+.trail-node.locked .node-face svg { fill: var(--locked-ink); color: var(--locked-ink); }
+.node-stars { display: flex; gap: 2px; margin-top: 12px; color: var(--star-off); }
+.node-stars svg.won { color: var(--star); }
+
+.banner-nav { flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: inherit; text-align: left; border-radius: 12px; }
+.banner-nav small { display: inline-flex !important; align-items: center; gap: 4px; }
+.banner-nav:hover small { opacity: 1; }
+button.section-label { border: 0; background: none; padding: 0; color: inherit; border-radius: 12px; }
+button.section-label:hover b { color: var(--blue-text); }
+
+.sections-page { position: fixed; inset: 0; z-index: 30; overflow-y: auto; background: var(--bg); padding-bottom: calc(30px + var(--safe-b)); }
+.sections-head {
+  position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center;
+  padding: 10px 12px; background: var(--bg); border-bottom: 2px solid var(--line);
+}
+.sections-head h1 { margin: 0; text-align: center; font-size: 20px; }
+.sections-cards { list-style: none; margin: 0 auto; padding: 20px 16px; max-width: 640px; display: grid; gap: 20px; }
+.section-card { padding: 0; overflow: hidden; box-shadow: 0 4px 0 var(--line); }
+.section-card.here { border-color: var(--unit); box-shadow: 0 4px 0 var(--unit-edge); }
+.section-art { position: relative; height: 140px; display: flex; align-items: center; justify-content: flex-end; padding: 0 24px; background: color-mix(in srgb, var(--unit) 8%, var(--surface)); }
+.section-card.locked .section-art { background: var(--bg-deep); }
+.mini-staff { position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%; display: grid; gap: 12px; }
+.mini-staff i { display: block; height: 2px; background: color-mix(in srgb, var(--unit) 28%, var(--surface)); }
+.section-card.locked .mini-staff i { background: var(--line); }
+.section-art .spot-art { z-index: 1; }
+.section-body { padding: 16px 20px 20px; display: grid; gap: 10px; justify-items: start; }
+.section-body h2 { margin: 0; font-size: 20px; }
+.section-body .sub { margin: 0; }
+.section-progress { width: 100%; display: flex; align-items: center; gap: 10px; color: var(--ink-2); }
+.section-progress .meter { flex: 1; height: 14px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.section-progress .meter i { display: block; height: 100%; border-radius: 999px; background: var(--unit); }
+.section-body .btn { width: 100%; }
+.section-locked { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--ink-3); font-weight: 800; }
+
+.rail-btn.tab-home svg { color: var(--tab-learn); }
+.rail-btn.tab-songs svg { color: var(--tab-songs); }
+.rail-btn.settings svg { color: var(--tab-settings); }
+.rail-btn svg { transition: transform var(--dur) var(--ease); }
+.rail-btn.on svg { transform: scale(1.08); }
+
+.staff-note { position: absolute; z-index: 1; width: 34px; height: 34px; }
+.staff-note.n1 { left: 9%; top: 52%; color: var(--flame); }
+.staff-note.n2 { left: 24%; top: 30%; color: var(--purple); transform: rotate(-6deg); }
+.staff-note.n3 { left: 39%; top: 44%; color: var(--unit); }
+.section-card.locked .staff-note { color: var(--line-2); }
+@media (max-width: 640px) { .staff-note { width: 28px; height: 28px; } }
+
+/* =====================================================================
+   Profile: his penguin on a coloured header, an overview, and the
+   mastery collection (bronze, silver, gold, forever).
+   ===================================================================== */
+:root {
+  --av-bg-sky: #bde8fb; --av-bg-lime: #c9f29b; --av-bg-mint: #b6f0dc; --av-bg-peach: #ffd9b8; --av-bg-pink: #ffd1ee; --av-bg-lilac: #e3d4ff;
+  --av-body-navy: #26324a; --av-body-ink: #2f2f2f; --av-body-blue: #2b93ba; --av-body-teal: #0f8f86; --av-body-plum: #6b3d8f;
+  --av-eye: #262626; --av-cheek: #ffa5c8;
+  --tier-bronze: #d68a4c; --tier-bronze-edge: #b06a30; --tier-bronze-text: #8a4f1d;
+  --tier-silver: #c4ccd6; --tier-silver-edge: #9aa5b1; --tier-silver-text: #56606b;
+  --tier-forever: #1cb0f6; --tier-forever-edge: #1899d6;
+}
+.profile-page { max-width: 680px; margin: 0 auto; padding-bottom: 40px; }
+.profile-hero { position: relative; height: 250px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; border-radius: 0 0 12px 12px; margin: 0 -16px; }
+@media (min-width: 641px) { .profile-hero { margin: 20px 0 0; border-radius: 12px; } }
+.profile-av { margin-bottom: -26px; }
+.profile-av .penguin-av { display: block; }
+.profile-edit { position: absolute; top: 14px; right: 14px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; }
+.profile-id { padding: 20px 4px 4px; border-bottom: 2px solid var(--line); }
+.profile-id h1 { margin: 0; font-size: 26px; }
+.profile-id .sub { margin: 4px 0 0; }
+.profile-counts { display: grid; grid-template-columns: repeat(3, 1fr); margin: 16px 0 18px; }
+.profile-counts > div { display: grid; gap: 2px; padding: 0 14px; border-left: 2px solid var(--line); }
+.profile-counts > div:first-child { padding-left: 0; border-left: 0; }
+.profile-counts dt { order: 2; color: var(--ink-3); font-weight: 800; font-size: 14px; }
+.profile-counts dd { margin: 0; font-weight: 900; font-size: 24px; color: var(--heading); font-variant-numeric: tabular-nums; }
+.profile-block { padding: 20px 4px 4px; }
+.profile-block h2 { margin: 0 0 12px; font-size: 22px; }
+.profile-block > .sub { margin: -6px 0 14px; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; box-shadow: 0 3px 0 var(--line); }
+.stat-ic { display: grid; place-items: center; flex: none; }
+.stat-ic .ic-xp { color: var(--star); }
+.stat-ic .gi-flame:not(.lit) { color: var(--line-2); }
+.stat-ic .gi-flame.best { color: var(--star); }
+.stat-text { display: grid; }
+.stat-text b { font-size: 21px; font-weight: 900; color: var(--heading); font-variant-numeric: tabular-nums; }
+.stat-text small { color: var(--ink-3); font-weight: 800; font-size: 14px; }
+
+.medal-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
+.medal { --tier: var(--line-2); --tier-edge: var(--line-2); --tier-text: var(--ink-3); }
+.medal.t-bronze { --tier: var(--tier-bronze); --tier-edge: var(--tier-bronze-edge); --tier-text: var(--tier-bronze-text); }
+.medal.t-silver { --tier: var(--tier-silver); --tier-edge: var(--tier-silver-edge); --tier-text: var(--tier-silver-text); }
+.medal.t-gold { --tier: var(--star); --tier-edge: var(--star-edge); --tier-text: var(--star-text); }
+.medal.t-forever { --tier: var(--tier-forever); --tier-edge: var(--tier-forever-edge); --tier-text: var(--blue-text); }
+.medal-btn { width: 100%; display: grid; justify-items: center; gap: 6px; padding: 14px 8px 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); box-shadow: 0 3px 0 var(--line); text-align: center; }
+.medal-disc {
+  position: relative; display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%;
+  background: var(--tier); box-shadow: 0 6px 0 var(--tier-edge); overflow: visible;
+}
+.medal-disc img { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; border: 3px solid var(--surface); }
+.medal.t-none .medal-disc { background: var(--bg-deep); box-shadow: 0 6px 0 var(--line); }
+.medal.t-none .medal-disc img { filter: grayscale(.6); opacity: .8; }
+.medal-ring { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); transform: rotate(-90deg); }
+.medal-ring circle { fill: none; stroke: var(--line); stroke-width: 6; }
+.medal-ring .fill { stroke: var(--go); stroke-linecap: round; }
+.medal-gem { position: absolute; right: -4px; bottom: -4px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 3px solid var(--tier); color: var(--tier-forever); }
+.medal-gem.gold { color: var(--star-text); }
+.medal-title { margin-top: 6px; font-size: 15px; font-weight: 900; color: var(--heading); line-height: 1.2; }
+.medal-tier { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--tier) 22%, var(--surface)); color: var(--tier-text); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+.medal.t-none .medal-tier { background: var(--bg-deep); color: var(--ink-2); }
+.medal-due { color: var(--ink-3); font-weight: 800; font-size: 12.5px; }
+.medal.empty { display: grid; justify-items: center; gap: 8px; padding: 14px 8px; border-radius: 12px; border: 2px dashed var(--line); color: var(--line-2); }
+.medal.empty .medal-disc { background: var(--bg-deep); box-shadow: none; color: var(--line-2); }
+.medal.empty small { color: var(--ink-3); font-weight: 800; }
+/* A medal that just went up a tier shines once. */
+.medal.shine .medal-disc::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--surface) 85%, transparent) 50%, transparent 70%); background-size: 250% 100%; animation: medal-shine 1.1s .6s var(--ease) both; }
+@keyframes medal-shine { from { background-position: 120% 0; } to { background-position: -40% 0; } }
+@media (prefers-reduced-motion: reduce) { .medal.shine .medal-disc::after { animation: none; } }
+
+.look-sheet { width: min(480px, 100%); display: grid; gap: 14px; justify-items: stretch; text-align: left; }
+.veil .card.look-sheet { justify-items: stretch; text-align: left; }
+.look-preview { justify-self: center; display: grid; place-items: end center; width: 170px; height: 170px; border-radius: 50%; overflow: hidden; }
+.look-row { display: grid; gap: 8px; }
+.look-row > span { color: var(--ink-3); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+.look-name { min-height: 46px; padding: 0 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg-deep); font: inherit; font-weight: 800; color: var(--ink); }
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.swatch { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--surface); box-shadow: 0 0 0 2px var(--line); }
+.swatch.on { box-shadow: 0 0 0 3px var(--go); }
+.extras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.extra { display: grid; justify-items: center; gap: 2px; padding: 6px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); box-shadow: 0 3px 0 var(--line); }
+.extra.on { border-color: var(--go); background: var(--go-soft); box-shadow: 0 3px 0 var(--go-edge); }
+.extra small { color: var(--ink-2); font-weight: 800; font-size: 12px; }
+.rail-btn .penguin-av { border-radius: 50%; }
+.medal-face { display: grid; place-items: center; width: 76px; height: 76px; border-radius: 50%; border: 3px solid var(--surface); background: var(--go); color: var(--go-ink); }

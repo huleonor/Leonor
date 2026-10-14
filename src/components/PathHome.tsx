@@ -1,14 +1,17 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { nodesOf, SECTIONS, type NodeKind, type PathNode, type Unit } from '../lib/curriculum';
+import { nodesOf, sectionOf, SECTIONS, type NodeKind, type PathNode, type Unit } from '../lib/curriculum';
 import { openChest, useEconomy, type ChestReward } from '../lib/energy';
 import type { CourseProgress } from '../lib/course';
 import type { LinkState, Source } from '../lib/input';
 import { currentNode, placementTaken, placementTest, unitLabel, unitTest, UNITS, usePath, type NodeState, type Playable } from '../lib/path';
 import type { Settings } from '../lib/types';
 import { ChestOpened, GameBar } from './Economy';
-import { Chest, GlyphBook, GlyphCrown, GlyphDumbbell, GlyphHand, GlyphHeadphones, GlyphLock, GlyphNote, GlyphStar, GlyphTrophy, Energy } from './GameIcons';
+import { Chest, GlyphBook, GlyphCrown, GlyphDumbbell, GlyphHand, GlyphHeadphones, GlyphNote, GlyphStar, GlyphTrophy, Energy } from './GameIcons';
 import { useDaily } from './Home';
-import { IconArrowLeft, IconCheck, IconClose } from './Icons';
+import { IconArrowLeft, IconCheck, IconChevronDown, IconClose, IconStar } from './Icons';
+import { UnitArt } from './PathArt';
+import { SectionsView } from './Sections';
+import { AnimatePresence } from 'motion/react';
 import { Logo } from './Brand';
 
 /** Each unit has its own colour, as on Duolingo's path. */
@@ -51,6 +54,7 @@ export function PathHome({ settings, links, onPiano, onNode, onTest, onEnergy, o
   const daily = useDaily();
   const [open, setOpen] = useState<string | null>(null);
   const [guide, setGuide] = useState<Unit | null>(null);
+  const [sections, setSections] = useState(false);
   const [chest, setChest] = useState<ChestReward | null>(null);
   const [away, setAway] = useState<'up' | 'down' | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -98,15 +102,15 @@ export function PathHome({ settings, links, onPiano, onNode, onTest, onEnergy, o
         )}
 
         {SECTIONS.map((section, si) => (
-          <div key={section.id} className="path-section">
+          <div key={section.id} className="path-section" id={`section-${section.id}`}>
             {si > 0 && (
               <div className="section-divider">
                 <span className="section-line" />
-                <div className="section-label">
+                <button className="section-label" onClick={() => setSections(true)} aria-label={`Section ${si + 1}: ${section.title}. See all sections`}>
                   <small>Section {si + 1}</small>
                   <b>{section.title}</b>
                   <span>{section.sub}</span>
-                </div>
+                </button>
                 <span className="section-line" />
               </div>
             )}
@@ -118,12 +122,14 @@ export function PathHome({ settings, links, onPiano, onNode, onTest, onEnergy, o
               return (
                 <section key={unit.id} className={`path-unit ${locked ? 'locked' : ''}`} aria-labelledby={`${unit.id}-title`} style={{ '--unit': c, '--unit-edge': edge, '--unit-ink': ink } as React.CSSProperties}>
                   <header className="unit-banner">
-                    <div>
-                      <small>{unitLabel(unit)}</small>
+                    {/* Tapping where he is opens every section, as on Duolingo. */}
+                    <button className="banner-nav" onClick={() => setSections(true)} aria-label={`${unitLabel(unit)}: ${unit.title}. See all sections`}>
+                      <small>{unitLabel(unit)}<IconChevronDown size={14} /></small>
                       <h2 id={`${unit.id}-title`}>{unit.title}</h2>
-                    </div>
+                    </button>
                     <button className="guide-btn" onClick={() => setGuide(unit)}><GlyphBook /><span>Guidebook</span></button>
                   </header>
+                  <UnitArt index={ui} lit={!locked} />
                   <ol className="trail">
                     {nodes.map((node, k) => {
                       const st = path?.state[node.id];
@@ -201,6 +207,18 @@ export function PathHome({ settings, links, onPiano, onNode, onTest, onEnergy, o
         </div>
       )}
       {chest && <ChestOpened reward={chest} onClose={() => setChest(null)} />}
+      <AnimatePresence>
+        {sections && path && (
+          <SectionsView
+            state={path.state} current={cur ? sectionOf(cur.unit).id : undefined}
+            onClose={() => setSections(false)}
+            onGo={(id, toCurrent) => {
+              setSections(false);
+              window.setTimeout(() => (toCurrent ? jump() : document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })), 60);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -241,8 +259,14 @@ function TrailNode({ node, unit, st, off, isOpen, onToggle, onStart, onTestOut, 
             <circle cx="50" cy="50" r="46" className="fill" style={{ strokeDasharray: `${ring * 289} 289` }} />
           </svg>
         )}
-        <span className="node-face">{open ? <Glyph /> : node.kind === 'trophy' ? <GlyphTrophy /> : <GlyphLock />}</span>
+        {/* Locked nodes keep their own picture, in grey: the path ahead shows what is coming. */}
+        <span className="node-face"><Glyph /></span>
       </button>
+      {done && st && st.stars > 0 && node.kind !== 'trophy' && node.kind !== 'theory' && (
+        <span className="node-stars" aria-label={`${st.stars} of 3 stars`}>
+          {[0, 1, 2].map(i => <IconStar key={i} size={16} className={i < st.stars ? 'won' : ''} />)}
+        </span>
+      )}
       {isOpen && (
         <div className={`node-pop ${open ? '' : 'locked'}`} role="dialog" aria-label={node.title}>
           <small>{KIND_NAME[node.kind]}{of > 1 ? ` ${n} of ${of}` : ''}</small>
