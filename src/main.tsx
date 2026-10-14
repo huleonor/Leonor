@@ -22,8 +22,9 @@ if (import.meta.env.DEV) {
 if (import.meta.env.DEV) {
   (window as unknown as { __predict: unknown }).__predict = async () => {
     const { calibration } = await import('./lib/predict');
+    const { memoryReport } = await import('./lib/mastery');
     const c = calibration();
     console.table(c.buckets);
-    return c;
+    return { ...c, memory: memoryReport('gymnopedie-1') };
   };
 }

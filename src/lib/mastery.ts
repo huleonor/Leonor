@@ -25,6 +25,7 @@
 import { useEffect, useReducer } from 'react';
 import { buildCourse, type CourseStep } from './course';
 import type { Engine } from './engine';
+import { dueIn, GAP, kept, relearn, START_H, typical } from './memory';
 import { fit, observe, predict, TARGET, type Features } from './predict';
 import { dayKey } from './stats';
 import { HIT, MISS, type FingerMode, type Hand, type HandsChoice, type Song, type SongNote } from './types';
@@ -142,7 +143,7 @@ function model(song: Song): Model {
 // ---------- What he knows ----------
 
 /** A strength (0-1) learnt from notes, with its spaced-review interval. */
-interface Item { s: number; n: number; at: number; /** Days until it is due again. */ ivl: number; due: number; }
+interface Item { s: number; n: number; at: number; /** Half-life in days: how fast it fades while he is away (memory.ts). */ h: number; due: number; /** Before half-lives: days until due. */ ivl?: number; }
 /** Runs of one piece of music played one way. `streak` is clean runs in a row. */
 interface Chunk { runs: number; streak: number; best: number; last: number; at: number; }
 
@@ -188,17 +189,24 @@ export interface MasteryState {
   days: string[];
   /** First tries, and how many were clean: a fast learner skips the hand-by-hand steps. */
   fast: { tries: number; clean: number };
+  /** His typical half-life in days, learnt from every return (memory.ts). */
+  h0: number;
   session: { day: string; runs: { acc: number; progress: boolean; chunk?: string }[]; restAt: number };
 }
 
 const KEY = (id: string) => `hugos-piano:mastery:${id}`;
-const blank = (): MasteryState => ({ items: {}, chunks: {}, top: {}, rung: {}, days: [], fast: { tries: 0, clean: 0 }, session: { day: '', runs: [], restAt: 0 } });
+const blank = (): MasteryState => ({ items: {}, chunks: {}, top: {}, rung: {}, days: [], fast: { tries: 0, clean: 0 }, h0: START_H, session: { day: '', runs: [], restAt: 0 } });
 
 const listeners = new Set<() => void>();
 export const onMastery = (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
 
 export function loadMastery(id: string): MasteryState {
-  try { return { ...blank(), ...JSON.parse(localStorage.getItem(KEY(id)) ?? '{}') }; } catch { return blank(); }
+  try {
+    const st: MasteryState = { ...blank(), ...JSON.parse(localStorage.getItem(KEY(id)) ?? '{}') };
+    // Saved before half-lives: the old review interval is a fair first guess.
+    for (const it of Object.values(st.items)) if (!it.h) it.h = Math.max(START_H, it.ivl ?? 0);
+    return st;
+  } catch { return blank(); }
 }
 function saveMastery(id: string, st: MasteryState) {
   try { localStorage.setItem(KEY(id), JSON.stringify(st)); } catch { /* storage unavailable */ }
@@ -217,10 +225,10 @@ const topOf = (st: MasteryState, key: string) => st.top[key] ?? -1;
 const Bars = (from: number, to: number) => (from === to ? `Bar ${from}` : `Bars ${from}-${to}`);
 const handName = (h: HandsChoice) => (h === 'R' ? 'right hand' : h === 'L' ? 'left hand' : 'both hands');
 
-/** What practice has left after `days` away: nothing lost for two days, then a little each day. */
+/** What practice on a whole part has left after `days` away (the meter): nothing lost for two days, then a little each day. */
 const retention = (days: number) => (days <= 2 ? 1 : Math.max(0.7, 1 - 0.03 * (days - 2)));
-/** An item's strength today, after forgetting. */
-const strength = (it: Item | undefined, now = Date.now()) => (it ? it.s * retention((now - it.at) / DAY - it.ivl) : 0);
+/** An item's strength today, after forgetting at its own half-life. */
+const strength = (it: Item | undefined, now = Date.now()) => (it ? it.s * kept((now - it.at) / DAY, it.h) : 0);
 
 // ---------- The meter ----------
 
@@ -806,15 +814,20 @@ export function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy
     if (hands.size > 1) add(`t${m.barOf(song.notes[g.ids[0]])}`, g.q);
   }
   for (const [k, a] of Object.entries(acc)) {
-    const it = st.items[k] ?? { s: 0.4, n: 0, at: now, ivl: 0, due: now };
+    const it = st.items[k] ?? { s: 0.4, n: 0, at: now, h: st.h0, due: now };
     const q = a.sum / a.n;
+    // Coming back after a gap: what is left shows how fast it fades for him (memory.ts).
+    const away = (now - it.at) / DAY;
+    if (it.n > 0 && away >= GAP && a.n >= 2) {
+      const r = relearn(it.h, it.s, q, away);
+      it.h = r.h;
+      st.h0 = typical(st.h0, r.shown);
+    }
     it.s += Math.min(0.5, 0.2 + 0.05 * a.n) * (q - it.s);
     it.n += a.n;
     it.at = now;
-    // Spaced review: clean doubles the gap (1, 2, 4, 8 days...), a weak run brings it back tomorrow.
-    if (q >= CLEAN && a.n >= 2) it.ivl = Math.min(30, Math.max(1, it.ivl * 2));
-    else if (q < 0.8) it.ivl = 1;
-    it.due = now + it.ivl * DAY;
+    // Review just before it fades: sooner for what fades fast, later for what sticks.
+    it.due = now + dueIn(it.h) * DAY;
     st.items[k] = it;
   }
 
@@ -1050,6 +1063,14 @@ export class MasterySession {
     const accuracy = this.accs.length ? this.accs.reduce((a, x) => a + x, 0) / this.accs.length : 0;
     return { before: this.before, after: meterOf(this.song).value, line: this.doneLine, rest: this.rest, accuracy };
   }
+}
+
+/** How fast he forgets this song (dev report): his typical half-life and the spread across bars and moves. */
+export function memoryReport(id: string, now = Date.now()) {
+  const st = loadMastery(id);
+  const items = Object.entries(st.items).map(([k, it]) => ({ k, h: Math.round(it.h * 10) / 10, now: Math.round(strength(it, now) * 100) / 100, dueInDays: Math.round(((it.due - now) / DAY) * 10) / 10 }));
+  items.sort((a, b) => a.h - b.h);
+  return { h0: Math.round(st.h0 * 100) / 100, shortest: items.slice(0, 5), longest: items.slice(-5), due: items.filter(i => i.dueInDays <= 0).length, items: items.length };
 }
 
 /** The meter and the next section for a song, kept fresh as he plays. */
