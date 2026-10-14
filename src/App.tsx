@@ -9,7 +9,7 @@ import { PathHome, colorOf } from './components/PathHome';
 import { EnergySheet, Shop } from './components/Economy';
 import { TheoryLesson } from './components/TheoryLesson';
 import { Gem } from './components/GameIcons';
-import { IconGear, IconHome, IconMusic } from './components/Icons';
+import { IconGearFill, IconHomeFill, IconMusicFill } from './components/Icons';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
 import { SettingsSheet } from './components/SettingsSheet';
@@ -30,8 +30,8 @@ import type { Settings, SongEntry } from './lib/types';
 
 type Tab = 'home' | 'songs' | 'shop';
 const TABS: [Tab, string, (p: { size?: number }) => React.ReactElement][] = [
-  ['home', 'Learn', IconHome],
-  ['songs', 'Songs', IconMusic],
+  ['home', 'Learn', IconHomeFill],
+  ['songs', 'Songs', IconMusicFill],
   ['shop', 'Shop', p => <Gem size={p.size} />],
 ];
 
@@ -241,12 +241,12 @@ export default function App() {
           <nav className="rail" aria-label="Main">
             <img className="rail-logo" src="/icons/logo.png" alt="Hugo’s Piano" width={40} height={40} />
             {TABS.map(([id, label, Icon]) => (
-              <button key={id} className={`rail-btn ${tab === id ? 'on' : ''}`} aria-current={tab === id ? 'page' : undefined}
+              <button key={id} className={`rail-btn tab-${id} ${tab === id ? 'on' : ''}`} aria-current={tab === id ? 'page' : undefined}
                 onClick={() => { setTab(id); setOpenId(null); }}>
-                <Icon size={22} /><span>{label}</span>
+                <Icon size={26} /><span>{label}</span>
               </button>
             ))}
-            <button className="rail-btn settings" onClick={() => setSheet('settings')}><IconGear size={22} /><span>Settings</span></button>
+            <button className="rail-btn settings" onClick={() => setSheet('settings')}><IconGearFill size={26} /><span>Settings</span></button>
           </nav>
           <main className="content">
             {tab === 'home' ? (

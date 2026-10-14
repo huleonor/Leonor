@@ -60,3 +60,7 @@ export const IconSnow = make(Snowflake);
 export const IconBell = make(Bell);
 export const IconTarget = make(Target);
 export const IconMoon = make(Moon, 'fill');
+/* The tab bar's marks: solid and coloured, so each tab is recognisable by shape and colour. */
+export const IconHomeFill = make(House, 'fill');
+export const IconMusicFill = make(MusicNote, 'fill');
+export const IconGearFill = make(Gear, 'fill');

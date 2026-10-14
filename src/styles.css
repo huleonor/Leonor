@@ -88,6 +88,12 @@
   --note-other: #b8b5ab;
   --note-next: #2b93ba;
   --staff-line: #8e8c85;
+  /* Locked things on the path: their own picture in a soft grey, as on Duolingo */
+  --locked-ink: #afafaf;
+  /* The tab bar's marks, each with its own colour */
+  --tab-learn: var(--flame);
+  --tab-songs: var(--purple);
+  --tab-settings: var(--ink-3);
   --lesson-chip: #a9a1bb;
   --hit-paper: #178a48;
   --miss-paper: #d92d45;
@@ -1810,3 +1816,78 @@ button.gb-stat:hover { background: var(--bg-deep); }
 /* The step count stays readable as its fill grows past the number. */
 .lesson.simply .lesson-count i { background: var(--go-soft); }
 .lesson.simply .lesson-count { box-shadow: inset 0 0 0 2px var(--blue-line); }
+
+/* =====================================================================
+   A livelier path: pictures beside the trail, greyed node icons ahead,
+   stars under finished lessons, the sections page, coloured tab marks.
+   ===================================================================== */
+.path-unit { position: relative; }
+.trail { position: relative; z-index: 1; }
+.unit-art { position: absolute; z-index: 0; pointer-events: none; top: 210px; }
+.unit-art.left { left: calc(50% - 300px); }
+.unit-art.right { right: calc(50% - 300px); top: 600px; }
+@media (max-width: 640px) {
+  .unit-art.left { left: -6px; }
+  .unit-art.right { right: -6px; }
+  .unit-art .spot-art { --art: 118px !important; }
+}
+
+.spot-art { position: relative; display: block; width: var(--art); height: var(--art); color: var(--unit); transition: filter var(--dur) var(--ease), opacity var(--dur) var(--ease); }
+.spot-art::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: -2%; height: 8%; border-radius: 50%; background: var(--line); }
+.spot-disc {
+  position: absolute; inset: 12%; z-index: 1; display: grid; place-items: center; border-radius: 50%;
+  background: color-mix(in srgb, var(--unit) 16%, var(--surface)); box-shadow: 0 8px 0 color-mix(in srgb, var(--unit) 30%, var(--surface));
+}
+.spot-disc svg { width: 54%; height: 54%; }
+.spot-bit { position: absolute; z-index: 2; width: 17%; height: 17%; }
+.spot-bit.b1 { top: 0; left: 4%; transform: rotate(-14deg); }
+.spot-bit.b2 { top: 8%; right: 2%; width: 14%; height: 14%; color: var(--star); }
+.spot-bit.b3 { bottom: 6%; right: 0; transform: rotate(10deg); }
+.spot-art:not(.lit) { filter: grayscale(1); opacity: .5; }
+
+.trail-node.locked .node-face svg { fill: var(--locked-ink); color: var(--locked-ink); }
+.node-stars { display: flex; gap: 2px; margin-top: 12px; color: var(--star-off); }
+.node-stars svg.won { color: var(--star); }
+
+.banner-nav { flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: inherit; text-align: left; border-radius: 12px; }
+.banner-nav small { display: inline-flex !important; align-items: center; gap: 4px; }
+.banner-nav:hover small { opacity: 1; }
+button.section-label { border: 0; background: none; padding: 0; color: inherit; border-radius: 12px; }
+button.section-label:hover b { color: var(--blue-text); }
+
+.sections-page { position: fixed; inset: 0; z-index: 30; overflow-y: auto; background: var(--bg); padding-bottom: calc(30px + var(--safe-b)); }
+.sections-head {
+  position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center;
+  padding: 10px 12px; background: var(--bg); border-bottom: 2px solid var(--line);
+}
+.sections-head h1 { margin: 0; text-align: center; font-size: 20px; }
+.sections-cards { list-style: none; margin: 0 auto; padding: 20px 16px; max-width: 640px; display: grid; gap: 20px; }
+.section-card { padding: 0; overflow: hidden; box-shadow: 0 4px 0 var(--line); }
+.section-card.here { border-color: var(--unit); box-shadow: 0 4px 0 var(--unit-edge); }
+.section-art { position: relative; height: 140px; display: flex; align-items: center; justify-content: flex-end; padding: 0 24px; background: color-mix(in srgb, var(--unit) 8%, var(--surface)); }
+.section-card.locked .section-art { background: var(--bg-deep); }
+.mini-staff { position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%; display: grid; gap: 12px; }
+.mini-staff i { display: block; height: 2px; background: color-mix(in srgb, var(--unit) 28%, var(--surface)); }
+.section-card.locked .mini-staff i { background: var(--line); }
+.section-art .spot-art { z-index: 1; }
+.section-body { padding: 16px 20px 20px; display: grid; gap: 10px; justify-items: start; }
+.section-body h2 { margin: 0; font-size: 20px; }
+.section-body .sub { margin: 0; }
+.section-progress { width: 100%; display: flex; align-items: center; gap: 10px; color: var(--ink-2); }
+.section-progress .meter { flex: 1; height: 14px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.section-progress .meter i { display: block; height: 100%; border-radius: 999px; background: var(--unit); }
+.section-body .btn { width: 100%; }
+.section-locked { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--ink-3); font-weight: 800; }
+
+.rail-btn.tab-home svg { color: var(--tab-learn); }
+.rail-btn.tab-songs svg { color: var(--tab-songs); }
+.rail-btn.settings svg { color: var(--tab-settings); }
+.rail-btn svg { transition: transform var(--dur) var(--ease); }
+.rail-btn.on svg { transform: scale(1.08); }
+
+.staff-note { position: absolute; z-index: 1; width: 34px; height: 34px; }
+.staff-note.n1 { left: 9%; top: 52%; color: var(--flame); }
+.staff-note.n2 { left: 24%; top: 30%; color: var(--purple); transform: rotate(-6deg); }
+.staff-note.n3 { left: 39%; top: 44%; color: var(--unit); }
+.section-card.locked .staff-note { color: var(--line-2); }
+@media (max-width: 640px) { .staff-note { width: 28px; height: 28px; } }
