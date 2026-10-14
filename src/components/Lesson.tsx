@@ -7,7 +7,7 @@ import { listenForSkills } from '../lib/skills';
 import { fastLearner, recordPace } from '../lib/path';
 import type { SongInfo } from '../lib/catalog';
 import { Engine } from '../lib/engine';
-import type { MasterySession, MasteryVerdict } from '../lib/mastery';
+import { pctOf, type MasterySession, type MasteryVerdict } from '../lib/mastery';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
 import { pickRange } from '../lib/keys';
 import { formatSpeed, noteName } from '../lib/names';
@@ -461,8 +461,8 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           <p className="sub">{result.hit} of {result.total} notes right first time, {result.wrong} wrong{result.strays > 0 ? `, ${result.strays} accidental ${result.strays === 1 ? 'touch' : 'touches'} not counted` : ''}</p>
           {result.verdict && (
             <motion.div className="mastery-gain" initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...SPRING, delay: 0.4 }}>
-              <span className="mastery-gain-head"><IconTarget size={18} />Mastery<b><CountUp from={Math.floor(result.verdict.before * 100)} to={Math.floor(result.verdict.after * 100)} ms={1100} />%</b></span>
-              <span className="mastery-track" role="progressbar" aria-label="Mastery" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.floor(result.verdict.after * 100)}>
+              <span className="mastery-gain-head"><IconTarget size={18} />Mastery<b><CountUp from={pctOf(result.verdict.before)} to={pctOf(result.verdict.after)} ms={1100} />%</b></span>
+              <span className="mastery-track" role="progressbar" aria-label="Mastery" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pctOf(result.verdict.after)}>
                 <motion.i initial={{ width: `${Math.max(2, result.verdict.before * 100)}%` }} animate={{ width: `${Math.max(2, result.verdict.after * 100)}%` }} transition={{ ...SOFT, delay: 0.7 }} />
               </span>
               <p>{result.verdict.line}</p>

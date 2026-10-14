@@ -3,16 +3,10 @@ import { clearCourseProgress } from './course';
 import { parseSong } from './midi';
 import type { Progress, Settings, Song, SongEntry } from './types';
 
-const unsplash = (id: string) => `https://images.unsplash.com/${id}?w=560&h=440&fit=crop&crop=entropy&q=70&auto=format`;
-const cover = (id: string, by: string, alt: string) => ({ src: unsplash(id), by, alt });
-
-/** Shown on imported songs, which have no cover of their own. */
-export const GENERIC_COVER = cover('photo-1689506422730-6a8e09038b1b', 'Bogdan Arhipov', 'Close-up of piano keys in low light');
-
 /** Songs shipped with the app, served from /songs. Missing ones are slots that ask for the .mid. */
 export const BUILT_IN: SongEntry[] = [
   // For now the app teaches one piece, and teaches it well.
-  { id: 'gymnopedie-1', collection: 'classical', image: cover('photo-1550188225-af2e1c2529b2', 'Fernando Jorge', 'A calm grey sea'), title: 'Gymnopédie No. 1', film: 'Trois Gymnopédies', year: 1888, composer: 'E. Satie', builtIn: true, file: '/songs/gymnopedie-1.mid', timeSig: [3, 4] },
+  { id: 'gymnopedie-1', collection: 'classical', title: 'Gymnopédie No. 1', film: 'Trois Gymnopédies', year: 1888, composer: 'E. Satie', builtIn: true, file: '/songs/gymnopedie-1.mid', timeSig: [3, 4] },
 ];
 
 const songStore = createStore('hugos-piano', 'songs');

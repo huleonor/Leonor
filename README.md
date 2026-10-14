@@ -50,7 +50,8 @@ npm run dev
 vercel deploy --prod
 ```
 
+Mastery asks a model to read each song and plan how to teach it (`api/plan.ts`). In the Vercel project's environment variables set `ANTHROPIC_API_KEY` (Claude), or `GROQ_API_KEY` to test with Groq (`GROQ_MODEL` picks the model, default `openai/gpt-oss-120b`; `PLAN_PROVIDER=groq` or `claude` chooses when both are set). Without a key the app plans from rules measured on the notes. The plan is kept in the browser under `hugos-piano:strategy:<song id>`, and its `by` field names the model that wrote it.
+
 For now the app ships one piece, Gymnopédie No. 1 (Satie, public domain), and its lessons are built to teach it well.
 
-Cover photos are from Unsplash (free license): Fernando Jorge, Bogdan Arhipov.
 # Leonor
