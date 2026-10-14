@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
-import { addToLibrary, GENERIC_COVER, myLibrary, onLibrary, removeFromLibrary } from '../lib/library';
+import { addToLibrary, myLibrary, onLibrary, removeFromLibrary } from '../lib/library';
 import type { SongEntry } from '../lib/types';
 import { Spot } from './Brand';
 import { IconCheck, IconClose, IconImport, IconMore, IconMusic, IconPlus, IconStar } from './Icons';
 import { SOFT, SPRING } from './Motion';
+import { SongCover } from './SongCover';
 
 const COLLECTIONS: [NonNullable<SongEntry['collection']>, string][] = [['film', 'Film scores'], ['modern', 'Modern piano'], ['classical', 'Classical']];
 
@@ -17,16 +18,9 @@ function useLibrary() {
   return ids;
 }
 
-/** A small square cover: the song's photo over a brand-blue tile, its music icon if the photo is missing. */
+/** A small square cover, the same design for every song (SongCover.tsx). */
 function Cover({ entry }: { entry: SongEntry }) {
-  const [broken, setBroken] = useState(false);
-  const img = entry.image ?? GENERIC_COVER;
-  return (
-    <span className={`cover c-${entry.collection ?? 'mine'}`}>
-      <IconMusic size={28} />
-      {!broken && <img src={img.src} alt="" loading="lazy" onError={() => setBroken(true)} />}
-    </span>
-  );
+  return <span className="cover"><SongCover entry={entry} /></span>;
 }
 
 /** A song in my library: cover, title, who wrote it, and stars once started. */

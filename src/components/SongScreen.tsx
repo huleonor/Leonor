@@ -6,7 +6,7 @@ import { partLearnt, type CourseStep } from '../lib/course';
 import { Engine } from '../lib/engine';
 import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
 import { recordRun } from '../lib/library';
-import { useMastery } from '../lib/mastery';
+import { pctOf, useMastery } from '../lib/mastery';
 import { listenForSkills } from '../lib/skills';
 import { addPractice } from '../lib/stats';
 import { formatSpeed } from '../lib/names';
@@ -74,7 +74,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
   const [teach, setTeach] = useState(false);
   const [masterySheet, setMasterySheet] = useState(false);
   const mastery = useMastery(song)!;
-  const pct = Math.floor(mastery.meter.value * 100);
+  const pct = pctOf(mastery.meter.value);
   const pickerWasPlaying = useRef(false);
   const [options, setOptions] = useState(false);
   const [alwaysKeys, setAlwaysKeys] = useState(() => { try { return localStorage.getItem('hugos-piano:keys') === 'always'; } catch { return false; } });
@@ -260,7 +260,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
               </span>
               <ol className="mastery-parts" aria-label="The parts of the song">
                 {mastery.meter.parts.map(p => (
-                  <li key={p.n} className={p.value >= 0.999 ? 'done' : ''} style={{ flexGrow: p.weight }} aria-label={`Part ${p.n}, bars ${p.from}-${p.to}: ${Math.floor(p.value * 100)}%`}>
+                  <li key={p.n} className={p.value >= 0.999 ? 'done' : ''} style={{ flexGrow: p.weight }} aria-label={`Part ${p.n}, bars ${p.from}-${p.to}: ${pctOf(p.value)}%`}>
                     <motion.i initial={{ width: 0 }} animate={{ width: `${p.value * 100}%` }} transition={SOFT} />
                   </li>
                 ))}

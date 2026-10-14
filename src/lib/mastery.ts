@@ -256,34 +256,62 @@ function lastAt(st: MasteryState, prefix: string) {
   return t;
 }
 
-function partValue(m: Model, st: MasteryState, p: { from: number; to: number }, now: number) {
-  const r = range(p.from, p.to);
-  const t = topOf(st, ladderKey(p.from, p.to, m.all));
-  const done = (k: string, need = 2) => Math.min(1, streakOf(st, k) / need);
-  let v: number;
-  if (t >= 0) v = 0.35 + 0.65 * (t + 1) / RUNGS.length;
-  else if (done(chunkKey(p.from, p.to, m.all, true)) >= 1) v = 0.35;
-  else if (m.two) v = m.hands.reduce((a, h) => a + 0.1 * done(chunkKey(p.from, p.to, h, true)), 0) + 0.15 * done(chunkKey(p.from, p.to, 'both', true));
-  else v = 0.35 * done(chunkKey(p.from, p.to, m.all, true));
-  const at = lastAt(st, `${r}:`);
-  return at ? v * retention((now - at) / DAY) : v;
+/**
+ * How far each bar has come (0-1), from every stretch he has played that covers it: the notes
+ * (each hand alone a quarter, both hands together the rest) and then the beat, rung by rung. A
+ * run that did not pass still counts for half of what it got right, so the meter follows him as
+ * he plays instead of waiting for a stretch to be perfect.
+ */
+function barProgress(m: Model, st: MasteryState, now: number) {
+  const hand = new Map<string, number>(), together = new Map<number, number>(), beat = new Map<number, number>();
+  const up = <K,>(map: Map<K, number>, k: K, v: number) => map.set(k, Math.max(map.get(k) ?? 0, v));
+  for (const [k, c] of Object.entries(st.chunks)) {
+    const x = /^(\d+)-(\d+):(\w+):(free|beat(\d))$/.exec(k);
+    if (!x) continue;
+    const credit = c.best >= PASS ? 1 : 0.5 * c.best;
+    for (let b = +x[1]; b <= +x[2]; b++) {
+      if (x[4] !== 'free') { if (x[3] === m.all) up(beat, b, credit * (+x[5] + 1) / RUNGS.length); }
+      else if (x[3] === m.all) up(together, b, credit);
+      else up(hand, `${b}:${x[3]}`, credit);
+    }
+  }
+  return (b: number) => {
+    const be = beat.get(b) ?? 0;
+    const alone = m.hands.reduce((a, h) => a + (hand.get(`${b}:${h}`) ?? 0), 0) / m.hands.length;
+    const notes = be > 0 ? 1 : m.two ? Math.max(together.get(b) ?? 0, 0.5 * alone) : Math.max(together.get(b) ?? 0, alone);
+    let at = 0;
+    for (const h of m.hands) at = Math.max(at, st.items[`b${b}:${h}`]?.at ?? 0);
+    return (0.45 * notes + 0.55 * be) * (at ? retention((now - at) / DAY) : 1);
+  };
 }
+
+function partValue(bar: (b: number) => number, p: { from: number; to: number }) {
+  let sum = 0;
+  for (let b = p.from; b <= p.to; b++) sum += bar(b);
+  return sum / (p.to - p.from + 1);
+}
+
+/** The meter as a whole percent: any progress shows as at least 1%, so the first right notes move it. */
+export const pctOf = (v: number) => (v > 0 ? Math.max(1, Math.floor(v * 100)) : 0);
 
 /** How much of the song he has mastered (0-1), and each part's share. */
 export function meterOf(song: Song, st = loadMastery(song.entry.id), now = Date.now()): Meter {
   const m = model(song);
-  const parts = m.parts.map(p => ({ n: p.n, from: p.from, to: p.to, weight: p.weight, value: partValue(m, st, p, now) }));
+  const bar = barProgress(m, st, now);
+  const parts = m.parts.map(p => ({ n: p.n, from: p.from, to: p.to, weight: p.weight, value: partValue(bar, p) }));
   const w = parts.reduce((a, p) => a + p.weight, 0) || 1;
   const partsV = parts.reduce((a, p) => a + p.value * p.weight, 0) / w;
-  const whole = ladderKey(m.first, m.last, m.all);
-  const wt = topOf(st, whole);
-  let wholeV = streakOf(st, chunkKey(m.first, m.last, m.all, true)) >= 1 ? 0.2 : 0;
-  if (wt >= 2) wholeV = 0.2 + 0.5 * (wt - 1) / 3;
-  if (st.days.length >= 1) wholeV = 0.85;
+  // The whole song start to finish: free play, then the beat rung by rung, then the clean run.
+  const wt = topOf(st, ladderKey(m.first, m.last, m.all));
+  const free = st.chunks[chunkKey(m.first, m.last, m.all, true)];
+  let wholeV = free ? 0.15 * (free.best >= PASS ? 1 : 0.5 * free.best) : 0;
+  if (wt >= 0) wholeV = Math.max(wholeV, 0.6 * (wt + 1) / RUNGS.length);
+  if (st.days.length >= 1) wholeV = 0.8;
   const away = (now - (lastAt(st, `${range(m.first, m.last)}:`) || now)) / DAY;
   // Mastered and kept up (checks on time, or his for good): it stays at 100%.
   const kept = st.crown && (st.crown.forever || now <= st.crown.due + CHECK_GRACE * DAY);
-  const value = kept ? 1 : st.days.length >= 2 ? retention(away) : Math.min(0.99, 0.7 * partsV + 0.3 * wholeV * retention(away));
+  // 100% only once it is perfect: the whole song clean at full speed on two different days.
+  const value = kept ? 1 : st.days.length >= 2 ? retention(away) : Math.min(0.99, 0.85 * partsV + 0.15 * wholeV * retention(away));
   return { value, parts, days: st.days.length };
 }
 
@@ -545,8 +573,8 @@ export function nextDrill(song: Song, st = loadMastery(song.entry.id), now = Dat
 
 /** Steps go phrase by phrase: about four bars, never fewer than two. */
 const PHRASE = 4;
-/** Good runs a step takes before it moves on: a hand alone once, both hands and the beat three times (Simply Piano's three dots), the whole song once. */
-const REPS: Record<LessonKind, number> = { hand: 1, together: 3, beat: 3, spot: 3, move: 3, join: 1, song: 1, review: 2 };
+/** Good runs a step takes before it moves on: once in free play, twice with the beat, so he keeps moving through the song. */
+const REPS: Record<LessonKind, number> = { hand: 1, together: 1, beat: 2, spot: 2, move: 2, join: 1, song: 1, review: 1 };
 /** A good run: 90% right, at most one slip. */
 const PASS = 0.9;
 
@@ -567,8 +595,14 @@ const withRung = (l: MLesson, rung: number): MLesson => ({ ...l, rung, speed: RU
 export interface MSection { title: string; why: string; lessons: MLesson[]; /** What finishing it means. */ done: string; }
 
 const fastLearner = (st: MasteryState) => st.fast.tries >= 2 && st.fast.clean / st.fast.tries >= 0.6;
-const partLearnt = (m: Model, st: MasteryState, p: Part) => topOf(st, ladderKey(p.from, p.to, m.all)) >= 1;
-const known = (st: MasteryState, from: number, to: number, hands: HandsChoice, wait: boolean, rung = 0) => streakOf(st, chunkKey(from, to, hands, wait, rung)) >= 2;
+/**
+ * A part is learnt enough to go on once he has played it with the beat: clean at any speed, or
+ * nearly right. Getting it up to full speed comes later, part by part, so he keeps moving on.
+ */
+const partLearnt = (m: Model, st: MasteryState, p: Part) =>
+  topOf(st, ladderKey(p.from, p.to, m.all)) >= 0 || RUNGS.some((_, r) => (st.chunks[chunkKey(p.from, p.to, m.all, false, r)]?.best ?? 0) >= HARD);
+/** Played well once: that stretch is known and the planner moves on. */
+const known = (st: MasteryState, from: number, to: number, hands: HandsChoice, wait: boolean, rung = 0) => streakOf(st, chunkKey(from, to, hands, wait, rung)) >= 1;
 
 /** The bars of a part in phrases of about four. */
 function phrases(p: { from: number; to: number }) {
@@ -591,11 +625,11 @@ function partSection(song: Song, m: Model, st: MasteryState, p: Part): MSection 
     const both = m.hands.filter(h => plays(h, f));
     if (m.two && both.length < 2) {
       // Only one hand plays here: that hand on its own is the whole phrase.
-      for (const h of both) if (!known(st, f.from, f.to, h, true)) out.push(lesson(st, { kind: 'hand', from: f.from, to: f.to, hands: h, wait: true, reps: 3, title: `${at}, ${handName(h)}` }));
+      for (const h of both) if (!known(st, f.from, f.to, h, true)) out.push(lesson(st, { kind: 'hand', from: f.from, to: f.to, hands: h, wait: true, title: `${at}, ${handName(h)}` }));
       continue;
     }
     if (m.two && !fast) for (const h of m.hands) if (!known(st, f.from, f.to, h, true)) out.push(lesson(st, { kind: 'hand', from: f.from, to: f.to, hands: h, wait: true, title: `${at}, ${handName(h)}` }));
-    if (!known(st, f.from, f.to, m.all, true)) out.push(lesson(st, { kind: m.two ? 'together' : 'hand', from: f.from, to: f.to, hands: m.all, wait: true, reps: 3, title: m.two ? `${at}, both hands` : `${at}, free play` }));
+    if (!known(st, f.from, f.to, m.all, true)) out.push(lesson(st, { kind: m.two ? 'together' : 'hand', from: f.from, to: f.to, hands: m.all, wait: true, title: m.two ? `${at}, both hands` : `${at}, free play` }));
   }
   if (ph.length > 1 && !known(st, p.from, p.to, m.all, true)) out.push(lesson(st, { kind: 'together', from: p.from, to: p.to, hands: m.all, wait: true, reps: 1, fingers: 'some', title: `${Bars(p.from, p.to)}, free play` }));
   // With the beat once the notes are known: at 70%, or at 60% first while the model says 70% is
@@ -748,7 +782,7 @@ function plan(song: Song, st: MasteryState, now: number): MSection {
   return {
     title: `Part ${weak.n}`, done: 'Sharper still.',
     why: st.days.length >= 2 ? 'Mastered. Keeping your weakest part sharp.' : 'The last step is the whole song again on another day. Until then, your weakest part.',
-    lessons: [lesson(st, { kind: 'review', from: weak.from, to: weak.to, hands: m.all, wait: false, rung: TOP, reps: 3, title: `${Bars(weak.from, weak.to)}, full speed` })],
+    lessons: [lesson(st, { kind: 'review', from: weak.from, to: weak.to, hands: m.all, wait: false, rung: TOP, title: `${Bars(weak.from, weak.to)}, full speed` })],
   };
 }
 

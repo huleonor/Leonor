@@ -68,6 +68,15 @@
   --premium-2: #1d4a6b;
   --purple: #ce82ff;
   --purple-edge: #a568cc;
+  /* Song covers: a unit colour each, white glyph and staff (no green or red: those mean right and wrong) */
+  --cover-1: #2b93ba; --cover-1-edge: #1f7395;
+  --cover-2: #00b38a; --cover-2-edge: #00916f;
+  --cover-3: #ff9600; --cover-3-edge: #e08300;
+  --cover-4: #e85fb8; --cover-4-edge: #c94499;
+  --cover-5: #2b70c9; --cover-5-edge: #18599e;
+  --cover-6: #a568cc; --cover-6-edge: #8a4fb3;
+  --cover-ink: #ffffff;
+  --cover-line: rgba(255, 255, 255, .3);
   /* Piano screens */
   --right: #1cb0f6;
   --left: #ff9600;
@@ -1643,7 +1652,11 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .song-card.skeleton { aspect-ratio: 1 / 1.3; border-radius: 12px; background: var(--surface-2); animation: blink 1.4s ease-in-out infinite; }
 .song-open, .add-tile { width: 100%; display: grid; gap: 8px; text-align: left; }
 .cover { position: relative; display: grid; place-items: center; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--blue-soft); color: var(--blue); border: 2px solid var(--line); }
-.cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cover:has(.song-cover) { border: 0; }
+.cover .song-cover { position: absolute; inset: 0; }
+.song-cover { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: 12px; background: var(--cover); color: var(--cover-ink); box-shadow: inset 0 -6px 0 var(--cover-edge); }
+.song-cover-staff { position: absolute; left: 0; right: 0; top: 34%; height: 32%; background: repeating-linear-gradient(to bottom, var(--cover-line) 0 2px, transparent 2px 25%); }
+.song-cover-glyph { position: relative; width: 46%; height: 46%; }
 .cover.add { background: var(--surface); border-style: dashed; border-color: var(--line-2); color: var(--blue); }
 .song-text { display: grid; gap: 1px; min-width: 0; }
 .song-text b { font-size: 15px; font-weight: 900; color: var(--heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1665,10 +1678,6 @@ button.gb-stat:hover { background: var(--bg-deep); }
 .market-list .cover { width: 64px; border-width: 0; }
 .btn.added { background: var(--surface); color: var(--blue-text); border-color: var(--blue-line); }
 .add-label { display: inline-flex; align-items: center; gap: 6px; }
-.cover.c-film { background: linear-gradient(135deg, #f2e3ff, #d9b8ff); color: #8a4fd1; }
-.cover.c-modern { background: linear-gradient(135deg, #d6f7ee, #9ee6d2); color: #00876a; }
-.cover.c-classical { background: linear-gradient(135deg, #fff4c2, #ffe07a); color: #8a6500; }
-.cover.c-mine { background: linear-gradient(135deg, var(--blue-soft), #b9e2f1); color: var(--blue); }
 
 @media (max-width: 640px) {
   .song-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
@@ -1948,9 +1957,9 @@ button.section-label:hover b { color: var(--blue-text); }
   position: relative; display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%;
   background: var(--tier); box-shadow: 0 6px 0 var(--tier-edge); overflow: visible;
 }
-.medal-disc img { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; border: 3px solid var(--surface); }
+.medal-disc .song-cover { width: 76px; height: 76px; border-radius: 50%; border: 3px solid var(--surface); box-shadow: none; }
 .medal.t-none .medal-disc { background: var(--bg-deep); box-shadow: 0 6px 0 var(--line); }
-.medal.t-none .medal-disc img { filter: grayscale(.6); opacity: .8; }
+.medal.t-none .medal-disc .song-cover { filter: grayscale(.6); opacity: .8; }
 .medal-ring { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); transform: rotate(-90deg); }
 .medal-ring circle { fill: none; stroke: var(--line); stroke-width: 6; }
 .medal-ring .fill { stroke: var(--go); stroke-linecap: round; }

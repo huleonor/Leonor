@@ -6,8 +6,8 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
-import { GENERIC_COVER, myLibrary } from '../lib/library';
-import { CHECK_GAPS, onMastery, standingOf, TIER_NAME, type Standing, type Tier } from '../lib/mastery';
+import { myLibrary } from '../lib/library';
+import { CHECK_GAPS, onMastery, pctOf, standingOf, TIER_NAME, type Standing, type Tier } from '../lib/mastery';
 import { usePath } from '../lib/path';
 import { AV_BG, AV_BODY, AV_EXTRA, saveProfile, useProfile, type Look } from '../lib/profile';
 import { streak, totalXp, totals } from '../lib/stats';
@@ -17,6 +17,7 @@ import { Flame, Gem } from './GameIcons';
 import { IconBolt, IconCheck, IconEdit, IconMusic, IconTarget } from './Icons';
 import { SOFT, SPRING } from './Motion';
 import { Penguin } from './Penguin';
+import { SongCover } from './SongCover';
 import { useDaily } from './Home';
 
 const RANK: Record<Tier, number> = { none: 0, bronze: 1, silver: 2, gold: 3, forever: 4 };
@@ -120,13 +121,11 @@ function dueText(st: Standing) {
     const days = Math.ceil((st.due - Date.now()) / 86_400_000);
     return days <= 0 ? 'Mastery check due' : `Check in ${days} ${days === 1 ? 'day' : 'days'}`;
   }
-  return `${Math.floor(st.value * 100)}% mastered`;
+  return `${pctOf(st.value)}% mastered`;
 }
 
 function Medal({ info, st, index, shine, onOpen }: { info: SongInfo; st: Standing; index: number; shine: boolean; onOpen: () => void }) {
-  const img = (info.entry.image ?? GENERIC_COVER).src;
   const ring = useMemo(() => Math.max(0.04, st.value), [st.value]);
-  const [broken, setBroken] = useState(false);
   return (
     <motion.li className={`medal t-${st.tier} ${shine ? 'shine' : ''}`} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ ...SPRING, delay: 0.15 + index * 0.07 }}>
       <motion.button className="medal-btn" onClick={onOpen} whileTap={{ scale: 0.94 }} aria-label={`${info.entry.title}: ${TIER_NAME[st.tier]}, ${dueText(st)}`}>
@@ -134,12 +133,12 @@ function Medal({ info, st, index, shine, onOpen }: { info: SongInfo; st: Standin
           {st.tier === 'none' && (
             <svg className="medal-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" /><circle cx="50" cy="50" r="46" className="fill" style={{ strokeDasharray: `${ring * 289} 289` }} /></svg>
           )}
-          {broken ? <span className="medal-face"><IconMusic size={34} /></span> : <img src={img} alt="" loading="lazy" onError={() => setBroken(true)} />}
+          <SongCover entry={info.entry} />
           {st.tier === 'forever' && <span className="medal-gem"><Gem size={20} /></span>}
           {(st.tier === 'gold') && <span className="medal-gem gold"><IconCheck size={16} /></span>}
         </span>
         <b className="medal-title">{info.entry.title}</b>
-        <span className="medal-tier">{st.tier === 'none' ? <><IconTarget size={13} />{Math.floor(st.value * 100)}%</> : TIER_NAME[st.tier]}</span>
+        <span className="medal-tier">{st.tier === 'none' ? <><IconTarget size={13} />{pctOf(st.value)}%</> : TIER_NAME[st.tier]}</span>
         <small className="medal-due">{dueText(st)}</small>
       </motion.button>
     </motion.li>
