@@ -21,6 +21,12 @@
  *  - When his playing stops improving it suggests stopping for the day: sleep does the rest.
  *
  * 100% is the whole song with the beat at full speed, 95% right, on two different days.
+ *
+ * Then it has to last: a mastery check comes due after a week, then two weeks later, then a
+ * month later (the whole song at full speed, 95% right, any day from the due date, with a week's
+ * grace). Three checks kept and the song is his for good. A check missed by more than the grace
+ * week drops it to silver until he plays it clean again, which restores gold and starts the
+ * checks over; nothing is ever lost for good.
  */
 import { useEffect, useReducer } from 'react';
 import { buildCourse, type CourseStep } from './course';
@@ -36,6 +42,10 @@ const CLEAN = 0.95;
 /** Below this the music is too hard as it is: slower, or a smaller piece. */
 const HARD = 0.85;
 const DAY = 86_400_000;
+/** Days between mastery checks after 100%: a week, then two weeks, then a month. */
+export const CHECK_GAPS = [7, 14, 30];
+/** Days of grace after a check falls due before the song drops back to silver. */
+export const CHECK_GRACE = 7;
 const FREE_SPEED = 0.7;
 
 // ---------- Movements ----------
@@ -166,7 +176,11 @@ export interface MLesson {
   reps: number;
 }
 
+/** A mastered song's checks: how many kept, when the next is due, and whether it is his for good. */
+export interface Crown { at: number; checks: number; due: number; forever?: boolean; }
+
 export interface MasteryState {
+  crown?: Crown;
   items: Record<string, Item>;
   chunks: Record<string, Chunk>;
   /** Highest rung played clean twice, per stretch and hands; missing means none yet. */
@@ -247,7 +261,9 @@ export function meterOf(song: Song, st = loadMastery(song.entry.id), now = Date.
   if (wt >= 2) wholeV = 0.2 + 0.5 * (wt - 1) / 3;
   if (st.days.length >= 1) wholeV = 0.85;
   const away = (now - (lastAt(st, `${range(m.first, m.last)}:`) || now)) / DAY;
-  const value = st.days.length >= 2 ? retention(away) : Math.min(0.99, 0.7 * partsV + 0.3 * wholeV * retention(away));
+  // Mastered and kept up (checks on time, or his for good): it stays at 100%.
+  const kept = st.crown && (st.crown.forever || now <= st.crown.due + CHECK_GRACE * DAY);
+  const value = kept ? 1 : st.days.length >= 2 ? retention(away) : Math.min(0.99, 0.7 * partsV + 0.3 * wholeV * retention(away));
   return { value, parts, days: st.days.length };
 }
 
@@ -332,6 +348,14 @@ export function planSection(song: Song, st = loadMastery(song.entry.id), now = D
 
   // The first section of a day checks what stuck overnight.
   const firstToday = st.session.day !== today || !st.session.runs.length;
+  // A mastery check that has come due comes first.
+  if (st.crown && !st.crown.forever && now >= st.crown.due) {
+    const left = CHECK_GAPS.length - st.crown.checks;
+    return {
+      title: 'Mastery check', lessons: [whole(false, TOP, 'The whole song, full speed')], done: 'Still yours.',
+      why: now > st.crown.due + CHECK_GRACE * DAY ? 'Play it clean once more and it is gold again.' : left === 1 ? 'The last check: keep it and the song is yours for good.' : 'Play it through once, 95% right, to keep it mastered.',
+    };
+  }
   if (firstToday && st.days.length === 1 && !st.days.includes(today)) {
     return { title: 'The whole song', why: 'One more clean run on another day locks it in.', lessons: [whole(false, TOP, 'The whole song, full speed')], done: 'Played clean on another day: it is yours.' };
   }
@@ -511,7 +535,18 @@ function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy: numbe
       st.rung[lk] = Math.max(0, Math.min(st.rung[lk] ?? l.rung, l.rung) - 1);
     }
     // The run that counts: the whole song, full speed, 95% right.
-    if (pass && run.accuracy >= CLEAN && l.from === m.first && l.to === m.last && l.rung === TOP && !st.days.includes(today)) st.days.push(today);
+    const counts = pass && run.accuracy >= CLEAN && l.from === m.first && l.to === m.last && l.rung === TOP;
+    if (counts && !st.days.includes(today)) st.days.push(today);
+    // Mastery checks: the first 100% starts them; a clean run once a check is due keeps it.
+    if (counts && !st.crown && st.days.length >= 2) st.crown = { at: now, checks: 0, due: now + CHECK_GAPS[0] * DAY };
+    else if (counts && st.crown && !st.crown.forever && now >= st.crown.due) {
+      if (now > st.crown.due + CHECK_GRACE * DAY) st.crown = { at: st.crown.at, checks: 0, due: now + CHECK_GAPS[0] * DAY };
+      else {
+        st.crown.checks++;
+        if (st.crown.checks >= CHECK_GAPS.length) st.crown.forever = true;
+        else st.crown.due = now + CHECK_GAPS[st.crown.checks] * DAY;
+      }
+    }
   }
 
   const spot = pass ? null : zoomIn(m, st, l, song, groups);
@@ -710,4 +745,30 @@ export function useMastery(song?: Song) {
   const [, bump] = useReducer((x: number) => x + 1, 0);
   useEffect(() => onMastery(bump), []);
   return song ? { meter: meterOf(song), next: planSection(song) } : null;
+}
+
+// ---------- Standing: where a song sits in his collection ----------
+
+export type Tier = 'none' | 'bronze' | 'silver' | 'gold' | 'forever';
+export const TIER_NAME: Record<Tier, string> = { none: 'Learning', bronze: 'Bronze', silver: 'Silver', gold: 'Gold', forever: 'Forever' };
+
+export interface Standing {
+  tier: Tier;
+  value: number;
+  /** Mastered: when the next check is due (ms), and how many are kept. */
+  due?: number;
+  checks?: number;
+  /** A check was missed: silver until he plays it clean again. */
+  lapsed?: boolean;
+}
+
+/** Bronze at 50%, silver at 75%, gold at 100% while its checks are kept, forever after three. */
+export function standingOf(song: Song, now = Date.now()): Standing {
+  const st = loadMastery(song.entry.id);
+  const value = meterOf(song, st, now).value;
+  const c = st.crown;
+  if (c?.forever) return { tier: 'forever', value: 1, checks: c.checks };
+  if (c && now <= c.due + CHECK_GRACE * DAY) return { tier: 'gold', value, due: c.due, checks: c.checks };
+  if (c) return { tier: 'silver', value, lapsed: true, checks: c.checks };
+  return { tier: value >= 0.75 ? 'silver' : value >= 0.5 ? 'bronze' : 'none', value };
 }

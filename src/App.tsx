@@ -16,6 +16,9 @@ import { SettingsSheet } from './components/SettingsSheet';
 import { EditSong } from './components/EditSong';
 import { SongScreen, sectionsOf } from './components/SongScreen';
 import { Songs } from './components/Songs';
+import { Profile } from './components/Profile';
+import { Penguin } from './components/Penguin';
+import { useProfile } from './lib/profile';
 import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
 import { I18nContext, makeT } from './lib/i18n';
@@ -28,11 +31,17 @@ import { connect, disconnectBle, disconnectMic, linkState, onLinkState, onNote, 
 import { loadSettings, removeSong, renameSong, saveSettings } from './lib/library';
 import type { Settings, SongEntry } from './lib/types';
 
-type Tab = 'home' | 'songs' | 'shop';
+type Tab = 'home' | 'songs' | 'shop' | 'profile';
+/** The profile tab's mark is his own penguin. */
+function ProfileMark({ size = 26 }: { size?: number }) {
+  const p = useProfile();
+  return <Penguin look={p.look} size={size} framed />;
+}
 const TABS: [Tab, string, (p: { size?: number }) => React.ReactElement][] = [
   ['home', 'Learn', IconHomeFill],
   ['songs', 'Songs', IconMusicFill],
   ['shop', 'Shop', p => <Gem size={p.size} />],
+  ['profile', 'Profile', p => <ProfileMark size={p.size} />],
 ];
 
 export default function App() {
@@ -261,6 +270,8 @@ export default function App() {
               />
             ) : tab === 'shop' ? (
               <Shop onPremium={() => setPaywall('upgrade')} />
+            ) : tab === 'profile' ? (
+              <Profile infos={infos} entries={entries} onOpenSong={openSheet} />
             ) : tab === 'songs' ? (
               <Songs infos={infos} entries={entries} ready={ready} onOpen={openSheet} onAdd={slot => pickFile(slot)} onEdit={setEditing} />
             ) : null}

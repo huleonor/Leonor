@@ -1891,3 +1891,89 @@ button.section-label:hover b { color: var(--blue-text); }
 .staff-note.n3 { left: 39%; top: 44%; color: var(--unit); }
 .section-card.locked .staff-note { color: var(--line-2); }
 @media (max-width: 640px) { .staff-note { width: 28px; height: 28px; } }
+
+/* =====================================================================
+   Profile: his penguin on a coloured header, an overview, and the
+   mastery collection (bronze, silver, gold, forever).
+   ===================================================================== */
+:root {
+  --av-bg-sky: #bde8fb; --av-bg-lime: #c9f29b; --av-bg-mint: #b6f0dc; --av-bg-peach: #ffd9b8; --av-bg-pink: #ffd1ee; --av-bg-lilac: #e3d4ff;
+  --av-body-navy: #26324a; --av-body-ink: #2f2f2f; --av-body-blue: #2b93ba; --av-body-teal: #0f8f86; --av-body-plum: #6b3d8f;
+  --av-eye: #262626; --av-cheek: #ffa5c8;
+  --tier-bronze: #d68a4c; --tier-bronze-edge: #b06a30; --tier-bronze-text: #8a4f1d;
+  --tier-silver: #c4ccd6; --tier-silver-edge: #9aa5b1; --tier-silver-text: #56606b;
+  --tier-forever: #1cb0f6; --tier-forever-edge: #1899d6;
+}
+.profile-page { max-width: 680px; margin: 0 auto; padding-bottom: 40px; }
+.profile-hero { position: relative; height: 250px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; border-radius: 0 0 12px 12px; margin: 0 -16px; }
+@media (min-width: 641px) { .profile-hero { margin: 20px 0 0; border-radius: 12px; } }
+.profile-av { margin-bottom: -26px; }
+.profile-av .penguin-av { display: block; }
+.profile-edit { position: absolute; top: 14px; right: 14px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; }
+.profile-id { padding: 20px 4px 4px; border-bottom: 2px solid var(--line); }
+.profile-id h1 { margin: 0; font-size: 26px; }
+.profile-id .sub { margin: 4px 0 0; }
+.profile-counts { display: grid; grid-template-columns: repeat(3, 1fr); margin: 16px 0 18px; }
+.profile-counts > div { display: grid; gap: 2px; padding: 0 14px; border-left: 2px solid var(--line); }
+.profile-counts > div:first-child { padding-left: 0; border-left: 0; }
+.profile-counts dt { order: 2; color: var(--ink-3); font-weight: 800; font-size: 14px; }
+.profile-counts dd { margin: 0; font-weight: 900; font-size: 24px; color: var(--heading); font-variant-numeric: tabular-nums; }
+.profile-block { padding: 20px 4px 4px; }
+.profile-block h2 { margin: 0 0 12px; font-size: 22px; }
+.profile-block > .sub { margin: -6px 0 14px; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; box-shadow: 0 3px 0 var(--line); }
+.stat-ic { display: grid; place-items: center; flex: none; }
+.stat-ic .ic-xp { color: var(--star); }
+.stat-ic .gi-flame:not(.lit) { color: var(--line-2); }
+.stat-ic .gi-flame.best { color: var(--star); }
+.stat-text { display: grid; }
+.stat-text b { font-size: 21px; font-weight: 900; color: var(--heading); font-variant-numeric: tabular-nums; }
+.stat-text small { color: var(--ink-3); font-weight: 800; font-size: 14px; }
+
+.medal-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
+.medal { --tier: var(--line-2); --tier-edge: var(--line-2); --tier-text: var(--ink-3); }
+.medal.t-bronze { --tier: var(--tier-bronze); --tier-edge: var(--tier-bronze-edge); --tier-text: var(--tier-bronze-text); }
+.medal.t-silver { --tier: var(--tier-silver); --tier-edge: var(--tier-silver-edge); --tier-text: var(--tier-silver-text); }
+.medal.t-gold { --tier: var(--star); --tier-edge: var(--star-edge); --tier-text: var(--star-text); }
+.medal.t-forever { --tier: var(--tier-forever); --tier-edge: var(--tier-forever-edge); --tier-text: var(--blue-text); }
+.medal-btn { width: 100%; display: grid; justify-items: center; gap: 6px; padding: 14px 8px 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); box-shadow: 0 3px 0 var(--line); text-align: center; }
+.medal-disc {
+  position: relative; display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%;
+  background: var(--tier); box-shadow: 0 6px 0 var(--tier-edge); overflow: visible;
+}
+.medal-disc img { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; border: 3px solid var(--surface); }
+.medal.t-none .medal-disc { background: var(--bg-deep); box-shadow: 0 6px 0 var(--line); }
+.medal.t-none .medal-disc img { filter: grayscale(.6); opacity: .8; }
+.medal-ring { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); transform: rotate(-90deg); }
+.medal-ring circle { fill: none; stroke: var(--line); stroke-width: 6; }
+.medal-ring .fill { stroke: var(--go); stroke-linecap: round; }
+.medal-gem { position: absolute; right: -4px; bottom: -4px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 3px solid var(--tier); color: var(--tier-forever); }
+.medal-gem.gold { color: var(--star-text); }
+.medal-title { margin-top: 6px; font-size: 15px; font-weight: 900; color: var(--heading); line-height: 1.2; }
+.medal-tier { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--tier) 22%, var(--surface)); color: var(--tier-text); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+.medal.t-none .medal-tier { background: var(--bg-deep); color: var(--ink-2); }
+.medal-due { color: var(--ink-3); font-weight: 800; font-size: 12.5px; }
+.medal.empty { display: grid; justify-items: center; gap: 8px; padding: 14px 8px; border-radius: 12px; border: 2px dashed var(--line); color: var(--line-2); }
+.medal.empty .medal-disc { background: var(--bg-deep); box-shadow: none; color: var(--line-2); }
+.medal.empty small { color: var(--ink-3); font-weight: 800; }
+/* A medal that just went up a tier shines once. */
+.medal.shine .medal-disc::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--surface) 85%, transparent) 50%, transparent 70%); background-size: 250% 100%; animation: medal-shine 1.1s .6s var(--ease) both; }
+@keyframes medal-shine { from { background-position: 120% 0; } to { background-position: -40% 0; } }
+@media (prefers-reduced-motion: reduce) { .medal.shine .medal-disc::after { animation: none; } }
+
+.look-sheet { width: min(480px, 100%); display: grid; gap: 14px; justify-items: stretch; text-align: left; }
+.veil .card.look-sheet { justify-items: stretch; text-align: left; }
+.look-preview { justify-self: center; display: grid; place-items: end center; width: 170px; height: 170px; border-radius: 50%; overflow: hidden; }
+.look-row { display: grid; gap: 8px; }
+.look-row > span { color: var(--ink-3); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+.look-name { min-height: 46px; padding: 0 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg-deep); font: inherit; font-weight: 800; color: var(--ink); }
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.swatch { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--surface); box-shadow: 0 0 0 2px var(--line); }
+.swatch.on { box-shadow: 0 0 0 3px var(--go); }
+.extras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.extra { display: grid; justify-items: center; gap: 2px; padding: 6px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); box-shadow: 0 3px 0 var(--line); }
+.extra.on { border-color: var(--go); background: var(--go-soft); box-shadow: 0 3px 0 var(--go-edge); }
+.extra small { color: var(--ink-2); font-weight: 800; font-size: 12px; }
+.rail-btn .penguin-av { border-radius: 50%; }
+.medal-face { display: grid; place-items: center; width: 76px; height: 76px; border-radius: 50%; border: 3px solid var(--surface); background: var(--go); color: var(--go-ink); }
