@@ -7,7 +7,7 @@ export const metronomeOn = () => { try { return localStorage.getItem(KEY) !== 'o
 export const setMetronome = (on: boolean) => { try { localStorage.setItem(KEY, on ? 'on' : 'off'); } catch { /* ignore */ } };
 
 /**
- * Ticks the beat while the music runs in tempo, Simply Piano style: one tick per count-in second,
+ * Ticks the beat while the music runs in tempo, Simply Piano style: one tick per count of the count-in,
  * then one per beat, accented on the first beat of each bar. Silent while listening or waiting.
  */
 export function useMetronome(engine: Engine, enabled: boolean) {
@@ -24,10 +24,14 @@ export function useMetronome(engine: Engine, enabled: boolean) {
     const frame = () => {
       if (engine.playing && !engine.opts.listen && !engine.opts.wait && !engine.opts.follow) {
         if (engine.countdown > 0) {
-          const c = Math.ceil(engine.countdown);
-          if (c !== lastCount) { lastCount = c; playClick(c === 3); }
+          // The count-in, a bar in tempo: accent on its first count.
+          const c = engine.countNumber();
+          if (c !== lastCount) { lastCount = c; playClick(c === 1); }
+          // The music starts on beat 1 right after: always tick it.
+          lastBeat = -1;
         } else {
           const beat = Math.floor((engine.time + 0.01) / beatSec);
+          lastCount = -1;
           if (beat !== lastBeat && engine.time >= 0) { lastBeat = beat; playClick(beat % perBar === 0); }
         }
       } else { lastBeat = -1; lastCount = -1; }
