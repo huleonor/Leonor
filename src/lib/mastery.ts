@@ -26,6 +26,7 @@ import { useEffect, useReducer } from 'react';
 import { buildCourse, type CourseStep } from './course';
 import type { Engine } from './engine';
 import { dueIn, GAP, kept, relearn, START_H, typical } from './memory';
+import { diagnose, hintLine, type Diagnosis } from './hints';
 import { fit, observe, predict, TARGET, type Features } from './predict';
 import { dayKey } from './stats';
 import { HIT, MISS, type FingerMode, type Hand, type HandsChoice, type Song, type SongNote } from './types';
@@ -730,7 +731,7 @@ function plan(song: Song, st: MasteryState, now: number): MSection {
 // ---------- Learning from a run ----------
 
 /** What one chord of the run showed. */
-interface GroupEv { ids: number[]; q: number; wrong: number[]; }
+interface GroupEv { ids: number[]; q: number; wrong: number[]; /** Seconds he waited before it (free play). */ stuck?: number; /** Seconds early or late per note, with the beat. */ offs?: { hand: Hand; off: number }[]; }
 
 /** What a run showed. */
 export interface RunVerdict {
@@ -740,6 +741,8 @@ export interface RunVerdict {
   spot?: { lesson: MLesson; line: string };
   /** Set when it is a good moment to stop for today. */
   rest?: string;
+  /** The kind of mistake behind most of a run that did not count (hints.ts). */
+  hint?: Diagnosis;
 }
 
 /** Where it went wrong, as a stretch of at least two bars: the worst bar and its neighbour, one hand if only one hand slipped. */
@@ -881,8 +884,14 @@ export function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy
     rest = 'The whole song, clean at full speed. Play it like that on another day and it is yours.';
   }
 
+  // Why it went wrong, for a short hint.
+  const hint = pass ? null : diagnose(groups.map(g => ({
+    notes: g.ids.map(i => ({ midi: song.notes[i].midi, hand: song.notes[i].hand, leap: (m.moves.get(i) ?? '').includes('leap') })),
+    wrong: g.wrong, stuck: g.stuck ?? 0, offs: g.offs ?? [], bar: l.cut ? undefined : m.barOf(song.notes[g.ids[0]]),
+  })), l.wait);
+
   saveMastery(id, st);
-  return { pass, accuracy: run.accuracy, spot: spot ?? undefined, rest };
+  return { pass, accuracy: run.accuracy, spot: spot ?? undefined, rest, hint: hint ?? undefined };
 }
 
 // ---------- Listening to a run ----------
@@ -910,17 +919,18 @@ function track(song: Song, l: MLesson, engine: Engine) {
     const wrong = wrongAt.get(gi) ?? [];
     wrongAt.delete(gi);
     let q: number;
+    // The first chord waits for him to get ready: its pause is not hesitation.
+    const stuck = free() && firstSettled && gi === cur && waitStart ? (now - waitStart) / 1000 : 0;
+    const offs = free() ? [] : g.ids.filter(id => offsets.has(id)).map(id => ({ hand: engine.song.notes[id].hand, off: offsets.get(id)! }));
     if (st.some(s => s === MISS)) q = 0;
     else if (free()) {
-      // The first chord waits for him to get ready: its pause is not hesitation.
-      const stuck = firstSettled && gi === cur && waitStart ? (now - waitStart) / 1000 : 0;
       q = 1 - Math.min(0.5, Math.max(0, stuck - 1.5) * 0.15) - Math.min(0.7, wrong.length * 0.35);
     } else {
       const off = Math.max(0, ...g.ids.map(id => Math.abs(offsets.get(id) ?? 0)));
       q = 1 - (off > 0.12 ? 0.25 : 0) - Math.min(0.7, wrong.length * 0.5);
     }
     firstSettled = true;
-    groups.push({ ids: real(g.ids), q: Math.max(0, q), wrong });
+    groups.push({ ids: real(g.ids), q: Math.max(0, q), wrong, stuck, offs });
   };
   const check = () => {
     const now = performance.now();
@@ -989,6 +999,9 @@ export class MasterySession {
   private accs: number[] = [];
   private rest?: string;
   private zoomed = new Set<string>();
+  /** Hints shown so far, per kind, and whether the last run already had one. */
+  private hinted = new Map<string, number>();
+  private lastHinted = false;
 
   constructor(readonly song: Song) {
     const sec = planSection(song);
@@ -1015,12 +1028,28 @@ export class MasterySession {
     this.fails.splice(i, 0, 0);
   }
 
+  /**
+   * A hint after a run that did not count: one line, never two runs in a row, and each kind at
+   * most twice a section, so it helps instead of nagging.
+   */
+  private hint(v: RunVerdict): string | undefined {
+    const d = v.hint;
+    const shown = d ? this.hinted.get(d.kind) ?? 0 : 0;
+    if (!d || this.lastHinted || shown >= 2) { this.lastHinted = false; return undefined; }
+    const line = hintLine(d, shown + this.hinted.size);
+    if (!line) return undefined;
+    this.hinted.set(d.kind, shown + 1);
+    this.lastHinted = true;
+    return line;
+  }
+
   after(i: number, v: RunVerdict): RepOutcome {
     this.accs.push(v.accuracy);
     if (v.rest) this.rest = v.rest;
     const l = this.lessons[i];
     const last = i >= this.steps.length - 1;
     if (v.pass) {
+      this.lastHinted = false;
       this.good[i]++;
       this.fails[i] = 0;
       if (this.good[i] < l.reps) return { kind: 'again', pass: true };
@@ -1042,7 +1071,7 @@ export class MasterySession {
       this.lessons[i] = slower;
       this.steps[i] = stepOf(slower);
       this.fails[i] = 0;
-      return { kind: 'again', pass: false };
+      return { kind: 'again', pass: false, line: this.hint(v) };
     }
     // Free play that keeps going wrong where no smaller stretch helps: a lead-in once, if one fits.
     if (this.fails[i] >= 2 && hopeless && !this.zoomed.has(`b:${l.chunk}`)) {
@@ -1056,7 +1085,7 @@ export class MasterySession {
     }
     // Not coming right today: move on rather than practise it wrong.
     if (this.fails[i] >= 4) return { kind: last ? 'done' : 'next', pass: false };
-    return { kind: 'again', pass: false };
+    return { kind: 'again', pass: false, line: this.hint(v) };
   }
 
   summary(): MasteryVerdict {
