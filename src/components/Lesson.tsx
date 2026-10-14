@@ -139,7 +139,7 @@ interface RunProps extends Props {
 }
 
 function LessonRun({ info, section, step, index, settings, update, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onRecorded, onPrev, onNext, onAgain, energyMode, onPremium, session, onPace, onPerfect, onStruggle, onGo }: RunProps) {
-  const song = info.song!;
+  const song = step.song ?? info.song!;
   // The coach sets this step's speed, how soon help comes and how many finger numbers show.
   // A Mastery step comes with its own speed: the planner climbs the tempo ladder itself.
   const coach = useMemo(() => { const c = settingsFor(step.speed, step.wait); return step.exact ? { ...c, speed: step.speed } : c; }, [step.id]); // eslint-disable-line react-hooks/exhaustive-deps

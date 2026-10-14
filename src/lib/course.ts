@@ -41,6 +41,8 @@ export interface CourseStep {
   fingers?: FingerMode;
   /** Good runs the step takes before it moves on (shown as dots). */
   reps?: number;
+  /** Music of its own (a drill cut from the song's notes); `from` and `to` are its bars. */
+  song?: Song;
 }
 
 export interface Course {
