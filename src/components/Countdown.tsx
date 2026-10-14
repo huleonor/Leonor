@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { Engine } from '../lib/engine';
 
-/** The count-in: a big number over the stage, one per beat of the lead-in. */
+/** The count-in: a big number over the stage, one per beat of the count-in. */
 export function Countdown({ engine }: { engine: Engine }) {
   const [n, setN] = useState(0);
 
   useEffect(() => {
     let raf = 0, last = -1;
     const frame = () => {
-      const c = engine.playing ? engine.countdown : 0;
-      const v = c > 0 ? Math.ceil(c) : 0;
+      // Counts up to the music: with the beat a bar in tempo (1, 2, 3 in 3/4).
+      const v = engine.countNumber();
       if (v !== last) { last = v; setN(v); }
       raf = requestAnimationFrame(frame);
     };

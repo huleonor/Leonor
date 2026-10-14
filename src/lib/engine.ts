@@ -38,6 +38,12 @@ export type EngineEvent =
 
 const CHORD_WINDOW = 0.045; // seconds: notes closer than this form one chord
 const LEAD_IN = 2.2; // seconds of song time before the first note
+/** With the beat: how early a note may come (real seconds), and how late (while the line passes it). */
+const EARLY_S = 0.3;
+const LATE_MIN_S = 0.3;
+const LATE_MAX_S = 0.6;
+/** The right key this close outside the window is not a wrong note (real seconds). */
+const NEAR_S = 0.5;
 /** Slips a tempo run takes before it stops: past this the passage is too fast for now. */
 const MAX_REWINDS = 4;
 /**
@@ -66,6 +72,10 @@ export class Engine {
   finished = false;
   started = false;
   countdown = 0;
+  /** Length of one count of the count-in, in real seconds (a beat at this speed, with the beat). */
+  countBeat = 1;
+  /** Counts in the count-in. */
+  countTotal = 0;
   status: Uint8Array;
   user: Uint8Array; // 1 when the note belongs to Hugo's part
   groups: Group[] = [];
@@ -194,12 +204,46 @@ export class Engine {
     const first = this.segment ? this.barAt(this.segment.from) : 0;
     const back = Math.max(first, bar - 1);
     this.seek(this.measureTimes[back] - 1e-3);
-    this.countdown = 2;
+    this.countIn();
     this.emit({ type: 'rewind', bar: bar + 1, from: back + 1 });
   }
 
-  /** A little run-up before the segment's first note (the app plays it). */
-  private segmentStart() { return this.segment ? Math.max(this.startTime, this.segment.from - 1.6) : this.startTime; }
+  /**
+   * Where a segment starts: with the beat, on its first bar's beat 1, and the count-in (a bar in
+   * tempo) leads him in; otherwise a little run-up before its first note (the app plays it).
+   */
+  private segmentStart() {
+    if (!this.segment) return this.startTime;
+    return this.inTempo() ? this.segment.from - 1e-3 : Math.max(this.startTime, this.segment.from - 1.6);
+  }
+
+  /** Playing with the beat: the music runs on and he has to keep up. */
+  private inTempo() { return !this.opts.wait && !this.opts.follow && !this.opts.listen; }
+
+  /** One beat in real seconds (dotted quarters in compound time). */
+  private beatSeconds() {
+    const [num, den] = this.song.timeSig;
+    const step = den === 8 && num % 3 === 0 && num > 3 ? 3 : 1;
+    return this.song.ticksToSeconds(this.song.ppq * 4 / den * step) / Math.max(0.1, this.opts.speed);
+  }
+
+  /**
+   * A count-in in tempo, one bar of beats (two bars in 2/4 or less), so he feels where beat 1
+   * lands and can come in with it, instead of seconds that have nothing to do with the music.
+   */
+  private countIn() {
+    const [num, den] = this.song.timeSig;
+    const perBar = den === 8 && num % 3 === 0 && num > 3 ? num / 3 : num;
+    this.countBeat = this.beatSeconds();
+    this.countTotal = perBar < 3 ? perBar * 2 : perBar;
+    this.countdown = this.countTotal * this.countBeat;
+  }
+
+  /** The count now showing, 1 to the bar's beats (0 when not counting in). */
+  countNumber() {
+    if (!this.playing || this.countdown <= 0) return 0;
+    return Math.max(1, this.countTotal - Math.ceil(this.countdown / this.countBeat - 1e-6) + 1);
+  }
 
   /** Notes inside the segment (or all of them). */
   inSegment(time: number) {
@@ -223,7 +267,9 @@ export class Engine {
     if (this.finished) this.restart();
     this.playing = true;
     this.started = true;
-    this.countdown = countdown;
+    // With the beat any count-in is a bar in tempo; elsewhere it is plain seconds.
+    if (countdown > 0 && this.inTempo()) this.countIn();
+    else { this.countBeat = 1; this.countTotal = Math.ceil(countdown); this.countdown = countdown; }
     this.last = performance.now();
     cancelAnimationFrame(this.raf);
     const loop = (now: number) => {
@@ -276,7 +322,16 @@ export class Engine {
     return g.ids.map(id => ({ midi: this.song.notes[id].midi, hand: this.song.notes[id].hand, finger: this.song.notes[id].finger }));
   }
 
-  private tolerance() { return 0.2 * this.opts.speed + 0.06; }
+  /**
+   * How early and how late a note may be played with the beat, in song seconds. Early: 0.3 s.
+   * Late: while the now line is still passing the note, half its length, 0.3 to 0.6 s. Wider than a
+   * strict judge on purpose: a note played as the line crosses it is a right note.
+   */
+  private early() { return EARLY_S * this.opts.speed; }
+  private late(g: { ids: number[] }) {
+    const len = Math.min(...g.ids.map(id => this.song.notes[id].duration)) / Math.max(0.1, this.opts.speed);
+    return Math.max(LATE_MIN_S, Math.min(LATE_MAX_S, len / 2)) * this.opts.speed;
+  }
 
   private tick(now: number) {
     const dt = Math.min(0.1, (now - this.last) / 1000);
@@ -322,9 +377,8 @@ export class Engine {
         this.emit({ type: 'state' });
       }
     } else {
-      const tol = this.tolerance();
       let slipAt = -1;
-      while (this.gi < this.groups.length && next > this.groups[this.gi].time + tol) {
+      while (this.gi < this.groups.length && next > this.groups[this.gi].time + this.late(this.groups[this.gi])) {
         for (const id of this.groups[this.gi].ids) if (this.status[id] === PENDING) { this.status[id] = MISS; changed.push(id); if (slipAt < 0) slipAt = this.groups[this.gi].time; }
         this.gi++;
       }
@@ -353,7 +407,7 @@ export class Engine {
     this.time = next;
     if (changed.length) this.emit({ type: 'status', ids: changed });
     if (this.segment && this.time >= this.segment.to) {
-      if (this.segmentLoop) { this.seek(this.segmentStart()); this.countdown = 1; return; }
+      if (this.segmentLoop) { this.seek(this.segmentStart()); this.countIn(); return; }
       this.finish();
       return;
     }
@@ -460,7 +514,8 @@ export class Engine {
       return;
     }
     this.held.add(e.midi);
-    if (!this.playing || this.countdown > 0 || this.opts.listen) return;
+    // The end of the count-in counts: a note played just before the music starts is on time.
+    if (!this.playing || this.opts.listen || (this.countdown > 0 && (!this.inTempo() || this.countdown > EARLY_S))) return;
     this.settleSuspects(now);
     // The note it matches, judged before the press can move the cursor on.
     const g = this.groups[this.gi];
@@ -511,17 +566,21 @@ export class Engine {
         this.emit({ type: 'state' });
       }
     } else {
-      const tol = this.tolerance();
-      const t = this.time - lag * this.opts.speed;
-      let best = -1, bestDt = Infinity;
+      // Still counting in: the press is that much before the music starts.
+      const t = this.time - (lag + this.countdown) * this.opts.speed;
+      let best = -1, bestDt = Infinity, near = false;
       for (let i = Math.max(0, this.gi - 3); i < Math.min(this.groups.length, this.gi + 4); i++) {
+        const late = this.late(this.groups[i]);
         for (const id of this.groups[i].ids) {
           const n = this.song.notes[id];
-          const d = Math.abs(n.time - t);
-          if (this.status[id] === PENDING && d <= tol && d < bestDt && this.matches(e.midi, n.midi)) { best = id; bestDt = d; }
+          if (this.status[id] !== PENDING || !this.matches(e.midi, n.midi)) continue;
+          const d = t - n.time;
+          if (d >= -this.early() && d <= late && Math.abs(d) < bestDt) { best = id; bestDt = Math.abs(d); }
+          // The right key a little too early or late is not a wrong note: the note itself says if he made it.
+          else if (d >= -NEAR_S * this.opts.speed && d <= late + NEAR_S * this.opts.speed) near = true;
         }
       }
-      if (best < 0) { if (!strikeOk) this.wrongKey(e, now); return undefined; }
+      if (best < 0) { if (!strikeOk && !near) this.wrongKey(e, now); return undefined; }
       this.status[best] = HIT;
       changed.push(best);
       this.emit({ type: 'judge', offset: (t - this.song.notes[best].time) / this.opts.speed });
