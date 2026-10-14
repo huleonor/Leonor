@@ -35,6 +35,8 @@ import { dueIn, GAP, kept, relearn, START_H, typical } from './memory';
 import { diagnose, hintLine, type Diagnosis } from './hints';
 import { fit, observe, predict, TARGET, type Features } from './predict';
 import { dayKey } from './stats';
+import { askStrategy, onStrategy, strategyOf } from './strategy';
+import type { PartPlan, Stretch } from './strategyShape';
 import { HIT, MISS, type FingerMode, type Hand, type HandsChoice, type Song, type SongNote } from './types';
 
 /** The tempo ladder, as a share of the written speed. */
@@ -613,30 +615,82 @@ function phrases(p: { from: number; to: number }) {
   return out;
 }
 
-/** The part he is learning: phrase by phrase in free play (hand by hand unless he learns fast), then the part with the beat. */
-function partSection(song: Song, m: Model, st: MasteryState, p: Part): MSection {
+/** The part's phrases as the song's plan splits them (its real musical phrases), else in fours. */
+function phrasesOf(p: Part, pp?: PartPlan) {
+  if (!pp?.phrases.length || pp.phrases[0] !== p.from) return phrases(p);
+  return pp.phrases.map((b, i) => ({ from: b, to: (pp.phrases[i + 1] ?? p.to + 1) - 1 }));
+}
+
+/**
+ * The part he is learning, the way the song's plan (strategy.ts) says suits this music: its hard
+ * spots first, then phrase by phrase in free play (hand by hand, both hands from the start, or the
+ * lead hand through the whole part before the other joins), then the part with the beat.
+ */
+function partSection(song: Song, m: Model, st: MasteryState, p: Part, pp: PartPlan | undefined, focus: Stretch[]): MSection {
   const out: MLesson[] = [];
-  const ph = phrases(p);
+  const ph = phrasesOf(p, pp);
   const fast = fastLearner(st);
   // A hand with nothing to play in a phrase gets no step of its own there.
   const plays = (h: Hand, f: { from: number; to: number }) => song.notes.some(n => n.hand === h && m.barOf(n) >= f.from && m.barOf(n) <= f.to);
-  for (const f of ph) {
-    const at = Bars(f.from, f.to);
-    const both = m.hands.filter(h => plays(h, f));
-    if (m.two && both.length < 2) {
-      // Only one hand plays here: that hand on its own is the whole phrase.
-      for (const h of both) if (!known(st, f.from, f.to, h, true)) out.push(lesson(st, { kind: 'hand', from: f.from, to: f.to, hands: h, wait: true, title: `${at}, ${handName(h)}` }));
-      continue;
+  // Lead hand first.
+  const order = pp && m.hands.includes(pp.lead) ? [pp.lead, ...m.hands.filter(h => h !== pp.lead)] : m.hands;
+  let mode = m.two ? pp?.hands ?? 'hand-by-phrase' : 'together';
+  if (fast && mode === 'hand-by-phrase') mode = 'together';
+  const hand = (h: Hand, f: { from: number; to: number }, title?: string) => {
+    if (!known(st, f.from, f.to, h, true)) out.push(lesson(st, { kind: 'hand', from: f.from, to: f.to, hands: h, wait: true, title: title ?? `${Bars(f.from, f.to)}, ${handName(h)}` }));
+  };
+  const together = (f: { from: number; to: number }) => {
+    if (!known(st, f.from, f.to, m.all, true)) out.push(lesson(st, { kind: m.two ? 'together' : 'hand', from: f.from, to: f.to, hands: m.all, wait: true, title: m.two ? `${Bars(f.from, f.to)}, both hands` : `${Bars(f.from, f.to)}, free play` }));
+  };
+
+  // The hard spots in this part, drilled before he meets them in the music.
+  for (const s of focus) {
+    if (s.from < p.from || s.to > p.to) continue;
+    const h: HandsChoice = s.hand === 'both' ? m.all : s.hand;
+    if (!known(st, s.from, s.to, h, true)) out.push({ ...lesson(st, { kind: 'spot', from: s.from, to: s.to, hands: h, wait: true, reps: 1, title: `${Bars(s.from, s.to)}${h !== m.all ? `, ${handName(h)}` : ''}` }), why: 'A hard spot, on its own first.' });
+  }
+
+  if (mode === 'lead-hand-first') {
+    // The lead hand through the whole part until it runs by itself, then the other, then together.
+    for (const h of order) {
+      for (const f of ph) if (plays(h, f)) hand(h, f);
+      if (ph.length > 1 && plays(h, p)) hand(h, p, `${Bars(p.from, p.to)}, ${handName(h)}`);
     }
-    if (m.two && !fast) for (const h of m.hands) if (!known(st, f.from, f.to, h, true)) out.push(lesson(st, { kind: 'hand', from: f.from, to: f.to, hands: h, wait: true, title: `${at}, ${handName(h)}` }));
-    if (!known(st, f.from, f.to, m.all, true)) out.push(lesson(st, { kind: m.two ? 'together' : 'hand', from: f.from, to: f.to, hands: m.all, wait: true, title: m.two ? `${at}, both hands` : `${at}, free play` }));
+    for (const f of ph) if (m.hands.every(h => plays(h, f))) together(f);
+  } else {
+    for (const f of ph) {
+      const both = order.filter(h => plays(h, f));
+      // Only one hand plays here: that hand on its own is the whole phrase.
+      if (m.two && both.length < 2) { for (const h of both) hand(h, f); continue; }
+      if (mode === 'hand-by-phrase') for (const h of order) hand(h, f);
+      together(f);
+    }
   }
   if (ph.length > 1 && !known(st, p.from, p.to, m.all, true)) out.push(lesson(st, { kind: 'together', from: p.from, to: p.to, hands: m.all, wait: true, reps: 1, fingers: 'some', title: `${Bars(p.from, p.to)}, free play` }));
-  // With the beat once the notes are known: at 70%, or at 60% first while the model says 70% is
-  // still too hard for him (once 60% is clean twice, 70% it is).
-  const beat = lesson(st, { kind: 'beat', from: p.from, to: p.to, hands: m.all, wait: false, rung: 1, title: `${Bars(p.from, p.to)}, with the beat` });
-  out.push(known(st, p.from, p.to, m.all, false, 0) ? beat : pickRung(song, st, beat, 1));
+  // With the beat once the notes are known: on the plan's first rung (70% unless the music is
+  // dense or very easy), or a rung lower while the model says that is still too hard for him.
+  const start = pp?.rung ?? 1;
+  const beat = lesson(st, { kind: 'beat', from: p.from, to: p.to, hands: m.all, wait: false, rung: start, title: `${Bars(p.from, p.to)}, with the beat` });
+  out.push(start === 0 || known(st, p.from, p.to, m.all, false, start - 1) ? beat : pickRung(song, st, beat, start));
   return { title: `Part ${p.n}`, why: ph.length > 1 || m.two ? 'Phrase by phrase without the beat, then the part with the metronome.' : 'Notes first, then with the metronome.', lessons: out, done: `Part ${p.n} learnt, with the beat.` };
+}
+
+/**
+ * A pattern that comes back all through the song (an ostinato, a left-hand figure), learnt on its
+ * own before the parts: once it runs by itself, every part that uses it is half learnt.
+ */
+function patternSection(m: Model, st: MasteryState, s: Stretch): MSection | null {
+  const h: HandsChoice = s.hand === 'both' ? m.all : s.hand;
+  // Already past it: the part it sits in is learnt.
+  if (m.parts.some(p => p.from <= s.from && p.to >= s.from && partLearnt(m, st, p))) return null;
+  const free = known(st, s.from, s.to, h, true);
+  const beat = topOf(st, ladderKey(s.from, s.to, h)) >= 0;
+  if (free && beat) return null;
+  const lessons: MLesson[] = [];
+  const title = `${Bars(s.from, s.to)}${h !== m.all ? `, ${handName(h)}` : ''}`;
+  if (!free) lessons.push(lesson(st, { kind: 'hand', from: s.from, to: s.to, hands: h, wait: true, title }));
+  lessons.push(lesson(st, { kind: 'beat', from: s.from, to: s.to, hands: h, wait: false, rung: 1, title: `${title}, with the beat` }));
+  return { title: 'The pattern', why: 'It comes back all through the song: learn it once and it is there everywhere.', lessons, done: 'The pattern runs by itself.' };
 }
 
 /** The part to review: the weakest one he has learnt, by the strength of its bars today. */
@@ -743,9 +797,16 @@ function plan(song: Song, st: MasteryState, now: number): MSection {
     }
   }
 
+  // The song's plan: patterns that come back everywhere first, then the parts in its order.
+  const plan = strategyOf(song);
+  for (const s of plan.patterns) {
+    const sec = patternSection(m, st, s);
+    if (sec) return sec;
+  }
+  const ordered = [...m.parts].sort((a, b) => (plan.order.indexOf(a.n) + 1 || 1e9) - (plan.order.indexOf(b.n) + 1 || 1e9));
   // Learn the song part by part, joining each one to the music before it.
-  for (const p of m.parts) {
-    if (!partLearnt(m, st, p)) return partSection(song, m, st, p);
+  for (const p of ordered) {
+    if (!partLearnt(m, st, p)) return partSection(song, m, st, p, plan.parts.find(x => x.n === p.n), plan.focus);
     const prev = m.order.find(q => q.to + 1 === p.from);
     const prevPart = prev && m.parts.find(q => q.n === prev.of);
     if (prev && prevPart && partLearnt(m, st, prevPart) && !known(st, prev.from, p.to, m.all, true)) {
@@ -1175,6 +1236,9 @@ export function memoryReport(id: string, now = Date.now()) {
 export function useMastery(song?: Song) {
   const [, bump] = useReducer((x: number) => x + 1, 0);
   useEffect(() => onMastery(bump), []);
+  useEffect(() => onStrategy(bump), []);
+  // The song's teaching plan: asked of the planning model once per song, rules until it answers.
+  useEffect(() => { if (song) void askStrategy(song); }, [song]);
   return song ? { meter: meterOf(song), next: planSection(song) } : null;
 }
 

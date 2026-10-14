@@ -50,7 +50,8 @@ npm run dev
 vercel deploy --prod
 ```
 
+Mastery asks Claude to read each song and plan how to teach it (`api/plan.ts`). Set `ANTHROPIC_API_KEY` in the Vercel project's environment variables; without it the app plans from rules measured on the notes.
+
 For now the app ships one piece, Gymnopédie No. 1 (Satie, public domain), and its lessons are built to teach it well.
 
-Cover photos are from Unsplash (free license): Fernando Jorge, Bogdan Arhipov.
 # Leonor

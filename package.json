@@ -13,6 +13,7 @@
     "release": "npm run ipa && npm run deploy"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.134.0",
     "@capacitor/core": "^8.5.2",
     "@capacitor/ios": "^8.5.2",
     "@capacitor/local-notifications": "^8.3.1",
