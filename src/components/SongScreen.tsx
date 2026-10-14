@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { loadPiano, unlockAudio } from '../lib/audio';
 import type { SongInfo } from '../lib/catalog';
 import { barsToTime } from '../lib/analysis';
@@ -75,6 +75,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
   const [masterySheet, setMasterySheet] = useState(false);
   const mastery = useMastery(song)!;
   const pct = Math.floor(mastery.meter.value * 100);
+  const pickerWasPlaying = useRef(false);
   const [options, setOptions] = useState(false);
   const [alwaysKeys, setAlwaysKeys] = useState(() => { try { return localStorage.getItem('hugos-piano:keys') === 'always'; } catch { return false; } });
   const toggleKeys = () => setAlwaysKeys(a => { try { localStorage.setItem('hugos-piano:keys', a ? 'help' : 'always'); } catch { /* ignore */ } return !a; });
@@ -148,6 +149,12 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
     if (part) setLoop({ n: part.sameAs ?? part.n, from: part.from, to: part.to });
   };
 
+  const openStepPicker = () => { pickerWasPlaying.current = engine.playing; engine.pause(); setTeach(true); };
+  const closeStepPicker = () => {
+    setTeach(false);
+    if (pickerWasPlaying.current && !engine.finished) engine.play(engine.opts.follow ? 0 : engine.started ? 1 : 3);
+    pickerWasPlaying.current = false;
+  };
   const restart = () => { setResult(null); engine.restart(); if (engine.opts.follow) { engine.toFirstNote(); engine.play(0); } setCombo(0); bump(); };
   const seek = (t: number) => {
     setResult(null);
@@ -178,11 +185,6 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
         {!inputOn && <button className="piano-chip" onClick={onSettings} aria-label="Connect your piano"><IconKeys size={20} /><i /></button>}
         <button className="icon-btn ghost" onClick={() => setOptions(true)} aria-label="Options"><IconGear size={22} /></button>
       </header>
-      <div className="song-head">
-        <h1>{song.entry.title}</h1>
-        <p className="sub">{mode === 'listen' ? 'Listen first, then play it yourself' : tempoMode ? 'In tempo: keep going through mistakes' : 'Play when you’re ready: the music waits for you'}</p>
-      </div>
-
       <main className="sheet">
         <div className="sheet-card">
           <ScoreView engine={engine} fingers={settings.fingers} feedback={feedback} follow title={song.entry.title} composer={byLine(song.entry) || undefined} sections={labels} onSeek={seek} />
@@ -201,7 +203,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
                 <p className="result-line">{result.hit} of {result.total} notes, {Math.round(result.accuracy * 100)}% right</p>
                 <div className="actions">
                   <button className="btn go" onClick={restart}><IconRestart size={16} />Play again</button>
-                  <button className="btn" onClick={() => { setResult(null); setTeach(true); }}><IconCap size={16} />Learn step by step</button>
+                  <button className="btn" onClick={() => { setResult(null); openStepPicker(); }}><IconCap size={16} />Learn step by step</button>
                 </div>
               </motion.div>
             )}
@@ -209,7 +211,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
         </div>
       </main>
 
-      <HelpKeys engine={engine} naming={settings.naming} fingers={settings.fingers} always={alwaysKeys} />
+      {!teach && <HelpKeys engine={engine} naming={settings.naming} fingers={settings.fingers} always={alwaysKeys} />}
 
       <footer className="song-foot">
         <motion.button className={`btn ${mode === 'listen' ? 'on' : ''}`} whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMode(m => (m === 'listen' ? 'play' : 'listen')); }} aria-pressed={mode === 'listen'}>
@@ -218,7 +220,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
         {tempoMode && !result && (
           <motion.button className="btn go" whileTap={{ scale: 0.96 }} onClick={startTempo}>{engine.playing ? <><IconStop size={16} />Stop</> : <><IconPlay size={16} />{engine.started ? 'Go on' : 'Start'}</>}</motion.button>
         )}
-        <motion.button className="btn" whileTap={{ scale: 0.96 }} onClick={() => setTeach(true)}><IconCap size={18} />Learn step by step</motion.button>
+      <motion.button className="btn go big" whileTap={{ scale: 0.96 }} onClick={openStepPicker}><IconCap size={18} />Learn step by step</motion.button>
         <motion.button className="btn big mastery-btn" whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMasterySheet(true); }} aria-label={`Mastery, ${pct}%`}>
           <motion.span className="mastery-fill" initial={false} animate={{ width: `${pct}%` }} transition={SOFT} />
           <IconTarget size={18} />Mastery<b>{pct}%</b>
@@ -275,10 +277,13 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
           </motion.div>
         )}
         {teach && (
-          <motion.div className="veil sheet-veil" onClick={() => setTeach(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div className="veil sections-veil" onClick={closeStepPicker} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.section className="card sections-sheet" role="dialog" aria-modal="true" aria-labelledby="sections-title" onClick={e => e.stopPropagation()} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={SOFT}>
-              <h2 id="sections-title">Learn step by step</h2>
-              <p className="sub">One part at a time: right hand, left hand, together, then in tempo.</p>
+              <header className="sections-head">
+                <button className="icon-btn ghost" onClick={closeStepPicker} aria-label="Back to the song"><IconClose size={22} /></button>
+                <h2 id="sections-title">Learn step by step</h2>
+                <span aria-hidden="true" />
+              </header>
               <ol className="section-list">
                 {sections.map((sc, n) => (
                   <motion.li key={sc.id} initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...SOFT, delay: n * 0.04 }}>
