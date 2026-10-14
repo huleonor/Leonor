@@ -461,8 +461,57 @@ export function planSection(song: Song, st = loadMastery(song.entry.id), now = D
   const learning = sec.lessons.some(l => l.wait && l.kind !== 'join');
   const span = { from: Math.min(...sec.lessons.map(l => l.from)), to: Math.max(...sec.lessons.map(l => l.to)) };
   const drill = nextDrill(song, st, now, learning ? span : undefined);
-  if (!drill || sec.lessons.some(l => l.chunk === drill.chunk)) return sec;
-  return { ...sec, lessons: [drill, ...sec.lessons] };
+  const lessons = drill && !sec.lessons.some(l => l.chunk === drill.chunk) ? [drill, ...sec.lessons] : sec.lessons;
+  return { ...sec, lessons: bridged(song, st, lessons, now) };
+}
+
+/** Below this chance a step is too big a jump: something easier goes in front of it. */
+const TOO_HARD = 0.6;
+/** At most this many lead-ins in one section, so it stays the section the planner meant. */
+const MAX_BRIDGES = 2;
+
+/**
+ * An easier way into a step the model thinks he will probably fail, played once just before it:
+ * the same music a little slower, the half of it he finds harder, or the harder hand alone. Of
+ * those he is likely to play well, the one closest to the target. The step itself stays as the
+ * planner made it (the tempo ladder still climbs); the lead-in only makes the jump smaller.
+ */
+export function bridgeFor(song: Song, st: MasteryState, l: MLesson, now = Date.now()): MLesson | null {
+  const m = model(song);
+  const opts: MLesson[] = [];
+  const like = (o: { from: number; to: number; hands: HandsChoice }, kind: LessonKind) =>
+    lesson(st, { kind, from: o.from, to: o.to, hands: o.hands, wait: l.wait, rung: l.rung, fingers: l.fingers, reps: 1, title: `${Bars(o.from, o.to)}${o.hands !== m.all ? `, ${handName(o.hands)}` : ''}${l.wait ? '' : ', with the beat'}` });
+  // Slower: the same stretch on a lower rung.
+  if (!l.wait) for (let r = l.rung - 1; r >= 0; r--) opts.push({ ...withRung(l, r), kind: 'spot', reps: 1 });
+  // Smaller: each half, never under two bars.
+  if (l.to - l.from >= 3) {
+    const mid = Math.floor((l.from + l.to) / 2);
+    opts.push(like({ from: l.from, to: mid, hands: l.hands }, 'spot'), like({ from: mid + 1, to: l.to, hands: l.hands }, 'spot'));
+  }
+  // One hand: the harder hand alone, with every finger number.
+  if (l.hands === 'both' && m.two) for (const h of m.hands) opts.push({ ...like({ from: l.from, to: l.to, hands: h }, 'hand'), fingers: 'all' });
+  let best: { l: MLesson; score: number } | null = null;
+  for (const o of opts) {
+    const p = chanceOf(song, o, st, now);
+    if (p < TARGET - 0.07) continue;
+    // Among lead-ins he will manage, the hardest teaches the most: closest to the target.
+    const score = fit(p);
+    if (!best || score > best.score) best = { l: { ...o, why: 'A smaller step first.' }, score };
+  }
+  return best?.l ?? null;
+}
+
+function bridged(song: Song, st: MasteryState, lessons: MLesson[], now: number): MLesson[] {
+  const out: MLesson[] = [];
+  let n = 0;
+  for (const l of lessons) {
+    if (n < MAX_BRIDGES && l.kind !== 'spot' && l.kind !== 'move' && chanceOf(song, l, st, now) < TOO_HARD) {
+      const b = bridgeFor(song, st, l, now);
+      if (b && !lessons.some(x => x.chunk === b.chunk) && !out.some(x => x.chunk === b.chunk)) { out.push(b); n++; }
+    }
+    out.push(l);
+  }
+  return out;
 }
 
 function plan(song: Song, st: MasteryState, now: number): MSection {
@@ -824,6 +873,8 @@ export class MasterySession {
       return { kind: last ? 'done' : 'next', pass: true };
     }
     this.fails[i]++;
+    // The model's chance of getting it right if he simply tries again, after what just happened.
+    const hopeless = chanceOf(this.song, l) < 0.5;
     // Twice wrong in the same place: that place on its own first, then back.
     if (this.fails[i] >= 2 && v.spot && !this.zoomed.has(l.chunk) && l.kind !== 'spot') {
       this.zoomed.add(l.chunk);
@@ -831,13 +882,23 @@ export class MasterySession {
       this.put(i, v.spot.lesson);
       return { kind: 'insert', pass: false, line: v.spot.line };
     }
-    // Three times wrong with the beat: a little slower.
-    if (this.fails[i] >= 3 && !l.wait && l.rung > 0) {
+    // Three times wrong with the beat (twice when another try looks hopeless): a little slower.
+    if ((this.fails[i] >= 3 || (hopeless && this.fails[i] >= 2)) && !l.wait && l.rung > 0) {
       const slower = withRung(l, l.rung - 1);
       this.lessons[i] = slower;
       this.steps[i] = stepOf(slower);
       this.fails[i] = 0;
       return { kind: 'again', pass: false };
+    }
+    // Free play that keeps going wrong where no smaller stretch helps: a lead-in once, if one fits.
+    if (this.fails[i] >= 2 && hopeless && !this.zoomed.has(`b:${l.chunk}`)) {
+      const b = bridgeFor(this.song, loadMastery(this.song.entry.id), l);
+      if (b) {
+        this.zoomed.add(`b:${l.chunk}`);
+        this.fails[i] = 0;
+        this.put(i, b);
+        return { kind: 'insert', pass: false };
+      }
     }
     // Not coming right today: move on rather than practise it wrong.
     if (this.fails[i] >= 4) return { kind: last ? 'done' : 'next', pass: false };
