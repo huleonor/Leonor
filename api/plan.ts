@@ -8,7 +8,8 @@
  * their own before anything else, which spots to drill early, and how slow to start with the beat.
  * Mastery follows it and keeps adapting to how he plays on top.
  *
- * Needs ANTHROPIC_API_KEY in the Vercel project's environment variables.
+ * Needs ANTHROPIC_API_KEY (Claude) or GROQ_API_KEY (Groq, for testing) in the Vercel project's
+ * environment variables; PLAN_PROVIDER picks one when both are set.
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { checkStrategy, STRATEGY_SCHEMA, type Shape } from '../src/lib/strategyShape.js';
@@ -37,7 +38,74 @@ What to decide, from the score you are given:
 
 Use only bar numbers and part numbers from the score. Repeated parts ("same as") are learnt through the part they repeat; do not list them. Write the summary for the app's developer in plain words.`;
 
-const client = new Anthropic();
+const USER = (reading: string) => `Plan how to master this piece.\n\n${reading}`;
+
+/** Claude reads the score and answers in the plan's schema (structured outputs). */
+async function askClaude(reading: string): Promise<{ raw: unknown; by: string } | Response> {
+  const client = new Anthropic();
+  try {
+    const response = await client.beta.messages.create({
+      model: 'claude-opus-5-5',
+      max_tokens: 16000,
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      system: SYSTEM,
+      output_config: { effort: 'high', format: { type: 'json_schema', schema: STRATEGY_SCHEMA as unknown as Record<string, unknown> } },
+      messages: [{ role: 'user', content: USER(reading) }],
+    });
+    if (response.stop_reason === 'refusal' || response.stop_reason === 'max_tokens') return new Response('No plan', { status: 502 });
+    const text = response.content.flatMap(b => (b.type === 'text' ? [b.text] : [])).join('');
+    return { raw: JSON.parse(text), by: response.model };
+  } catch (error) {
+    if (error instanceof Anthropic.RateLimitError) return new Response('Busy', { status: 429 });
+    if (error instanceof Anthropic.APIError) return new Response(`Model error ${error.status}`, { status: 502 });
+    return new Response('No plan', { status: 502 });
+  }
+}
+
+/**
+ * Groq, for testing the plan end to end with a free key (OpenAI-style chat API). Asks for the
+ * schema strictly; a model that does not take a JSON schema gets JSON mode with the schema in the
+ * prompt instead. GROQ_MODEL picks the model.
+ */
+async function askGroq(reading: string): Promise<{ raw: unknown; by: string } | Response> {
+  const model = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+  const call = (format: 'schema' | 'json') => fetch(`${process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1'}/chat/completions`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${process.env.GROQ_API_KEY}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      temperature: 0.2,
+      messages: [
+        { role: 'system', content: format === 'schema' ? SYSTEM : `${SYSTEM}\n\nAnswer with one JSON object only, matching this JSON schema:\n${JSON.stringify(STRATEGY_SCHEMA)}` },
+        { role: 'user', content: USER(reading) },
+      ],
+      response_format: format === 'schema' ? { type: 'json_schema', json_schema: { name: 'strategy', schema: STRATEGY_SCHEMA } } : { type: 'json_object' },
+    }),
+  });
+  try {
+    let res = await call('schema');
+    if (res.status === 400) res = await call('json');
+    if (res.status === 429) return new Response('Busy', { status: 429 });
+    if (!res.ok) return new Response(`Model error ${res.status}`, { status: 502 });
+    const data = await res.json() as { model?: string; choices?: { message?: { content?: string } }[] };
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) return new Response('No plan', { status: 502 });
+    return { raw: JSON.parse(text), by: `groq:${data.model ?? model}` };
+  } catch {
+    return new Response('No plan', { status: 502 });
+  }
+}
+
+/** Which model plans: PLAN_PROVIDER (claude or groq) when set, else whichever key is there, Claude first. */
+function provider(): 'claude' | 'groq' | null {
+  const want = process.env.PLAN_PROVIDER;
+  if (want === 'groq' && process.env.GROQ_API_KEY) return 'groq';
+  if (want === 'claude' && process.env.ANTHROPIC_API_KEY) return 'claude';
+  if (process.env.ANTHROPIC_API_KEY) return 'claude';
+  if (process.env.GROQ_API_KEY) return 'groq';
+  return null;
+}
 
 export async function POST(request: Request): Promise<Response> {
   // Only the app itself may ask: every plan costs a model call.
@@ -55,24 +123,11 @@ export async function POST(request: Request): Promise<Response> {
     return new Response('Bad request', { status: 400 });
   }
 
-  try {
-    const response = await client.beta.messages.create({
-      model: 'claude-opus-5-5',
-      max_tokens: 16000,
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      system: SYSTEM,
-      output_config: { effort: 'high', format: { type: 'json_schema', schema: STRATEGY_SCHEMA as unknown as Record<string, unknown> } },
-      messages: [{ role: 'user', content: `Plan how to master this piece.\n\n${reading}` }],
-    });
-    if (response.stop_reason === 'refusal' || response.stop_reason === 'max_tokens') return new Response('No plan', { status: 502 });
-    const text = response.content.flatMap(b => (b.type === 'text' ? [b.text] : [])).join('');
-    const plan = checkStrategy(JSON.parse(text), shape, 'ai', '');
-    if (!plan) return new Response('No plan', { status: 502 });
-    return Response.json(plan);
-  } catch (error) {
-    if (error instanceof Anthropic.RateLimitError) return new Response('Busy', { status: 429 });
-    if (error instanceof Anthropic.APIError) return new Response(`Model error ${error.status}`, { status: 502 });
-    return new Response('No plan', { status: 502 });
-  }
+  const who = provider();
+  if (!who) return new Response('No model key set', { status: 503 });
+  const out = who === 'claude' ? await askClaude(reading) : await askGroq(reading);
+  if (out instanceof Response) return out;
+  const plan = checkStrategy(out.raw, shape, 'ai', '');
+  if (!plan) return new Response('No plan', { status: 502 });
+  return Response.json({ ...plan, by: out.by });
 }

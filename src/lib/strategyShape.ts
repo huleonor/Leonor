@@ -31,6 +31,8 @@ export interface Strategy {
   source: 'ai' | 'rules';
   /** The reading's version it was written for. */
   version: string;
+  /** The model that wrote it, when one did (for the developer). */
+  by?: string;
   /** For the developer: the approach in a few sentences. Never shown to the learner. */
   summary: string;
   /** Part numbers in the order to learn them. */
@@ -125,7 +127,7 @@ export function checkStrategy(raw: unknown, shape: Shape, source: Strategy['sour
     return [{ from: o.from, to, hand: h, why: typeof o.why === 'string' ? o.why.slice(0, 200) : '' }];
   }).slice(0, max);
   return {
-    source, version, summary: typeof r.summary === 'string' ? r.summary.slice(0, 1200) : '',
+    source, version, ...(typeof r.by === 'string' ? { by: r.by.slice(0, 80) } : {}), summary: typeof r.summary === 'string' ? r.summary.slice(0, 1200) : '',
     order, parts, patterns: stretches(r.patterns, 2), focus: stretches(r.focus, 4),
   };
 }

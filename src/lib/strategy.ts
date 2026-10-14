@@ -45,7 +45,9 @@ export function strategyOf(song: Song): Strategy {
 export async function askStrategy(song: Song): Promise<void> {
   const reading = readingOf(song);
   const tag = `${song.entry.id}:${reading.version}`;
-  if (stored(song)?.source === 'ai' || asked.has(tag)) return;
+  // A Groq plan is a test plan: asked again each time the app opens, so Claude's replaces it once it has a key.
+  const have = stored(song);
+  if ((have?.source === 'ai' && !have.by?.startsWith('groq:')) || asked.has(tag)) return;
   asked.add(tag);
   try {
     const res = await fetch('/api/plan', {
