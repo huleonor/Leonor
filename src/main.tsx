@@ -17,3 +17,14 @@ if (import.meta.env.DEV) {
   (window as unknown as { __runPitch: unknown }).__runPitch = async (tuning?: object) =>
     (await import('./dev/pitchTest')).runPitchTest(tuning);
 }
+
+// The prediction model's report card: window.__predict() in the console.
+if (import.meta.env.DEV) {
+  (window as unknown as { __predict: unknown }).__predict = async () => {
+    const { calibration } = await import('./lib/predict');
+    const { memoryReport } = await import('./lib/mastery');
+    const c = calibration();
+    console.table(c.buckets);
+    return { ...c, memory: memoryReport('gymnopedie-1') };
+  };
+}

@@ -25,6 +25,9 @@
 import { useEffect, useReducer } from 'react';
 import { buildCourse, type CourseStep } from './course';
 import type { Engine } from './engine';
+import { dueIn, GAP, kept, relearn, START_H, typical } from './memory';
+import { diagnose, hintLine, type Diagnosis } from './hints';
+import { fit, observe, predict, TARGET, type Features } from './predict';
 import { dayKey } from './stats';
 import { HIT, MISS, type FingerMode, type Hand, type HandsChoice, type Song, type SongNote } from './types';
 
@@ -141,7 +144,7 @@ function model(song: Song): Model {
 // ---------- What he knows ----------
 
 /** A strength (0-1) learnt from notes, with its spaced-review interval. */
-interface Item { s: number; n: number; at: number; /** Days until it is due again. */ ivl: number; due: number; }
+interface Item { s: number; n: number; at: number; /** Half-life in days: how fast it fades while he is away (memory.ts). */ h: number; due: number; /** Before half-lives: days until due. */ ivl?: number; }
 /** Runs of one piece of music played one way. `streak` is clean runs in a row. */
 interface Chunk { runs: number; streak: number; best: number; last: number; at: number; }
 
@@ -164,7 +167,17 @@ export interface MLesson {
   fingers?: FingerMode;
   /** Good runs it takes, in a row, before the lesson moves on (the dots under the step count). */
   reps: number;
+  /** A movement drill: music of its own, cut from the song (`from` and `to` are its bars). */
+  cut?: Cut;
 }
+
+/**
+ * A movement drill's music: the same movement taken from the places in the song where he plays it
+ * worst, each with the chord before it, one after the other. Every note is a real note of the song
+ * (pitch, length, place in the bar, finger) and `src` says which, so what he plays here counts for
+ * those bars and that movement.
+ */
+export interface Cut { song: Song; src: number[]; bars: number[]; move: string; }
 
 export interface MasteryState {
   items: Record<string, Item>;
@@ -177,17 +190,24 @@ export interface MasteryState {
   days: string[];
   /** First tries, and how many were clean: a fast learner skips the hand-by-hand steps. */
   fast: { tries: number; clean: number };
+  /** His typical half-life in days, learnt from every return (memory.ts). */
+  h0: number;
   session: { day: string; runs: { acc: number; progress: boolean; chunk?: string }[]; restAt: number };
 }
 
 const KEY = (id: string) => `hugos-piano:mastery:${id}`;
-const blank = (): MasteryState => ({ items: {}, chunks: {}, top: {}, rung: {}, days: [], fast: { tries: 0, clean: 0 }, session: { day: '', runs: [], restAt: 0 } });
+const blank = (): MasteryState => ({ items: {}, chunks: {}, top: {}, rung: {}, days: [], fast: { tries: 0, clean: 0 }, h0: START_H, session: { day: '', runs: [], restAt: 0 } });
 
 const listeners = new Set<() => void>();
 export const onMastery = (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
 
 export function loadMastery(id: string): MasteryState {
-  try { return { ...blank(), ...JSON.parse(localStorage.getItem(KEY(id)) ?? '{}') }; } catch { return blank(); }
+  try {
+    const st: MasteryState = { ...blank(), ...JSON.parse(localStorage.getItem(KEY(id)) ?? '{}') };
+    // Saved before half-lives: the old review interval is a fair first guess.
+    for (const it of Object.values(st.items)) if (!it.h) it.h = Math.max(START_H, it.ivl ?? 0);
+    return st;
+  } catch { return blank(); }
 }
 function saveMastery(id: string, st: MasteryState) {
   try { localStorage.setItem(KEY(id), JSON.stringify(st)); } catch { /* storage unavailable */ }
@@ -206,10 +226,10 @@ const topOf = (st: MasteryState, key: string) => st.top[key] ?? -1;
 const Bars = (from: number, to: number) => (from === to ? `Bar ${from}` : `Bars ${from}-${to}`);
 const handName = (h: HandsChoice) => (h === 'R' ? 'right hand' : h === 'L' ? 'left hand' : 'both hands');
 
-/** What practice has left after `days` away: nothing lost for two days, then a little each day. */
+/** What practice on a whole part has left after `days` away (the meter): nothing lost for two days, then a little each day. */
 const retention = (days: number) => (days <= 2 ? 1 : Math.max(0.7, 1 - 0.03 * (days - 2)));
-/** An item's strength today, after forgetting. */
-const strength = (it: Item | undefined, now = Date.now()) => (it ? it.s * retention((now - it.at) / DAY - it.ivl) : 0);
+/** An item's strength today, after forgetting at its own half-life. */
+const strength = (it: Item | undefined, now = Date.now()) => (it ? it.s * kept((now - it.at) / DAY, it.h) : 0);
 
 // ---------- The meter ----------
 
@@ -251,6 +271,260 @@ export function meterOf(song: Song, st = loadMastery(song.entry.id), now = Date.
   return { value, parts, days: st.days.length };
 }
 
+// ---------- What the prediction model sees ----------
+
+const UNSEEN = 0.3;
+const mean = (xs: number[]) => (xs.length ? xs.reduce((a, x) => a + x, 0) / xs.length : UNSEEN);
+
+/** An exercise described for the prediction model (predict.ts), from what he knows today. */
+export function featuresOf(song: Song, l: MLesson, st = loadMastery(song.entry.id), now = Date.now()): Features {
+  const m = model(song);
+  if (l.cut) return cutFeatures(l, l.cut, st, now);
+  const hands: Hand[] = l.hands === 'both' ? m.hands : [l.hands];
+  const bars: number[] = [], together: number[] = [], moves = new Set<string>();
+  let notes = 0;
+  for (let b = l.from; b <= l.to; b++) {
+    for (const h of hands) bars.push(st.items[`b${b}:${h}`] ? strength(st.items[`b${b}:${h}`], now) : UNSEEN);
+    if (hands.length > 1) together.push(st.items[`t${b}`] ? strength(st.items[`t${b}`], now) : UNSEEN);
+  }
+  for (const n of song.notes) {
+    const b = m.barOf(n);
+    if (b < l.from || b > l.to || !hands.includes(n.hand)) continue;
+    notes++;
+    const mv = m.moves.get(n.id);
+    if (mv) moves.add(mv);
+  }
+  const mv = [...moves].map(k => (st.items[`m:${k}`] ? strength(st.items[`m:${k}`], now) : UNSEEN));
+  const c = st.chunks[l.chunk];
+  const size = l.to - l.from + 1;
+  let at = 0;
+  for (let b = l.from; b <= l.to; b++) for (const h of hands) at = Math.max(at, st.items[`b${b}:${h}`]?.at ?? 0);
+  return {
+    bars: mean(bars),
+    together: hands.length > 1 ? mean(together) : 1,
+    move: mv.length ? Math.min(...mv) : 1,
+    tried: c ? 1 : 0,
+    last: c ? c.last : 0,
+    streak: c ? Math.min(3, c.streak) / 3 : 0,
+    beat: l.wait ? 0 : 1,
+    speed: l.wait ? 0 : (l.speed - RUNGS[0]) / (RUNGS[TOP] - RUNGS[0]),
+    size: Math.min(1, (size - 1) / 7),
+    density: Math.min(1, notes / size / 8),
+    both: hands.length > 1 ? 1 : 0,
+    noFingers: l.fingers === 'off' ? 1 : l.fingers === 'some' ? 0.5 : 0,
+    away: at ? Math.min(1, (now - at) / DAY / 7) : 0,
+  };
+}
+
+function cutFeatures(l: MLesson, cut: Cut, st: MasteryState, now: number): Features {
+  const h = cut.move.split(':')[0] as Hand;
+  const bars = [...new Set(cut.bars)];
+  const it = (k: string) => (st.items[k] ? strength(st.items[k], now) : UNSEEN);
+  const c = st.chunks[l.chunk];
+  const size = l.to - l.from + 1;
+  const at = Math.max(0, ...bars.map(b => st.items[`b${b}:${h}`]?.at ?? 0));
+  return {
+    bars: mean(bars.map(b => it(`b${b}:${h}`))),
+    together: 1,
+    move: it(`m:${cut.move}`),
+    tried: c ? 1 : 0,
+    last: c ? c.last : 0,
+    streak: c ? Math.min(3, c.streak) / 3 : 0,
+    beat: l.wait ? 0 : 1,
+    speed: l.wait ? 0 : (l.speed - RUNGS[0]) / (RUNGS[TOP] - RUNGS[0]),
+    size: Math.min(1, (size - 1) / 7),
+    density: Math.min(1, cut.src.length / size / 8),
+    both: 0,
+    noFingers: l.fingers === 'off' ? 1 : l.fingers === 'some' ? 0.5 : 0,
+    away: at ? Math.min(1, (now - at) / DAY / 7) : 0,
+  };
+}
+
+/** Places a movement drill takes from the song: the weakest first, at most this many. */
+const CUT_PLACES = 4;
+/** A drill plays at least this many places (one place alone comes round again). */
+const CUT_MIN = 3;
+
+/**
+ * Cuts a movement drill out of the song: each place the movement happens is the chord before it
+ * and the chord it moves to, kept where they fall in the bar so the beat still feels right. Places
+ * that sound the same count once; the ones in his weakest bars come first, then they are played in
+ * song order.
+ */
+export function cutMove(song: Song, key: string, st = loadMastery(song.entry.id), now = Date.now()): Cut | null {
+  const m = model(song);
+  const h = key.split(':')[0] as Hand;
+  if (!song.hands.includes(h)) return null;
+  const gs = handGroups(song, h);
+  const [num, den] = song.timeSig;
+  const measure = song.ppq * 4 * (num / den);
+  const seen = new Map<string, { pair: SongNote[][]; bar: number }>();
+  for (let i = 1; i < gs.length; i++) {
+    if (m.moves.get(gs[i][0].id) !== key) continue;
+    const sound = `${sig(gs[i - 1])}>${sig(gs[i])}`;
+    const bar = m.barOf(gs[i][0]);
+    const weak = (b: number) => strength(st.items[`b${b}:${h}`], now);
+    const had = seen.get(sound);
+    if (!had || weak(bar) < weak(had.bar)) seen.set(sound, { pair: [gs[i - 1], gs[i]], bar });
+  }
+  if (!seen.size) return null;
+  let places = [...seen.values()].sort((a, b) => strength(st.items[`b${a.bar}:${h}`], now) - strength(st.items[`b${b.bar}:${h}`], now)).slice(0, CUT_PLACES);
+  places.sort((a, b) => a.bar - b.bar);
+  while (places.length < CUT_MIN) places = places.concat(places.slice(0, CUT_MIN - places.length));
+  // A steady tempo for the drill: the song's own, around the first place.
+  const t0 = places[0].pair[0][0].ticks;
+  const secPerTick = (song.ticksToSeconds(t0 + song.ppq) - song.ticksToSeconds(t0)) / song.ppq;
+  const notes: SongNote[] = [];
+  const src: number[] = [];
+  const bars: number[] = [];
+  let cursor = 0;
+  for (const { pair, bar } of places) {
+    const start = pair[0][0].ticks;
+    const inBar = start - Math.floor(start / measure + 1e-6) * measure;
+    // A long note before the move: the move comes in the next bar, on its own beat, not bars later.
+    const gap = pair[1][0].ticks - start;
+    const skipBars = Math.max(0, Math.floor((inBar + gap) / measure + 1e-6) - 1);
+    const at = (n: SongNote) => n.ticks - start - (n.ticks >= pair[1][0].ticks ? skipBars * measure : 0);
+    const span = Math.max(1, Math.ceil((inBar + gap - skipBars * measure + 1) / measure));
+    const limit = cursor + span * measure;
+    for (const g of pair) for (const n of g) {
+      const ticks = cursor + inBar + at(n);
+      const next = g === pair[0] ? cursor + inBar + at(pair[1][0]) : limit;
+      const durationTicks = Math.max(1, Math.min(n.durationTicks, next - ticks));
+      notes.push({ ...n, id: 0, ticks, durationTicks, time: ticks * secPerTick, duration: durationTicks * secPerTick * (n.duration / Math.max(1e-6, song.ticksToSeconds(n.ticks + n.durationTicks) - song.ticksToSeconds(n.ticks))) });
+      src.push(n.id);
+    }
+    bars.push(bar);
+    cursor = limit;
+  }
+  const order = notes.map((_, i) => i).sort((a, b) => notes[a].ticks - notes[b].ticks || notes[a].midi - notes[b].midi);
+  const sorted = order.map((i, k) => ({ ...notes[i], id: k }));
+  const pitches = sorted.map(n => n.midi);
+  const drill: Song = {
+    entry: song.entry,
+    notes: sorted,
+    duration: Math.max(...sorted.map(n => n.time + n.duration)),
+    firstNoteTime: sorted[0].time,
+    ppq: song.ppq,
+    timeSig: song.timeSig,
+    fifths: song.fifths,
+    ticksToSeconds: t => t * secPerTick,
+    hands: [h],
+    range: [Math.min(...pitches), Math.max(...pitches)],
+    ceiling: song.ceiling,
+  };
+  return { song: drill, src: order.map(i => src[i]), bars, move: key };
+}
+
+/** A movement drill as a lesson: free play, or with the beat on a rung. */
+function moveLesson(cut: Cut, wait: boolean, rung = 0): MLesson {
+  const [num, den] = cut.song.timeSig;
+  const measure = cut.song.ppq * 4 * (num / den);
+  const bars = Math.max(1, Math.ceil(Math.max(...cut.song.notes.map(n => n.ticks + 1)) / measure));
+  const r = wait ? 0 : rung;
+  const chunk = `move:${cut.move}:${wait ? 'free' : `beat${r}`}`;
+  return {
+    chunk, kind: 'move', title: moveLabel(cut.move), why: 'The same move from around the song.',
+    from: 1, to: bars, hands: cut.move.split(':')[0] as Hand, wait, rung: r, speed: wait ? FREE_SPEED : RUNGS[r],
+    fingers: wait ? 'all' : 'some', reps: REPS.move, cut,
+  };
+}
+
+/** The chance he plays this exercise well now. */
+export const chanceOf = (song: Song, l: MLesson, st = loadMastery(song.entry.id), now = Date.now()) => predict(featuresOf(song, l, st, now));
+
+/** The fastest rung, up to `max`, that he is likely to play well; the slowest when none is. */
+function pickRung(song: Song, st: MasteryState, l: MLesson, max: number, now = Date.now()): MLesson {
+  for (let r = Math.max(0, max); r > 0; r--) {
+    const t = withRung(l, r);
+    if (chanceOf(song, t, st, now) >= TARGET - 0.07) return t;
+  }
+  return withRung(l, 0);
+}
+
+/**
+ * The exercise he needs most, aimed at the zone of ideal effort. Every weak bar of a hand, every
+ * weak bar of hands together and every weak movement becomes a short stretch of the song's own
+ * notes (two bars), played free or with the beat at each speed. Each is weighed by how weak it is,
+ * how often the song plays it, whether it is due for review and how close the model's chance is to
+ * the target; one practised a moment ago counts for less. Only music he has already played is
+ * drilled, and nothing in `skip` (the bars the section is about to teach anyway).
+ */
+export function nextDrill(song: Song, st = loadMastery(song.entry.id), now = Date.now(), skip?: { from: number; to: number }): MLesson | null {
+  const m = model(song);
+  const seen = (k: string) => (st.items[k]?.n ?? 0) >= 4;
+  const plays = new Map<number, number>();
+  for (const o of m.order) for (let b = o.from; b <= o.to; b++) {
+    const part = m.parts.find(p => p.n === o.of);
+    const src = part ? part.from + (b - o.from) : b;
+    plays.set(src, (plays.get(src) ?? 0) + 1);
+  }
+  const recent = new Set(st.session.runs.slice(-6).map(r => r.chunk));
+  const stretch = (bar: number, weaker: (b: number) => number) => {
+    const prev = bar - 1 >= m.first ? weaker(bar - 1) : 2, next = bar + 1 <= m.last ? weaker(bar + 1) : 2;
+    return prev <= next ? { from: bar - 1, to: bar } : { from: bar, to: bar + 1 };
+  };
+  const wants: { kind: LessonKind; from: number; to: number; hands: HandsChoice; need: number; title: string }[] = [];
+  const due = (k: string) => (st.items[k]?.due ?? Infinity) <= now;
+  const need = (k: string, bar: number) => (1 - strength(st.items[k], now)) * (1 + 0.5 * ((plays.get(bar) ?? 1) - 1)) * (due(k) ? 1.3 : 1);
+  for (const h of m.hands) for (let b = m.first; b <= m.last; b++) {
+    const k = `b${b}:${h}`;
+    if (!seen(k) || strength(st.items[k], now) >= 0.8) continue;
+    const s = stretch(b, x => strength(st.items[`b${x}:${h}`], now));
+    wants.push({ kind: 'spot', ...s, hands: m.two ? h : m.all, need: need(k, b), title: `${Bars(s.from, s.to)}${m.two ? `, ${handName(h)}` : ''}` });
+  }
+  if (m.two) for (let b = m.first; b <= m.last; b++) {
+    const k = `t${b}`;
+    if (!seen(k) || strength(st.items[k], now) >= 0.8) continue;
+    const s = stretch(b, x => strength(st.items[`t${x}`], now));
+    wants.push({ kind: 'spot', ...s, hands: 'both', need: need(k, b), title: `${Bars(s.from, s.to)}, both hands` });
+  }
+  // A weak movement is drilled where it is weakest: the bar it happens in that he plays worst.
+  const moveBars = new Map<string, Set<number>>();
+  for (const [id, k] of m.moves) {
+    const set = moveBars.get(k) ?? new Set<number>();
+    set.add(m.barOf(song.notes[id]));
+    moveBars.set(k, set);
+  }
+  // A weak movement is drilled on its own: the same move from around the song, one after the other.
+  const cuts: { cut: Cut; need: number }[] = [];
+  for (const [k, set] of moveBars) {
+    const key = `m:${k}`;
+    if (!seen(key) || strength(st.items[key], now) >= 0.8) continue;
+    const cut = cutMove(song, k, st, now);
+    const need = (1 - strength(st.items[key], now)) * (1 + 0.25 * (set.size - 1)) * (due(key) ? 1.3 : 1);
+    if (cut && !(skip && cut.bars.every(b => b >= skip.from && b <= skip.to))) { cuts.push({ cut, need }); continue; }
+    const h = k.split(':')[0] as Hand;
+    const barS = (b: number) => strength(st.items[`b${b}:${h}`], now);
+    const bar = [...set].filter(b => st.items[`b${b}:${h}`]).sort((a, b) => barS(a) - barS(b))[0];
+    if (bar === undefined) continue;
+    const s = stretch(bar, barS);
+    wants.push({ kind: 'move', ...s, hands: m.two ? h : m.all, need: (1 - strength(st.items[key], now)) * (1 + 0.25 * (set.size - 1)) * (due(key) ? 1.3 : 1), title: `${Bars(s.from, s.to)}${m.two ? `, ${handName(h)}` : ''}` });
+  }
+
+  let best: { l: MLesson; value: number } | null = null;
+  for (const w of wants) {
+    if (skip && w.from <= skip.to && w.to >= skip.from) continue;
+    const variants = [lesson(st, { kind: w.kind, from: w.from, to: w.to, hands: w.hands, wait: true, title: w.title })];
+    // With the beat only once the notes are known, free or in their part.
+    const notesKnown = known(st, w.from, w.to, w.hands, true) || m.parts.some(p => p.from <= w.from && p.to >= w.to && partLearnt(m, st, p));
+    if (notesKnown) for (let r = 0; r <= TOP; r++) variants.push(lesson(st, { kind: w.kind, from: w.from, to: w.to, hands: w.hands, wait: false, rung: r, fingers: 'some', title: `${w.title}, with the beat` }));
+    for (const l of variants) {
+      const value = w.need * fit(chanceOf(song, l, st, now)) * (recent.has(l.chunk) ? 0.3 : 1);
+      if (!best || value > best.value) best = { l, value };
+    }
+  }
+  for (const { cut, need } of cuts) {
+    const variants = [moveLesson(cut, true)];
+    if (streakOf(st, `move:${cut.move}:free`) >= 2) for (let r = 0; r <= TOP; r++) variants.push(moveLesson(cut, false, r));
+    for (const l of variants) {
+      const value = need * fit(chanceOf(song, l, st, now)) * (recent.has(l.chunk) ? 0.3 : 1);
+      if (!best || value > best.value) best = { l, value };
+    }
+  }
+  return best && best.value >= 0.15 ? { ...best.l, why: best.l.cut ? best.l.why : 'Your weakest spot right now.' } : null;
+}
+
 // ---------- The planner: a section at a time ----------
 
 /** Steps go phrase by phrase: about four bars, never fewer than two. */
@@ -271,7 +545,7 @@ function lesson(st: MasteryState, o: { kind: LessonKind; from: number; to: numbe
   const rung = o.wait ? 0 : o.rung ?? Math.max(0, st.rung[ladderKey(o.from, o.to, o.hands)] ?? 0);
   return { why: '', fingers: FINGERS[o.kind], ...o, rung, reps: o.reps ?? REPS[o.kind], chunk: chunkKey(o.from, o.to, o.hands, o.wait, rung), speed: o.wait ? FREE_SPEED : RUNGS[rung] };
 }
-const withRung = (l: MLesson, rung: number): MLesson => ({ ...l, rung, speed: RUNGS[rung], chunk: chunkKey(l.from, l.to, l.hands, l.wait, rung) });
+const withRung = (l: MLesson, rung: number): MLesson => ({ ...l, rung, speed: RUNGS[rung], chunk: l.cut ? `move:${l.cut.move}:beat${rung}` : chunkKey(l.from, l.to, l.hands, l.wait, rung) });
 
 /** A section: the steps of one stretch of practice, played one after the other without stopping. */
 export interface MSection { title: string; why: string; lessons: MLesson[]; /** What finishing it means. */ done: string; }
@@ -308,8 +582,10 @@ function partSection(song: Song, m: Model, st: MasteryState, p: Part): MSection 
     if (!known(st, f.from, f.to, m.all, true)) out.push(lesson(st, { kind: m.two ? 'together' : 'hand', from: f.from, to: f.to, hands: m.all, wait: true, reps: 3, title: m.two ? `${at}, both hands` : `${at}, free play` }));
   }
   if (ph.length > 1 && !known(st, p.from, p.to, m.all, true)) out.push(lesson(st, { kind: 'together', from: p.from, to: p.to, hands: m.all, wait: true, reps: 1, fingers: 'some', title: `${Bars(p.from, p.to)}, free play` }));
-  // With the beat once the notes are known: at 70%, slower only if it keeps going wrong.
-  out.push(lesson(st, { kind: 'beat', from: p.from, to: p.to, hands: m.all, wait: false, rung: 1, title: `${Bars(p.from, p.to)}, with the beat` }));
+  // With the beat once the notes are known: at 70%, or at 60% first while the model says 70% is
+  // still too hard for him (once 60% is clean twice, 70% it is).
+  const beat = lesson(st, { kind: 'beat', from: p.from, to: p.to, hands: m.all, wait: false, rung: 1, title: `${Bars(p.from, p.to)}, with the beat` });
+  out.push(known(st, p.from, p.to, m.all, false, 0) ? beat : pickRung(song, st, beat, 1));
   return { title: `Part ${p.n}`, why: ph.length > 1 || m.two ? 'Phrase by phrase without the beat, then the part with the metronome.' : 'Notes first, then with the metronome.', lessons: out, done: `Part ${p.n} learnt, with the beat.` };
 }
 
@@ -325,6 +601,68 @@ function weakestPart(m: Model, st: MasteryState, now: number): Part | undefined 
 
 /** The section that will teach him the most right now. */
 export function planSection(song: Song, st = loadMastery(song.entry.id), now = Date.now()): MSection {
+  const sec = plan(song, st, now);
+  // The lock-in run on a new day stands alone; any other section may open with one drill on
+  // his weakest spot, chosen by the prediction model, away from the bars the section teaches.
+  if (sec.lessons.length === 1 && sec.lessons[0].kind === 'song') return sec;
+  const learning = sec.lessons.some(l => l.wait && l.kind !== 'join');
+  const span = { from: Math.min(...sec.lessons.map(l => l.from)), to: Math.max(...sec.lessons.map(l => l.to)) };
+  const drill = nextDrill(song, st, now, learning ? span : undefined);
+  const lessons = drill && !sec.lessons.some(l => l.chunk === drill.chunk) ? [drill, ...sec.lessons] : sec.lessons;
+  return { ...sec, lessons: bridged(song, st, lessons, now) };
+}
+
+/** Below this chance a step is too big a jump: something easier goes in front of it. */
+const TOO_HARD = 0.6;
+/** At most this many lead-ins in one section, so it stays the section the planner meant. */
+const MAX_BRIDGES = 2;
+
+/**
+ * An easier way into a step the model thinks he will probably fail, played once just before it:
+ * the same music a little slower, the half of it he finds harder, or the harder hand alone. Of
+ * those he is likely to play well, the one closest to the target. The step itself stays as the
+ * planner made it (the tempo ladder still climbs); the lead-in only makes the jump smaller.
+ */
+export function bridgeFor(song: Song, st: MasteryState, l: MLesson, now = Date.now()): MLesson | null {
+  if (l.cut) return null;
+  const m = model(song);
+  const opts: MLesson[] = [];
+  const like = (o: { from: number; to: number; hands: HandsChoice }, kind: LessonKind) =>
+    lesson(st, { kind, from: o.from, to: o.to, hands: o.hands, wait: l.wait, rung: l.rung, fingers: l.fingers, reps: 1, title: `${Bars(o.from, o.to)}${o.hands !== m.all ? `, ${handName(o.hands)}` : ''}${l.wait ? '' : ', with the beat'}` });
+  // Slower: the same stretch on a lower rung.
+  if (!l.wait) for (let r = l.rung - 1; r >= 0; r--) opts.push({ ...withRung(l, r), kind: 'spot', reps: 1 });
+  // Smaller: each half, never under two bars.
+  if (l.to - l.from >= 3) {
+    const mid = Math.floor((l.from + l.to) / 2);
+    opts.push(like({ from: l.from, to: mid, hands: l.hands }, 'spot'), like({ from: mid + 1, to: l.to, hands: l.hands }, 'spot'));
+  }
+  // One hand: the harder hand alone, with every finger number.
+  if (l.hands === 'both' && m.two) for (const h of m.hands) opts.push({ ...like({ from: l.from, to: l.to, hands: h }, 'hand'), fingers: 'all' });
+  let best: { l: MLesson; score: number } | null = null;
+  for (const o of opts) {
+    const p = chanceOf(song, o, st, now);
+    if (p < TARGET - 0.07) continue;
+    // Among lead-ins he will manage, the hardest teaches the most: closest to the target.
+    const score = fit(p);
+    if (!best || score > best.score) best = { l: { ...o, why: 'A smaller step first.' }, score };
+  }
+  return best?.l ?? null;
+}
+
+function bridged(song: Song, st: MasteryState, lessons: MLesson[], now: number): MLesson[] {
+  const out: MLesson[] = [];
+  let n = 0;
+  for (const l of lessons) {
+    if (n < MAX_BRIDGES && l.kind !== 'spot' && l.kind !== 'move' && chanceOf(song, l, st, now) < TOO_HARD) {
+      const b = bridgeFor(song, st, l, now);
+      if (b && !lessons.some(x => x.chunk === b.chunk) && !out.some(x => x.chunk === b.chunk)) { out.push(b); n++; }
+    }
+    out.push(l);
+  }
+  return out;
+}
+
+function plan(song: Song, st: MasteryState, now: number): MSection {
   const m = model(song);
   const today = dayKey(new Date(now));
   const whole = (wait: boolean, rung: number, title: string) => lesson(st, { kind: 'song', from: m.first, to: m.last, hands: m.all, wait, rung, title });
@@ -393,7 +731,7 @@ export function planSection(song: Song, st = loadMastery(song.entry.id), now = D
 // ---------- Learning from a run ----------
 
 /** What one chord of the run showed. */
-interface GroupEv { ids: number[]; q: number; wrong: number[]; }
+interface GroupEv { ids: number[]; q: number; wrong: number[]; /** Seconds he waited before it (free play). */ stuck?: number; /** Seconds early or late per note, with the beat. */ offs?: { hand: Hand; off: number }[]; }
 
 /** What a run showed. */
 export interface RunVerdict {
@@ -403,6 +741,8 @@ export interface RunVerdict {
   spot?: { lesson: MLesson; line: string };
   /** Set when it is a good moment to stop for today. */
   rest?: string;
+  /** The kind of mistake behind most of a run that did not count (hints.ts). */
+  hint?: Diagnosis;
 }
 
 /** Where it went wrong, as a stretch of at least two bars: the worst bar and its neighbour, one hand if only one hand slipped. */
@@ -420,10 +760,11 @@ function zoomIn(m: Model, st: MasteryState, l: MLesson, song: Song, groups: Grou
   }
   const weakBars = [...perBar.entries()].filter(([, e]) => e.weak).sort((a, b) => b[1].lost - a[1].lost);
   if (!weakBars.length) return null;
-  const spot = (from: number, to: number, hands: HandsChoice, line: string) => ({
-    lesson: lesson(st, { kind: 'spot', from, to, hands, wait: l.wait, rung: Math.max(0, l.rung - 1), title: `${Bars(from, to)}${hands !== m.all ? `, ${handName(hands)}` : ''}` }),
-    line,
-  });
+  const spot = (from: number, to: number, hands: HandsChoice, line: string) => {
+    const s = lesson(st, { kind: 'spot', from, to, hands, wait: l.wait, rung: Math.max(0, l.rung - 1), title: `${Bars(from, to)}${hands !== m.all ? `, ${handName(hands)}` : ''}` });
+    // With the beat: a step slower, or slower still if the model says that is still too hard.
+    return { lesson: l.wait ? s : pickRung(song, st, s, s.rung), line };
+  };
   // Each hand knows it but together it falls apart in many places: half the stretch at a time.
   const handsKnown = m.two && m.hands.every(h => known(st, l.from, l.to, h, true));
   if (weakBars.length >= 3 && l.hands === 'both' && handsKnown && l.to - l.from >= 3) {
@@ -454,7 +795,7 @@ function zoomIn(m: Model, st: MasteryState, l: MLesson, song: Song, groups: Grou
  * Takes in a finished run: updates the strengths, the chunk's record and the tempo ladder, finds
  * where it went wrong, and says whether it is time to stop for today.
  */
-function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy: number; cutShort: boolean; rewinds: number }): RunVerdict {
+export function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy: number; cutShort: boolean; rewinds: number }, seen?: Features): RunVerdict {
   const id = song.entry.id;
   const m = model(song);
   const st = loadMastery(id);
@@ -476,21 +817,28 @@ function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy: numbe
     if (hands.size > 1) add(`t${m.barOf(song.notes[g.ids[0]])}`, g.q);
   }
   for (const [k, a] of Object.entries(acc)) {
-    const it = st.items[k] ?? { s: 0.4, n: 0, at: now, ivl: 0, due: now };
+    const it = st.items[k] ?? { s: 0.4, n: 0, at: now, h: st.h0, due: now };
     const q = a.sum / a.n;
+    // Coming back after a gap: what is left shows how fast it fades for him (memory.ts).
+    const away = (now - it.at) / DAY;
+    if (it.n > 0 && away >= GAP && a.n >= 2) {
+      const r = relearn(it.h, it.s, q, away);
+      it.h = r.h;
+      st.h0 = typical(st.h0, r.shown);
+    }
     it.s += Math.min(0.5, 0.2 + 0.05 * a.n) * (q - it.s);
     it.n += a.n;
     it.at = now;
-    // Spaced review: clean doubles the gap (1, 2, 4, 8 days...), a weak run brings it back tomorrow.
-    if (q >= CLEAN && a.n >= 2) it.ivl = Math.min(30, Math.max(1, it.ivl * 2));
-    else if (q < 0.8) it.ivl = 1;
-    it.due = now + it.ivl * DAY;
+    // Review just before it fades: sooner for what fades fast, later for what sticks.
+    it.due = now + dueIn(it.h) * DAY;
     st.items[k] = it;
   }
 
   // The chunk's record. A good run is 90% right with at most one slip.
   const wrongs = groups.reduce((a, g) => a + g.wrong.length, 0);
   const pass = run.accuracy >= PASS && !run.cutShort && run.rewinds <= 1;
+  // The prediction model learns from what it expected before the run and what happened.
+  if (seen && groups.length) observe(seen, pass, { song: id, chunk: l.chunk, kind: l.kind, acc: run.accuracy });
   const perfect = pass && !wrongs && !run.rewinds && run.accuracy >= 0.999;
   const c = st.chunks[l.chunk] ?? { runs: 0, streak: 0, best: 0, last: 0, at: now };
   if (c.runs === 0 && l.kind !== 'review') { st.fast.tries++; if (perfect) st.fast.clean++; }
@@ -502,7 +850,7 @@ function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy: numbe
   st.chunks[l.chunk] = c;
 
   // The tempo ladder: enough good runs climb a rung, a run below the zone steps one down.
-  if (!l.wait) {
+  if (!l.wait && !l.cut) {
     const lk = ladderKey(l.from, l.to, l.hands);
     if (pass && c.streak >= Math.min(2, l.reps)) {
       st.top[lk] = Math.max(topOf(st, lk), l.rung);
@@ -514,7 +862,7 @@ function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy: numbe
     if (pass && run.accuracy >= CLEAN && l.from === m.first && l.to === m.last && l.rung === TOP && !st.days.includes(today)) st.days.push(today);
   }
 
-  const spot = pass ? null : zoomIn(m, st, l, song, groups);
+  const spot = pass || l.cut ? null : zoomIn(m, st, l, song, groups);
   // Wrong notes next to the right key point at the hand's position: show the fingers.
   const near = groups.flatMap(g => g.wrong.map(w => Math.min(...g.ids.map(i => Math.abs(song.notes[i].midi - w))))).filter(d => d <= 2).length;
   if (spot && wrongs >= 2 && near / wrongs >= 0.5) spot.lesson.fingers = 'all';
@@ -536,8 +884,14 @@ function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy: numbe
     rest = 'The whole song, clean at full speed. Play it like that on another day and it is yours.';
   }
 
+  // Why it went wrong, for a short hint.
+  const hint = pass ? null : diagnose(groups.map(g => ({
+    notes: g.ids.map(i => ({ midi: song.notes[i].midi, hand: song.notes[i].hand, leap: (m.moves.get(i) ?? '').includes('leap') })),
+    wrong: g.wrong, stuck: g.stuck ?? 0, offs: g.offs ?? [], bar: l.cut ? undefined : m.barOf(song.notes[g.ids[0]]),
+  })), l.wait);
+
   saveMastery(id, st);
-  return { pass, accuracy: run.accuracy, spot: spot ?? undefined, rest };
+  return { pass, accuracy: run.accuracy, spot: spot ?? undefined, rest, hint: hint ?? undefined };
 }
 
 // ---------- Listening to a run ----------
@@ -547,6 +901,9 @@ function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy: numbe
  * is 1, found after a pause or wrong notes less, missed 0; with the beat, early or late costs a little.
  */
 function track(song: Song, l: MLesson, engine: Engine) {
+  const seen = featuresOf(song, l);
+  // A drill's notes are the song's own: what he plays counts for the bars they come from.
+  const real = (ids: number[]) => (l.cut ? ids.map(i => l.cut!.src[i]) : ids);
   const groups: GroupEv[] = [];
   let cur = engine.gi, waitStart = 0, firstSettled = false;
   const wrongAt = new Map<number, number[]>();
@@ -562,17 +919,18 @@ function track(song: Song, l: MLesson, engine: Engine) {
     const wrong = wrongAt.get(gi) ?? [];
     wrongAt.delete(gi);
     let q: number;
+    // The first chord waits for him to get ready: its pause is not hesitation.
+    const stuck = free() && firstSettled && gi === cur && waitStart ? (now - waitStart) / 1000 : 0;
+    const offs = free() ? [] : g.ids.filter(id => offsets.has(id)).map(id => ({ hand: engine.song.notes[id].hand, off: offsets.get(id)! }));
     if (st.some(s => s === MISS)) q = 0;
     else if (free()) {
-      // The first chord waits for him to get ready: its pause is not hesitation.
-      const stuck = firstSettled && gi === cur && waitStart ? (now - waitStart) / 1000 : 0;
       q = 1 - Math.min(0.5, Math.max(0, stuck - 1.5) * 0.15) - Math.min(0.7, wrong.length * 0.35);
     } else {
       const off = Math.max(0, ...g.ids.map(id => Math.abs(offsets.get(id) ?? 0)));
       q = 1 - (off > 0.12 ? 0.25 : 0) - Math.min(0.7, wrong.length * 0.5);
     }
     firstSettled = true;
-    groups.push({ ids: [...g.ids], q: Math.max(0, q), wrong });
+    groups.push({ ids: real(g.ids), q: Math.max(0, q), wrong, stuck, offs });
   };
   const check = () => {
     const now = performance.now();
@@ -594,10 +952,10 @@ function track(song: Song, l: MLesson, engine: Engine) {
       // Chords he slipped on and never got past (the run stopped first) are failures too.
       for (const [gi, wrong] of wrongAt) {
         const g = engine.groups[gi];
-        if (g) groups.push({ ids: [...g.ids], q: 0, wrong });
+        if (g) groups.push({ ids: real(g.ids), q: 0, wrong });
       }
       const { accuracy } = engine.stats();
-      return learn(song, l, groups, { accuracy, cutShort: engine.cutShort, rewinds: engine.rewinds });
+      return learn(song, l, groups, { accuracy, cutShort: engine.cutShort, rewinds: engine.rewinds }, seen);
     },
   };
 }
@@ -619,7 +977,7 @@ export interface RepOutcome { kind: 'again' | 'next' | 'insert' | 'done'; pass: 
 
 const stepOf = (l: MLesson): CourseStep => ({
   id: `m:${l.chunk}`, kind: l.wait ? 'phrase' : 'tempo', title: l.title, short: 'M',
-  from: l.from, to: l.to, hands: l.hands, speed: l.speed, wait: l.wait, exact: true, fingers: l.fingers, reps: l.reps,
+  from: l.from, to: l.to, hands: l.hands, speed: l.speed, wait: l.wait, exact: true, fingers: l.fingers, reps: l.reps, song: l.cut?.song,
 });
 
 /**
@@ -641,6 +999,9 @@ export class MasterySession {
   private accs: number[] = [];
   private rest?: string;
   private zoomed = new Set<string>();
+  /** Hints shown so far, per kind, and whether the last run already had one. */
+  private hinted = new Map<string, number>();
+  private lastHinted = false;
 
   constructor(readonly song: Song) {
     const sec = planSection(song);
@@ -667,18 +1028,36 @@ export class MasterySession {
     this.fails.splice(i, 0, 0);
   }
 
+  /**
+   * A hint after a run that did not count: one line, never two runs in a row, and each kind at
+   * most twice a section, so it helps instead of nagging.
+   */
+  private hint(v: RunVerdict): string | undefined {
+    const d = v.hint;
+    const shown = d ? this.hinted.get(d.kind) ?? 0 : 0;
+    if (!d || this.lastHinted || shown >= 2) { this.lastHinted = false; return undefined; }
+    const line = hintLine(d, shown + this.hinted.size);
+    if (!line) return undefined;
+    this.hinted.set(d.kind, shown + 1);
+    this.lastHinted = true;
+    return line;
+  }
+
   after(i: number, v: RunVerdict): RepOutcome {
     this.accs.push(v.accuracy);
     if (v.rest) this.rest = v.rest;
     const l = this.lessons[i];
     const last = i >= this.steps.length - 1;
     if (v.pass) {
+      this.lastHinted = false;
       this.good[i]++;
       this.fails[i] = 0;
       if (this.good[i] < l.reps) return { kind: 'again', pass: true };
       return { kind: last ? 'done' : 'next', pass: true };
     }
     this.fails[i]++;
+    // The model's chance of getting it right if he simply tries again, after what just happened.
+    const hopeless = chanceOf(this.song, l) < 0.5;
     // Twice wrong in the same place: that place on its own first, then back.
     if (this.fails[i] >= 2 && v.spot && !this.zoomed.has(l.chunk) && l.kind !== 'spot') {
       this.zoomed.add(l.chunk);
@@ -686,23 +1065,41 @@ export class MasterySession {
       this.put(i, v.spot.lesson);
       return { kind: 'insert', pass: false, line: v.spot.line };
     }
-    // Three times wrong with the beat: a little slower.
-    if (this.fails[i] >= 3 && !l.wait && l.rung > 0) {
+    // Three times wrong with the beat (twice when another try looks hopeless): a little slower.
+    if ((this.fails[i] >= 3 || (hopeless && this.fails[i] >= 2)) && !l.wait && l.rung > 0) {
       const slower = withRung(l, l.rung - 1);
       this.lessons[i] = slower;
       this.steps[i] = stepOf(slower);
       this.fails[i] = 0;
-      return { kind: 'again', pass: false };
+      return { kind: 'again', pass: false, line: this.hint(v) };
+    }
+    // Free play that keeps going wrong where no smaller stretch helps: a lead-in once, if one fits.
+    if (this.fails[i] >= 2 && hopeless && !this.zoomed.has(`b:${l.chunk}`)) {
+      const b = bridgeFor(this.song, loadMastery(this.song.entry.id), l);
+      if (b) {
+        this.zoomed.add(`b:${l.chunk}`);
+        this.fails[i] = 0;
+        this.put(i, b);
+        return { kind: 'insert', pass: false };
+      }
     }
     // Not coming right today: move on rather than practise it wrong.
     if (this.fails[i] >= 4) return { kind: last ? 'done' : 'next', pass: false };
-    return { kind: 'again', pass: false };
+    return { kind: 'again', pass: false, line: this.hint(v) };
   }
 
   summary(): MasteryVerdict {
     const accuracy = this.accs.length ? this.accs.reduce((a, x) => a + x, 0) / this.accs.length : 0;
     return { before: this.before, after: meterOf(this.song).value, line: this.doneLine, rest: this.rest, accuracy };
   }
+}
+
+/** How fast he forgets this song (dev report): his typical half-life and the spread across bars and moves. */
+export function memoryReport(id: string, now = Date.now()) {
+  const st = loadMastery(id);
+  const items = Object.entries(st.items).map(([k, it]) => ({ k, h: Math.round(it.h * 10) / 10, now: Math.round(strength(it, now) * 100) / 100, dueInDays: Math.round(((it.due - now) / DAY) * 10) / 10 }));
+  items.sort((a, b) => a.h - b.h);
+  return { h0: Math.round(st.h0 * 100) / 100, shortest: items.slice(0, 5), longest: items.slice(-5), due: items.filter(i => i.dueInDays <= 0).length, items: items.length };
 }
 
 /** The meter and the next section for a song, kept fresh as he plays. */
