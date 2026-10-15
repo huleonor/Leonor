@@ -165,6 +165,8 @@ export type LessonKind = 'hand' | 'together' | 'beat' | 'spot' | 'move' | 'join'
 export interface MLesson {
   /** The chunk it trains: the same music played the same way shares its record. */
   chunk: string;
+  /** New music: the app plays it to him once before his turn (Simply Piano: hear it, then read it). */
+  listen?: boolean;
   kind: LessonKind;
   title: string;
   /** Why this lesson now, in a line. */
@@ -642,13 +644,21 @@ function partSection(song: Song, m: Model, st: MasteryState, p: Part, pp: PartPl
   let mode = m.two ? pp?.hands ?? 'hand-by-phrase' : 'together';
   if (fast && mode === 'hand-by-phrase') mode = 'together';
   const hand = (h: Hand, f: { from: number; to: number }, title?: string) => {
-    if (!known(st, f.from, f.to, h, true)) out.push(lesson(st, { kind: 'hand', from: f.from, to: f.to, hands: h, wait: true, title: title ?? `${Bars(f.from, f.to)}, ${handName(h)}` }));
+    if (!known(st, f.from, f.to, h, true)) { out.push(lesson(st, { kind: 'hand', from: f.from, to: f.to, hands: h, wait: true, title: title ?? `${Bars(f.from, f.to)}, ${handName(h)}` })); hearFirst(); }
   };
   const together = (f: { from: number; to: number }) => {
-    if (!known(st, f.from, f.to, m.all, true)) out.push(lesson(st, { kind: m.two ? 'together' : 'hand', from: f.from, to: f.to, hands: m.all, wait: true, title: m.two ? `${Bars(f.from, f.to)}, both hands` : `${Bars(f.from, f.to)}, free play` }));
+    if (!known(st, f.from, f.to, m.all, true)) { out.push(lesson(st, { kind: m.two ? 'together' : 'hand', from: f.from, to: f.to, hands: m.all, wait: true, title: m.two ? `${Bars(f.from, f.to)}, both hands` : `${Bars(f.from, f.to)}, free play` })); hearFirst(); }
   };
 
   // The hard spots in this part, drilled before he meets them in the music.
+  // A phrase he has never played: he hears it once first, then reads it.
+  const fresh = (f: { from: number; to: number }) => !Object.keys(st.chunks).some(k => k.startsWith(`${f.from}-${f.to}:`));
+  const heard = new Set<string>();
+  const hearFirst = () => {
+    const l = out[out.length - 1];
+    const key = `${l.from}-${l.to}`;
+    if (l && l.wait && !heard.has(key) && fresh(l)) { heard.add(key); l.listen = true; }
+  };
   for (const s of focus) {
     if (s.from < p.from || s.to > p.to) continue;
     const h: HandsChoice = s.hand === 'both' ? m.all : s.hand;
@@ -693,7 +703,9 @@ function patternSection(m: Model, st: MasteryState, s: Stretch): MSection | null
   if (free && beat) return null;
   const lessons: MLesson[] = [];
   const title = `${Bars(s.from, s.to)}${h !== m.all ? `, ${handName(h)}` : ''}`;
-  if (!free) lessons.push(lesson(st, { kind: 'hand', from: s.from, to: s.to, hands: h, wait: true, title }));
+  // Never played: he hears it once first.
+  const fresh = !Object.keys(st.chunks).some(k => k.startsWith(`${s.from}-${s.to}:`));
+  if (!free) lessons.push({ ...lesson(st, { kind: 'hand', from: s.from, to: s.to, hands: h, wait: true, title }), listen: fresh });
   lessons.push(lesson(st, { kind: 'beat', from: s.from, to: s.to, hands: h, wait: false, rung: 1, title: `${title}, with the beat` }));
   return { title: 'The pattern', why: 'It comes back all through the song: learn it once and it is there everywhere.', lessons, done: 'The pattern runs by itself.' };
 }
@@ -1121,7 +1133,7 @@ const graceOf = (l: MLesson) => (l.wait || l.kind === 'song' || l.kind === 'revi
 const stepOf = (l: MLesson): CourseStep => ({
   id: `m:${l.chunk}`, kind: l.wait ? 'phrase' : 'tempo', title: l.title, short: 'M',
   from: l.from, to: l.to, hands: l.hands, speed: l.speed, wait: l.wait, exact: true, fingers: l.fingers, reps: l.reps, song: l.cut?.song,
-  grace: graceOf(l),
+  grace: graceOf(l), listen: l.listen,
 });
 
 /**

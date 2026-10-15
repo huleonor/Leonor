@@ -1811,13 +1811,29 @@ button.gb-stat:hover { background: var(--bg-deep); }
 }
 .rep-dots i.on { background: var(--ok); }
 .rep-mark {
-  position: absolute; top: 14px; right: 20px; z-index: 8; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%;
+  position: absolute; top: 26%; right: 9%; z-index: 8; display: grid; place-items: center; width: 76px; height: 76px; border-radius: 50%;
   pointer-events: none;
 }
-.rep-mark.good { background: var(--ok); color: var(--surface); box-shadow: 0 4px 0 var(--ok-edge); }
+/* Like Simply Piano: a big green check over the end of the music when a run is good, with a ring that spreads. */
+.rep-mark.good { background: var(--note-hit); color: var(--surface); box-shadow: 0 0 0 0 color-mix(in srgb, var(--note-hit) 45%, transparent); animation: mark-ring .7s ease-out; }
+.rep-mark.good svg { width: 40px; height: 40px; }
+@keyframes mark-ring { to { box-shadow: 0 0 0 26px color-mix(in srgb, var(--note-hit) 0%, transparent); } }
 .rep-mark.again { background: var(--surface); color: var(--miss-text); border: 2px solid var(--miss); }
 .lesson-listening.zoom { max-width: min(560px, calc(100% - 32px)); white-space: normal; text-align: center; background: var(--surface); color: var(--ink); border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); }
 .lesson.simply .now-line { background: var(--go); opacity: .9; box-shadow: 0 0 14px 3px color-mix(in srgb, var(--go) 45%, transparent); }
+/* The now line trails a soft band of light behind it, like Simply Piano's. */
+.lesson.simply .now-line::before { content: ''; position: absolute; top: 0; bottom: 0; right: 100%; width: 46px; background: linear-gradient(to right, transparent, color-mix(in srgb, var(--go) 22%, transparent)); }
+/* A note he gets right bursts: a teal ring and six sparks flying out. */
+.spark { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none; z-index: 3; border: 2px solid var(--note-hit); animation: spark-ring .55s ease-out forwards; }
+.spark i { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: var(--note-hit); transform: rotate(var(--a)) translateY(0); animation: spark-fly .6s ease-out forwards; }
+@keyframes spark-ring { from { transform-origin: center; opacity: .9; scale: .4; } to { opacity: 0; scale: 1.25; } }
+@keyframes spark-fly { from { opacity: 1; transform: rotate(var(--a)) translateY(0); } to { opacity: 0; transform: rotate(var(--a)) translateY(-150%); } }
+/* With the beat: a right note played clearly early or late says so, briefly, above the staff. */
+.timing { position: absolute; left: 0; top: 0; z-index: 4; pointer-events: none; transform: translate(-50%, -100%); padding: 2px 9px; border-radius: 999px; background: var(--surface); border: 2px solid var(--line); color: var(--ink-2); font-size: 13px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; animation: timing-up .9s ease-out forwards; }
+@keyframes timing-up { 0% { opacity: 0; scale: .7; } 15% { opacity: 1; scale: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+/* Stuck on a note: its name, next to it on the staff, so he reads it there instead of on the keys. */
+.note-name { position: absolute; left: 0; top: 0; z-index: 4; pointer-events: none; padding: 1px 8px; border-radius: 999px; background: var(--note-next); color: var(--surface); font-weight: 900; line-height: 1.3; white-space: nowrap; animation: name-in .3s cubic-bezier(.2,.8,.2,1); }
+@keyframes name-in { from { opacity: 0; scale: .6; } }
 .btn.auto-next { position: relative; overflow: hidden; isolation: isolate; }
 .btn.auto-next i { position: absolute; inset: 0 auto 0 0; z-index: -1; background: var(--go-edge); }
 .mastery-next .mastery-count { text-transform: none; letter-spacing: 0; font-size: 13px; }

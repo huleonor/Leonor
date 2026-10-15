@@ -35,7 +35,7 @@ export function pressDots(engine: Engine, eg: Engraved, layer: HTMLElement): () 
     d.className = `press-dot ${e.ok ? 'ok' : 'bad'}`;
     const size = Math.max(9, p.gap * 1.25);
     d.style.width = d.style.height = `${size}px`;
-    d.style.transform = `translate(${at.x - size / 2}px, ${p.y - size / 2}px)`;
+    d.style.translate = `${at.x - size / 2}px ${p.y - size / 2}px`;
     layer.appendChild(d);
     live.set(e.midi, d);
     const born = performance.now();

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { barsToTime } from '../lib/analysis';
-import { loadPiano, unlockAudio } from '../lib/audio';
+import { loadPiano, playCue, unlockAudio } from '../lib/audio';
 import { coachRun, settingsFor } from '../lib/adapt';
 import { recordStep, starsFor, type CourseStep } from '../lib/course';
 import { listenForSkills } from '../lib/skills';
@@ -22,7 +22,6 @@ import { HelpKeys } from './HelpKeys';
 import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
 import { EnergySheet } from './Economy';
 import { Energy, Gem } from './GameIcons';
-import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
 import { IconArrowLeft, IconArrowRight, IconBolt, IconCheck, IconFlame, IconHeadphones, IconMoon, IconPause, IconPlay, IconRestart, IconStar, IconTarget } from './Icons';
 import { Keyboard } from './Keyboard';
@@ -166,10 +165,12 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
   const [alwaysKeys, setAlwaysKeys] = useState(() => { try { return localStorage.getItem('hugos-piano:keys') === 'always'; } catch { return false; } });
   const toggleKeys = () => setAlwaysKeys(a => { try { localStorage.setItem('hugos-piano:keys', a ? 'help' : 'always'); } catch { /* ignore */ } return !a; });
 
+  // Mastery, one hand with the beat: the app plays the other hand softly, so it sounds like the music.
+  const accompany = !!session && !step.wait && (step.hands === 'R' || step.hands === 'L');
   const engine = useMemo(() => new Engine(song, {
     // Free play: the cursor jumps to the next notes and waits there, no bars to sit through.
-    speed: coach.speed, wait: false, follow: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter, fixSlips: !step.wait && !step.grace, grace: step.wait ? 0 : step.grace,
-    accompaniment: settings.accompaniment, lenient: settings.input === 'mic',
+    speed: coach.speed, wait: false, follow: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter, accompaniment: settings.accompaniment || accompany, fixSlips: !step.wait && !step.grace, grace: step.wait ? 0 : step.grace,
+    lenient: settings.input === 'mic',
   }), [song, step.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // (Keyed by id: refreshed progress hands down new step objects for the same step.)
   useMetronome(engine, !step.wait && metro);
@@ -196,7 +197,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
   }, [engine, noEnergy]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setMicRange(song.range[0], song.range[1]); loadPiano().catch(() => {}); }, [song]);
   useEffect(() => { if (import.meta.env.DEV) (window as unknown as { __engine: Engine }).__engine = engine; }, [engine]);
-  useEffect(() => { engine.setOptions({ speed, listen, accompaniment: settings.accompaniment, lenient: settings.input === 'mic' }); }, [engine, speed, listen, settings.accompaniment, settings.input]);
+  useEffect(() => { engine.setOptions({ speed, listen, accompaniment: settings.accompaniment || accompany, lenient: settings.input === 'mic' }); }, [engine, speed, listen, settings.accompaniment, settings.input]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Every chord he plays teaches the app about his skills; a whole run also tunes the coach.
@@ -236,6 +237,9 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
         if (session && verdict) {
           // Mastery: no screens between runs. A tick or "again", then the same step, the next, or a smaller stretch.
           const out = session.after(index, verdict);
+          // A sound for every run, quiet under his piano: a chime, a bell when the step is done,
+          // a short arpeggio at the end of the section, a soft low tone for "again".
+          playCue(out.kind === 'done' && out.pass ? 'section' : !out.pass ? 'again' : out.kind === 'again' ? 'good' : 'step');
           if (out.kind === 'done') {
             const sum = session.summary();
             const stars = starsFor(sum.accuracy);
@@ -373,8 +377,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
       <main className="lesson-stage">
         {settings.view === 'notes'
           ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={0} onTap={pause} />
-          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback fingers={fingers} only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
-        <Countdown engine={engine} />
+          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback fingers={fingers} naming={settings.naming} only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
         <Cheer combo={combo} />
         <AnimatePresence>
           {rep && (
@@ -407,7 +410,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
 
       {settings.view === 'notes'
         ? <footer className="lesson-keys"><Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={fingers} /></footer>
-        : <HelpKeys engine={engine} naming={settings.naming} fingers={fingers} lo={lo} hi={hi} wide always={alwaysKeys} />}
+        : <HelpKeys engine={engine} naming={settings.naming} fingers={fingers} lo={lo} hi={hi} wide always={alwaysKeys} reading={!!session} />}
       <footer className="lesson-actions">
         {!session && !engine.started && !paused && !result && !listen && !step.wait && (
           <div className="lesson-start">
