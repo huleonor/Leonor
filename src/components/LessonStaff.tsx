@@ -117,6 +117,21 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only,
     };
     const offSpark = engine.on(e => { if (e.type === 'status' && e.ids !== 'all') sparkle(e.ids); });
 
+    // With the beat, a right note that came clearly before or after its time says so above the
+    // staff: "Early" or "Late", in small letters, so he hears and sees the beat without a mistake.
+    const offJudge = engine.on(e => {
+      if (e.type !== 'judge' || Math.abs(e.offset) < 0.12) return;
+      const stop = eg.stopOf(e.id);
+      const box = stop && eg.lines[stop.line];
+      if (!stop || !box) return;
+      const t = document.createElement('span');
+      t.className = `timing ${e.offset < 0 ? 'early' : 'late'}`;
+      t.textContent = e.offset < 0 ? 'Early' : 'Late';
+      t.style.translate = `${stop.x}px ${box.top - 8 * scale}px`;
+      dots.appendChild(t);
+      setTimeout(() => t.remove(), 900);
+    });
+
     // Stuck on a note in free play: its name appears next to it on the staff (never the keyboard
     // first), after two wrong keys or a long look, so he learns to read it there.
     let named = -1;
@@ -264,7 +279,7 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only,
     raf = requestAnimationFrame(frame);
     // A new step comes in: the notes slide in from the right, like turning to the next line.
     paper.animate?.([{ opacity: 0, transform: 'translateX(40px)' }, { opacity: 1, transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.2,.8,.2,1)' });
-    return () => { cancelAnimationFrame(raf); off(); offDots(); offSpark(); clearNames(); dots.remove(); extras.forEach(x => x.remove()); };
+    return () => { cancelAnimationFrame(raf); off(); offDots(); offSpark(); offJudge(); clearNames(); dots.remove(); extras.forEach(x => x.remove()); };
   }, [engine, from, to, only, fingers, size.w, size.h]);
 
   return (

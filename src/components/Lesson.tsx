@@ -165,10 +165,12 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
   const [alwaysKeys, setAlwaysKeys] = useState(() => { try { return localStorage.getItem('hugos-piano:keys') === 'always'; } catch { return false; } });
   const toggleKeys = () => setAlwaysKeys(a => { try { localStorage.setItem('hugos-piano:keys', a ? 'help' : 'always'); } catch { /* ignore */ } return !a; });
 
+  // Mastery, one hand with the beat: the app plays the other hand softly, so it sounds like the music.
+  const accompany = !!session && !step.wait && (step.hands === 'R' || step.hands === 'L');
   const engine = useMemo(() => new Engine(song, {
     // Free play: the cursor jumps to the next notes and waits there, no bars to sit through.
-    speed: coach.speed, wait: false, follow: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter, fixSlips: !step.wait && !step.grace, grace: step.wait ? 0 : step.grace,
-    accompaniment: settings.accompaniment, lenient: settings.input === 'mic',
+    speed: coach.speed, wait: false, follow: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter, accompaniment: settings.accompaniment || accompany, fixSlips: !step.wait && !step.grace, grace: step.wait ? 0 : step.grace,
+    lenient: settings.input === 'mic',
   }), [song, step.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // (Keyed by id: refreshed progress hands down new step objects for the same step.)
   useMetronome(engine, !step.wait && metro);
@@ -195,7 +197,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
   }, [engine, noEnergy]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setMicRange(song.range[0], song.range[1]); loadPiano().catch(() => {}); }, [song]);
   useEffect(() => { if (import.meta.env.DEV) (window as unknown as { __engine: Engine }).__engine = engine; }, [engine]);
-  useEffect(() => { engine.setOptions({ speed, listen, accompaniment: settings.accompaniment, lenient: settings.input === 'mic' }); }, [engine, speed, listen, settings.accompaniment, settings.input]);
+  useEffect(() => { engine.setOptions({ speed, listen, accompaniment: settings.accompaniment || accompany, lenient: settings.input === 'mic' }); }, [engine, speed, listen, settings.accompaniment, settings.input]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Every chord he plays teaches the app about his skills; a whole run also tunes the coach.

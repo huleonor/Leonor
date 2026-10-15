@@ -35,7 +35,8 @@ export type EngineEvent =
   /** A key went down while playing: right or wrong, and the written note it matched, if known. */
   | { type: 'press'; midi: number; ok: boolean; id?: number }
   /** A note hit in tempo: how early (negative) or late it was, in real seconds. */
-  | { type: 'judge'; offset: number }
+  /** With the beat: how early (negative) or late a right note came, in real seconds, and which. */
+  | { type: 'judge'; offset: number; id: number }
   /** A slip in tempo sent him back: `bar` is where it happened, `from` where he starts again (1-based). */
   | { type: 'rewind'; bar: number; from: number }
   /** A key touched by accident (a brush, a bounce, a ghost touch): not counted. */
@@ -605,7 +606,7 @@ export class Engine {
       if (best < 0) { if (!strikeOk && !near) this.wrongKey(e, now); return undefined; }
       this.status[best] = HIT;
       changed.push(best);
-      this.emit({ type: 'judge', offset: (t - this.song.notes[best].time) / this.opts.speed });
+      this.emit({ type: 'judge', offset: (t - this.song.notes[best].time) / this.opts.speed, id: best });
     }
     if (changed.length) this.emit({ type: 'status', ids: changed });
     return this.opts.wait || this.opts.follow ? undefined : changed[0];
