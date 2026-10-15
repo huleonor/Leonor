@@ -17,6 +17,11 @@ export interface EngineOptions {
   follow?: boolean;
   /** In tempo, a slip (a wrong or missed note) takes him back to beat 1 of the bar before it. */
   fixSlips?: boolean;
+  /**
+   * In tempo, while he is new to the beat: the music waits this long (real seconds) at a note he
+   * has not played yet, instead of marking it missed, then goes on. 0 or unset: no waiting.
+   */
+  grace?: number;
 }
 
 interface Group { time: number; ids: number[]; midis: number[]; }
@@ -105,6 +110,9 @@ export class Engine {
 
   private presses: Press[] = [];
   private lastGroupAt = 0;
+  /** When the music started holding at a note (the beat's grace), 0 when it is not. */
+  private heldSince = 0;
+  private heldGi = -1;
   private autoIdx = 0;
   private raf = 0;
   private last = 0;
@@ -172,6 +180,7 @@ export class Engine {
     this.autoIdx = notes.findIndex(n => n.time >= this.time - 1e-3);
     if (this.autoIdx < 0) this.autoIdx = notes.length;
     this.presses = [];
+    this.heldSince = 0;
     this.waiting = false;
     this.finished = false;
     stopAll();
@@ -378,6 +387,18 @@ export class Engine {
       }
     } else {
       let slipAt = -1;
+      // Notes already played that the music has passed: step over them first.
+      while (this.gi < this.groups.length && next > this.groups[this.gi].time + this.late(this.groups[this.gi]) && !this.groups[this.gi].ids.some(id => this.status[id] === PENDING)) this.gi++;
+      // New to the beat: the music holds at a note he has not played yet, for a moment, before it goes on.
+      const g0 = this.groups[this.gi];
+      const holdAt = g0 && this.opts.grace ? g0.time + this.late(g0) : Infinity;
+      if (next > holdAt && g0.ids.some(id => this.status[id] === PENDING)) {
+        if (this.heldSince === 0 || this.heldGi !== this.gi) { this.heldSince = now; this.heldGi = this.gi; }
+        if (now - this.heldSince < (this.opts.grace ?? 0) * 1000) {
+          next = holdAt;
+          if (!this.waiting) { this.waiting = true; this.waitSince = now; this.wrongInWait = 0; this.emit({ type: 'state' }); }
+        }
+      } else if (this.heldSince) { this.heldSince = 0; if (this.waiting) { this.waiting = false; this.emit({ type: 'state' }); } }
       while (this.gi < this.groups.length && next > this.groups[this.gi].time + this.late(this.groups[this.gi])) {
         for (const id of this.groups[this.gi].ids) if (this.status[id] === PENDING) { this.status[id] = MISS; changed.push(id); if (slipAt < 0) slipAt = this.groups[this.gi].time; }
         this.gi++;
@@ -575,7 +596,8 @@ export class Engine {
           const n = this.song.notes[id];
           if (this.status[id] !== PENDING || !this.matches(e.midi, n.midi)) continue;
           const d = t - n.time;
-          if (d >= -this.early() && d <= late && Math.abs(d) < bestDt) { best = id; bestDt = Math.abs(d); }
+          // (+1 ms: the music holding at the window's edge must still be inside it.)
+          if (d >= -this.early() && d <= late + 1e-3 && Math.abs(d) < bestDt) { best = id; bestDt = Math.abs(d); }
           // The right key a little too early or late is not a wrong note: the note itself says if he made it.
           else if (d >= -NEAR_S * this.opts.speed && d <= late + NEAR_S * this.opts.speed) near = true;
         }

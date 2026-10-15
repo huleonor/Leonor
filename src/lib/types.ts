@@ -28,8 +28,10 @@ export interface SongEntry {
   filmPt?: string;
   year?: number;
   composer?: string;
-  /** Cover photo (Unsplash) and its credit. */
+  /** Cover photo (Unsplash) and its credit; no longer shown (covers are drawn, SongCover.tsx). */
   image?: { src: string; by: string; alt: string };
+  /** What the piece is like, in a line, for the marketplace. */
+  about?: string;
   builtIn: boolean;
   /** Library shelf: film scores, modern piano, classical (imports go to "My songs"). */
   collection?: 'film' | 'modern' | 'classical';

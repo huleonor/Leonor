@@ -168,7 +168,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
 
   const engine = useMemo(() => new Engine(song, {
     // Free play: the cursor jumps to the next notes and waits there, no bars to sit through.
-    speed: coach.speed, wait: false, follow: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter, fixSlips: !step.wait,
+    speed: coach.speed, wait: false, follow: step.wait, hands: step.hands, listen: false, hintAfter: coach.hintAfter, fixSlips: !step.wait && !step.grace, grace: step.wait ? 0 : step.grace,
     accompaniment: settings.accompaniment, lenient: settings.input === 'mic',
   }), [song, step.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // (Keyed by id: refreshed progress hands down new step objects for the same step.)
