@@ -2,13 +2,15 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
 import { addToLibrary, myLibrary, onLibrary, removeFromLibrary } from '../lib/library';
-import type { SongEntry } from '../lib/types';
+import { keyName } from '../lib/analysis';
+import { meterOf, pctOf } from '../lib/mastery';
+import type { Song, SongEntry } from '../lib/types';
 import { Spot } from './Brand';
-import { IconCheck, IconClose, IconImport, IconMore, IconMusic, IconPlus, IconStar } from './Icons';
+import { IconCheck, IconClose, IconImport, IconMore, IconMusic, IconPlus } from './Icons';
 import { SOFT, SPRING } from './Motion';
 import { SongCover } from './SongCover';
 
-const COLLECTIONS: [NonNullable<SongEntry['collection']>, string][] = [['film', 'Film scores'], ['modern', 'Modern piano'], ['classical', 'Classical']];
+const COLLECTIONS: [NonNullable<SongEntry['collection']>, string][] = [['classical', 'Classical'], ['film', 'Film scores'], ['modern', 'Modern piano']];
 
 export const byLine = (e: SongEntry) => [e.composer, e.film && e.film !== e.title ? e.film : undefined].filter(Boolean).join(' · ');
 
@@ -19,25 +21,39 @@ function useLibrary() {
 }
 
 /** A small square cover, the same design for every song (SongCover.tsx). */
-function Cover({ entry }: { entry: SongEntry }) {
-  return <span className="cover"><SongCover entry={entry} /></span>;
+function Cover({ entry, song }: { entry: SongEntry; song?: Song }) {
+  return <span className="cover"><SongCover entry={entry} song={song} /></span>;
 }
 
-/** A song in my library: cover, title, who wrote it, and stars once started. */
+/** Minutes and seconds, for how long a piece plays. */
+const length = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
+
+/** A song in my library: its cover (its own opening notes), title, composer, and how far Mastery has come. */
 export function SongCard({ info, onOpen, onEdit }: { info: SongInfo; onOpen: () => void; onEdit?: () => void }) {
   const e = info.entry;
   return (
     <motion.div className="song-card" layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={SOFT}>
       <motion.button className="song-open" onClick={onOpen} aria-label={`Open ${e.title}`} whileTap={{ scale: 0.96 }}>
-        <Cover entry={e} />
+        <Cover entry={e} song={info.song} />
         <span className="song-text">
           <b>{e.title}</b>
           <span>{e.composer ?? (e.builtIn ? '' : 'Imported')}</span>
-          {info.stars > 0 && <span className="song-stars" aria-label={`${info.stars} of ${info.total} stars`}><IconStar size={12} />{info.stars}/{info.total}</span>}
+          {info.song && <SongMeter song={info.song} />}
         </span>
       </motion.button>
       {onEdit && <button className="card-more" onClick={onEdit} aria-label={`Edit ${e.title}`}><IconMore size={20} /></button>}
     </motion.div>
+  );
+}
+
+/** Mastery on the card: a thin bar and the percent, once he has started. */
+function SongMeter({ song }: { song: Song }) {
+  const v = meterOf(song).value;
+  if (v <= 0) return <span className="song-fresh">{length(song.duration)}, not started</span>;
+  return (
+    <span className="song-meter" aria-label={`Mastery ${pctOf(v)}%`}>
+      <i><b style={{ width: `${Math.max(4, v * 100)}%` }} /></i>{pctOf(v)}%
+    </span>
   );
 }
 
@@ -86,14 +102,20 @@ export function Songs({ infos, entries, ready, onOpen, onAdd, onEdit }: Props) {
         </motion.div>
       )}
       <AnimatePresence>
-        {market && <Marketplace entries={entries} lib={lib} onClose={() => setMarket(false)} onUpload={onAdd} />}
+        {market && <Marketplace entries={entries} infos={infos} lib={lib} onClose={() => setMarket(false)} onUpload={onAdd} />}
       </AnimatePresence>
     </div>
   );
 }
 
+/** What he gets: how long it plays and its key, or that it needs his own MIDI file. */
+function facts(e: SongEntry, song?: Song) {
+  if (!song) return e.missing ? 'Bring your own MIDI file' : '';
+  return [length(song.duration), `${keyName(song).name}`, song.hands.length === 2 ? 'two hands' : 'one hand'].join(', ');
+}
+
 /** The marketplace: every song the app offers, to bring into the library with one tap. */
-function Marketplace({ entries, lib, onClose, onUpload }: { entries: SongEntry[]; lib: string[]; onClose: () => void; onUpload: (slot?: SongEntry) => void }) {
+function Marketplace({ entries, infos, lib, onClose, onUpload }: { entries: SongEntry[]; infos: Record<string, SongInfo>; lib: string[]; onClose: () => void; onUpload: (slot?: SongEntry) => void }) {
   const built = entries.filter(e => e.builtIn || e.slot);
   return (
     <motion.div className="market" role="dialog" aria-modal="true" aria-labelledby="market-title" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={SOFT}>
@@ -116,8 +138,13 @@ function Marketplace({ entries, lib, onClose, onUpload }: { entries: SongEntry[]
                   const needsFile = e.missing && !filled;
                   return (
                     <li key={e.id} className={have ? 'have' : ''}>
-                      <Cover entry={e} />
-                      <span className="song-text"><b>{e.title}</b><span>{byLine(e)}</span></span>
+                      <Cover entry={e} song={(filled && infos[filled.id]?.song) || infos[e.id]?.song} />
+                      <span className="song-text market-text">
+                        <b>{e.title}</b>
+                        <span>{[e.composer, e.film && e.film !== e.title ? e.film : undefined, e.year].filter(Boolean).join(', ')}</span>
+                        {e.about && <span className="market-about">{e.about}</span>}
+                        <span className="market-facts">{facts(e, (filled && infos[filled.id]?.song) || infos[e.id]?.song)}</span>
+                      </span>
                       {needsFile ? (
                         <button className="btn small" onClick={() => { addToLibrary(e.id); onUpload(e); }}>Add MIDI</button>
                       ) : (

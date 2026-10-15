@@ -3,10 +3,26 @@ import { clearCourseProgress } from './course';
 import { parseSong } from './midi';
 import type { Progress, Settings, Song, SongEntry } from './types';
 
-/** Songs shipped with the app, served from /songs. Missing ones are slots that ask for the .mid. */
+/**
+ * Songs the app offers. Public-domain pieces ship with it, served from /songs. The others are
+ * slots (`missing`): they are listed in the marketplace and take his own MIDI file of the piece.
+ */
 export const BUILT_IN: SongEntry[] = [
-  // For now the app teaches one piece, and teaches it well.
-  { id: 'gymnopedie-1', collection: 'classical', title: 'Gymnopédie No. 1', film: 'Trois Gymnopédies', year: 1888, composer: 'E. Satie', builtIn: true, file: '/songs/gymnopedie-1.mid', timeSig: [3, 4] },
+  // Classical, shipped
+  { id: 'gymnopedie-1', collection: 'classical', title: 'Gymnopédie No. 1', film: 'Trois Gymnopédies', year: 1888, composer: 'E. Satie', builtIn: true, file: '/songs/gymnopedie-1.mid', timeSig: [3, 4], about: 'A slow, floating waltz: a quiet melody over a rocking left hand.' },
+  { id: 'fur-elise', collection: 'classical', title: 'Für Elise', film: 'Bagatelle WoO 59, the opening', year: 1810, composer: 'L. van Beethoven', builtIn: true, file: '/songs/fur-elise.mid', about: 'The famous turn in the right hand over broken chords in the left.' },
+  { id: 'sarabande', collection: 'classical', title: 'Sarabande', film: 'Suite in D minor, HWV 437', year: 1733, composer: 'G. F. Handel', builtIn: true, file: '/songs/sarabande.mid', about: 'Solemn chords in a slow three, both hands moving together.' },
+  { id: 'passacaglia', collection: 'classical', title: 'Passacaglia', film: 'Suite in G minor, HWV 432', year: 1720, composer: 'G. F. Handel', builtIn: true, file: '/songs/passacaglia.mid', about: 'One chord pattern played again and again, a little busier each time.' },
+  { id: 'clair-de-lune', collection: 'classical', title: 'Clair de Lune', film: 'Suite bergamasque', year: 1905, composer: 'C. Debussy', builtIn: true, file: '/songs/clair-de-lune.mid', about: 'Soft and flowing, free in time, with wide hands and many flats.' },
+  // Film scores and modern piano: bring your own MIDI
+  { id: 'comptine', collection: 'film', title: "Comptine d'un autre été", film: 'Amélie', year: 2001, composer: 'Y. Tiersen', builtIn: true, missing: true, about: 'Running broken chords in the left hand under a simple tune.' },
+  { id: 'cornfield-chase', collection: 'film', title: 'Cornfield Chase', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, missing: true, about: 'A ticking pattern that builds and builds.' },
+  { id: 'hes-a-pirate', collection: 'film', title: "He's a Pirate", film: 'Pirates of the Caribbean', year: 2003, composer: 'K. Badelt, H. Zimmer', builtIn: true, missing: true, about: 'Fast and driving, in six-eight.' },
+  { id: 'now-we-are-free', collection: 'film', title: 'Now We Are Free', film: 'Gladiator', year: 2000, composer: 'H. Zimmer, L. Gerrard', builtIn: true, missing: true, about: 'A wide, slow melody over a steady left hand.' },
+  { id: 'time', collection: 'film', title: 'Time', film: 'Inception', year: 2010, composer: 'H. Zimmer', builtIn: true, missing: true, about: 'Four chords that grow from a whisper.' },
+  { id: 'nuvole-bianche', collection: 'modern', title: 'Nuvole Bianche', film: 'Una Mattina', year: 2004, composer: 'L. Einaudi', builtIn: true, missing: true, about: 'Gentle arpeggios and a melody that keeps coming back.' },
+  { id: 'una-mattina', collection: 'modern', title: 'Una Mattina', film: 'Una Mattina', year: 2004, composer: 'L. Einaudi', builtIn: true, missing: true, about: 'Calm and repetitive, good for steady hands.' },
+  { id: 'experience', collection: 'modern', title: 'Experience', film: 'In a Time Lapse', year: 2013, composer: 'L. Einaudi', builtIn: true, missing: true, about: 'A pulsing pattern that gathers strength.' },
 ];
 
 const songStore = createStore('hugos-piano', 'songs');

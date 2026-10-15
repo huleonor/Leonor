@@ -598,11 +598,16 @@ export interface MSection { title: string; why: string; lessons: MLesson[]; /** 
 
 const fastLearner = (st: MasteryState) => st.fast.tries >= 2 && st.fast.clean / st.fast.tries >= 0.6;
 /**
- * A part is learnt enough to go on once he has played it with the beat: clean at any speed, or
- * nearly right. Getting it up to full speed comes later, part by part, so he keeps moving on.
+ * A part is learnt enough to go on once he has played it with the beat: clean at any speed, nearly
+ * right, or tried twice and more than half right. The song keeps moving; what is still weak comes
+ * back later (each part faster, the warm-ups, the drills on weak spots), so he feels it growing.
  */
-const partLearnt = (m: Model, st: MasteryState, p: Part) =>
-  topOf(st, ladderKey(p.from, p.to, m.all)) >= 0 || RUNGS.some((_, r) => (st.chunks[chunkKey(p.from, p.to, m.all, false, r)]?.best ?? 0) >= HARD);
+const partLearnt = (m: Model, st: MasteryState, p: Part) => {
+  if (topOf(st, ladderKey(p.from, p.to, m.all)) >= 0) return true;
+  const runs = RUNGS.map((_, r) => st.chunks[chunkKey(p.from, p.to, m.all, false, r)]).filter(Boolean);
+  const best = Math.max(0, ...runs.map(c => c!.best));
+  return best >= HARD || (runs.reduce((a, c) => a + c!.runs, 0) >= 2 && best >= 0.6);
+};
 /** Played well once: that stretch is known and the planner moves on. */
 const known = (st: MasteryState, from: number, to: number, hands: HandsChoice, wait: boolean, rung = 0) => streakOf(st, chunkKey(from, to, hands, wait, rung)) >= 1;
 
@@ -1105,9 +1110,18 @@ export interface MasteryVerdict {
 /** What the lesson does after a run: the same step again, the next one, a smaller stretch first, or the end. */
 export interface RepOutcome { kind: 'again' | 'next' | 'insert' | 'done'; pass: boolean; line?: string }
 
+/**
+ * With the beat, while he is new to it, the music waits a moment at a note he has not played
+ * instead of marking it missed and sending him back: longest on the slowest rung, none from 80%.
+ * The run that counts (the whole song, a review, a mastery check) is played for real.
+ */
+const GRACE = [1.5, 1, 0.5, 0, 0];
+const graceOf = (l: MLesson) => (l.wait || l.kind === 'song' || l.kind === 'review' ? 0 : GRACE[l.rung] ?? 0);
+
 const stepOf = (l: MLesson): CourseStep => ({
   id: `m:${l.chunk}`, kind: l.wait ? 'phrase' : 'tempo', title: l.title, short: 'M',
   from: l.from, to: l.to, hands: l.hands, speed: l.speed, wait: l.wait, exact: true, fingers: l.fingers, reps: l.reps, song: l.cut?.song,
+  grace: graceOf(l),
 });
 
 /**
