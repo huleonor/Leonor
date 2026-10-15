@@ -64,20 +64,55 @@ export function stopAll() {
   held.clear();
 }
 
-/** A metronome tick: a short woodblock-like blip, higher on the first beat of the bar. */
+/** A metronome tick: a soft wooden "tok" (a short sine that drops in pitch), brighter on beat 1. */
 export function playClick(accent = false) {
   try {
     const ctx = audioContext();
     const t = ctx.currentTime + 0.005;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(accent ? 1760 : 1175, t);
+    osc.type = 'sine';
+    const f = accent ? 1500 : 1050;
+    osc.frequency.setValueAtTime(f, t);
+    osc.frequency.exponentialRampToValueAtTime(f * 0.55, t + 0.04);
     gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(accent ? 0.22 : 0.14, t + 0.002);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    gain.gain.exponentialRampToValueAtTime(accent ? 0.2 : 0.12, t + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
     osc.connect(gain).connect(ctx.destination);
     osc.start(t);
-    osc.stop(t + 0.06);
+    osc.stop(t + 0.08);
+  } catch { /* audio unavailable */ }
+}
+
+/** A soft bell: a sine with a quieter octave above, a quick attack and a long ring. */
+function bell(ctx: AudioContext, freq: number, at: number, level: number, ring = 0.9) {
+  for (const [mult, amp] of [[1, 1], [2, 0.28], [3, 0.08]] as const) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq * mult, at);
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(level * amp, at + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + ring / mult);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(at);
+    osc.stop(at + ring + 0.05);
+  }
+}
+
+const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
+
+/**
+ * The little sounds that answer how a run went, kept quiet under his piano: a bright two-note
+ * chime for a good run, a rising three-note bell when a step is done, a short arpeggio for a
+ * finished section, and a soft low tone (never a buzzer) when it is "again".
+ */
+export function playCue(kind: 'good' | 'step' | 'section' | 'again') {
+  try {
+    const ctx = audioContext();
+    const t = ctx.currentTime + 0.01;
+    const notes = kind === 'good' ? [84, 88] : kind === 'step' ? [79, 84, 88] : kind === 'section' ? [72, 76, 79, 84, 88] : [60];
+    const gap = kind === 'section' ? 0.09 : 0.07;
+    notes.forEach((m, i) => bell(ctx, hz(m), t + i * gap, kind === 'again' ? 0.05 : 0.07, kind === 'again' ? 0.35 : 0.9));
   } catch { /* audio unavailable */ }
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { barsToTime } from '../lib/analysis';
-import { loadPiano, unlockAudio } from '../lib/audio';
+import { loadPiano, playCue, unlockAudio } from '../lib/audio';
 import { coachRun, settingsFor } from '../lib/adapt';
 import { recordStep, starsFor, type CourseStep } from '../lib/course';
 import { listenForSkills } from '../lib/skills';
@@ -22,7 +22,6 @@ import { HelpKeys } from './HelpKeys';
 import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
 import { EnergySheet } from './Economy';
 import { Energy, Gem } from './GameIcons';
-import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
 import { IconArrowLeft, IconArrowRight, IconBolt, IconCheck, IconFlame, IconHeadphones, IconMoon, IconPause, IconPlay, IconRestart, IconStar, IconTarget } from './Icons';
 import { Keyboard } from './Keyboard';
@@ -236,6 +235,9 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
         if (session && verdict) {
           // Mastery: no screens between runs. A tick or "again", then the same step, the next, or a smaller stretch.
           const out = session.after(index, verdict);
+          // A sound for every run, quiet under his piano: a chime, a bell when the step is done,
+          // a short arpeggio at the end of the section, a soft low tone for "again".
+          playCue(out.kind === 'done' && out.pass ? 'section' : !out.pass ? 'again' : out.kind === 'again' ? 'good' : 'step');
           if (out.kind === 'done') {
             const sum = session.summary();
             const stars = starsFor(sum.accuracy);
@@ -373,8 +375,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
       <main className="lesson-stage">
         {settings.view === 'notes'
           ? <FallingNotes engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={settings.fingers} inset={0} onTap={pause} />
-          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback fingers={fingers} only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
-        <Countdown engine={engine} />
+          : <LessonStaff engine={engine} from={step.from} to={step.to} feedback fingers={fingers} naming={settings.naming} only={step.hands === 'R' || step.hands === 'L' ? step.hands : undefined} />}
         <Cheer combo={combo} />
         <AnimatePresence>
           {rep && (
@@ -407,7 +408,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
 
       {settings.view === 'notes'
         ? <footer className="lesson-keys"><Keyboard engine={engine} lo={lo} hi={hi} naming={settings.naming} fingers={fingers} /></footer>
-        : <HelpKeys engine={engine} naming={settings.naming} fingers={fingers} lo={lo} hi={hi} wide always={alwaysKeys} />}
+        : <HelpKeys engine={engine} naming={settings.naming} fingers={fingers} lo={lo} hi={hi} wide always={alwaysKeys} reading={!!session} />}
       <footer className="lesson-actions">
         {!session && !engine.started && !paused && !result && !listen && !step.wait && (
           <div className="lesson-start">

@@ -14,7 +14,7 @@ const LINGER_MS = 1600;
  * notes) or just played a wrong key, shows a small stretch of keys around the notes he needs with
  * them lit, and slides away again once he is playing right.
  */
-export function HelpKeys({ engine, naming, fingers, always = false, lo, hi, wide = false }: { engine: Engine; naming: NoteNaming; fingers: FingerMode; always?: boolean; /** A fixed range: every key the piece needs. */ lo?: number; hi?: number; /** Full width along the bottom of a lesson. */ wide?: boolean }) {
+export function HelpKeys({ engine, naming, fingers, always = false, lo, hi, wide = false, reading = false }: { engine: Engine; naming: NoteNaming; fingers: FingerMode; always?: boolean; /** A fixed range: every key the piece needs. */ lo?: number; hi?: number; /** Full width along the bottom of a lesson. */ wide?: boolean; /** Mastery: he learns to read, so the keys come only when the staff's help (the note's name) was not enough: three wrong keys on one note, or a long stall. */ reading?: boolean }) {
   const [show, setShow] = useState(always);
   const [range, setRange] = useState<[number, number]>(() => pickRange(60, 72, 14));
   const lastNeed = useRef(0);
@@ -24,7 +24,9 @@ export function HelpKeys({ engine, naming, fingers, always = false, lo, hi, wide
     const frame = () => {
       const now = performance.now();
       const wrong = engine.lastWrong.at > 0 && now - engine.lastWrong.at < WRONG_MS;
-      const need = always || engine.hintVisible() || wrong;
+      const need = always || (reading
+        ? engine.waiting && (engine.wrongInWait >= 3 || (engine.wrongInWait >= 1 && now - engine.waitSince > 12000))
+        : engine.hintVisible() || wrong);
       if (need) lastNeed.current = now;
       const next = need || now - lastNeed.current < LINGER_MS;
       if (next !== shown) { shown = next; setShow(next); }
