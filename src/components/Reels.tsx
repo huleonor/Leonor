@@ -52,7 +52,14 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void) {
     setPlaying(false);
   };
 
-  useEffect(() => { if (!ready) loadPiano().then(() => setReady(true)).catch(() => setReady(true)); }, [ready]);
+  // The reel starts once the piano is loaded, or after three seconds without it (it plays silent
+  // until the sound arrives, rather than leaving him waiting on a still frame).
+  useEffect(() => {
+    if (ready) return;
+    loadPiano().then(() => setReady(true)).catch(() => setReady(true));
+    const t = window.setTimeout(() => setReady(true), 3000);
+    return () => window.clearTimeout(t);
+  }, [ready]);
   useEffect(() => {
     if (active && ready) { unlockAudio(); play(0); }
     if (!active) { pause(); state.current.t = 0; }
@@ -357,6 +364,8 @@ export function ReelPlayer({ song, reel, index, count, active, onPractice, onNex
 }
 
 interface FeedProps {
+  /** Inside the Watch tab (no close button, the tab bar stays), instead of over the whole app. */
+  embedded?: boolean;
   song: Song;
   reels: Reel[];
   start: number;
@@ -365,7 +374,7 @@ interface FeedProps {
 }
 
 /** The song's reels in a vertical feed: swipe up for the next one, TikTok style. */
-export function ReelFeed({ song, reels, start, onClose, onPractice }: FeedProps) {
+export function ReelFeed({ embedded, song, reels, start, onClose, onPractice }: FeedProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(start);
   useEffect(() => {
@@ -389,8 +398,8 @@ export function ReelFeed({ song, reels, start, onClose, onPractice }: FeedProps)
   }, [active, reels.length, onClose]);
 
   return (
-    <div className="reel-screen">
-      <button className="icon-btn reel-close" onClick={onClose} aria-label="Close the videos"><IconClose size={24} /></button>
+    <div className={`reel-screen ${embedded ? 'embedded' : ''}`}>
+      {!embedded && <button className="icon-btn reel-close" onClick={onClose} aria-label="Close the videos"><IconClose size={24} /></button>}
       <span className="reel-count" aria-live="polite">{active + 1}/{reels.length}</span>
       <div className="reel-feed" ref={ref}>
         {reels.map((r, i) => (

@@ -12,19 +12,16 @@ import { onNote, setMicRange, type LinkState, type Source } from '../lib/input';
 import { pickRange } from '../lib/keys';
 import { formatSpeed, noteName } from '../lib/names';
 import { usePracticeClock } from '../lib/practiceClock';
-import { addPractice, streak, xpForStars } from '../lib/stats';
+import { addPractice } from '../lib/stats';
 import type { FingerMode, Settings } from '../lib/types';
-import { addGems, energy, gainEnergy, gemsForStars, spendEnergy, STREAK_FOR_ENERGY } from '../lib/energy';
 import { AnimatePresence, motion } from 'motion/react';
 import { Confetti, CountUp } from './Confetti';
 import { Bump, Cheer, SOFT, SPRING } from './Motion';
 import { HelpKeys } from './HelpKeys';
 import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
-import { EnergySheet } from './Economy';
-import { Energy, Gem } from './GameIcons';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
-import { IconArrowLeft, IconArrowRight, IconBolt, IconCheck, IconFlame, IconHeadphones, IconMoon, IconPause, IconPlay, IconRestart, IconStar, IconTarget } from './Icons';
+import { IconArrowLeft, IconArrowRight, IconCheck, IconHeadphones, IconMoon, IconPause, IconPlay, IconRestart, IconStar, IconTarget } from './Icons';
 import { Keyboard } from './Keyboard';
 import { LessonStaff } from './LessonStaff';
 import type { Section } from './SongScreen';
@@ -61,8 +58,6 @@ interface Props {
   stopLabel?: string;
   onSettings: () => void;
   onRecorded: () => void;
-  /** Path lessons spend energy (1 a step); practice earns it (+2 a piece). */
-  energyMode?: 'spend' | 'earn';
   /**
    * Path lessons adapt: a perfect free-play run passes the free-play steps it proves and goes on
    * to the beat, and a fast learner starts with both hands (back to one at a time if that is hard).
@@ -73,7 +68,6 @@ interface Props {
    * next one starts by itself; the section's result shows for three seconds, then the next section.
    */
   session?: MasterySession;
-  onPremium?: () => void;
 }
 
 /** Teach me: one section, step by step (right hand, left hand, together, in tempo), Simply Piano style. */
@@ -138,7 +132,7 @@ interface RunProps extends Props {
   onGo: (i: number) => void;
 }
 
-function LessonRun({ info, section, step, index, settings, update, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onRecorded, onPrev, onNext, onAgain, energyMode, onPremium, session, onPace, onPerfect, onStruggle, onGo }: RunProps) {
+function LessonRun({ info, section, step, index, settings, update, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onRecorded, onPrev, onNext, onAgain, session, onPace, onPerfect, onStruggle, onGo }: RunProps) {
   const song = step.song ?? info.song!;
   // The coach sets this step's speed, how soon help comes and how many finger numbers show.
   // A Mastery step comes with its own speed: the planner climbs the tempo ladder itself.
@@ -147,19 +141,18 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
   const [speed, setSpeed] = useState(coach.speed);
   const [listen, setListen] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; strays: number; stars: number; xp: number; gems: number; energy: number; streakUp?: number; verdict?: MasteryVerdict } | null>(null);
+  const [result, setResult] = useState<{ accuracy: number; hit: number; total: number; wrong: number; strays: number; stars: number; verdict?: MasteryVerdict } | null>(null);
   // With the beat, a slip sends him back: say where from, briefly.
   const [slip, setSlip] = useState<{ from: number; n: number } | null>(null);
   // Mastery: how the last run went (a tick, or again), and a line when a smaller stretch comes first.
   const [rep, setRep] = useState<{ pass: boolean; line?: string; n: number } | null>(null);
-  // Energy: a path step needs 1 to start. Notes right in a row earn it back, 1 for every 10.
-  const [noEnergy, setNoEnergy] = useState(() => energyMode === 'spend' && energy() < 1);
+  // Right notes in a row, for the praise that pops at milestones.
   const [combo, setCombo] = useState(0);
   const comboRef = useRef(0);
   const heard = useRef(false);
   const [say, setSay] = useState<{ text: string; wrong?: string }>({ text: intro(step) });
   // A short step that went well moves on by itself, like Simply Piano; one that did not, starts again.
-  const [flash, setFlash] = useState<{ text: string; good: boolean; xp?: number; gems?: number } | null>(null);
+  const [flash, setFlash] = useState<{ text: string; good: boolean } | null>(null);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   usePracticeClock();
   const [metro, setMetro] = useState(metronomeOn);
@@ -184,7 +177,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
     return () => window.clearTimeout(id);
   }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!step.wait || noEnergy) return;
+    if (!step.wait) return;
     const id = window.setTimeout(() => {
       if (engine.started) return;
       unlockAudio();
@@ -193,7 +186,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
       bump();
     }, 500);
     return () => window.clearTimeout(id);
-  }, [engine, noEnergy]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [engine]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setMicRange(song.range[0], song.range[1]); loadPiano().catch(() => {}); }, [song]);
   useEffect(() => { if (import.meta.env.DEV) (window as unknown as { __engine: Engine }).__engine = engine; }, [engine]);
   useEffect(() => { engine.setOptions({ speed, listen, accompaniment: settings.accompaniment, lenient: settings.input === 'mic' }); }, [engine, speed, listen, settings.accompaniment, settings.input]);
@@ -215,9 +208,6 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
         if (e.ok && e.id === undefined) return;
         comboRef.current = e.ok ? comboRef.current + 1 : 0;
         setCombo(comboRef.current);
-        if (e.ok && comboRef.current % STREAK_FOR_ENERGY === 0) {
-          if (energyMode) gainEnergy(1);
-        }
       }
       if (e.type === 'end') {
         if (engine.opts.listen) {
@@ -239,12 +229,9 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           if (out.kind === 'done') {
             const sum = session.summary();
             const stars = starsFor(sum.accuracy);
-            const xp = xpForStars(Math.max(1, stars)) * 2;
-            const before = streak();
-            addPractice(0, 1, xp);
-            const after = streak();
+            addPractice(0, 1, 0);
             onRecorded();
-            setResult({ ...s, accuracy: sum.accuracy, stars, xp, gems: 0, energy: 0, streakUp: !before.today && after.today ? after.days : undefined, verdict: sum });
+            setResult({ ...s, accuracy: sum.accuracy, stars, verdict: sum });
             return;
           }
           setRep({ pass: out.pass, line: out.line, n: Date.now() });
@@ -252,7 +239,6 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           return;
         }
         const stars = starsFor(s.accuracy);
-        const before = streak();
         const quick = step.wait && !!onNext;
         const perfect = step.wait && s.wrong === 0 && s.accuracy >= 0.999;
         onPace?.(perfect);
@@ -267,28 +253,20 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           return;
         }
         recordStep(song.entry.id, step.id, s.accuracy).then(() => {
-          // A finished step earns XP and counts for the streak; on the path it costs energy and earns
-          // gems, in practice it earns energy.
-          const xp = xpForStars(stars);
-          if (stars > 0) addPractice(0, 1, xp);
-          if (energyMode === 'spend') spendEnergy(1);
-          const gems = energyMode !== 'earn' && stars > 0 ? gemsForStars(stars) : 0;
-          if (gems) addGems(gems);
-          const earned = energyMode === 'earn' && stars > 0 ? 2 : 0;
-          if (earned) gainEnergy(earned);
-          const after = streak();
+          // A finished step counts as practice (for the reminders); nothing to collect or spend.
+          if (stars > 0) addPractice(0, 1, 0);
           onRecorded();
           if (quick && perfect && onPerfect) {
-            setFlash({ text: 'Perfect! On to the beat', good: true, xp, gems });
+            setFlash({ text: 'Perfect! On to the beat', good: true });
             window.setTimeout(() => onPerfect(s.accuracy), 1100);
             return;
           }
           if (quick) {
-            setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true, xp, gems });
+            setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true });
             window.setTimeout(onNext!, 1100);
             return;
           }
-          setResult({ ...s, stars, xp, gems, energy: earned, streakUp: !before.today && after.today ? after.days : undefined });
+          setResult({ ...s, stars });
         });
       }
     });
@@ -398,7 +376,6 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
             <motion.div className="lesson-flash-wrap" role="status" key="flash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <motion.p className={`lesson-flash ${flash.good ? 'good' : ''}`} initial={{ scale: 0.6, y: 20 }} animate={{ scale: 1, y: 0 }} transition={SPRING}>
                 {flash.good ? <IconCheck size={22} /> : <IconRestart size={20} />}{flash.text}
-                {flash.xp ? <small className="xp-gain">+{flash.xp} XP{flash.gems ? `, +${flash.gems} gems` : ''}</small> : null}
               </motion.p>
             </motion.div>
           )}
@@ -444,10 +421,6 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
         )}
       </AnimatePresence>
 
-      {noEnergy && (
-        <EnergySheet empty onPremium={() => onPremium?.()} onClose={() => { if (energy() >= 1) setNoEnergy(false); else onExit(); }} />
-      )}
-
       {result && (
         <div className="lesson-done" role="dialog" aria-labelledby="lesson-result-title">
           {result.stars >= 2 && <Confetti />}
@@ -470,17 +443,10 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           )}
           {result.verdict?.rest && <p className="rest-note"><IconMoon size={18} />{result.verdict.rest}</p>}
           <div className="theory-rewards">
-            {[
-              ['xp', 'Total XP', <><IconBolt size={20} />+<CountUp to={result.xp} /></>],
-              ['acc', 'Accuracy', <>{Math.round(result.accuracy * 100)}%</>],
-              result.gems > 0 ? ['gems', 'Gems', <><Gem size={20} />+{result.gems}</>] : result.energy > 0 ? ['energy', 'Energy', <><Energy size={18} />+{result.energy}</>] : null,
-            ].filter((x): x is [string, string, React.ReactElement] => !!x).map(([k, label, val], n) => (
-              <motion.span key={k} className={`reward ${k}`} initial={{ y: 24, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ ...SPRING, delay: 0.5 + n * 0.12 }}>
-                <small>{label}</small><b>{val}</b>
-              </motion.span>
-            ))}
+            <motion.span className="reward acc" initial={{ y: 24, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ ...SPRING, delay: 0.5 }}>
+              <small>Accuracy</small><b><CountUp to={Math.round(result.accuracy * 100)} />%</b>
+            </motion.span>
           </div>
-          {result.streakUp !== undefined && <p className="streak-up"><IconFlame size={18} />{result.streakUp === 1 ? 'Streak started' : `${result.streakUp}-day streak`}</p>}
           {result.stars === 0 && !result.verdict && <p className="fine">You need 70% for a star. {step.wait ? 'Take it one note at a time.' : 'Try it slower: pause and pick a speed.'}</p>}
           {result.verdict ? (
             // Mastery: the next section starts by itself after three seconds; when he has levelled

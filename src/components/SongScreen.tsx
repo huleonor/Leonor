@@ -15,7 +15,7 @@ import type { HandsChoice, Settings } from '../lib/types';
 import { AnimatePresence, motion } from 'motion/react';
 import { HelpKeys } from './HelpKeys';
 import {
-  IconCap, IconCheck, IconClose, IconFlame, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconStop, IconTarget,
+  IconCap, IconCheck, IconClose, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconStop, IconTarget,
 } from './Icons';
 import { Bump, Cheer, ProgressBar, SOFT, SPRING } from './Motion';
 import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
@@ -82,7 +82,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
   const [hands, setHands] = useState<HandsChoice>('both');
   const [loop, setLoop] = useState<{ n: number; from: number; to: number } | null>(null);
   const [result, setResult] = useState<ReturnType<Engine['stats']> | null>(null);
-  // A run of right notes, for the streak chip and the praise.
+  // A run of right notes, for the praise that pops at milestones.
   const [combo, setCombo] = useState(0);
   const [metro, setMetro] = useState(metronomeOn);
   const [, bump] = useReducer((x: number) => x + 1, 0);
@@ -114,8 +114,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
         if (engine.opts.listen) { engine.restart(); setMode('play'); bump(); return; }
         const s = engine.stats();
         recordRun(song.entry.id, s.accuracy, engine.opts.follow ? 1 : engine.opts.speed);
-        // Playing a song through earns XP by how well it went, and counts for the streak.
-        if (s.accuracy >= 0.5) addPractice(0, 1, Math.round(s.accuracy * 20));
+        if (s.accuracy >= 0.5) addPractice(0, 1, 0);
         setResult(s);
       }
     });
@@ -175,13 +174,6 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
       <header className="song-top">
         <button className="icon-btn ghost" onClick={onExit} aria-label="Back to my songs"><IconClose size={24} /></button>
         <ProgressBar value={stats.total ? stats.hit / stats.total : 0} label={`${stats.hit} of ${stats.total} notes`} />
-        <AnimatePresence>
-          {combo >= 3 && (
-            <motion.span className={`combo ${combo >= 10 ? 'hot' : ''}`} aria-label={`${combo} right in a row`} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={SPRING}>
-              <IconFlame size={14} /><Bump value={combo} />
-            </motion.span>
-          )}
-        </AnimatePresence>
         {!inputOn && <button className="piano-chip" onClick={onSettings} aria-label="Connect your piano"><IconKeys size={20} /><i /></button>}
         <button className="icon-btn ghost" onClick={() => setOptions(true)} aria-label="Options"><IconGear size={22} /></button>
       </header>

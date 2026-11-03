@@ -38,6 +38,9 @@ function useBump(sub: (fn: () => void) => () => void) {
 }
 
 interface Props {
+  /** The song being learnt now. */
+  songId: string;
+  onChoose: (id: string) => void;
   infos: Record<string, SongInfo>;
   entries: SongEntry[];
   ready: boolean;
@@ -55,14 +58,13 @@ type Item = { kind: 'reel'; reel: Reel; i: number; done: boolean } | { kind: 'pr
  * right hand, both), and after each video the practice that drills exactly that. The next thing to
  * do is lit; what is done carries a tick or its stars.
  */
-export function Journey({ infos, entries, ready, onWatch, onPractice, onWholeSong, onBringMidi, onSongs }: Props) {
-  const [id, setId] = useState(currentSongId);
+export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, onPractice, onWholeSong, onBringMidi, onSongs }: Props) {
   useBump(onSeen);
   const entry = entries.find(e => e.id === id || e.slot === id);
   const info = entry ? infos[entry.id] : undefined;
   const song = info?.song;
   useEffect(() => { if (song) askStrategy(song); }, [song]);
-  const choose = (x: string) => { setId(x); setCurrentSong(x); };
+  const choose = onChoose;
 
   const reels = useMemo(() => (song ? reelsOf(song) : []), [song, infos]); // eslint-disable-line react-hooks/exhaustive-deps
   const seen = song ? seenReels(song.entry.id) : [];
@@ -122,6 +124,7 @@ export function Journey({ infos, entries, ready, onWatch, onPractice, onWholeSon
   const intro = reels.findIndex(r => r.kind === 'intro');
   const pct = pctOf(meterOf(song).value);
   const allDone = !next;
+  const nextPart = next ? parts.find(p => p.items.includes(next))?.n : undefined;
 
   return (
     <div className="page journey">
@@ -131,9 +134,16 @@ export function Journey({ infos, entries, ready, onWatch, onPractice, onWholeSon
           <small>Now learning</small>
           <h1>{entry.title}</h1>
           <p>{entry.composer}</p>
-          <div className="journey-meter" aria-label={`Mastery ${pct}%`}><i><motion.b initial={{ width: 0 }} animate={{ width: `${Math.max(2, pct)}%` }} transition={SOFT} /></i><span>{pct}%</span></div>
+          <div className="journey-meter" aria-label={`${pct}% of the song`}><i><motion.b initial={{ width: 0 }} animate={{ width: `${Math.max(2, pct)}%` }} transition={SOFT} /></i></div>
+          <p className="journey-meta"><span>{nextPart ? `Part ${nextPart} of ${parts.length}` : 'Every part done'}</span><span>{pct}%</span></p>
           <div className="journey-actions">
-            {intro >= 0 && <button className="btn go" onClick={() => onWatch(song.entry.id, seen.length && next?.kind === 'reel' ? next.i : intro)}><IconPlay size={16} />{seen.length ? 'Watch the next video' : 'Watch the intro'}</button>}
+            {next ? (
+              <button className="btn go big" onClick={() => (next.kind === 'reel' ? onWatch(song.entry.id, !seen.length && intro >= 0 ? intro : next.i) : onPractice(song.entry.id, next.reel))}>
+                <IconPlay size={18} />{next.kind === 'reel' ? (seen.length ? 'Continue' : 'Start with the intro') : 'Continue: practise'}
+              </button>
+            ) : (
+              <button className="btn go big" onClick={() => onWholeSong(info)}><IconKeysFill size={18} />Play the whole song</button>
+            )}
             <button className="btn" onClick={onSongs}>Change song</button>
           </div>
         </div>
@@ -154,7 +164,7 @@ export function Journey({ infos, entries, ready, onWatch, onPractice, onWholeSon
                 const hand = item.reel.kind === 'L' ? 'Left hand' : item.reel.kind === 'R' ? 'Right hand' : 'Both hands';
                 return (
                   <li key={`${item.kind}-${item.reel.id}`} className={`part-step ${item.kind} hand-${item.reel.kind} ${item.done ? 'done' : ''} ${isNext ? 'next' : ''} ${locked ? 'later' : ''}`}>
-                    {isNext && <motion.span className="start-bubble" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}>{item.kind === 'reel' ? 'WATCH' : 'PLAY'}</motion.span>}
+                    {isNext && <motion.span className="step-bubble" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}>{item.kind === 'reel' ? 'WATCH' : 'PLAY'}</motion.span>}
                     <motion.button whileTap={{ scale: 0.95 }} transition={SPRING}
                       onClick={() => (item.kind === 'reel' ? onWatch(song.entry.id, item.i) : onPractice(song.entry.id, item.reel))}
                       aria-label={item.kind === 'reel' ? `Watch: ${item.reel.words.hook}` : `Practise ${hand.toLowerCase()}, part ${p.n}`}>

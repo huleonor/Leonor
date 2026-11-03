@@ -1,28 +1,20 @@
 /**
- * His profile, Duolingo style: the penguin he dressed on a coloured header, his name and how long
- * he has been learning, an overview of what he has done, and his mastery collection, where each
- * song he is learning shows as a medal that turns bronze, silver, gold and finally his for good.
+ * His profile: the penguin he dressed on a coloured header, his name and how long he has been
+ * learning, and his songs with how far each one has come. No points, streaks or medals: only the
+ * music and his progress in it.
  */
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
 import { myLibrary } from '../lib/library';
-import { CHECK_GAPS, onMastery, pctOf, standingOf, TIER_NAME, type Standing, type Tier } from '../lib/mastery';
-import { usePath } from '../lib/path';
+import { meterOf, onMastery, pctOf } from '../lib/mastery';
 import { AV_BG, AV_BODY, AV_EXTRA, saveProfile, useProfile, type Look } from '../lib/profile';
-import { streak, totalXp, totals } from '../lib/stats';
 import type { SongEntry } from '../lib/types';
 import { CountUp } from './Confetti';
-import { Flame, Gem } from './GameIcons';
-import { IconBolt, IconCheck, IconEdit, IconMusic, IconTarget } from './Icons';
+import { IconEdit, IconMusic } from './Icons';
 import { SOFT, SPRING } from './Motion';
 import { Penguin } from './Penguin';
 import { SongCover } from './SongCover';
-import { useDaily } from './Home';
-
-const RANK: Record<Tier, number> = { none: 0, bronze: 1, silver: 2, gold: 3, forever: 4 };
-const SEEN = 'hugos-piano:seen-tiers';
-const readSeen = (): Record<string, Tier> => { try { return JSON.parse(localStorage.getItem(SEEN) ?? '{}'); } catch { return {}; } };
 
 const EXTRA_NAME: Record<string, string> = { none: 'None', glasses: 'Glasses', headphones: 'Headphones', beanie: 'Beanie', bowtie: 'Bow tie', crown: 'Crown' };
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -31,28 +23,15 @@ interface Props { infos: Record<string, SongInfo>; entries: SongEntry[]; onOpenS
 
 export function Profile({ infos, entries, onOpenSong }: Props) {
   const profile = useProfile();
-  const daily = useDaily();
-  const path = usePath();
   const [editing, setEditing] = useState(false);
   const [, bump] = useState(0);
   useEffect(() => onMastery(() => bump(x => x + 1)), []);
 
   const lib = myLibrary();
   const songs = entries.filter(e => !e.missing && (!e.builtIn || lib.includes(e.id) || (e.slot && lib.includes(e.slot)))).map(e => infos[e.id]).filter((i): i is SongInfo => !!i?.song);
-  const standings = songs.map(info => ({ info, st: standingOf(info.song!) })).sort((a, b) => RANK[b.st.tier] - RANK[a.st.tier] || b.st.value - a.st.value);
-  const mastered = standings.filter(s => RANK[s.st.tier] >= RANK.gold).length;
-  const lessons = path ? Object.values(path.state).filter(s => s.done && s.passed > 0).length : 0;
-  const best = totals().best;
-  const s = streak();
+  const rows = songs.map(info => ({ info, v: meterOf(info.song!).value })).sort((a, b) => b.v - a.v);
+  const parts = songs.reduce((n, i) => n + (i.course?.parts.filter(p => !p.sameAs && i.course!.steps.filter(st => st.part === p.n).every(st => (i.prog[st.id]?.stars ?? 0) > 0)).length ?? 0), 0);
   const since = new Date(profile.since);
-
-  // A medal that went up a tier since he last looked shines once.
-  const [seen] = useState(readSeen);
-  useEffect(() => {
-    const now = Object.fromEntries(standings.map(x => [x.info.entry.id, x.st.tier]));
-    const t = window.setTimeout(() => { try { localStorage.setItem(SEEN, JSON.stringify({ ...readSeen(), ...now })); } catch { /* ignore */ } }, 1500);
-    return () => window.clearTimeout(t);
-  });
 
   return (
     <div className="profile-page">
@@ -68,80 +47,34 @@ export function Profile({ infos, entries, onOpenSong }: Props) {
         <p className="sub">Learning piano since {MONTHS[since.getMonth()]} {since.getFullYear()}</p>
         <dl className="profile-counts">
           <div><dt>Songs</dt><dd><CountUp to={songs.length} /></dd></div>
-          <div><dt>Mastered</dt><dd><CountUp to={mastered} /></dd></div>
-          <div><dt>Lessons</dt><dd><CountUp to={lessons} /></dd></div>
+          <div><dt>Parts learnt</dt><dd><CountUp to={parts} /></dd></div>
         </dl>
       </section>
 
       <section className="profile-block">
-        <h2>Overview</h2>
-        <div className="stat-grid">
-          <Stat icon={<Flame size={28} lit={daily.streak.today} />} value={s.days} label="Day streak" />
-          <Stat icon={<IconBolt size={28} className="ic-xp" />} value={totalXp()} label="Total XP" />
-          <Stat icon={<Flame size={28} lit className="best" />} value={best} label="Best streak" />
-          <Stat icon={<Gem size={26} />} value={mastered} label="Songs mastered" />
-        </div>
-      </section>
-
-      <section className="profile-block">
-        <h2>Mastery collection</h2>
-        <p className="sub">Bronze at 50%, silver at 75%, gold at 100%. Keep gold through {CHECK_GAPS.length} checks and the song is yours for good.</p>
-        {standings.length ? (
-          <ol className="medal-grid">
-            {standings.map(({ info, st }, i) => (
-              <Medal key={info.entry.id} info={info} st={st} index={i} shine={RANK[st.tier] > RANK[seen[info.entry.id] ?? 'none'] && st.tier !== 'none'} onOpen={() => onOpenSong(info)} />
-            ))}
-            {standings.length < 3 && Array.from({ length: 3 - standings.length }, (_, k) => (
-              <li key={`empty-${k}`} className="medal empty" aria-hidden="true"><span className="medal-disc"><IconMusic size={30} /></span><small>Your next song</small></li>
+        <h2>Your songs</h2>
+        {rows.length ? (
+          <ol className="progress-list">
+            {rows.map(({ info, v }, i) => (
+              <motion.li key={info.entry.id} initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...SOFT, delay: i * 0.05 }}>
+                <button className="progress-row" onClick={() => onOpenSong(info)} aria-label={`${info.entry.title}, ${pctOf(v)}%`}>
+                  <span className="cover"><SongCover entry={info.entry} song={info.song} /></span>
+                  <span className="progress-text">
+                    <b>{info.entry.title}</b>
+                    <small>{info.entry.composer}</small>
+                    <span className="song-meter"><i><motion.b initial={{ width: 0 }} animate={{ width: `${Math.max(2, v * 100)}%` }} transition={SOFT} /></i>{pctOf(v)}%</span>
+                  </span>
+                </button>
+              </motion.li>
             ))}
           </ol>
         ) : (
-          <p className="fine">Add a song in Songs and start its Mastery: it shows up here.</p>
+          <p className="fine"><IconMusic size={16} /> Add a song in Library: it shows up here with its progress.</p>
         )}
       </section>
 
       <AnimatePresence>{editing && <EditLook onClose={() => setEditing(false)} />}</AnimatePresence>
     </div>
-  );
-}
-
-function Stat({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
-  return (
-    <div className="stat-card card">
-      <span className="stat-ic">{icon}</span>
-      <span className="stat-text"><b><CountUp to={value} /></b><small>{label}</small></span>
-    </div>
-  );
-}
-
-function dueText(st: Standing) {
-  if (st.tier === 'forever') return 'Yours for good';
-  if (st.lapsed) return 'Play it clean to win gold back';
-  if (st.tier === 'gold' && st.due) {
-    const days = Math.ceil((st.due - Date.now()) / 86_400_000);
-    return days <= 0 ? 'Mastery check due' : `Check in ${days} ${days === 1 ? 'day' : 'days'}`;
-  }
-  return `${pctOf(st.value)}% mastered`;
-}
-
-function Medal({ info, st, index, shine, onOpen }: { info: SongInfo; st: Standing; index: number; shine: boolean; onOpen: () => void }) {
-  const ring = useMemo(() => Math.max(0.04, st.value), [st.value]);
-  return (
-    <motion.li className={`medal t-${st.tier} ${shine ? 'shine' : ''}`} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ ...SPRING, delay: 0.15 + index * 0.07 }}>
-      <motion.button className="medal-btn" onClick={onOpen} whileTap={{ scale: 0.94 }} aria-label={`${info.entry.title}: ${TIER_NAME[st.tier]}, ${dueText(st)}`}>
-        <span className="medal-disc">
-          {st.tier === 'none' && (
-            <svg className="medal-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" /><circle cx="50" cy="50" r="46" className="fill" style={{ strokeDasharray: `${ring * 289} 289` }} /></svg>
-          )}
-          <SongCover entry={info.entry} />
-          {st.tier === 'forever' && <span className="medal-gem"><Gem size={20} /></span>}
-          {(st.tier === 'gold') && <span className="medal-gem gold"><IconCheck size={16} /></span>}
-        </span>
-        <b className="medal-title">{info.entry.title}</b>
-        <span className="medal-tier">{st.tier === 'none' ? <><IconTarget size={13} />{pctOf(st.value)}%</> : TIER_NAME[st.tier]}</span>
-        <small className="medal-due">{dueText(st)}</small>
-      </motion.button>
-    </motion.li>
   );
 }
 

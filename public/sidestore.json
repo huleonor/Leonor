@@ -1,5 +1,5 @@
 {
-  "name": "Hugo's Piano",
+  "name": "Leonor",
   "identifier": "com.hugoleonor.hugospiano.source",
   "subtitle": "Your songs, part by part.",
   "iconURL": "https://hugos-piano.vercel.app/icons/icon-512.png",
@@ -7,7 +7,7 @@
   "tintColor": "#f25c08",
   "apps": [
     {
-      "name": "Hugo's Piano",
+      "name": "Leonor",
       "bundleIdentifier": "com.hugoleonor.hugospiano",
       "developerName": "Hugo Leonor",
       "subtitle": "Learn your songs part by part.",
@@ -30,7 +30,7 @@
       "appPermissions": {
         "entitlements": [],
         "privacy": {
-          "NSMicrophoneUsageDescription": "Hugo's Piano listens to your piano to check the notes you play.",
+          "NSMicrophoneUsageDescription": "Leonor listens to your piano to check the notes you play.",
           "NSBluetoothAlwaysUsageDescription": "Connect a Bluetooth MIDI keyboard."
         }
       }

@@ -121,8 +121,9 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
       const page = hostRef.current!.closest('.lesson');
       if (page) {
         const pr = page.getBoundingClientRect(), hr = hostRef.current!.getBoundingClientRect();
-        panel.style.backgroundSize = `100% ${pr.height}px`;
-        panel.style.backgroundPosition = `0 ${-(hr.top - pr.top + lineTop)}px`;
+        // Sized and placed like the page's own background, so every layer of the gradient lines up.
+        panel.style.backgroundSize = `${pr.width}px ${pr.height}px`;
+        panel.style.backgroundPosition = `${-(hr.left - pr.left)}px ${-(hr.top - pr.top + lineTop)}px`;
       }
       for (const bd of bands) {
         const strip = document.createElement('div');
