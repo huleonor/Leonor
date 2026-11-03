@@ -16,6 +16,9 @@ Hugo, one learner practising at his own digital piano. The phone sits sideways (
 
 ## Product Purpose
 
+2026-11: one song at a time, taught by short vertical reels (TikTok style) drawn live from the song's notes, each pattern (left hand, right hand, both) followed straight away by the practice step for it. Claude writes the words on the reels (api/reels.ts). The first song is Tony Ann's Interstellar Experience, a slot that takes his own MIDI file.
+
+
 Hugo's Piano teaches songs Hugo actually wants to play (Hans Zimmer film scores first) by showing the notes falling toward an on-screen keyboard and listening to what he plays. Success: he gets through a piece he chose, first slowly, then at full speed.
 
 ## Positioning

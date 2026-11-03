@@ -110,7 +110,9 @@ function fingerHand(notes: SongNote[], hand: Hand) {
 function solve(evs: Ev[], hand: Hand) {
   const F = [1, 2, 3, 4, 5];
   // Anchor finger options: a chord's anchor leaves room for the rest of the chord.
-  const allowed = (e: Ev) => F.filter(f => f + e.notes.length - 1 <= 5 || e.notes.length === 1);
+  // A wide chord (a sixth or more, an octave) is played thumb and little finger: the thumb on the anchor.
+  const wide = (e: Ev) => e.notes.length > 1 && Math.abs(pos(Math.max(...e.notes.map(n => n.midi))) - pos(Math.min(...e.notes.map(n => n.midi)))) >= 5;
+  const allowed = (e: Ev) => (wide(e) ? [1] : F.filter(f => f + e.notes.length - 1 <= 5 || e.notes.length === 1));
   // Top note of a chord (the far side from the anchor), for moving to the next strike.
   const outer = (e: Ev, f: number) => {
     const fs = spreadChord(e, hand, f);

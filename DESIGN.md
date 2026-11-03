@@ -1,6 +1,6 @@
 ---
 name: Hugo's Piano
-description: A piano-learning app that looks and moves like Duolingo around the piano and like Simply Piano at the piano. White pages, one bright owl green for every action and every right note, macaw blue for choices, gold stars, an orange streak flame; chunky uppercase buttons on a 4px edge that press down; a coloured unit banner over a winding path of round lesson nodes. The piano screens (song sheet and Teach me lesson) keep their Simply Piano look.
+description: A piano-learning app in Simply Piano's look (2026-11 redesign): a deep navy app, one vivid blue for every action, the piano screens on Simply's blue-to-teal gradient with the staff on white strips, and each song taught by short vertical reels drawn from its notes. The older Duolingo notes below describe the components' shapes; the colours are now the dark tokens in src/styles.css. White pages, one bright owl green for every action and every right note, macaw blue for choices, gold stars, an orange streak flame; chunky uppercase buttons on a 4px edge that press down; a coloured unit banner over a winding path of round lesson nodes. The piano screens (song sheet and Teach me lesson) keep their Simply Piano look.
 source: Duolingo-inspired, after the open "Lingo" DESIGN.md (bergside/awesome-design-md-skills, MIT) and Duolingo's public visual language; no Duolingo assets, mascot, logo or proprietary fonts are used.
 colors:
   white: "#ffffff"
@@ -45,6 +45,10 @@ edges: { button: "0 4px 0 <edge>", node: "0 8px 0 <edge>", card: "2px solid swan
 # Design System: Hugo's Piano
 
 ## Tokens
+
+2026-11: Simply Piano's dark look replaces the white Duolingo ground. Navy ground #121b3e with a soft gradient, cards #1b2752 with a 1px #2c3a6b border, primary blue #1d8cf8 (edge #1466c2) with white bold uppercase text, green #58cc02 only for right notes, white text, muted #9aa5d4 for hints. Piano screens and reels on the gradient #1f3a7d, #2b6f9c, #43a7a7 and back; staff on white strips; glowing now line #2a8cff; right hand #3ec1ff, left hand #ff9f43. Everything else below (shape, type, spacing, motion) still holds.
+
+Before:
 
 White ground like the Duolingo app, in the logo's blue: cards and dialogs white with a 2px #e5e5e5 border, wells #f7f7f7; primary brand blue #2b93ba (edge #1f7395) with white bold uppercase text on 3D buttons, also the interactive accent; green #58cc02 only for right answers, red #ff4b4b only for wrong ones; text #3c3c3c, muted #777777 for hints. One family, Nunito bold: body 700, headings 900 with 0.8px tracking. Radius 12px for every control, card and dialog. Spacing unit 10px. State-driven motion with springs (see CLAUDE.md); CSS transitions 300ms ease. Focus ring 2px accent, 2px offset. Icons are Phosphor, bold. The logo is the penguin with round glasses; no characters in the UI for now. No em or en dashes in visible text. See CLAUDE.md for the full rule list.
 

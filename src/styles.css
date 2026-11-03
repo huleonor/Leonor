@@ -1,8 +1,7 @@
 /* Hugo's Piano. Design rules live in DESIGN.md and CLAUDE.md; read them before changing anything here.
-   Duolingo's app look in the logo's blue: a white ground, cards with a 2px grey border, brand blue
-   (#2b93ba) with white text on chunky buttons, green only for a right answer, one blue accent (#1cb0f6) for interactive things, charcoal
-   text, one family (Nunito, bold), 12px corners, a 10px spacing unit, 300ms ease for every transition.
-   The piano screens keep their Simply Piano look. */
+   Simply Piano's look: a deep navy app, cards a step lighter, one vivid blue for every action, green
+   only for a right answer, white text; the piano screens on Simply's blue-to-teal gradient with the
+   staff on white strips. One family (Nunito, bold), 12px corners, a 10px spacing unit, 300ms ease. */
 
 @font-face {
   font-family: 'Nunito Variable';
@@ -12,63 +11,67 @@
 }
 
 :root {
-  /* Ground and surfaces */
-  --bg: #ffffff;
-  --bg-deep: #f7f7f7;
-  --surface: #ffffff;
-  --surface-2: #f7f7f7;
-  --raised: #ffffff;
-  --raised-edge: #e5e5e5;
-  --line: #e5e5e5;
-  --line-2: #cecece;
+  /* Simply Piano's app: a deep navy night, cards a step lighter, one bright blue for every action */
+  --bg: #121b3e;
+  --bg-deep: #0d1531;
+  --surface: #1b2752;
+  --surface-2: #16214a;
+  --raised: #26365f;
+  --raised-edge: #121d44;
+  --line: #2c3a6b;
+  --line-2: #3f4e84;
   --paper: #ffffff;
   --shadow: none;
+  --app-ground: linear-gradient(180deg, #1b2858 0%, #121b3e 45%, #0e1634 100%);
+  /* The piano screens: Simply Piano's blue to teal and back, the staff on white strips */
+  --stage: linear-gradient(180deg, #1f3a7d 0%, #2b6f9c 26%, #43a7a7 50%, #2b6f9c 76%, #1f3a7d 100%);
+  --stage-solid: #2b6f9c;
   /* Text */
-  --heading: #3c3c3c;
-  --ink: #3c3c3c;
-  --ink-2: #5c5c5c;
-  --ink-3: #777777;
-  /* Primary: lime with near-black text */
-  --go: #2b93ba;
-  --go-hi: #36a3cc;
-  --go-edge: #1f7395;
+  --heading: #ffffff;
+  --ink: #eef1ff;
+  --ink-2: #c4cbec;
+  --ink-3: #9aa5d4;
+  /* Primary: a vivid blue, white text */
+  --go: #1d8cf8;
+  --go-hi: #3a9dff;
+  --go-edge: #1466c2;
   --go-ink: #ffffff;
-  --go-soft: #ddf1f9;
-  --go-text: #1d6c8c;
-  /* Correct answers stay green, as everywhere */
+  --go-soft: #1e3a78;
+  --go-text: #8cc8ff;
+  /* Correct answers stay green */
   --ok: #58cc02;
-  --ok-edge: #58a700;
-  --ok-soft: #d7ffb8;
-  --ok-text: #3b8a00;
-  /* Accent: the brand blue from the logo */
-  --blue: #2b93ba;
-  --blue-edge: #1f7395;
-  --blue-soft: #ddf1f9;
-  --blue-line: #9fd2e6;
+  --ok-edge: #46a302;
+  --ok-soft: #1f4a2a;
+  --ok-text: #86e04a;
+  /* Accent: the same blue for what can be tapped */
+  --blue: #1d8cf8;
+  --blue-edge: #1466c2;
+  --blue-soft: #1e3a78;
+  --blue-line: #3d6fc4;
   --on-blue: #ffffff;
-  --blue-text: #1d6c8c;
-  /* Game colours, each with a text shade that passes AA */
+  --blue-text: #8cc8ff;
+  /* Game colours, each with a text shade that passes AA on navy */
   --star: #ffc800;
   --star-edge: #e0ad00;
-  --star-off: #e5e5e5;
-  --star-text: #8a6500;
+  --star-off: #34426f;
+  --star-text: #ffd54a;
   --flame: #ff9600;
   --flame-edge: #e08300;
-  --flame-text: #b35500;
+  --flame-text: #ffb04d;
   --energy: #ff7ad9;
   --energy-edge: #e05bbd;
-  --energy-soft: #ffe8f7;
-  --energy-text: #a8307f;
+  --energy-soft: #4a2550;
+  --energy-text: #ff9fe4;
   --miss: #ff4b4b;
   --miss-edge: #e03535;
-  --miss-soft: #ffe1e1;
-  --miss-text: #c62828;
-  --danger: #c62828;
-  --premium: #14324a;
-  --premium-2: #1d4a6b;
-  --purple: #ce82ff;
-  --purple-edge: #a568cc;
-  /* Song covers: a unit colour each, white glyph and staff (no green or red: those mean right and wrong) */
+  --miss-soft: #4a2030;
+  --miss-text: #ff8a8a;
+  --danger: #e5484d;
+  --premium: #0b1230;
+  --premium-2: #1a2a5a;
+  --purple: #b18cff;
+  --purple-edge: #8a63e0;
+  /* Song covers: a colour each, white glyph and staff (no green or red: those mean right and wrong) */
   --cover-1: #2b93ba; --cover-1-edge: #1f7395;
   --cover-2: #00b38a; --cover-2-edge: #00916f;
   --cover-3: #ff9600; --cover-3-edge: #e08300;
@@ -77,28 +80,34 @@
   --cover-6: #a568cc; --cover-6-edge: #8a4fb3;
   --cover-ink: #ffffff;
   --cover-line: rgba(255, 255, 255, .3);
-  /* Piano screens */
-  --right: #1cb0f6;
-  --left: #ff9600;
-  --violet: #1cb0f6;
-  --teal: #14c4cf;
+  /* Piano screens: the right hand blue, the left hand orange */
+  --right: #3ec1ff;
+  --left: #ff9f43;
+  --violet: #3ec1ff;
+  --teal: #2fd0c7;
   --difficulty-medium: #ffc800;
   --hint: #ffd25e;
   --hint-edge: #e0a92a;
   --hint-ink: #5a3d00;
-  --key-black: #3c3c3c;
+  --key-white: #fbfbfd;
+  --key-edge: #b9bccb;
+  --key-black: #1b1b22;
+  --key-ink: #1b1b22;
+  --reel-lane: rgba(255, 255, 255, .09);
+  --reel-veil: rgba(9, 16, 40, .72);
+  --now-line: #2a8cff;
   --lesson-bg: #f0eee9;
   --lesson-ink: #1b1640;
-  /* The lesson staff, Simply Piano's way: a warm light ground, black notes, teal once played */
-  --staff-ground: #efeee9;
+  /* The lesson staff, Simply Piano's way: white strips, black notes, teal once played */
+  --staff-ground: #ffffff;
   --note-ink: #262626;
   --note-hit: #11a097;
   --note-miss: #e5484d;
   --note-other: #b8b5ab;
-  --note-next: #2b93ba;
-  --staff-line: #8e8c85;
-  /* Locked things on the path: their own picture in a soft grey, as on Duolingo */
-  --locked-ink: #afafaf;
+  --note-next: #1d8cf8;
+  --staff-line: #6f7380;
+  /* Locked things: their own picture, dimmed */
+  --locked-ink: #56628f;
   /* The tab bar's marks, each with its own colour */
   --tab-learn: var(--flame);
   --tab-songs: var(--purple);
@@ -109,7 +118,7 @@
   /* Shape, space, motion, type */
   --r-sm: 12px;
   --r: 12px;
-  --r-lg: 12px;
+  --r-lg: 16px;
   --space: 10px;
   --dur: 300ms;
   --ease: ease;
@@ -119,7 +128,7 @@
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 
@@ -971,7 +980,7 @@ h1, h2, h3 { font-weight: 900; letter-spacing: .8px; color: var(--heading); }
 .field input:focus { border-color: var(--blue-text); }
 .switch::after { background: var(--surface); box-shadow: 0 2px 0 rgba(0, 0, 0, .12); }
 .next-step span { background: var(--go-soft); color: var(--go-text); }
-.card-more { background: rgba(255, 255, 255, .92); color: var(--ink); border: 2px solid var(--line); }
+.card-more { background: var(--reel-veil); color: var(--heading); border: 0; }
 .upload-slot { border-color: var(--line-2); }
 .upload-slot svg { color: var(--blue-text); }
 
@@ -2007,3 +2016,186 @@ button.section-label:hover b { color: var(--blue-text); }
 .extra small { color: var(--ink-2); font-weight: 800; font-size: 12px; }
 .rail-btn .penguin-av { border-radius: 50%; }
 .medal-face { display: grid; place-items: center; width: 76px; height: 76px; border-radius: 50%; border: 3px solid var(--surface); background: var(--go); color: var(--go-ink); }
+
+/* =====================================================================
+   Round 6: Simply Piano's look, and the reels (short videos, one pattern each)
+   ===================================================================== */
+body { background: var(--bg); }
+.app { background: var(--app-ground); }
+.rail { background: var(--bg-deep); }
+.rail-btn.on { color: var(--heading); background: var(--blue-soft); box-shadow: inset 0 0 0 2px var(--blue-line); }
+.page-head { background: transparent; }
+.btn.go { box-shadow: 0 4px 0 var(--go-edge); }
+
+/* The lesson: the staff on white strips across Simply Piano's gradient. */
+.lesson.simply:not(.view-notes) { background: var(--stage); }
+.lesson.simply .lesson-stage { background: transparent; }
+.staff-band { position: absolute; left: 0; right: 0; z-index: 1; background: var(--staff-ground); pointer-events: none; }
+.clef-panel { background: var(--stage); background-repeat: no-repeat; }
+.clef-panel .staff-band { z-index: 0; }
+.clef-panel svg { position: relative; z-index: 1; }
+.past-fade { bottom: auto; background: linear-gradient(to right, color-mix(in srgb, var(--staff-ground) 94%, transparent), color-mix(in srgb, var(--staff-ground) 55%, transparent) 60%, transparent); }
+.lesson.simply .lesson-pause { background: rgba(255, 255, 255, .12); color: var(--heading); border: 2px solid rgba(255, 255, 255, .55); box-shadow: none; border-radius: 50%; }
+.lesson.simply .lesson-arrow { background: rgba(255, 255, 255, .12); color: var(--heading); border: 0; box-shadow: none; border-radius: 50%; }
+.lesson.simply .lesson-arrow:disabled { background: rgba(255, 255, 255, .06); color: rgba(255, 255, 255, .45); }
+.lesson.simply .lesson-count { background: rgba(9, 16, 40, .45); }
+.lesson.simply .lesson-count span { color: var(--heading); }
+.lesson.simply .lesson-start { background: none; }
+.lesson.simply .now-line { background: var(--now-line); opacity: 1; width: 6px; box-shadow: 0 0 14px var(--now-line), -40px 0 40px -10px color-mix(in srgb, var(--now-line) 60%, transparent); }
+
+/* ---------- Learn: the song's journey ---------- */
+.journey { padding: 20px 0 40px; display: grid; gap: 20px; max-width: 980px; }
+.journey-hero { display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: center; padding: 20px; border-radius: var(--r-lg); background: linear-gradient(135deg, var(--surface) 0%, var(--blue-soft) 100%); border: 1px solid var(--line); }
+.journey-hero.skeleton { height: 190px; }
+.journey-cover { display: block; border-radius: var(--r); overflow: hidden; aspect-ratio: 1; }
+.journey-cover > * { width: 100%; height: 100%; }
+.journey-title { display: grid; gap: 4px; justify-items: start; min-width: 0; }
+.journey-title small { color: var(--go-text); text-transform: uppercase; letter-spacing: .1em; font-weight: 900; font-size: 12px; }
+.journey-title h1 { font-size: 26px; }
+.journey-title > p { color: var(--ink-2); }
+.journey-title .sub { max-width: 46ch; margin: 6px 0 10px; }
+.journey-meter { display: flex; align-items: center; gap: 10px; width: min(100%, 320px); margin-top: 6px; font-weight: 900; color: var(--ink-2); font-size: 13px; }
+.journey-meter i { flex: 1; height: 8px; border-radius: 8px; background: var(--line); overflow: hidden; }
+.journey-meter b { display: block; height: 100%; border-radius: 8px; background: var(--go); }
+.journey-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.error-line { color: var(--miss-text); font-size: 13.5px; margin-top: 8px; }
+.journey-others h2 { font-size: 17px; margin-bottom: 10px; }
+.journey-others ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.other-song { display: grid; gap: 6px; text-align: left; width: 100%; }
+.other-song .cover { display: block; border-radius: var(--r); overflow: hidden; aspect-ratio: 1; }
+.other-song small { color: var(--ink-3); }
+
+.journey-parts { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.journey-part { padding: 16px 18px 18px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); display: grid; gap: 12px; }
+.journey-part > header { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.journey-part h2 { font-size: 19px; }
+.journey-part header small { color: var(--ink-3); font-size: 13px; }
+.part-chords { margin-left: auto; font-weight: 900; letter-spacing: .25em; color: var(--star-text); font-size: 15px; }
+.part-steps { list-style: none; margin: 0; padding: 4px 0 2px; display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; }
+.part-step { position: relative; flex: none; padding-top: 22px; }
+.part-step > button { display: block; border-radius: var(--r); }
+.step-tile { position: relative; width: 112px; height: 150px; border-radius: var(--r); padding: 12px 10px; display: grid; align-content: end; justify-items: start; gap: 2px; text-align: left; overflow: hidden; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.step-tile b { font-size: 14px; color: var(--heading); }
+.step-tile small { font-size: 11.5px; line-height: 1.25; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.step-tile > svg:first-child { position: absolute; top: 12px; left: 10px; }
+.reel-tile { background: var(--stage); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); color: var(--heading); }
+.reel-tile small { color: rgba(255, 255, 255, .86); }
+.hand-L .reel-tile { box-shadow: inset 0 -4px 0 var(--left), inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.hand-R .reel-tile { box-shadow: inset 0 -4px 0 var(--right), inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.practice-tile { width: 92px; background: var(--raised); color: var(--go-text); box-shadow: 0 4px 0 var(--raised-edge); }
+.part-step.done .practice-tile { color: var(--ok-text); }
+.tile-stars { display: inline-flex; gap: 1px; color: var(--star-off); margin-top: 4px; }
+.tile-stars .on { color: var(--star); }
+.tick { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--ok); color: var(--go-ink); }
+.part-step.next .step-tile { box-shadow: 0 0 0 3px var(--go), 0 0 22px color-mix(in srgb, var(--go) 55%, transparent); }
+.part-step.next .practice-tile { background: var(--go); color: var(--go-ink); box-shadow: 0 4px 0 var(--go-edge); }
+.part-step.next .practice-tile small, .part-step.next .practice-tile b { color: var(--go-ink); }
+.part-step.later { opacity: .62; }
+.part-step:active .step-tile { transform: scale(.97); }
+.start-bubble { position: absolute; top: 0; left: 50%; translate: -50% 0; z-index: 2; padding: 3px 9px; border-radius: 999px; background: var(--heading); color: var(--bg); font-size: 11px; font-weight: 900; letter-spacing: .08em; white-space: nowrap; }
+.journey-part.finale { justify-items: start; }
+.journey-part.finale.ready { background: linear-gradient(135deg, var(--surface), var(--go-soft)); }
+
+/* ---------- Reels: a vertical feed of 9:16 videos, TikTok style ---------- */
+.reel-screen { position: fixed; inset: 0; z-index: 20; background: var(--bg-deep); }
+.reel-feed { height: 100dvh; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain; scrollbar-width: none; }
+.reel-feed::-webkit-scrollbar { display: none; }
+.reel-snap { height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; display: grid; place-items: center; }
+.reel-close { position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); left: calc(10px + var(--safe-l)); z-index: 22; background: rgba(9, 16, 40, .5); color: var(--heading); box-shadow: none; border-radius: 50%; }
+.reel-count { position: fixed; top: calc(18px + env(safe-area-inset-top, 0px)); right: calc(16px + var(--safe-r)); z-index: 22; font-weight: 900; font-size: 13px; color: var(--ink-2); }
+.reel-slide { height: 100%; display: flex; align-items: center; justify-content: center; gap: 20px; }
+.reel-frame {
+  position: relative; height: calc(100dvh - 20px); aspect-ratio: 9 / 16; max-width: calc(100vw - 120px);
+  border-radius: 20px; overflow: hidden; background: var(--stage); color: var(--heading);
+  display: grid; grid-template-rows: auto auto auto auto minmax(0, 1fr) auto; cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .08);
+}
+.reel-progress { display: flex; gap: 4px; padding: 10px 12px 0; }
+.reel-progress i { flex: 1; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .3); overflow: hidden; }
+.reel-progress b { display: block; height: 100%; background: var(--heading); }
+.reel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px 0 56px; }
+.reel-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; }
+.reel-kicker i { font-style: normal; padding: 3px 8px; border-radius: 999px; background: rgba(9, 16, 40, .35); }
+.reel-speed { padding: 4px 10px; border-radius: 999px; background: var(--star); color: var(--hint-ink); font-size: 12px; font-weight: 900; }
+.reel-speed.full { background: var(--heading); color: var(--bg); }
+.reel-hook { padding: 12px 16px 0; font-size: clamp(18px, 3.2vh, 26px); line-height: 1.15; text-shadow: 0 2px 10px rgba(9, 16, 40, .45); }
+.reel-chords { list-style: none; margin: 0; padding: 12px 14px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.reel-chords li { display: flex; align-items: center; gap: 2px; }
+.reel-chords b { min-width: 34px; height: 34px; padding: 0 6px; display: grid; place-items: center; border-radius: 10px; font-size: 19px; color: rgba(255, 255, 255, .55); transition: color var(--dur), background var(--dur), transform var(--dur); }
+.reel-chords li.past b { color: rgba(255, 255, 255, .8); }
+.reel-chords li.on b { background: var(--star); color: var(--hint-ink); transform: scale(1.12); }
+.reel-chords .arrow { width: 10px; height: 2px; background: rgba(255, 255, 255, .4); border-radius: 2px; }
+.reel-stage { position: relative; min-height: 0; margin-top: 8px; }
+.reel-lanes { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.reel-foot { min-height: 92px; padding: 6px 14px 16px; display: grid; gap: 6px; align-content: start; }
+.reel-groups { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 17px; letter-spacing: .12em; }
+.reel-groups span { display: inline-flex; gap: 3px; }
+.reel-groups b { min-width: 18px; text-align: center; border-radius: 6px; color: rgba(255, 255, 255, .55); transition: color 120ms, background 120ms; }
+.reel-groups b.past { color: rgba(255, 255, 255, .85); }
+.reel-groups b.on { background: var(--star); color: var(--hint-ink); }
+.reel-cue { font-size: 16px; line-height: 1.3; padding: 8px 12px; border-radius: 12px; background: rgba(9, 16, 40, .55); justify-self: start; }
+.reel-card { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 24px; text-align: center; background: var(--reel-veil); }
+.reel-card > div { display: grid; gap: 10px; justify-items: center; }
+.reel-card small { font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: var(--star-text); }
+.reel-card h3 { font-size: clamp(22px, 4vh, 32px); line-height: 1.15; }
+.reel-card p { color: var(--ink-2); }
+.reel-card.light { background: transparent; pointer-events: none; }
+.reel-card.light h3 { padding: 12px 22px; border-radius: 999px; background: var(--heading); color: var(--bg); font-size: 20px; }
+.reel-card.end { cursor: default; }
+.reel-end-actions { display: grid; gap: 10px; margin-top: 10px; width: min(100%, 260px); }
+.btn.ghost-light { background: rgba(255, 255, 255, .14); color: var(--heading); box-shadow: none; }
+.btn.ghost-light:hover { background: rgba(255, 255, 255, .22); }
+.reel-paused { position: absolute; top: 50%; left: 50%; translate: -50% -50%; z-index: 4; width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: rgba(9, 16, 40, .55); color: var(--heading); pointer-events: none; }
+.reel-loading { position: absolute; top: 50%; left: 50%; translate: -50% -50%; z-index: 6; padding: 10px 16px; border-radius: 999px; background: var(--reel-veil); font-size: 14px; }
+.reel-time { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--go); transform-origin: left; }
+.reel-side { display: grid; gap: 16px; }
+.reel-act { display: grid; justify-items: center; gap: 4px; font-size: 12px; font-weight: 900; color: var(--ink-2); }
+.reel-act span { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: var(--raised); color: var(--heading); transition: background var(--dur); }
+.reel-act:hover span { background: var(--line-2); }
+.reel-act.go span { background: var(--go); color: var(--go-ink); box-shadow: 0 4px 0 var(--go-edge); }
+.reel-act.go { color: var(--heading); }
+
+/* Phones held upright: the reel is the whole screen, the actions float on its right like TikTok. */
+@media (max-aspect-ratio: 10 / 16) {
+  .reel-slide { position: relative; width: 100%; }
+  .reel-frame { height: 100dvh; width: 100vw; max-width: none; aspect-ratio: auto; border-radius: 0; }
+  .reel-side { position: absolute; right: 8px; top: 38%; z-index: 6; gap: 12px; }
+  .reel-stage { margin-right: 66px; }
+  .reel-act span { width: 48px; height: 48px; background: rgba(9, 16, 40, .45); }
+  .reel-act { color: var(--heading); text-shadow: 0 1px 4px rgba(9, 16, 40, .6); }
+  .reel-foot { padding-right: 76px; }
+}
+@media (max-width: 640px) and (orientation: portrait) {
+  .journey { padding-top: 16px; }
+  .journey-hero { grid-template-columns: 96px 1fr; padding: 14px; gap: 14px; }
+  .journey-title h1 { font-size: 21px; }
+  .part-chords { margin-left: 0; width: 100%; }
+}
+/* Phone on its side on the music stand: the reel widens, the words on the left, the keys on the right. */
+@media (min-aspect-ratio: 5 / 4) {
+  .reel-frame {
+    width: calc(100vw - 120px - var(--safe-l) - var(--safe-r)); max-width: 1100px; height: calc(100dvh - 20px); aspect-ratio: auto;
+    grid-template-columns: minmax(230px, 36%) minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    grid-template-areas: 'bar bar' 'head stage' 'hook stage' 'chords stage' 'foot stage';
+  }
+  .reel-progress { grid-area: bar; }
+  .reel-head { grid-area: head; padding-left: 14px; }
+  .reel-hook { grid-area: hook; }
+  .reel-chords { grid-area: chords; }
+  .reel-foot { grid-area: foot; align-content: end; }
+  .reel-stage { grid-area: stage; margin: 8px 10px 10px 0; }
+  .reel-close { top: 10px; }
+  .reel-side { gap: 10px; }
+  .reel-act span { width: 48px; height: 48px; }
+}
+@media (min-aspect-ratio: 5 / 4) and (max-height: 430px) {
+  .reel-hook { font-size: 18px; padding-top: 8px; }
+  .reel-chords b { min-width: 28px; height: 28px; font-size: 16px; }
+  .reel-groups { font-size: 15px; }
+  .reel-cue { font-size: 14px; }
+  .reel-foot { min-height: 0; }
+}
+.start-bubble { display: block; line-height: 16px; }
+.reel-kicker, .reel-speed { white-space: nowrap; }
+@media (min-aspect-ratio: 5 / 4) { .reel-head { padding-left: 56px; } }
