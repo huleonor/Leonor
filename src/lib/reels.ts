@@ -10,6 +10,7 @@
  * measured from the notes write them.
  */
 import { splitBars } from './analysis';
+import { barIndex, barLength, barStart, type BarGrid } from './bars';
 import { buildCourse } from './course';
 import { readSong } from './reading';
 import { BAR_SCRIPTS, REEL_SCRIPTS, type BarScript } from './reelScripts';
@@ -76,7 +77,7 @@ function triadOf(ns: SongNote[], flats: boolean): string {
   return best;
 }
 
-function barFacts(song: Song, notes: SongNote[], bar: number, beatTicks: number, startTicks: number, prevThumb?: number): BarFacts & { thumb?: number } {
+function barFacts(song: Song, notes: SongNote[], bar: number, beatTicks: number, startTicks: number, barTicks: number, prevThumb?: number): BarFacts & { thumb?: number } {
   const L = notes.filter(n => n.hand === 'L');
   const R = notes.filter(n => n.hand === 'R');
   let chord = triadOf(notes, song.fifths < 0);
@@ -86,7 +87,6 @@ function barFacts(song: Song, notes: SongNote[], bar: number, beatTicks: number,
     const opening = L.filter(n => n.ticks === first).sort((a, b) => a.midi - b.midi);
     chord = letter(opening[0].midi, song.fifths < 0);
     octave = opening.length === 2 && opening[1].midi - opening[0].midi === 12;
-    const barTicks = beatTicks * song.timeSig[0];
     held = opening[0].durationTicks >= barTicks * 0.7;
   }
   // Right hand: the top note of each onset, grouped by beat.
@@ -109,21 +109,21 @@ function barFacts(song: Song, notes: SongNote[], bar: number, beatTicks: number,
 }
 
 function songFacts(song: Song) {
-  const { bars, measureTicks } = splitBars(song);
-  const beatTicks = song.ppq * 4 / song.timeSig[1];
+  const { bars, grid } = splitBars(song);
   const out: BarFacts[] = [];
   let thumb: number | undefined;
   for (const b of bars) {
-    const f = barFacts(song, b.notes, b.index + 1, beatTicks, b.index * measureTicks, thumb);
+    const beatTicks = song.ppq * 4 / grid.sigs[b.index][1];
+    const f = barFacts(song, b.notes, b.index + 1, beatTicks, barStart(grid, b.index), barLength(grid, b.index), thumb);
     if (f.thumb !== undefined) thumb = f.thumb;
     out.push(f);
   }
-  return { bars: out, measureTicks };
+  return { bars: out, grid };
 }
 
 /** Seconds a bar lasts at full speed (from the song's own tempo map). */
-export function barSeconds(song: Song, measureTicks: number, bar: number) {
-  return song.ticksToSeconds(bar * measureTicks) - song.ticksToSeconds((bar - 1) * measureTicks);
+export function barSeconds(song: Song, grid: BarGrid, bar: number) {
+  return song.ticksToSeconds(barStart(grid, bar)) - song.ticksToSeconds(barStart(grid, bar - 1));
 }
 
 // ---------- The rules' words ----------
@@ -201,8 +201,8 @@ function ruleWords(kind: ReelKind, facts: BarFacts[], part: number, title: strin
 // ---------- The reels of a song ----------
 
 /** Fit a reel in about 30 seconds: a slow pass of the first bars, then the whole stretch at full speed. */
-function fitPasses(song: Song, measureTicks: number, from: number, to: number) {
-  const secs = (a: number, b: number) => { let s = 0; for (let x = a; x <= b; x++) s += barSeconds(song, measureTicks, x); return s; };
+function fitPasses(song: Song, grid: BarGrid, from: number, to: number) {
+  const secs = (a: number, b: number) => { let s = 0; for (let x = a; x <= b; x++) s += barSeconds(song, grid, x); return s; };
   let real = to;
   while (real > from && secs(from, real) > 16) real--;
   const slow = secs(from, from) > 6 ? 0.75 : 0.6;
@@ -218,7 +218,7 @@ export function reelsOf(song: Song): Reel[] {
   const hit = cache.get(song);
   if (hit) return hit;
   const course = buildCourse(song);
-  const { bars, measureTicks } = songFacts(song);
+  const { bars, grid } = songFacts(song);
   const songBars = splitBars(song).bars;
   const plan = strategyOf(song);
   const twoHands = song.hands.length === 2;
@@ -234,21 +234,21 @@ export function reelsOf(song: Song): Reel[] {
 
   const firstPart = course.parts[0];
   if (firstPart) {
-    const p = fitPasses(song, measureTicks, firstPart.from, Math.min(course.parts[course.parts.length - 1].to, firstPart.from + 7));
+    const p = fitPasses(song, grid, firstPart.from, Math.min(course.parts[course.parts.length - 1].to, firstPart.from + 7));
     add({ id: 'intro', part: 0, kind: 'intro', from: firstPart.from, to: p.real, slowTo: 0, slow: 1, practice: { section: `p${firstPart.n}` } }, song.entry.title);
   }
   for (const part of course.parts) {
     if (part.sameAs) continue;
     const steps = course.steps.filter(s => s.part === part.n);
     const stepFor = (h: 'L' | 'R' | 'both') => steps.find(s => s.hands === h)?.id ?? steps[0]?.id;
-    const p = fitPasses(song, measureTicks, part.from, part.to);
+    const p = fitPasses(song, grid, part.from, part.to);
     const lead = plan.parts.find(x => x.n === part.n)?.lead ?? 'R';
     const hands: Hand[] = twoHands ? (lead === 'L' ? ['L', 'R'] : ['R', 'L']) : song.hands;
     for (const h of hands) {
       // A hand's reel starts where that hand comes in: no bars of silence to watch.
       let from = part.from;
       while (from < part.to && !songBars[from - 1]?.notes.some(n => n.hand === h)) from++;
-      const q = from === part.from ? p : fitPasses(song, measureTicks, from, part.to);
+      const q = from === part.from ? p : fitPasses(song, grid, from, part.to);
       add({ id: `p${part.n}-${h}`, part: part.n, kind: twoHands ? h : 'both', from, to: q.real, slowTo: q.slowTo, slow: q.slow, practice: { section: `p${part.n}`, step: stepFor(twoHands ? h : 'both') } }, `Part ${part.n}`);
     }
     if (twoHands) {
@@ -268,11 +268,11 @@ export interface ReelTimeline { notes: ReelNote[]; cards: ReelCard[]; passes: { 
 const TITLE = 2.2, GAP = 1.8, END = 2.5, LEAD = 0.35;
 
 export function timelineOf(song: Song, reel: Reel): ReelTimeline {
-  const { measureTicks } = splitBars(song);
-  const at = (bar: number) => song.ticksToSeconds((bar - 1) * measureTicks);
-  const beatTicks = song.ppq * 4 / song.timeSig[1];
+  const { grid } = splitBars(song);
+  const at = (bar: number) => song.ticksToSeconds(barStart(grid, bar - 1));
   const hands: Hand[] = reel.kind === 'L' ? ['L'] : reel.kind === 'R' ? ['R'] : song.hands;
-  const notesIn = (a: number, b: number) => song.notes.filter(n => hands.includes(n.hand) && n.ticks >= (a - 1) * measureTicks - 1 && n.ticks < b * measureTicks - 1);
+  const notesIn = (a: number, b: number) => song.notes.filter(n => hands.includes(n.hand) && n.ticks >= barStart(grid, a - 1) - 1 && n.ticks < barStart(grid, b) - 1);
+  const placeOf = (ticks: number) => { const i = barIndex(grid, ticks); return { bar: i + 1, beat: Math.floor((ticks - barStart(grid, i)) / (song.ppq * 4 / grid.sigs[i][1]) + 1e-6) }; };
   const notes: ReelNote[] = [], cards: ReelCard[] = [], passes: ReelTimeline['passes'] = [];
   let t = 0;
   cards.push({ t, until: TITLE, kind: 'title' });
@@ -282,7 +282,7 @@ export function timelineOf(song: Song, reel: Reel): ReelTimeline {
     const ns = notesIn(a, b);
     const end = Math.max(at(b + 1), ...ns.map(n => n.time + n.duration));
     for (const n of ns) {
-      notes.push({ t: t + LEAD + (n.time - start) / speed, dur: n.duration / speed, midi: n.midi, hand: n.hand, finger: n.finger, vel: n.velocity, pass: k, bar: 1 + Math.floor(n.ticks / measureTicks + 1e-6), beat: Math.floor((n.ticks % measureTicks) / beatTicks + 1e-6) });
+      notes.push({ t: t + LEAD + (n.time - start) / speed, dur: n.duration / speed, midi: n.midi, hand: n.hand, finger: n.finger, vel: n.velocity, pass: k, ...placeOf(n.ticks) });
     }
     const until = t + LEAD + (end - start) / speed;
     passes.push({ t, until, speed });

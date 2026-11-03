@@ -53,6 +53,8 @@ export interface Song {
   firstNoteTime: number;
   ppq: number;
   timeSig: [number, number];
+  /** Time-signature changes after the first (bars.ts builds the bar grid from them). */
+  meter?: { ticks: number; sig: [number, number] }[];
   /** Key signature as a count of sharps (positive) or flats (negative). */
   fifths: number;
   ticksToSeconds: (ticks: number) => number;

@@ -132,6 +132,8 @@ export function parseSong(buf: ArrayBuffer, entry: SongEntry): Song {
     firstNoteTime: notes[0].time,
     ppq: midi.header.ppq,
     timeSig: entry.timeSig ?? (ts && ts.length >= 2 ? [ts[0], ts[1]] : [4, 4]),
+    // A piece that changes metre keeps its changes (unless the slot overrides the signature).
+    meter: entry.timeSig ? undefined : midi.header.timeSignatures.filter(t => t.ticks > 0 && t.timeSignature.length >= 2).map(t => ({ ticks: t.ticks, sig: [t.timeSignature[0], t.timeSignature[1]] as [number, number] })),
     fifths,
     ticksToSeconds: t => midi.header.ticksToSeconds(t),
     hands: (['R', 'L'] as Hand[]).filter(h => notes.some(n => n.hand === h)),

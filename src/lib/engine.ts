@@ -1,3 +1,4 @@
+import { barGrid } from './bars';
 import { playNote, stopAll } from './audio';
 import { markAppPlayed, setExpected, type NoteEvent } from './input';
 import { AUTO, HIT, MISS, PENDING, type HandsChoice, type Song } from './types';
@@ -101,6 +102,8 @@ export class Engine {
   private deferred = false;
   lastWrong = { midi: -1, at: 0 };
   measureTimes: number[] = [];
+  /** Each bar's time signature (bars.ts). */
+  barSigs: [number, number][] = [];
   /** When the current wait began, and wrong notes played during it (for the hint). */
   waitSince = 0;
   wrongInWait = 0;
@@ -125,12 +128,18 @@ export class Engine {
     this.user = new Uint8Array(song.notes.length);
     this.startTime = song.firstNoteTime - LEAD_IN;
     this.time = this.startTime;
-    const [num, den] = song.timeSig;
-    const measureTicks = song.ppq * 4 * (num / den);
-    for (let k = 0; ; k++) {
-      const t = song.ticksToSeconds(k * measureTicks);
+    // Bar lines from the bar grid, which follows any change of time signature.
+    const grid = barGrid(song);
+    this.barSigs = grid.sigs;
+    for (let k = 0; k < grid.starts.length; k++) {
+      const t = song.ticksToSeconds(grid.starts[k]);
       this.measureTimes.push(t);
-      if (t > song.duration + 1 || k > 5000) break;
+      if (t > song.duration + 1) break;
+    }
+    // A spare bar line past the end, in the last bar's metre, as before.
+    const lastLen = grid.starts[grid.starts.length - 1] - grid.starts[grid.starts.length - 2];
+    for (let k = grid.starts.length; this.measureTimes[this.measureTimes.length - 1] <= song.duration + 1 && k < 5000; k++) {
+      this.measureTimes.push(song.ticksToSeconds(grid.starts[grid.starts.length - 1] + (k - grid.starts.length + 1) * lastLen));
     }
     this.configure();
   }
@@ -229,9 +238,16 @@ export class Engine {
   /** Playing with the beat: the music runs on and he has to keep up. */
   private inTempo() { return !this.opts.wait && !this.opts.follow && !this.opts.listen; }
 
+  /** The time signature of the bar the cursor is in. */
+  sigNow(): [number, number] {
+    let bar = 0;
+    while (bar + 1 < this.measureTimes.length && this.measureTimes[bar + 1] <= this.time + 1e-3) bar++;
+    return this.barSigs[Math.min(bar, this.barSigs.length - 1)] ?? this.song.timeSig;
+  }
+
   /** One beat in real seconds (dotted quarters in compound time). */
   private beatSeconds() {
-    const [num, den] = this.song.timeSig;
+    const [num, den] = this.sigNow();
     const step = den === 8 && num % 3 === 0 && num > 3 ? 3 : 1;
     return this.song.ticksToSeconds(this.song.ppq * 4 / den * step) / Math.max(0.1, this.opts.speed);
   }
@@ -241,7 +257,7 @@ export class Engine {
    * lands and can come in with it, instead of seconds that have nothing to do with the music.
    */
   private countIn() {
-    const [num, den] = this.song.timeSig;
+    const [num, den] = this.sigNow();
     const perBar = den === 8 && num % 3 === 0 && num > 3 ? num / 3 : num;
     this.countBeat = this.beatSeconds();
     this.countTotal = perBar < 3 ? perBar * 2 : perBar;

@@ -4,6 +4,7 @@
  * be measured exactly (how busy each hand is, how often the hands play together, the widest leap,
  * the bars each hand repeats). The model reads the music; the numbers keep it honest.
  */
+import { barStart } from './bars';
 import { keyName, scoreBar, splitBars } from './analysis';
 import { buildCourse } from './course';
 import type { Hand, Song, SongNote } from './types';
@@ -39,7 +40,7 @@ function handLine(ns: SongNote[], start: number, beat: number) {
 }
 
 export function readSong(song: Song): Reading {
-  const { bars, measureTicks } = splitBars(song);
+  const { bars, grid } = splitBars(song);
   const course = buildCourse(song);
   const beat = song.ppq * 4 / song.timeSig[1];
   const key = keyName(song);
@@ -48,6 +49,9 @@ export function readSong(song: Song): Reading {
   const lines: string[] = [];
   lines.push(`Title: ${song.entry.title}${song.entry.composer ? ` (${song.entry.composer})` : ''}`);
   lines.push(`Key: ${key.name}. Time: ${song.timeSig[0]}/${song.timeSig[1]}. Tempo: about ${bpm} beats a minute. Bars: ${bars.length}. Hands: ${song.hands.join(' and ')}.`);
+  // Only a piece that changes metre says so (the text of every other piece stays as it was).
+  const changes = grid.sigs.slice(0, bars.length).map((s, i) => ({ s, i })).filter(({ s, i }) => i > 0 && (s[0] !== grid.sigs[i - 1][0] || s[1] !== grid.sigs[i - 1][1]));
+  if (changes.length) lines.push(`Time changes: ${changes.map(({ s, i }) => `${s[0]}/${s[1]} from bar ${i + 1}`).join(', ')}.`);
   lines.push('Parts (bars, inclusive; "same as" means it repeats an earlier part):');
   for (const p of course.parts) lines.push(`  Part ${p.n}: bars ${p.from}-${p.to}${p.sameAs ? `, same as part ${p.sameAs}` : ''}`);
 
@@ -73,10 +77,11 @@ export function readSong(song: Song): Reading {
 
   lines.push('Bars (beat:pitch/length in beats; [ ] is a chord; - is rest; difficulty is a busy-ness score):');
   for (const b of bars) {
-    const start = b.index * measureTicks;
+    const start = barStart(grid, b.index);
+    const barBeat = song.ppq * 4 / grid.sigs[b.index][1];
     const parts = song.hands.map(h => {
       const ns = b.notes.filter(n => n.hand === h);
-      return `${h}: ${ns.length ? handLine(ns, start, beat) : '-'}`;
+      return `${h}: ${ns.length ? handLine(ns, start, barBeat) : '-'}`;
     });
     lines.push(`  ${b.index + 1} (difficulty ${num(scoreBar(b))}) ${parts.join(' | ')}`);
   }

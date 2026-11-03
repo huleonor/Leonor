@@ -4,6 +4,7 @@
  * so it is asked once. Until it arrives, or when it cannot be reached, rules measured from the
  * notes write the plan, so Mastery always has one.
  */
+import { barGrid, barIndex } from './bars';
 import { scoreBar, splitBars } from './analysis';
 import { readSong, type Reading } from './reading';
 import { checkStrategy, type HandMode, type Strategy, type Stretch } from './strategyShape';
@@ -75,8 +76,8 @@ export function ruleStrategy(song: Song, reading: Reading): Strategy {
   const { bars } = splitBars(song);
   const two = song.hands.length === 2;
   const own = reading.parts.filter(p => !p.sameAs);
-  const measure = song.ppq * 4 * (song.timeSig[0] / song.timeSig[1]);
-  const barOf = (t: number) => Math.floor(t / measure + 1e-6) + 1;
+  const grid = barGrid(song);
+  const barOf = (t: number) => barIndex(grid, t) + 1;
   const notesIn = (h: Hand, from: number, to: number) => song.notes.filter(n => n.hand === h && barOf(n.ticks) >= from && barOf(n.ticks) <= to);
 
   // Patterns: a figure of one or two bars that fills at least a third of the bars a hand plays.

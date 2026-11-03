@@ -1,3 +1,4 @@
+import { barGrid } from './bars';
 import type { Hand, Song, SongNote } from './types';
 
 /** One written symbol (note, chord or rest) in the generated ABC, with where it sits in the text. */
@@ -83,18 +84,29 @@ export interface ScoreOptions {
 }
 
 export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' | 'some' | 'all' = 'off', opts: ScoreOptions = {}): AbcScore {
-  const [num, den] = song.timeSig;
   const grid = song.ppq / 4; // one 16th note in ticks
-  const measureUnits = Math.max(1, Math.round((num * 16) / den));
-  const beatUnits = den === 8 && num % 3 === 0 ? 6 : Math.max(1, 16 / den);
   const q = (ticks: number) => Math.round(ticks / grid);
   const keyAcc = keyAccidentals(song.fifths);
+  // Bars follow the song's bar grid, so a change of metre keeps its bar lines (bars.ts).
+  const bg = barGrid(song);
+  const startsQ = bg.starts.map(q);
+  const lastIdx = startsQ.length - 1;
+  const lastLenQ = Math.max(1, startsQ[lastIdx] - startsQ[lastIdx - 1]);
+  const startAt = (m: number) => (m <= lastIdx ? startsQ[m] : startsQ[lastIdx] + (m - lastIdx) * lastLenQ);
+  const sigAt = (m: number): [number, number] => bg.sigs[Math.min(m, bg.sigs.length - 1)];
+  const measureOf = (u: number) => {
+    if (u >= startsQ[lastIdx]) return lastIdx + Math.floor((u - startsQ[lastIdx]) / lastLenQ);
+    let lo = 0, hi = lastIdx - 1;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (startsQ[mid] <= u) lo = mid; else hi = mid - 1; }
+    return lo;
+  };
+  const beatUnitsAt = (m: number) => { const [n, d] = sigAt(m); return d === 8 && n % 3 === 0 ? 6 : Math.max(1, 16 / d); };
 
   const firstQ = Math.min(...song.notes.map(n => q(n.ticks)));
   const lastQ = Math.max(...song.notes.map(n => q(n.ticks + n.durationTicks)));
-  const firstMeasure = opts.from ? opts.from - 1 : Math.floor(firstQ / measureUnits);
-  const totalMeasures = opts.to ?? Math.ceil(Math.max(lastQ, firstQ + 1) / measureUnits);
-  const startQ = firstMeasure * measureUnits, endQ = totalMeasures * measureUnits;
+  const firstMeasure = opts.from ? opts.from - 1 : measureOf(firstQ);
+  const totalMeasures = opts.to ?? measureOf(Math.max(lastQ, firstQ + 1) - 1) + 1;
+  const startQ = startAt(firstMeasure), endQ = startAt(totalMeasures);
   const hands = song.hands;
 
   const measures: Record<Hand, string[]> = { R: [], L: [] };
@@ -124,9 +136,10 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
     const emit = (start: number, len: number, ev: Event | null) => {
       let first = true;
       while (len > 0) {
-        const m = Math.floor(start / measureUnits);
-        let pos = start % measureUnits;
-        const take = Math.min(len, measureUnits - pos);
+        const m = measureOf(start);
+        let pos = start - startAt(m);
+        const take = Math.min(len, startAt(m + 1) - startAt(m) - pos);
+        const beatUnits = beatUnitsAt(m);
         let remaining = take;
         while (remaining > 0) {
           // Break at the beat when a long value would straddle it mid-beat.
@@ -151,7 +164,7 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
           ts[m].push({
             rel: ms[m].length + sep.length,
             tok: {
-              ids: ev ? ev.notes.map(n => n.id) : [], time: song.ticksToSeconds((m * measureUnits + pos) * grid),
+              ids: ev ? ev.notes.map(n => n.id) : [], time: song.ticksToSeconds((startAt(m) + pos) * grid),
               hand, cont: !first, rest: !ev, measure: m, line: Math.floor((m - firstMeasure) / measuresPerLine),
             },
           });
@@ -165,13 +178,13 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
       }
     };
 
-    let cursor = firstMeasure * measureUnits;
+    let cursor = startAt(firstMeasure);
     for (const ev of events) {
       if (ev.qs > cursor) emit(cursor, ev.qs - cursor, null);
       emit(ev.qs, ev.dur, ev);
       cursor = ev.qs + ev.dur;
     }
-    if (cursor < totalMeasures * measureUnits) emit(cursor, totalMeasures * measureUnits - cursor, null);
+    if (cursor < startAt(totalMeasures)) emit(cursor, startAt(totalMeasures) - cursor, null);
   }
 
   const lAvg = song.notes.filter(n => n.hand === 'L').reduce((s, n, _, a) => s + n.midi / a.length, 0);
@@ -179,7 +192,7 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
   const rAvg = song.notes.filter(n => n.hand === 'R').reduce((s, n, _, a) => s + n.midi / a.length, 0);
   const rClef = rAvg && rAvg < 55 ? 'bass' : 'treble';
 
-  let abc = `X:1\n${opts.title ? `T:${opts.title.replace(/\n/g, ' ')}\n` : ''}${opts.composer ? `C:${opts.composer.replace(/\n/g, ' ')}\n` : ''}M:${num}/${den}\nL:1/16\n`;
+  let abc = `X:1\n${opts.title ? `T:${opts.title.replace(/\n/g, ' ')}\n` : ''}${opts.composer ? `C:${opts.composer.replace(/\n/g, ' ')}\n` : ''}M:${sigAt(firstMeasure)[0]}/${sigAt(firstMeasure)[1]}\nL:1/16\n`;
   if (opts.sections?.length) abc += '%%partsbox true\n';
   if (opts.staffSep) abc += `%%sysstaffsep ${opts.staffSep}\n`;
   if (hands.length === 2) abc += '%%score {R | L}\n';
@@ -196,6 +209,9 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
       for (let m = s; m < end; m++) {
         const part = hand === hands[0] ? opts.sections?.find(sc => sc.bar === m + 1) : undefined;
         if (part) abc += `[P:${part.label.replace(/[\]\n]/g, ' ')}]`;
+        // A change of metre is written where it happens.
+        const ms = sigAt(m), prev = sigAt(m - 1);
+        if (m > firstMeasure && (ms[0] !== prev[0] || ms[1] !== prev[1])) abc += `[M:${ms[0]}/${ms[1]}] `;
         const base = abc.length;
         for (const { rel, tok } of toks[hand][m]) tokens.push({ ...tok, start: base + rel });
         abc += measures[hand][m] + (m === totalMeasures - 1 ? ' |]' : ' | ');
@@ -212,9 +228,7 @@ export function buildScore(song: Song, measuresPerLine: number, fingers: 'off' |
 
 /** How many symbols per bar, on average, for the busier hand. */
 export function density(song: Song): number {
-  const [num, den] = song.timeSig;
-  const measureTicks = song.ppq * 4 * (num / den);
-  const bars = Math.max(1, Math.ceil(Math.max(...song.notes.map(n => n.ticks + n.durationTicks)) / measureTicks));
+  const bars = barGrid(song).count;
   const onsets = (h: Hand) => new Set(song.notes.filter(n => n.hand === h).map(n => Math.round(n.ticks / (song.ppq / 4)))).size;
   return Math.max(onsets('R'), onsets('L')) / bars;
 }
