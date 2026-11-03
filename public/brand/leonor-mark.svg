@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#141c56"/><stop offset=".45" stop-color="#1b4f9e"/><stop offset="1" stop-color="#2aa9b0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".72" cy=".78" r=".6"><stop offset="0" stop-color="#5fe0d2" stop-opacity=".55"/><stop offset="1" stop-color="#5fe0d2" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow2" cx=".15" cy=".1" r=".55"><stop offset="0" stop-color="#4f7dff" stop-opacity=".45"/><stop offset="1" stop-color="#4f7dff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="key" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e6f0ff"/></linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="232" fill="url(#g)"/>
+  <rect width="1024" height="1024" rx="232" fill="url(#glow)"/>
+  <rect width="1024" height="1024" rx="232" fill="url(#glow2)"/>
+  <g filter="drop-shadow(0 18px 30px rgba(8,14,50,.45))">
+    <path d="M318 232 a44 44 0 0 1 44 -44 h96 a44 44 0 0 1 44 44 v368 h222 a44 44 0 0 1 44 44 v108 a44 44 0 0 1 -44 44 h-362 a44 44 0 0 1 -44 -44 z" fill="url(#key)"/>
+  </g>
+  <rect x="452" y="188" width="92" height="262" rx="22" fill="#0f1745"/>
+  <rect x="318" y="592" width="450" height="14" rx="7" fill="#3ec1ff" opacity=".9"/>
+</svg>

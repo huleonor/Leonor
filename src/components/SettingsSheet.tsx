@@ -1,4 +1,3 @@
-import { cancelTest, usePlan } from '../lib/billing';
 import { useEffect, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { isNative, nativeMidiStatus, support, type LinkState, type Source } from '../lib/input';
@@ -28,11 +27,9 @@ interface Props {
   connectInput: (kind: Source) => void;
   onCheck: () => void;
   onClose: () => void;
-  onPlan: () => void;
 }
 
-export function SettingsSheet({ settings, update, links, connectInput, onCheck, onClose, onPlan }: Props) {
-  const plan = usePlan();
+export function SettingsSheet({ settings, update, links, connectInput, onCheck, onClose }: Props) {
   const { t } = useI18n();
   const [nativeApp, setNativeApp] = useState<{ version: string; build: number } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -56,17 +53,6 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
           <button className="icon-btn ghost" onClick={onClose} aria-label="Close"><IconClose /></button>
         </header>
 
-        <section className="set-group" aria-labelledby="plan-title">
-          <h3 id="plan-title">Your plan</h3>
-          <div className="toggle-row">
-            <span>
-              <b>{plan ? 'Premium' : 'Free'}{plan?.test ? ' (test mode)' : ''}</b>
-              <small>{plan ? `${plan.trial ? 'Free week' : 'Active'} until ${new Date(plan.until).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}` : 'Units 1 and 2, the daily session, the coach, 3 songs of your own'}</small>
-            </span>
-            {plan ? <button className="btn small" onClick={cancelTest}>End test</button> : <button className="btn small go" onClick={onPlan}>Get Premium</button>}
-          </div>
-        </section>
-
         <section className="set-group" aria-labelledby="piano-title">
           <h3 id="piano-title">Your piano</h3>
           <div className="input-choices">
@@ -88,14 +74,13 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
             })}
           </div>
           <button className="btn" onClick={onCheck}>Test your piano</button>
-          {!isNative && support.isIOS && <p className="fine">iPhone browsers only have the microphone. Cable and Bluetooth work in the Hugo’s Piano iPhone app.</p>}
+          {!isNative && support.isIOS && <p className="fine">iPhone browsers only have the microphone. Cable and Bluetooth work in the Leonor iPhone app.</p>}
         </section>
 
         <section className="set-group">
           <Segmented label="Note names" value={settings.naming} onChange={v => update({ naming: v })} options={[['letters', 'C D E'], ['solfege', 'Dó Ré Mi']]} />
           <Segmented<FingerMode> label="Finger numbers" value={settings.fingers} onChange={v => update({ fingers: v })} options={[['off', 'Off'], ['some', 'Some'], ['all', 'All']]} />
           <p className="fine">1 is the thumb, 5 the little finger. Some shows them only where the hand moves.</p>
-          <Segmented label="Daily goal, minutes" value={settings.dailyGoal} onChange={v => update({ dailyGoal: v })} options={[5, 10, 15, 20, 30].map(v => [v, `${v}`] as [number, string])} />
           <Segmented label="Practice reminder" value={settings.reminder ?? 'off'}
             onChange={async v => { if (v !== 'off') await allowWebReminders(); update({ reminder: v === 'off' ? null : v }); }}
             options={[['off', 'Off'], ['08:00', '8:00'], ['13:00', '13:00'], ['19:00', '19:00'], ['21:00', '21:00']]} />

@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Hugo's Piano</string>
+	<string>Leonor</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -27,7 +27,7 @@
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Connect a Bluetooth MIDI keyboard.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Hugo's Piano listens to your piano to check the notes you play.</string>
+	<string>Leonor listens to your piano to check the notes you play.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

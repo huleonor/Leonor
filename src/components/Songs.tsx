@@ -29,13 +29,14 @@ function Cover({ entry, song }: { entry: SongEntry; song?: Song }) {
 const length = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
 
 /** A song in my library: its cover (its own opening notes), title, composer, and how far Mastery has come. */
-export function SongCard({ info, onOpen, onEdit }: { info: SongInfo; onOpen: () => void; onEdit?: () => void }) {
+export function SongCard({ info, now, onOpen, onEdit }: { info: SongInfo; now?: boolean; onOpen: () => void; onEdit?: () => void }) {
   const e = info.entry;
   return (
     <motion.div className="song-card" layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={SOFT}>
       <motion.button className="song-open" onClick={onOpen} aria-label={`Open ${e.title}`} whileTap={{ scale: 0.96 }}>
         <Cover entry={e} song={info.song} />
         <span className="song-text">
+          {now && <small className="now-chip">Learning now</small>}
           <b>{e.title}</b>
           <span>{e.composer ?? (e.builtIn ? '' : 'Imported')}</span>
           {info.song && <SongMeter song={info.song} />}
@@ -61,13 +62,15 @@ interface Props {
   infos: Record<string, SongInfo>;
   entries: SongEntry[];
   ready: boolean;
+  /** The song being learnt now (its id or the slot it fills). */
+  current?: string;
   onOpen: (info: SongInfo) => void;
   onAdd: (slot?: SongEntry) => void;
   onEdit: (entry: SongEntry) => void;
 }
 
 /** My songs: only the ones he brought into his library; the marketplace adds more. */
-export function Songs({ infos, entries, ready, onOpen, onAdd, onEdit }: Props) {
+export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }: Props) {
   const lib = useLibrary();
   const [market, setMarket] = useState(false);
   const mine = entries.filter(e => !e.missing && (!e.builtIn || lib.includes(e.id) || (e.slot && lib.includes(e.slot)))).map(e => infos[e.id]).filter(Boolean);
@@ -75,7 +78,7 @@ export function Songs({ infos, entries, ready, onOpen, onAdd, onEdit }: Props) {
   return (
     <div className="page songs">
       <header className="page-head">
-        <h1>My songs</h1>
+        <h1>Library</h1>
         <button className="btn go" onClick={() => setMarket(true)}><IconPlus size={16} />Add songs</button>
       </header>
       {!ready && <div className="song-grid" aria-busy="true">{Array.from({ length: 6 }, (_, i) => <span key={i} className="song-card skeleton" />)}</div>}
@@ -93,7 +96,7 @@ export function Songs({ infos, entries, ready, onOpen, onAdd, onEdit }: Props) {
       {ready && mine.length > 0 && (
         <motion.div className="song-grid" layout>
           <AnimatePresence>
-            {mine.map(info => <SongCard key={info.entry.id} info={info} onOpen={() => onOpen(info)} onEdit={info.entry.builtIn ? undefined : () => onEdit(info.entry)} />)}
+            {mine.map(info => <SongCard key={info.entry.id} info={info} now={current === (info.entry.slot ?? info.entry.id)} onOpen={() => onOpen(info)} onEdit={info.entry.builtIn ? undefined : () => onEdit(info.entry)} />)}
           </AnimatePresence>
           <motion.button layout className="song-card add-tile" onClick={() => setMarket(true)} whileTap={{ scale: 0.96 }}>
             <span className="cover add"><IconPlus size={28} /></span>

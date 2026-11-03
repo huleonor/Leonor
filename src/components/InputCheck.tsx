@@ -100,7 +100,7 @@ export function InputCheck({ links, naming, onClose }: Props) {
         <p className="fine">
           {isNative
             ? 'Cable: plug the piano in with the Lightning to USB Camera Adapter; it shows up above within 2 seconds. Bluetooth: choose Bluetooth under Your piano in Settings, pick the piano, then Done.'
-            : 'On iPhone, use the Hugo’s Piano app for cable and Bluetooth. iPhone browsers only have the microphone.'}
+            : 'On iPhone, use the Leonor app for cable and Bluetooth. iPhone browsers only have the microphone.'}
         </p>
       </div>
     </div>

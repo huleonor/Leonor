@@ -1,4 +1,4 @@
-/* Hugo's Piano. Design rules live in DESIGN.md and CLAUDE.md; read them before changing anything here.
+/* Leonor. Design rules live in DESIGN.md and CLAUDE.md; read them before changing anything here.
    Simply Piano's look: a deep navy app, cards a step lighter, one vivid blue for every action, green
    only for a right answer, white text; the piano screens on Simply's blue-to-teal gradient with the
    staff on white strips. One family (Nunito, bold), 12px corners, a 10px spacing unit, 300ms ease. */
@@ -11,21 +11,30 @@
 }
 
 :root {
-  /* Simply Piano's app: a deep navy night, cards a step lighter, one bright blue for every action */
-  --bg: #121b3e;
-  --bg-deep: #0d1531;
-  --surface: #1b2752;
-  --surface-2: #16214a;
-  --raised: #26365f;
-  --raised-edge: #121d44;
-  --line: #2c3a6b;
-  --line-2: #3f4e84;
+  /* Leonor: Simply Piano's deep navy, cards a step lighter, one bright blue for every action */
+  --bg: #0c1330;
+  --bg-deep: #090f28;
+  --surface: #151f4a;
+  --surface-2: #111a40;
+  --raised: #22305e;
+  --raised-edge: #0f1840;
+  --line: #24326a;
+  --line-2: #364784;
   --paper: #ffffff;
   --shadow: none;
-  --app-ground: linear-gradient(180deg, #1b2858 0%, #121b3e 45%, #0e1634 100%);
-  /* The piano screens: Simply Piano's blue to teal and back, the staff on white strips */
-  --stage: linear-gradient(180deg, #1f3a7d 0%, #2b6f9c 26%, #43a7a7 50%, #2b6f9c 76%, #1f3a7d 100%);
-  --stage-solid: #2b6f9c;
+  /* The app's ground: a quiet blue light from above the top edge onto deep navy */
+  --app-ground:
+    radial-gradient(120% 55% at 50% -12%, rgb(40 78 178 / .55) 0%, rgb(40 78 178 / 0) 62%),
+    linear-gradient(180deg, #0f1840 0%, #0c1330 55%, #090f28 100%);
+  /* The piano screens (reels, lessons): indigo into ocean blue, a luminous teal band across the
+     middle where the music sits, a cool light from the top corner, and back to indigo. Layered so
+     it never bands into stripes the way a plain three-colour ramp does. */
+  --stage:
+    radial-gradient(80% 42% at 50% 54%, rgb(72 205 196 / .62) 0%, rgb(72 205 196 / .18) 45%, rgb(72 205 196 / 0) 75%),
+    radial-gradient(70% 45% at 92% 2%, rgb(84 128 255 / .38) 0%, rgb(84 128 255 / 0) 70%),
+    radial-gradient(60% 40% at 0% 100%, rgb(36 64 170 / .5) 0%, rgb(36 64 170 / 0) 70%),
+    linear-gradient(180deg, #111850 0%, #16388a 28%, #1b62a2 50%, #17438e 74%, #0d1446 100%);
+  --stage-solid: #1b62a2;
   /* Text */
   --heading: #ffffff;
   --ink: #eef1ff;
@@ -2092,7 +2101,7 @@ body { background: var(--bg); }
 .part-step.next .practice-tile small, .part-step.next .practice-tile b { color: var(--go-ink); }
 .part-step.later { opacity: .62; }
 .part-step:active .step-tile { transform: scale(.97); }
-.start-bubble { position: absolute; top: 0; left: 50%; translate: -50% 0; z-index: 2; padding: 3px 9px; border-radius: 999px; background: var(--heading); color: var(--bg); font-size: 11px; font-weight: 900; letter-spacing: .08em; white-space: nowrap; }
+.step-bubble { position: absolute; top: 0; left: 50%; translate: -50% 0; z-index: 2; padding: 2px 10px; line-height: 16px; border-radius: 999px; background: var(--heading); color: var(--bg); font-size: 11px; font-weight: 900; letter-spacing: .08em; white-space: nowrap; }
 .journey-part.finale { justify-items: start; }
 .journey-part.finale.ready { background: linear-gradient(135deg, var(--surface), var(--go-soft)); }
 
@@ -2196,6 +2205,64 @@ body { background: var(--bg); }
   .reel-cue { font-size: 14px; }
   .reel-foot { min-height: 0; }
 }
-.start-bubble { display: block; line-height: 16px; }
 .reel-kicker, .reel-speed { white-space: nowrap; }
 @media (min-aspect-ratio: 5 / 4) { .reel-head { padding-left: 56px; } }
+
+/* =====================================================================
+   Round 7: Leonor. Watch (the reel feed) first, no game elements.
+   ===================================================================== */
+@supports (background: linear-gradient(in oklab, red, blue)) {
+  :root {
+    --stage:
+      radial-gradient(80% 42% at 50% 54%, rgb(72 205 196 / .62) 0%, rgb(72 205 196 / .18) 45%, rgb(72 205 196 / 0) 75%),
+      radial-gradient(70% 45% at 92% 2%, rgb(84 128 255 / .38) 0%, rgb(84 128 255 / 0) 70%),
+      radial-gradient(60% 40% at 0% 100%, rgb(36 64 170 / .5) 0%, rgb(36 64 170 / 0) 70%),
+      linear-gradient(in oklab 180deg, #111850 0%, #16388a 28%, #1b62a2 50%, #17438e 74%, #0d1446 100%);
+  }
+}
+.rail-logo { border-radius: 12px; box-shadow: 0 8px 20px rgb(29 140 248 / .25); }
+/* The Watch tab is the reel feed, edge to edge; the tab bar stays. */
+.content.tab-watch { padding: 0; overflow: hidden; position: relative; }
+.reel-screen.embedded { position: relative; inset: auto; z-index: 0; height: 100%; background: transparent; }
+.reel-screen.embedded .reel-feed, .reel-screen.embedded .reel-snap { height: 100%; }
+.reel-screen.embedded .reel-frame { height: calc(100% - 20px); }
+.reel-screen.embedded .reel-count { position: absolute; top: 18px; }
+.reel-screen.embedded .reel-head { padding-left: 14px; }
+@media (max-aspect-ratio: 10 / 16), (max-width: 640px) and (orientation: portrait) {
+  .reel-screen.embedded .reel-frame { height: 100%; }
+}
+/* Song map */
+.journey-meta { display: flex; justify-content: space-between; width: min(100%, 320px); font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+.journey-hero { background: radial-gradient(90% 120% at 100% 0%, rgb(84 128 255 / .28), rgb(84 128 255 / 0) 60%), linear-gradient(135deg, var(--surface) 0%, #1a3270 100%); border-color: var(--line); box-shadow: 0 16px 40px rgb(4 8 30 / .45); }
+.journey-part { box-shadow: 0 8px 24px rgb(4 8 30 / .3); }
+/* Library: the song being learnt */
+.now-chip { justify-self: start; padding: 2px 8px; border-radius: 999px; background: var(--go); color: var(--go-ink); font-size: 11px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+/* You: songs and their progress */
+.progress-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.progress-row { width: 100%; display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: center; padding: 10px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); text-align: left; }
+.progress-row .cover { display: block; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; }
+.progress-row .cover > * { width: 100%; height: 100%; }
+.progress-text { display: grid; gap: 2px; min-width: 0; }
+.progress-text small { color: var(--ink-3); }
+.progress-text .song-meter { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.progress-text .song-meter i { flex: 1; height: 6px; border-radius: 6px; background: var(--line); overflow: hidden; }
+.progress-text .song-meter i b { display: block; height: 100%; background: var(--go); border-radius: 6px; }
+.step-bubble { display: block; }
+/* The reel inside the Watch tab sizes to the tab, not the window. */
+@media (min-aspect-ratio: 5 / 4) {
+  .reel-screen.embedded .reel-frame { width: calc(100% - 110px); max-width: 1100px; }
+  .reel-screen.embedded .reel-slide { width: 100%; padding: 0 10px; }
+}
+@media (max-width: 640px) and (orientation: portrait) {
+  .rail .rail-logo, .rail .logo { display: none; }
+  .journey-hero { grid-template-columns: 72px 1fr; align-items: start; }
+  .journey-hero .journey-cover { width: 72px; }
+  .journey-actions { grid-column: 1 / -1; }
+  .journey-title { display: contents; }
+  .journey-title > * { grid-column: 2; }
+  .journey-title .journey-meter, .journey-title .journey-meta, .journey-title .journey-actions, .journey-title .sub, .journey-title > button { grid-column: 1 / -1; width: 100%; }
+  .journey-actions .btn { flex: 1; }
+}
+@media (max-aspect-ratio: 10 / 16), (max-width: 640px) and (orientation: portrait) {
+  .reel-screen.embedded .reel-count { display: none; }
+}

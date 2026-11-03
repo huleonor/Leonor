@@ -6,7 +6,7 @@ const url = process.env.LOCAL === '1' ? undefined : process.env.LIVE_URL ?? 'htt
 
 const config: CapacitorConfig = {
   appId: 'com.hugoleonor.hugospiano',
-  appName: "Hugo's Piano",
+  appName: "Leonor",
   webDir: 'dist',
   server: url ? {
     url,

@@ -1,5 +1,5 @@
 ---
-name: Hugo's Piano
+name: Leonor
 description: A piano-learning app in Simply Piano's look (2026-11 redesign): a deep navy app, one vivid blue for every action, the piano screens on Simply's blue-to-teal gradient with the staff on white strips, and each song taught by short vertical reels drawn from its notes. The older Duolingo notes below describe the components' shapes; the colours are now the dark tokens in src/styles.css. White pages, one bright owl green for every action and every right note, macaw blue for choices, gold stars, an orange streak flame; chunky uppercase buttons on a 4px edge that press down; a coloured unit banner over a winding path of round lesson nodes. The piano screens (song sheet and Teach me lesson) keep their Simply Piano look.
 source: Duolingo-inspired, after the open "Lingo" DESIGN.md (bergside/awesome-design-md-skills, MIT) and Duolingo's public visual language; no Duolingo assets, mascot, logo or proprietary fonts are used.
 colors:
@@ -45,6 +45,8 @@ edges: { button: "0 4px 0 <edge>", node: "0 8px 0 <edge>", card: "2px solid swan
 # Design System: Hugo's Piano
 
 ## Tokens
+
+2026-11, Leonor: the app is renamed Leonor, with a new logo (a white key and its black key forming an L on the gradient, `public/brand/leonor-mark.svg`). The ground is navy #0c1330 under a soft blue light from the top; the stage gradient is layered (teal glow across the middle, cool blue light from the top corner, indigo ramp #111850, #16388a, #1b62a2, #17438e, #0d1446). No game elements anywhere. The tabs are Watch, Song, Library, You.
 
 2026-11: Simply Piano's dark look replaces the white Duolingo ground. Navy ground #121b3e with a soft gradient, cards #1b2752 with a 1px #2c3a6b border, primary blue #1d8cf8 (edge #1466c2) with white bold uppercase text, green #58cc02 only for right notes, white text, muted #9aa5d4 for hints. Piano screens and reels on the gradient #1f3a7d, #2b6f9c, #43a7a7 and back; staff on white strips; glowing now line #2a8cff; right hand #3ec1ff, left hand #ff9f43. Everything else below (shape, type, spacing, motion) still holds.
 

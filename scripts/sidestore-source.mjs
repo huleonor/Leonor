@@ -8,7 +8,7 @@ const site = 'https://hugos-piano.vercel.app';
 const today = new Date().toISOString().slice(0, 10);
 
 const source = {
-  name: "Hugo's Piano",
+  name: "Leonor",
   identifier: 'com.hugoleonor.hugospiano.source',
   subtitle: 'Your songs, part by part.',
   iconURL: `${site}/icons/icon-512.png`,
@@ -16,7 +16,7 @@ const source = {
   tintColor: '#f25c08',
   apps: [
     {
-      name: "Hugo's Piano",
+      name: "Leonor",
       bundleIdentifier: 'com.hugoleonor.hugospiano',
       developerName: 'Hugo Leonor',
       subtitle: 'Learn your songs part by part.',
@@ -39,7 +39,7 @@ const source = {
       appPermissions: {
         entitlements: [],
         privacy: {
-          NSMicrophoneUsageDescription: "Hugo's Piano listens to your piano to check the notes you play.",
+          NSMicrophoneUsageDescription: "Leonor listens to your piano to check the notes you play.",
           NSBluetoothAlwaysUsageDescription: 'Connect a Bluetooth MIDI keyboard.',
         },
       },
