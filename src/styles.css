@@ -2266,3 +2266,4 @@ body { background: var(--bg); }
 @media (max-aspect-ratio: 10 / 16), (max-width: 640px) and (orientation: portrait) {
   .reel-screen.embedded .reel-count { display: none; }
 }
+.now-chip { white-space: nowrap; font-size: 10px; }
