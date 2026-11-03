@@ -12,8 +12,9 @@
 import { splitBars } from './analysis';
 import { buildCourse } from './course';
 import { readSong } from './reading';
+import { REEL_SCRIPTS } from './reelScripts';
 import { strategyOf } from './strategy';
-import { checkReelWords, type ReelFacts, type ReelWords } from './reelShape';
+import { cleanWords, type ReelFacts, type ReelWords } from './reelShape';
 import type { Hand, Song, SongNote } from './types';
 
 export type { ReelWords } from './reelShape';
@@ -38,8 +39,10 @@ export interface Reel {
   practice: { section: string; step?: string };
 }
 
-const LETTERS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
-export const letter = (m: number) => LETTERS[((m % 12) + 12) % 12];
+const SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+/** A note's letter, spelt the way the key spells it (sharps, or flats in a flat key). */
+export const letter = (m: number, flats = false) => (flats ? FLATS : SHARPS)[((m % 12) + 12) % 12];
 
 // ---------- What each bar holds ----------
 
@@ -62,13 +65,13 @@ interface BarFacts {
 const TRIADS: [number[], string][] = [[[0, 4, 7], ''], [[0, 3, 7], 'm']];
 
 /** Best major or minor triad for a set of notes, weighted by length. */
-function triadOf(ns: SongNote[]): string {
+function triadOf(ns: SongNote[], flats: boolean): string {
   const w = new Array(12).fill(0);
   for (const n of ns) w[n.midi % 12] += Math.min(2, n.duration);
   let best = '', score = -1;
   for (let root = 0; root < 12; root++) for (const [iv, q] of TRIADS) {
     const s = iv.reduce((a, i) => a + w[(root + i) % 12], 0) + w[root] * 0.5;
-    if (s > score) { score = s; best = LETTERS[root] + q; }
+    if (s > score) { score = s; best = letter(root, flats) + q; }
   }
   return best;
 }
@@ -76,12 +79,12 @@ function triadOf(ns: SongNote[]): string {
 function barFacts(song: Song, notes: SongNote[], bar: number, beatTicks: number, startTicks: number, prevThumb?: number): BarFacts & { thumb?: number } {
   const L = notes.filter(n => n.hand === 'L');
   const R = notes.filter(n => n.hand === 'R');
-  let chord = triadOf(notes);
+  let chord = triadOf(notes, song.fifths < 0);
   let octave = false, held = false;
   if (L.length) {
     const first = Math.min(...L.map(n => n.ticks));
     const opening = L.filter(n => n.ticks === first).sort((a, b) => a.midi - b.midi);
-    chord = letter(opening[0].midi);
+    chord = letter(opening[0].midi, song.fifths < 0);
     octave = opening.length === 2 && opening[1].midi - opening[0].midi === 12;
     const barTicks = beatTicks * song.timeSig[0];
     held = opening[0].durationTicks >= barTicks * 0.7;
@@ -95,13 +98,13 @@ function barFacts(song: Song, notes: SongNote[], bar: number, beatTicks: number,
   for (const [t, g] of sorted) {
     const beat = Math.floor((t - startTicks) / beatTicks + 1e-6);
     const top = g.reduce((a, b) => (b.midi > a.midi ? b : a));
-    groups[beat] = groups[beat] ? `${groups[beat]} ${letter(top.midi)}` : letter(top.midi);
+    groups[beat] = groups[beat] ? `${groups[beat]} ${letter(top.midi, song.fifths < 0)}` : letter(top.midi, song.fifths < 0);
     (pitches[beat] ??= []).push(top.midi);
   }
   // Where the thumb sits: the note played with finger 1, if any.
   const thumbNote = R.find(n => n.finger === 1);
   const thumb = thumbNote?.midi;
-  const moveTo = thumb !== undefined && prevThumb !== undefined && thumb !== prevThumb ? letter(thumb) : undefined;
+  const moveTo = thumb !== undefined && prevThumb !== undefined && thumb !== prevThumb ? letter(thumb, song.fifths < 0) : undefined;
   return { bar, chord, octave, held, groups: groups.filter(Boolean), pitches: pitches.filter(Boolean), moveTo, thumb };
 }
 
@@ -216,9 +219,10 @@ export function reelsOf(song: Song): Reel[] {
   if (hit) return hit;
   const course = buildCourse(song);
   const { bars, measureTicks } = songFacts(song);
+  const songBars = splitBars(song).bars;
   const plan = strategyOf(song);
   const twoHands = song.hands.length === 2;
-  const stored = storedWords(song);
+  const stored = scriptOf(song);
   const reels: Reel[] = [];
   const add = (r: Omit<Reel, 'words' | 'chords'>, title: string) => {
     const facts = bars.slice(r.from - 1, r.to);
@@ -239,7 +243,11 @@ export function reelsOf(song: Song): Reel[] {
     const lead = plan.parts.find(x => x.n === part.n)?.lead ?? 'R';
     const hands: Hand[] = twoHands ? (lead === 'L' ? ['L', 'R'] : ['R', 'L']) : song.hands;
     for (const h of hands) {
-      add({ id: `p${part.n}-${h}`, part: part.n, kind: twoHands ? h : 'both', from: part.from, to: p.real, slowTo: p.slowTo, slow: p.slow, practice: { section: `p${part.n}`, step: stepFor(twoHands ? h : 'both') } }, `Part ${part.n}`);
+      // A hand's reel starts where that hand comes in: no bars of silence to watch.
+      let from = part.from;
+      while (from < part.to && !songBars[from - 1]?.notes.some(n => n.hand === h)) from++;
+      const q = from === part.from ? p : fitPasses(song, measureTicks, from, part.to);
+      add({ id: `p${part.n}-${h}`, part: part.n, kind: twoHands ? h : 'both', from, to: q.real, slowTo: q.slowTo, slow: q.slow, practice: { section: `p${part.n}`, step: stepFor(twoHands ? h : 'both') } }, `Part ${part.n}`);
     }
     if (twoHands) {
       add({ id: `p${part.n}-both`, part: part.n, kind: 'both', from: part.from, to: p.real, slowTo: p.slowTo, slow: p.slow, practice: { section: `p${part.n}`, step: stepFor('both') } }, `Part ${part.n}`);
@@ -291,49 +299,29 @@ export function timelineOf(song: Song, reel: Reel): ReelTimeline {
   return { notes, cards, passes, duration: t, lo, hi };
 }
 
-// ---------- The model's words ----------
+// ---------- The written scripts ----------
 
-const KEY = (id: string) => `hugos-piano:reels:${id}`;
-const asked = new Set<string>();
-const listeners = new Set<() => void>();
-export function onReels(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; }
-
-function storedWords(song: Song): Record<string, ReelWords> | null {
-  try {
-    const s = JSON.parse(localStorage.getItem(KEY(song.entry.id)) ?? 'null') as { version: string; words: Record<string, ReelWords> } | null;
-    return s && s.version === readSong(song).version ? s.words : null;
-  } catch { return null; }
+/**
+ * The words on a song's reels, written by hand after reading its score bar by bar (the bank in
+ * reelScripts.ts), for the exact version of the notes they were written for: another MIDI file of
+ * the same piece gets the rules' words. A reel the bank leaves out, or a line too long for the
+ * screen, falls back to the rules too.
+ */
+function scriptOf(song: Song): Record<string, ReelWords> | null {
+  const s = REEL_SCRIPTS[song.entry.slot ?? song.entry.id];
+  if (!s || s.version !== readSong(song).version) return null;
+  const out: Record<string, ReelWords> = {};
+  for (const [id, w] of Object.entries(s.reels)) { const c = cleanWords(w); if (c) out[id] = c; }
+  return out;
 }
 
-/** What the model is told about each reel: its kind, bars and what is in them. */
+/** What each reel shows, bar by bar: what the scripts are written from (see scripts/reel-facts). */
 export function reelFacts(song: Song): ReelFacts[] {
   const { bars } = songFacts(song);
   return reelsOf(song).map(r => ({
     id: r.id, kind: r.kind, part: r.part, from: r.from, to: r.to,
     bars: bars.slice(r.from - 1, r.to).map(f => ({ bar: f.bar, bass: f.chord, octave: f.octave, held: f.held, right: f.groups.join(' | '), moveTo: f.moveTo })),
   }));
-}
-
-/** Ask Claude to write the reels' words, once per song and version; the rules' words stay on failure. */
-export async function askReels(song: Song): Promise<void> {
-  const reading = readSong(song);
-  const tag = `${song.entry.id}:${reading.version}`;
-  if (storedWords(song) || asked.has(tag)) return;
-  asked.add(tag);
-  try {
-    const facts = reelFacts(song);
-    const res = await fetch('/api/reels', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ reading: reading.text, reels: facts }),
-    });
-    if (!res.ok) return;
-    const words = checkReelWords(await res.json(), facts);
-    if (!words) return;
-    localStorage.setItem(KEY(song.entry.id), JSON.stringify({ version: reading.version, words }));
-    cache.delete(song);
-    listeners.forEach(fn => fn());
-  } catch { /* offline or no server: the rules' words stay */ }
 }
 
 // ---------- What he has watched ----------
