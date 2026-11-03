@@ -12,10 +12,7 @@ import { SettingsSheet } from './components/SettingsSheet';
 import { EditSong } from './components/EditSong';
 import { SongScreen, sectionsOf, type Section } from './components/SongScreen';
 import { Songs } from './components/Songs';
-import { Profile } from './components/Profile';
-import { Penguin } from './components/Penguin';
 import { Logo } from './components/Brand';
-import { useProfile } from './lib/profile';
 import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
 import { I18nContext, makeT } from './lib/i18n';
@@ -24,18 +21,12 @@ import { connect, disconnectBle, disconnectMic, linkState, onLinkState, onNote, 
 import { addToLibrary, loadSettings, removeSong, renameSong, saveSettings } from './lib/library';
 import type { Settings, SongEntry } from './lib/types';
 
-/** Watch is the reel feed of the song being learnt; Song is its map; Library his songs; You his profile. */
-type Tab = 'watch' | 'song' | 'library' | 'you';
-/** The You tab's mark is his own penguin. */
-function ProfileMark({ size = 26 }: { size?: number }) {
-  const p = useProfile();
-  return <Penguin look={p.look} size={size} framed />;
-}
+/** Watch is the reel feed of the song being learnt; Song is its map; Library his songs. */
+type Tab = 'watch' | 'song' | 'library';
 const TABS: [Tab, string, (p: { size?: number }) => React.ReactElement][] = [
   ['watch', 'Watch', IconReel],
   ['song', 'Song', IconPathFill],
   ['library', 'Library', IconLibraryFill],
-  ['you', 'You', p => <ProfileMark size={p.size} />],
 ];
 
 export default function App() {
@@ -227,10 +218,7 @@ export default function App() {
                   onPractice={(reel, i) => practise(currentInfo.entry.id, reel, i)}
                 />
               ) : journey
-            ) : tab === 'song' ? journey
-              : tab === 'you' ? (
-              <Profile infos={infos} entries={entries} onOpenSong={info => { choose(info.entry.slot ?? info.entry.id); setTab('song'); }} />
-            ) : (
+            ) : tab === 'song' ? journey : (
               <Songs infos={infos} entries={entries} ready={ready} current={current}
                 onOpen={info => { choose(info.entry.slot ?? info.entry.id); addToLibrary(info.entry.slot ?? info.entry.id); setTab('song'); }}
                 onAdd={slot => pickFile(slot)} onEdit={setEditing} />
