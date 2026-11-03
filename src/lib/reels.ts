@@ -12,7 +12,7 @@
 import { splitBars } from './analysis';
 import { buildCourse } from './course';
 import { readSong } from './reading';
-import { REEL_SCRIPTS } from './reelScripts';
+import { BAR_SCRIPTS, REEL_SCRIPTS, type BarScript } from './reelScripts';
 import { strategyOf } from './strategy';
 import { cleanWords, type ReelFacts, type ReelWords } from './reelShape';
 import type { Hand, Song, SongNote } from './types';
@@ -223,10 +223,12 @@ export function reelsOf(song: Song): Reel[] {
   const plan = strategyOf(song);
   const twoHands = song.hands.length === 2;
   const stored = scriptOf(song);
+  const byBar = barScriptOf(song, bars);
   const reels: Reel[] = [];
   const add = (r: Omit<Reel, 'words' | 'chords'>, title: string) => {
     const facts = bars.slice(r.from - 1, r.to);
-    const words = stored?.[r.id] ?? ruleWords(r.kind, facts, r.part, title);
+    const rules = ruleWords(r.kind, facts, r.part, title);
+    const words = stored?.[r.id] ?? byBar?.(r, rules) ?? rules;
     reels.push({ ...r, words, chords: facts.map(f => ({ bar: f.bar, name: f.chord })) });
   };
 
@@ -313,6 +315,27 @@ function scriptOf(song: Song): Record<string, ReelWords> | null {
   const out: Record<string, ReelWords> = {};
   for (const [id, w] of Object.entries(s.reels)) { const c = cleanWords(w); if (c) out[id] = c; }
   return out;
+}
+
+/**
+ * A script written from a printed score, by bar number (BAR_SCRIPTS): it fits any MIDI file of that
+ * score, however its parts are cut, as long as the bass of the file's bars matches the score's (so
+ * another arrangement of the same piece never gets the wrong words). Each reel takes the hook and
+ * tip of the section it starts in, for its hand, and the cues of its own bars.
+ */
+function barScriptOf(song: Song, bars: BarFacts[]): ((r: Omit<Reel, 'words' | 'chords'>, rules: ReelWords) => ReelWords | undefined) | null {
+  const s: BarScript | undefined = BAR_SCRIPTS[song.entry.slot ?? song.entry.id];
+  if (!s) return null;
+  const marks = Object.entries(s.fingerprint);
+  const same = marks.filter(([bar, bass]) => bars[Number(bar) - 1]?.chord === bass).length;
+  if (same < marks.length * 0.7) return null;
+  return (r, rules) => {
+    if (r.kind === 'intro') return cleanWords({ ...s.intro, title: song.entry.title }) ?? undefined;
+    const sec = s.sections.find(x => r.from >= x.from && r.from <= x.to);
+    if (!sec) return undefined;
+    const cues = Object.entries(s.cues[r.kind]).map(([bar, text]) => ({ bar: Number(bar), text })).filter(c => c.bar >= r.from && c.bar <= r.to);
+    return cleanWords({ title: rules.title, hook: sec[r.kind].hook, tip: sec[r.kind].tip, cues: cues.length ? cues : rules.cues }) ?? undefined;
+  };
 }
 
 /** What each reel shows, bar by bar: what the scripts are written from (see scripts/reel-facts). */
