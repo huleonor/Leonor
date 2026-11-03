@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
 import { meterOf, pctOf } from '../lib/mastery';
-import { askReels, onReels, onSeen, reelsOf, seenReels, type Reel } from '../lib/reels';
+import { onSeen, reelsOf, seenReels, type Reel } from '../lib/reels';
 import { askStrategy } from '../lib/strategy';
 import type { SongEntry } from '../lib/types';
 import { IconCheck, IconImport, IconKeysFill, IconPlay, IconReel, IconStar } from './Icons';
@@ -58,11 +58,10 @@ type Item = { kind: 'reel'; reel: Reel; i: number; done: boolean } | { kind: 'pr
 export function Journey({ infos, entries, ready, onWatch, onPractice, onWholeSong, onBringMidi, onSongs }: Props) {
   const [id, setId] = useState(currentSongId);
   useBump(onSeen);
-  useBump(onReels);
   const entry = entries.find(e => e.id === id || e.slot === id);
   const info = entry ? infos[entry.id] : undefined;
   const song = info?.song;
-  useEffect(() => { if (song) { askStrategy(song); askReels(song); } }, [song]);
+  useEffect(() => { if (song) askStrategy(song); }, [song]);
   const choose = (x: string) => { setId(x); setCurrentSong(x); };
 
   const reels = useMemo(() => (song ? reelsOf(song) : []), [song, infos]); // eslint-disable-line react-hooks/exhaustive-deps

@@ -1,6 +1,5 @@
 /**
- * The words on a song's reels, as the model writes them (api/reels.ts) and the app checks them.
- * Shared by the app and the server, so it imports nothing.
+ * The words on a song's reels: written by hand in reelScripts.ts, checked here before they show.
  */
 
 export interface ReelWords {
@@ -14,7 +13,7 @@ export interface ReelWords {
   tip: string;
 }
 
-/** What the model is told about one reel. */
+/** What one reel shows, bar by bar: what a script is written from. */
 export interface ReelFacts {
   id: string;
   kind: 'intro' | 'L' | 'R' | 'both';
@@ -24,61 +23,19 @@ export interface ReelFacts {
   bars: { bar: number; bass: string; octave: boolean; held: boolean; right: string; moveTo?: string }[];
 }
 
-export const REEL_SCHEMA = {
-  type: 'object',
-  properties: {
-    reels: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', description: 'The reel id, exactly as given.' },
-          title: { type: 'string', description: 'Small label, at most 32 characters, e.g. "Part 1: left hand".' },
-          hook: { type: 'string', description: 'The big line on top, at most 48 characters: the one idea of this reel.' },
-          cues: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                bar: { type: 'integer', description: 'A bar of this reel.' },
-                text: { type: 'string', description: 'At most 56 characters, shown while that bar plays.' },
-              },
-              required: ['bar', 'text'],
-              additionalProperties: false,
-            },
-          },
-          tip: { type: 'string', description: 'At most 80 characters, shown at the end before he plays.' },
-        },
-        required: ['id', 'title', 'hook', 'cues', 'tip'],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ['reels'],
-  additionalProperties: false,
-} as const;
-
 /** No em or en dashes on screen, and nothing longer than the reel has room for. */
 const clean = (s: unknown, max: number) => {
   if (typeof s !== 'string') return null;
-  const t = s.replace(/\s*[–—]\s*/g, ', ').replace(/\s+/g, ' ').trim();
-  return t && t.length <= max + 12 ? (t.length > max ? `${t.slice(0, max - 1).trimEnd()}.` : t) : null;
+  const t = s.replace(/\s*[\u2013\u2014]\s*/g, ', ').replace(/\s+/g, ' ').trim();
+  return t && t.length <= max ? t : null;
 };
 
-/** Keeps the model's words only where they fit their reel; a reel it got wrong keeps the rules' words. */
-export function checkReelWords(raw: unknown, facts: ReelFacts[]): Record<string, ReelWords> | null {
-  const list = (raw as { reels?: unknown })?.reels;
-  if (!Array.isArray(list)) return null;
-  const out: Record<string, ReelWords> = {};
-  for (const r of list as Record<string, unknown>[]) {
-    const f = facts.find(x => x.id === r?.id);
-    if (!f) continue;
-    const title = clean(r.title, 32), hook = clean(r.hook, 48), tip = clean(r.tip, 80);
-    if (!title || !hook || !tip || !Array.isArray(r.cues)) continue;
-    const cues = (r.cues as { bar?: unknown; text?: unknown }[])
-      .map(c => ({ bar: Number(c?.bar), text: clean(c?.text, 56) }))
-      .filter((c): c is { bar: number; text: string } => Number.isInteger(c.bar) && c.bar >= f.from && c.bar <= f.to && !!c.text);
-    out[f.id] = { title, hook, cues, tip };
-  }
-  return Object.keys(out).length ? out : null;
+export const LIMITS = { title: 32, hook: 48, cue: 56, tip: 80 };
+
+/** A script's words if they fit the reel; null sends the reel back to the rules' words. */
+export function cleanWords(w: ReelWords): ReelWords | null {
+  const title = clean(w.title, LIMITS.title), hook = clean(w.hook, LIMITS.hook), tip = clean(w.tip, LIMITS.tip);
+  if (!title || !hook || !tip) return null;
+  const cues = w.cues.map(c => ({ bar: c.bar, text: clean(c.text, LIMITS.cue) })).filter((c): c is { bar: number; text: string } => !!c.text);
+  return { title, hook, cues, tip };
 }

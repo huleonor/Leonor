@@ -83,7 +83,7 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void) {
 interface Lane { hand: Hand; lo: number; hi: number; }
 
 /** Falling notes onto a keyboard, one lane per hand (right above left), drawn every frame. */
-function Lanes({ tl, lanes, now, held }: { tl: ReelTimeline; lanes: Lane[]; now: () => number; held: React.RefObject<Set<number>> }) {
+function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[]; now: () => number; held: React.RefObject<Set<number>>; flats: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current!;
@@ -176,7 +176,7 @@ function Lanes({ tl, lanes, now, held }: { tl: ReelTimeline; lanes: Lane[]; now:
                 ctx.fillStyle = pal.fingerInk;
                 ctx.font = `900 ${Math.round(Math.min(14, k.w * 0.45))}px Nunito Variable, Nunito, sans-serif`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(letter(m), k.x + k.w / 2, cy - r - 10);
+                ctx.fillText(letter(m, flats), k.x + k.w / 2, cy - r - 10);
               }
             }
           }
@@ -186,7 +186,7 @@ function Lanes({ tl, lanes, now, held }: { tl: ReelTimeline; lanes: Lane[]; now:
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [tl, lanes, now, held]);
+  }, [tl, lanes, now, held, flats]);
   return <canvas ref={ref} className="reel-lanes" aria-hidden="true" />;
 }
 
@@ -261,8 +261,8 @@ export function ReelPlayer({ song, reel, index, count, active, onPractice, onNex
     const by = new Map<number, typeof onsets>();
     for (const o of onsets) by.set(o.beat, [...(by.get(o.beat) ?? []), o]);
     const curT = cur.t;
-    return [...by.values()].map(g => g.map(o => ({ l: letter(o.m), on: Math.abs(tl.notes[o.i].t - curT) < 0.02 || (cur.hand === 'R' && o.i === place.note), past: tl.notes[o.i].t < curT - 0.02 })));
-  }, [tl, place.note, reel.kind]);
+    return [...by.values()].map(g => g.map(o => ({ l: letter(o.m, song.fifths < 0), on: Math.abs(tl.notes[o.i].t - curT) < 0.02 || (cur.hand === 'R' && o.i === place.note), past: tl.notes[o.i].t < curT - 0.02 })));
+  }, [tl, place.note, reel.kind, song.fifths]);
   const pct = tl.duration ? Math.min(1, clock.now() / tl.duration) : 0;
   const showTitle = place.card === 'title';
   const showSpeed = place.card === 'speed';
@@ -294,7 +294,7 @@ export function ReelPlayer({ song, reel, index, count, active, onPractice, onNex
           </ol>
         )}
         <div className="reel-stage">
-          <Lanes tl={tl} lanes={lanes} now={clock.now} held={held} />
+          <Lanes tl={tl} lanes={lanes} now={clock.now} held={held} flats={song.fifths < 0} />
         </div>
         <div className="reel-foot">
           {groups && (

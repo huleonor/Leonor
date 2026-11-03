@@ -1,6 +1,5 @@
 {
   "functions": {
-    "api/plan.ts": { "maxDuration": 300 },
-    "api/reels.ts": { "maxDuration": 300 }
+    "api/plan.ts": { "maxDuration": 300 }
   }
 }

@@ -28,3 +28,16 @@ if (import.meta.env.DEV) {
     return { ...c, memory: memoryReport('gymnopedie-1') };
   };
 }
+
+// What each reel shows, bar by bar, to write its script from: await window.__reelFacts('song-id').
+if (import.meta.env.DEV) {
+  (window as unknown as { __reelFacts: unknown }).__reelFacts = async (id: string) => {
+    const { listSongs, loadSong } = await import('./lib/library');
+    const { reelFacts } = await import('./lib/reels');
+    const { readSong } = await import('./lib/reading');
+    const entry = (await listSongs()).find(e => e.id === id || e.slot === id);
+    if (!entry) return `No song ${id}`;
+    const song = await loadSong(entry);
+    return { version: readSong(song).version, score: readSong(song).text, reels: reelFacts(song) };
+  };
+}
