@@ -3,6 +3,7 @@
  * hand by hand (the tricky phrase twice), then hands together, then in tempo; then the whole song.
  * Parts that repeat an earlier one are marked as such and count as learnt with it.
  */
+import { barGrid, barStart } from './bars';
 import { createStore, del, get, set } from 'idb-keyval';
 import { scoreBar, splitBars } from './analysis';
 import type { FingerMode, HandsChoice, Song } from './types';
@@ -85,11 +86,10 @@ export function buildCourse(song: Song): Course {
   }
 
   // Same music as an earlier part (80% of the notes in the same place): learnt once, counted twice.
-  const [num, den] = song.timeSig;
-  const measureTicks = song.ppq * 4 * (num / den);
+  const grid = barGrid(song);
   const q = song.ppq / 4;
   const tokensOf = (p: CoursePart) => {
-    const start = (p.from - 1) * measureTicks;
+    const start = barStart(grid, p.from - 1);
     const t = new Map<string, number>();
     for (const b of bars.slice(p.from - 1, p.to)) {
       for (const n of b.notes) {

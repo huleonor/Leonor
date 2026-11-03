@@ -28,6 +28,7 @@
  * week drops it to silver until he plays it clean again, which restores gold and starts the
  * checks over; nothing is ever lost for good.
  */
+import { barGrid, barIndex, barStart } from './bars';
 import { useEffect, useReducer } from 'react';
 import { buildCourse, type CourseStep } from './course';
 import type { Engine } from './engine';
@@ -133,8 +134,7 @@ function model(song: Song): Model {
   const hit = models.get(song);
   if (hit) return hit;
   const course = buildCourse(song);
-  const [num, den] = song.timeSig;
-  const measure = song.ppq * 4 * (num / den);
+  const grid = barGrid(song);
   const size = (p: { from: number; to: number }) => p.to - p.from + 1;
   const parts: Part[] = course.parts.filter(p => !p.sameAs).map(p => ({
     n: p.n, from: p.from, to: p.to,
@@ -144,7 +144,7 @@ function model(song: Song): Model {
   const m: Model = {
     parts, moves: movesOf(song),
     order: course.parts.map(p => ({ from: p.from, to: p.to, of: p.sameAs ?? p.n })),
-    barOf: n => Math.floor(n.ticks / measure + 1e-6) + 1,
+    barOf: n => barIndex(grid, n.ticks) + 1,
     two, hands: song.hands, all: two ? 'both' : song.hands[0],
     first: parts[0]?.from ?? 1,
     last: course.parts[course.parts.length - 1]?.to ?? 1,
@@ -426,7 +426,9 @@ export function cutMove(song: Song, key: string, st = loadMastery(song.entry.id)
   let cursor = 0;
   for (const { pair, bar } of places) {
     const start = pair[0][0].ticks;
-    const inBar = start - Math.floor(start / measure + 1e-6) * measure;
+    // Where the move sits in its own bar (the bar grid follows any change of metre).
+    const srcGrid = barGrid(song);
+    const inBar = start - barStart(srcGrid, barIndex(srcGrid, start));
     // A long note before the move: the move comes in the next bar, on its own beat, not bars later.
     const gap = pair[1][0].ticks - start;
     const skipBars = Math.max(0, Math.floor((inBar + gap) / measure + 1e-6) - 1);

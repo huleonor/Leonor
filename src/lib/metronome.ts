@@ -14,12 +14,16 @@ export function useMetronome(engine: Engine, enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
     const song = engine.song;
-    const [num, den] = song.timeSig;
-    const beatTicks = song.ppq * 4 / den;
-    // Compound time (6/8, 9/8, 12/8) is felt in dotted quarters.
-    const step = den === 8 && num % 3 === 0 && num > 3 ? 3 : 1;
-    const beatSec = song.ticksToSeconds(beatTicks * step);
-    const perBar = step === 3 ? num / 3 : num;
+    // Each bar ticks in its own metre (a piece can change it): compound time (6/8, 9/8, 12/8) is
+    // felt in dotted quarters, and beat 1 of every bar is accented.
+    const beatOf = (t: number) => {
+      let bar = 0;
+      while (bar + 1 < engine.measureTimes.length && engine.measureTimes[bar + 1] <= t + 1e-3) bar++;
+      const [num, den] = engine.barSigs[Math.min(bar, engine.barSigs.length - 1)] ?? song.timeSig;
+      const step = den === 8 && num % 3 === 0 && num > 3 ? 3 : 1;
+      const beatSec = song.ticksToSeconds(song.ppq * 4 / den * step);
+      return { bar, beat: Math.floor((t - (engine.measureTimes[bar] ?? 0)) / Math.max(1e-3, beatSec) + 1e-6) };
+    };
     let raf = 0, lastBeat = -1, lastCount = -1;
     const frame = () => {
       if (engine.playing && !engine.opts.listen && !engine.opts.wait && !engine.opts.follow) {
@@ -30,9 +34,10 @@ export function useMetronome(engine: Engine, enabled: boolean) {
           // The music starts on beat 1 right after: always tick it.
           lastBeat = -1;
         } else {
-          const beat = Math.floor((engine.time + 0.01) / beatSec);
+          const { bar, beat } = beatOf(engine.time + 0.01);
+          const key = bar * 1000 + beat;
           lastCount = -1;
-          if (beat !== lastBeat && engine.time >= 0) { lastBeat = beat; playClick(beat % perBar === 0); }
+          if (key !== lastBeat && engine.time >= 0) { lastBeat = key; playClick(beat === 0); }
         }
       } else { lastBeat = -1; lastCount = -1; }
       raf = requestAnimationFrame(frame);

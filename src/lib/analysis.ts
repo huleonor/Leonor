@@ -3,6 +3,7 @@
  * doing, which chords come round, where the hands sit, and which bars will be hard. Each finding
  * becomes a tip, and most tips come with a stretch of bars to practise.
  */
+import { barGrid, barIndex, barLength, barStart, type BarGrid } from './bars';
 import { noteName } from './names';
 import type { Hand, HandsChoice, Song, SongNote } from './types';
 
@@ -80,20 +81,20 @@ function classify(items: (Tokens | null)[]): number[] {
   });
 }
 
-export function splitBars(song: Song): { bars: Bar[]; measureTicks: number } {
-  const [num, den] = song.timeSig;
-  const measureTicks = song.ppq * 4 * (num / den);
+export function splitBars(song: Song): { bars: Bar[]; measureTicks: number; grid: BarGrid } {
+  const grid = barGrid(song);
+  // The first bar's length, for callers that only need a typical bar; bars themselves follow the grid.
+  const measureTicks = barLength(grid, 0);
   const q = song.ppq / 4;
-  const last = Math.max(...song.notes.map(n => n.ticks));
-  const count = Math.floor(last / measureTicks + 1e-6) + 1;
+  const count = grid.count;
   const bars: Bar[] = Array.from({ length: count }, (_, i) => ({ index: i, notes: [], cls: -1, shape: { R: -1, L: -1 } }));
-  for (const n of song.notes) bars[Math.min(count - 1, Math.floor(n.ticks / measureTicks + 1e-6))].notes.push(n);
-  const start = (b: Bar) => b.index * measureTicks;
+  for (const n of song.notes) bars[Math.min(count - 1, barIndex(grid, n.ticks))].notes.push(n);
+  const start = (b: Bar) => barStart(grid, b.index);
   classify(bars.map(b => tokens(b.notes, start(b), q, false))).forEach((c, i) => (bars[i].cls = c));
   for (const h of ['R', 'L'] as Hand[]) {
     classify(bars.map(b => tokens(b.notes.filter(n => n.hand === h), start(b), q, true))).forEach((c, i) => (bars[i].shape[h] = c));
   }
-  return { bars, measureTicks };
+  return { bars, measureTicks, grid };
 }
 
 /** Longest stretches of bars that come back unchanged, most useful first. */
@@ -206,9 +207,9 @@ export function songGrade(song: Song): 1 | 2 | 3 | 4 | 5 {
 }
 
 export function analyseSong(song: Song): Analysis {
-  const { bars, measureTicks } = splitBars(song);
+  const { bars, grid } = splitBars(song);
   const tips: Tip[] = [];
-  const barOf = (n: SongNote) => Math.min(bars.length, Math.floor(n.ticks / measureTicks + 1e-6) + 1);
+  const barOf = (n: SongNote) => Math.min(bars.length, barIndex(grid, n.ticks) + 1);
   const playing = bars.filter(b => b.notes.length);
   const unique = new Set(playing.map(b => b.cls)).size;
   const twoHands = song.hands.length === 2;
