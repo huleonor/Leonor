@@ -82,6 +82,7 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
     const lineTop = parseFloat(line.style.top) || 0;
     const paperBox = paper.getBoundingClientRect();
     const extras: HTMLElement[] = [];
+    const bands: { top: number; height: number }[] = [];
     const thick = Math.max(1, scale * 0.5);
     paper.querySelectorAll<SVGGElement>('g.abcjs-staff').forEach(g => {
       const b = g.getBoundingClientRect();
@@ -93,6 +94,14 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
       ext.style.setProperty('--thick', `${thick}px`);
       hostRef.current!.appendChild(ext);
       extras.push(ext);
+      // Simply Piano's white strip behind each staff, running across the whole screen.
+      const band = document.createElement('div');
+      band.className = 'staff-band';
+      band.style.top = ext.style.top;
+      band.style.height = ext.style.height;
+      hostRef.current!.appendChild(band);
+      extras.push(band);
+      bands.push({ top: b.top - paperBox.top, height: b.height + thick });
     });
     // The clef (and key signature) stays at the left edge while the music slides under it, and the
     // notes he has played fade out behind it.
@@ -107,13 +116,34 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
       panel.style.height = `${paperBox.height}px`;
       const copy = svg.cloneNode(true) as SVGElement;
       copy.querySelectorAll('.abcjs-note, .abcjs-rest, .abcjs-bar, .abcjs-time-signature, .abcjs-annotation, .abcjs-slur, .abcjs-tie').forEach(n => n.remove());
+      // The panel hides the music sliding under the clef: the page's own gradient, lined up with it
+      // (it only changes from top to bottom), with the white strips of the staves on it.
+      const page = hostRef.current!.closest('.lesson');
+      if (page) {
+        const pr = page.getBoundingClientRect(), hr = hostRef.current!.getBoundingClientRect();
+        panel.style.backgroundSize = `100% ${pr.height}px`;
+        panel.style.backgroundPosition = `0 ${-(hr.top - pr.top + lineTop)}px`;
+      }
+      for (const bd of bands) {
+        const strip = document.createElement('div');
+        strip.className = 'staff-band';
+        strip.style.top = `${bd.top}px`;
+        strip.style.height = `${bd.height}px`;
+        panel.appendChild(strip);
+      }
       panel.appendChild(copy);
-      const fadeEl = document.createElement('div');
-      fadeEl.className = 'past-fade';
-      fadeEl.style.left = `${clefW + 10 * scale}px`;
       hostRef.current!.appendChild(panel);
-      hostRef.current!.appendChild(fadeEl);
-      extras.push(panel, fadeEl);
+      extras.push(panel);
+      // Played notes fade out behind the clef: a white fade over each staff's strip.
+      for (const bd of bands) {
+        const fadeEl = document.createElement('div');
+        fadeEl.className = 'past-fade';
+        fadeEl.style.left = `${clefW + 10 * scale}px`;
+        fadeEl.style.top = `${lineTop + bd.top}px`;
+        fadeEl.style.height = `${bd.height}px`;
+        hostRef.current!.appendChild(fadeEl);
+        extras.push(fadeEl);
+      }
     }
 
     // A step that fits on the screen stays still, centred between the clef and the right edge, and

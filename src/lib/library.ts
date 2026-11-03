@@ -14,7 +14,8 @@ export const BUILT_IN: SongEntry[] = [
   { id: 'sarabande', collection: 'classical', title: 'Sarabande', film: 'Suite in D minor, HWV 437', year: 1733, composer: 'G. F. Handel', builtIn: true, file: '/songs/sarabande.mid', about: 'Solemn chords in a slow three, both hands moving together.' },
   { id: 'passacaglia', collection: 'classical', title: 'Passacaglia', film: 'Suite in G minor, HWV 432', year: 1720, composer: 'G. F. Handel', builtIn: true, file: '/songs/passacaglia.mid', about: 'One chord pattern played again and again, a little busier each time.' },
   { id: 'clair-de-lune', collection: 'classical', title: 'Clair de Lune', film: 'Suite bergamasque', year: 1905, composer: 'C. Debussy', builtIn: true, file: '/songs/clair-de-lune.mid', about: 'Soft and flowing, free in time, with wide hands and many flats.' },
-  // Film scores and modern piano: bring your own MIDI
+  // Film scores and modern piano: bring your own MIDI. Interstellar Experience is the first song the reels teach.
+  { id: 'interstellar-experience', collection: 'modern', title: 'Interstellar Experience', film: 'after the Interstellar theme by H. Zimmer', composer: 'T. Ann', builtIn: true, missing: true, about: 'Tony Ann on Hans Zimmer\'s Interstellar theme: a pattern that turns and turns and grows to a big finish.' },
   { id: 'comptine', collection: 'film', title: "Comptine d'un autre été", film: 'Amélie', year: 2001, composer: 'Y. Tiersen', builtIn: true, missing: true, about: 'Running broken chords in the left hand under a simple tune.' },
   { id: 'cornfield-chase', collection: 'film', title: 'Cornfield Chase', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, missing: true, about: 'A ticking pattern that builds and builds.' },
   { id: 'hes-a-pirate', collection: 'film', title: "He's a Pirate", film: 'Pirates of the Caribbean', year: 2003, composer: 'K. Badelt, H. Zimmer', builtIn: true, missing: true, about: 'Fast and driving, in six-eight.' },
@@ -182,7 +183,7 @@ const LIBRARY = 'hugos-piano:library';
 const libListeners = new Set<() => void>();
 export function myLibrary(): string[] {
   // A new library starts with the one song the app teaches for now.
-  try { return JSON.parse(localStorage.getItem(LIBRARY) ?? '["gymnopedie-1"]'); } catch { return ['gymnopedie-1']; }
+  try { return JSON.parse(localStorage.getItem(LIBRARY) ?? '["interstellar-experience","gymnopedie-1"]'); } catch { return ['interstellar-experience', 'gymnopedie-1']; }
 }
 function saveLibrary(ids: string[]) {
   try { localStorage.setItem(LIBRARY, JSON.stringify(ids)); } catch { /* storage unavailable */ }

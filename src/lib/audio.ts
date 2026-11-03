@@ -43,9 +43,10 @@ export function loadPiano(onProgress?: (loaded: number, total: number) => void):
 
 export const pianoReady = () => !!piano;
 
-export function playNote(midi: number, velocity = 80, duration?: number) {
+/** Sounds a note now, or at `time` on the audio clock (for music scheduled a little ahead). */
+export function playNote(midi: number, velocity = 80, duration?: number, time?: number) {
   if (!piano) return;
-  piano.start({ note: midi, velocity: Math.max(1, Math.min(127, velocity)), duration });
+  piano.start({ note: midi, velocity: Math.max(1, Math.min(127, velocity)), duration, time });
 }
 
 export function holdNote(midi: number, velocity = 80) {

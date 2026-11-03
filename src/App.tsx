@@ -5,7 +5,10 @@ import { Paywall } from './components/Paywall';
 import { type PaywallReason } from './lib/billing';
 import { applyFreezes, onStats, setGoalMinutes } from './lib/stats';
 import { scheduleReminders, startWebReminders } from './lib/reminders';
-import { PathHome, colorOf } from './components/PathHome';
+import { colorOf } from './components/PathHome';
+import { Journey, practiceFor } from './components/Journey';
+import { ReelFeed } from './components/Reels';
+import { reelsOf, type Reel } from './lib/reels';
 import { EnergySheet, Shop } from './components/Economy';
 import { TheoryLesson } from './components/TheoryLesson';
 import { Gem } from './components/GameIcons';
@@ -14,7 +17,7 @@ import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
 import { SettingsSheet } from './components/SettingsSheet';
 import { EditSong } from './components/EditSong';
-import { SongScreen, sectionsOf } from './components/SongScreen';
+import { SongScreen, sectionsOf, type Section } from './components/SongScreen';
 import { Songs } from './components/Songs';
 import { Profile } from './components/Profile';
 import { Penguin } from './components/Penguin';
@@ -22,10 +25,8 @@ import { useProfile } from './lib/profile';
 import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
 import { I18nContext, makeT } from './lib/i18n';
-import { finishTheory, markPlacementTaken, nodePlayable, pathChanged, placedUnits, placeUnit, UNITS, type Playable } from './lib/path';
+import { finishTheory, markPlacementTaken, pathChanged, placedUnits, placeUnit, UNITS, type Playable } from './lib/path';
 import type { PathNode, Unit } from './lib/curriculum';
-import type { CourseProgress } from './lib/course';
-import { energy } from './lib/energy';
 import { MasterySession } from './lib/mastery';
 import { connect, disconnectBle, disconnectMic, linkState, onLinkState, onNote, watchForMidi, type LinkState, type Source } from './lib/input';
 import { loadSettings, removeSong, renameSong, saveSettings } from './lib/library';
@@ -48,7 +49,9 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [tab, setTab] = useState<Tab>('home');
   const [openId, setOpenId] = useState<string | null>(null);
-  const [lesson, setLesson] = useState<{ id: string; section: string; step?: string; n: number } | null>(null);
+  const [lesson, setLesson] = useState<{ id: string; section: string; step?: string; n: number; only?: Section; back?: number } | null>(null);
+  // A song's reels, the short videos, from this one on.
+  const [watch, setWatch] = useState<{ id: string; start: number } | null>(null);
   // A course lesson, a skill practice, or today's session (several pieces played one after the other).
   const [run, setRun] = useState<{ items: Playable[]; i: number; n: number; session: boolean; test?: boolean; path?: boolean } | null>(null);
   const [theory, setTheory] = useState<{ node: PathNode; unit: Unit } | null>(null);
@@ -137,19 +140,6 @@ export default function App() {
   // Opening a song shows its sheet music; Teach me opens a section's lesson on top of it.
   const openSheet = (info: SongInfo) => { unlockAudio(); ensureInput(); openSong(info); };
 
-  // A node on the path: theory opens its cards, the trophy is the unit test, the rest are lessons
-  // (each step costs energy, so he needs some to start).
-  const playNode = (node: PathNode, unit: Unit, prog?: CourseProgress) => {
-    if (node.kind === 'theory') { setTheory({ node, unit }); return; }
-    const p = nodePlayable(node, prog);
-    if (!p) return;
-    if (node.kind === 'trophy') { takeTest([p]); return; }
-    if (energy() < 1) { setEnergySheet('empty'); return; }
-    unlockAudio(); ensureInput();
-    setRun({ items: [p], i: 0, n: 0, session: false, path: true });
-  };
-  // A test: the placement test (every unit in turn) or one unit's test-out. Each pass skips that unit.
-  const takeTest = (items: Playable[]) => { unlockAudio(); ensureInput(); setRun({ items, i: 0, n: 0, session: false, test: true }); };
   const endTest = (passedThrough: number) => {
     markPlacementTaken();
     setRun(null);
@@ -159,12 +149,23 @@ export default function App() {
     setNotice({ text: passedThrough > 0 ? (at < 0 ? 'You passed every unit test.' : `You start at Unit ${at + 1}: ${UNITS[at].title}.`) : 'You start at the beginning: Unit 1.' });
   };
   const runItem = run?.items[run.i];
+  // After a reel: the practice for that pattern; when it is done, the next video.
+  const practise = (id: string, reel: Reel, i: number) => {
+    const info = infos[id];
+    if (!info?.song) return;
+    if (reel.kind === 'intro') { setWatch({ id, start: i + 1 }); return; }
+    const only = practiceFor(info, reel);
+    if (!only) return;
+    unlockAudio(); ensureInput();
+    setWatch(null);
+    setLesson({ id, section: only.id, n: Date.now(), only, back: i });
+  };
 
   const open = openId ? infos[openId] : undefined;
   const lessonInfo = lesson && infos[lesson.id];
   const lessonSections = lessonInfo?.course ? sectionsOf(lessonInfo) : [];
-  const lessonSection = lessonSections.find(sc => sc.id === lesson?.section);
-  const nextSection = lessonSection && lessonSections[lessonSections.indexOf(lessonSection) + 1];
+  const lessonSection = lesson?.only ?? lessonSections.find(sc => sc.id === lesson?.section);
+  const nextSection = lessonSection && !lesson?.only ? lessonSections[lessonSections.indexOf(lessonSection) + 1] : undefined;
   const masteryInfo = mastery ? infos[mastery.id] : undefined;
   const masterySection = useMemo(() => mastery?.session.section, [mastery?.session]);
 
@@ -231,10 +232,20 @@ export default function App() {
           key={`${lesson.id}-${lesson.section}-${lesson.n}`}
           info={lessonInfo} section={lessonSection} startAt={lesson.step}
           settings={settings} update={update} links={links}
-          onExit={() => setLesson(null)}
-          onNextSection={nextSection ? () => setLesson(l => l && { ...l, section: nextSection.id, step: undefined, n: l.n + 1 }) : undefined}
+          onExit={() => { if (lesson.back !== undefined) setWatch({ id: lesson.id, start: lesson.back }); setLesson(null); }}
+          exitLabel={lesson.back !== undefined ? 'Back to the videos' : undefined}
+          nextLabel={lesson.back !== undefined ? 'Next video' : undefined}
+          onNextSection={lesson.back !== undefined ? () => { setWatch({ id: lesson.id, start: lesson.back! + 1 }); setLesson(null); }
+            : nextSection ? () => setLesson(l => l && { ...l, section: nextSection.id, step: undefined, n: l.n + 1 }) : undefined}
           onRecorded={() => refreshSong(lesson.id)}
           onSettings={() => setSheet('settings')}
+        />
+      ) : watch && infos[watch.id]?.song ? (
+        <ReelFeed
+          key={`${watch.id}-${watch.start}`}
+          song={infos[watch.id].song!} reels={reelsOf(infos[watch.id].song!)} start={Math.min(watch.start, reelsOf(infos[watch.id].song!).length - 1)}
+          onClose={() => setWatch(null)}
+          onPractice={(reel, i) => practise(watch.id, reel, i)}
         />
       ) : open?.song ? (
         <SongScreen
@@ -259,14 +270,13 @@ export default function App() {
           </nav>
           <main className="content">
             {tab === 'home' ? (
-              <PathHome
-                settings={settings} links={links}
-                onPiano={() => setSheet('settings')}
-                onNode={playNode}
-                onTest={items => takeTest(items)}
-                onEnergy={() => setEnergySheet('info')}
-                onShop={() => setTab('shop')}
-                onPremium={() => setPaywall('upgrade')}
+              <Journey
+                infos={infos} entries={entries} ready={ready}
+                onWatch={(id, i) => { unlockAudio(); setWatch({ id, start: i }); }}
+                onPractice={(id, reel) => practise(id, reel, reelsOf(infos[id].song!).indexOf(reel))}
+                onWholeSong={info => { unlockAudio(); ensureInput(); setLesson({ id: info.entry.id, section: 'song', n: 0 }); }}
+                onBringMidi={slot => pickFile(slot)}
+                onSongs={() => setTab('songs')}
               />
             ) : tab === 'shop' ? (
               <Shop onPremium={() => setPaywall('upgrade')} />
