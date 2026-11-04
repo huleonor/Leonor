@@ -31,7 +31,7 @@ edges: { card: "2px solid ink", rule: "1px dashed rule-2", control: "2px solid i
 
 ## The idea
 
-A practice notebook on a music stand. The page is paper-yellow; what he works on is an index card taped onto it, a little crooked; the notes are printed in two riso inks, pink for the right hand and teal for the left, the other ink's plate a few pixels off register under each falling note. Three system faces collide on purpose: Times for names, Helvetica for words and the huge note letters, Courier for labels and numbers. Titles carry the riso misregistration (`--riso`, a pink and a teal ghost three pixels either side). It is an app: one page column, the tabs along the bottom.
+A practice notebook on a music stand. The page is paper-yellow; what he works on is an index card taped onto it, a little crooked; the notes are printed in two riso inks, pink for the right hand and teal for the left, the other ink's plate a few pixels off register under each falling note. Three system faces collide on purpose: Times for names, Helvetica for words and the huge note letters, Courier for labels and numbers. Type is printed clean in plain ink: the riso offset stays only on the falling notes (the user found misregistered titles hard to read). It is an app: one page column, the tabs along the bottom; on Watch the video takes the whole screen and the tabs hide behind a menu button.
 
 ## Colour, by job
 
@@ -55,14 +55,15 @@ A practice notebook on a music stand. The page is paper-yellow; what he works on
 
 - A bottom tab bar on every screen size, like an app's: Watch, Song, Library, Settings, each a Phosphor bold glyph over a Courier label; the current tab's glyph is filled and its label sits on the marker.
 - On a wide screen the app is one page column (560px) with an ink edge, on the dotted desk. A phone on its side takes the full width.
+- On Watch the bar hides: a three-line menu button at the top left slides the tabs in from the left as a sheet of paper.
 - No logo anywhere in the shell.
 
 ## The screens
 
-- **Watch**: the videos on the page: the kicker in Courier on a marker strip, the notes huge in Helvetica 900 with the riso offset (teal for a left-hand step), the meta in Courier, one keyboard with the notes falling onto it in their ink, the caption in italic Times, the word being said on the marker. Side actions are white squares turned a few degrees, Next inked with a pink offset. The practise stop is an index card taped over the top with two dashed squares that fill green.
-- **Song**: the composer and size in Courier, the title huge in Times with the riso offset, the percent in Courier on a marker strip, one primary action, then the phases as crooked index cards (number in Courier, name in Times, where it is in Courier; Practise behind a dashed line). The next phase is pink-soft and taped; the whole song closes the list as an ink card.
+- **Watch**: the videos on the page: the kicker in Courier on a marker strip, the notes huge in Helvetica 900, plain ink (teal for a left-hand step), the meta in Courier, one keyboard with the notes falling onto it in their ink, the caption in italic Times, the word being said on the marker. A head in words (both hands) is Times, smaller. Side actions are white squares turned a few degrees, Next inked with a pink offset; they show only while the video is paused, sliding in from the right edge. Wider than tall, the video is horizontal: words on the left, the keyboard wide on the right, the whole screen. The practise stop is an index card taped over the top with two dashed squares that fill green.
+- **Song**: the composer and size in Courier, the title huge in Times, the percent in Courier on a marker strip, one primary action, then the phases as crooked index cards (number in Courier, name in Times, where it is in Courier; Practise behind a dashed line). The next phase is pink-soft and taped; the whole song closes the list as an ink card.
 - **Library**: the song learnt now as a big taped card printed with pink halftone, its opening on a staff and its percent; the others as a two-column grid of halftone cards; the marketplace behind a dashed card.
-- **Lessons**: Simply Piano's page (the user's choice), on the white card stock: the staff big across it, a pink now line, square pause, arrows and a Courier step counter filled with marker as he goes. The result: the headline big with the riso offset, the numbers in Courier.
+- **Lessons**: Simply Piano's page (the user's choice), on the white card stock: the staff big across it, a pink now line, square pause, arrows and a Courier step counter filled with marker as he goes. The result: the headline big, the numbers in Courier.
 
 ## Motion
 
@@ -70,7 +71,7 @@ State-driven only (`src/components/Motion.tsx`), as before. CSS transitions step
 
 ## Anti-slop rules (fixed)
 
-1. No gradient, glow, blur or glass for decoration. The only radial gradients are the halftone dot tiles; the only shadows are the hard riso offsets.
+1. No gradient, glow, blur or glass for decoration. The only radial gradients are the halftone dot tiles; the only shadow is the hard pink block behind the primary button. No shadow on type.
 2. Three system faces, each with its job; no web font, no rounded font.
 3. One primary action per screen, in the one primary style.
 4. No grid of identical icon-title-line cards: cards carry their own content (notes on a staff, numbers, his progress) and sit crooked.
@@ -94,7 +95,7 @@ The phase videos follow the production craft of HyperFrames (heygen-com/hyperfra
 5. **Titles and captions word by word.** The idea blurs in word by word (6 px to 0, 0.13 s, 67 ms apart). Captions come in groups of three to five words, broken at a comma or a full stop, each word blurring in 70 ms after the last; the word being said is marked in yellow, said words ink, words to come muted; a group leaves in 0.12 s before the next. The title card leaves with a blur swap (8 px, 0.18 s), never a slide.
 6. **Pacing.** A line holds about 0.5 s plus 0.3 s a word; the speech estimate is 2.4 words a second; a video's line stays short (about 19 words at most) so the music is never padded with idle drift.
 7. **Vertical frame.** Frame 0 is the hook (the idea or the notes, already on screen, never blank); text stays out of the right-hand action rail; one subject, stacked.
-8. **Teach, then train with him.** Each video: explain (keys lit as named), show (slow), "Train with me" (a bar of count-in, the count huge in ink with the riso offset, the notes drawn open for him to fill, the piano at 40% as a guide), then it stops by itself on an index card taped over the top of the frame: "Pause and practise", "Play it 2 more times", two dashed squares that turn green as his clean runs count, Done and Train with me again. The end line names the next video. The header is the step set like a TikTok title: the kicker (phase, the hand, the speed or Train with me) small, the notes huge, the bar small on the right.
+8. **Teach, then train with him.** Each video: explain (keys lit as named), show (slow), "Train with me" (a bar of count-in, the count huge in plain ink, the notes drawn open for him to fill, the piano at 40% as a guide), then it stops by itself on an index card taped over the top of the frame: "Pause and practise", "Play it 2 more times", two dashed squares that turn green as his clean runs count, Done and Train with me again. The end line names the next video. The header is the step set like a TikTok title: the kicker (phase, the hand, the speed or Train with me) small, the notes huge, the bar small on the right.
 9. **Sound on visible actions only** (HyperFrames' sound rules): a whoosh when a title arrives, a click on a count-in beat, a pop when a run is counted, a riser into an impact when the whole phase starts. The piano under the voice steps back; nothing chimes.
 10. **The app's videos are the TikToks.** Same layout as the Für Elise videos rendered with HyperFrames: kicker and huge notes on top, one keyboard for both hands in the middle, the caption under it, air below; only the side actions are added.
 

@@ -4,7 +4,7 @@
  */
 import {
   ArrowCounterClockwise, ArrowDown, ArrowLeft, ArrowRight, ArrowsDownUp, Barbell, Bell, Bluetooth, Books, CaretDown, CaretLeft, CaretUp, ChartBar,
-  Check, Checks, DotsThree, DownloadSimple, Equalizer, Fire, Gauge, Gear, GraduationCap, HandPalm, Headphones, House, Lightning,
+  Check, Checks, DotsThree, DownloadSimple, Equalizer, Fire, Gauge, Gear, GraduationCap, HandPalm, Headphones, House, Lightning, List,
   FilmStrip, Lock, MagicWand, Microphone, Moon, MusicNote, MusicNotes, MusicNotesSimple, Path, Notepad, Pause, PencilSimple, PianoKeys, Play, PlayCircle, Plus, Repeat, Rewind,
   SignOut, Snowflake, SpeakerHigh, SpeakerSlash, Star, Stop, Target, Trash, X, type Icon as PhIcon, type IconProps,
 } from '@phosphor-icons/react';
@@ -79,3 +79,4 @@ export const IconTabLibrary = make(Books);
 export const IconTabSettings = make(Gear);
 export const IconTabLibraryFill = make(Books, 'fill');
 export const IconTabSongFill = make(MusicNotes, 'fill');
+export const IconMenu = make(List);
