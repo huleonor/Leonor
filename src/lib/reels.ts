@@ -1,43 +1,39 @@
 /**
- * Reels: a song taught in short vertical videos, one pattern at a time, TikTok style, each followed
- * by the practice step that drills it. A reel is never a recorded video: it is drawn live from the
- * song's own notes (keys lighting up with their finger numbers, the notes falling onto them, the
- * real piano sound), so it is always right and works for any MIDI he brings.
+ * Reels: a song taught in short vertical videos, TikTok style, one per phase of the music (where
+ * the music changes: the opening pattern, the melody, the build...). Each video explains that
+ * phase's patterns and tricks: a title card with the idea, the left hand alone and slow, the right
+ * hand alone and slow, then both hands at full speed with a caption on the bars that need one, and
+ * a tip at the end. A reel is never a recorded video: it is drawn live from the song's own notes
+ * (keys lighting up with their finger numbers, the notes falling onto them, the real piano sound),
+ * so it is always right and works for any MIDI he brings.
  *
- * What a song's reels are comes from the notes (the parts, each hand's pattern, the bass under each
- * bar). The words on them (the hook, a caption per bar, a tip) are written by Claude through
- * api/reels.ts, once per song and version, and kept; until that answers, or without a key, rules
- * measured from the notes write them.
+ * The phases and their words are written by hand after reading the score (reelScripts.ts); a song
+ * without a script gets phases cut from its course parts and words the rules write from the notes.
  */
 import { splitBars } from './analysis';
 import { barIndex, barLength, barStart, type BarGrid } from './bars';
 import { buildCourse } from './course';
 import { readSong } from './reading';
-import { BAR_SCRIPTS, REEL_SCRIPTS, type BarScript } from './reelScripts';
-import { strategyOf } from './strategy';
-import { cleanWords, type ReelFacts, type ReelWords } from './reelShape';
+import { SCRIPTS } from './reelScripts';
+import { cleanPhase, type PhaseWords } from './reelShape';
 import type { Hand, Song, SongNote } from './types';
 
-export type { ReelWords } from './reelShape';
-export type ReelKind = 'intro' | 'L' | 'R' | 'both';
+export type { PhaseWords } from './reelShape';
+
+/** One stretch of a phase video: a hand alone and slow, or both hands. */
+export interface Segment { kind: 'L' | 'R' | 'both'; from: number; to: number; speed: number; label: string; }
 
 export interface Reel {
   id: string;
-  /** Course part it teaches (0 for the song's opening reel). */
-  part: number;
-  kind: ReelKind;
-  /** Bars it shows, 1-based, inclusive. */
+  /** Phase number, from 1. */
+  n: number;
+  /** Bars of the phase, 1-based, inclusive. */
   from: number;
   to: number;
-  /** The slow first pass ends on this bar (0: no slow pass). */
-  slowTo: number;
-  /** Speed of the slow pass. */
-  slow: number;
-  /** Bass (or chord) letter of each bar it shows, in order. */
+  words: PhaseWords;
+  segments: Segment[];
+  /** Bass (or chord) letter of every bar of the phase. */
   chords: { bar: number; name: string }[];
-  words: ReelWords;
-  /** The practice step that follows it. */
-  practice: { section: string; step?: string };
 }
 
 const SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -126,7 +122,7 @@ export function barSeconds(song: Song, grid: BarGrid, bar: number) {
   return song.ticksToSeconds(barStart(grid, bar)) - song.ticksToSeconds(barStart(grid, bar - 1));
 }
 
-// ---------- The rules' words ----------
+// ---------- The rules' phases and words ----------
 
 const shortSeq = (xs: string[]) => {
   // "F G A E" for a sequence; a run of the same letter shows once.
@@ -135,165 +131,138 @@ const shortSeq = (xs: string[]) => {
   return out.slice(0, 6).join(' ');
 };
 
-function ruleWords(kind: ReelKind, facts: BarFacts[], part: number, title: string): ReelWords {
+/** The phases of a song without a script: its course parts, grouped into at most seven. */
+function rulePhases(song: Song): { from: number; to: number }[] {
+  const parts = buildCourse(song).parts;
+  if (!parts.length) return [];
+  const size = Math.max(1, Math.ceil(parts.length / 7));
+  const out: { from: number; to: number }[] = [];
+  for (let i = 0; i < parts.length; i += size) out.push({ from: parts[i].from, to: parts[Math.min(parts.length, i + size) - 1].to });
+  return out;
+}
+
+/** Words measured from the notes: the bass line, the right hand's shape, a tip. */
+function ruleWords(facts: BarFacts[], n: number, from: number, to: number, twoHands: boolean): PhaseWords {
   const seq = shortSeq(facts.map(f => f.chord));
-  const cues: { bar: number; text: string }[] = [];
-  if (kind === 'intro') {
-    return {
-      title,
-      hook: 'Listen first: this is where we are going',
-      cues: facts.slice(0, 1).map(f => ({ bar: f.bar, text: 'Watch the keys light up as it plays' })),
-      tip: 'Every part comes as a short video, then you play it yourself.',
-    };
-  }
-  if (kind === 'L') {
-    const octaves = facts.filter(f => f.octave).length >= facts.length / 2;
-    for (const f of facts) {
-      cues.push({
-        bar: f.bar,
-        text: f.octave ? `Octave on ${f.chord}: little finger 5 low, thumb high, together` : `Bass on ${f.chord}${f.held ? ', hold it for the whole bar' : ''}`,
-      });
-    }
-    return {
-      title: `Part ${part}: left hand`,
-      hook: octaves ? `Four octaves carry it: ${seq}` : `The bass line: ${seq}`,
-      cues,
-      tip: facts.some(f => f.held) ? 'Play on beat 1 and hold until the next one.' : 'Keep the hand loose and let the wrist move it.',
-    };
-  }
-  if (kind === 'R') {
-    // A figure that comes back beat after beat: the same notes, or the same shape (which note is
-    // high, middle, low) on whatever notes the chord gives it.
-    const all = facts.flatMap(f => f.groups);
-    const count = (xs: string[]) => { const m = new Map<string, number>(); xs.forEach(x => m.set(x, (m.get(x) ?? 0) + 1)); return [...m.entries()].sort((a, b) => b[1] - a[1])[0]; };
-    const [fig, figN] = count(all) ?? ['', 0];
-    const contour = (ps: number[]) => { const u = [...new Set(ps)].sort((a, b) => b - a); return ps.map(p => u.indexOf(p)).join(''); };
-    const shapes = facts.flatMap(f => f.pitches).filter(ps => ps.length >= 3).map(contour);
-    const [shape, shapeN] = count(shapes) ?? ['', 0];
-    const repeats = figN >= all.length * 0.6;
-    const sameShape = !repeats && shapeN >= all.length * 0.6;
-    const RANK = ['top', 'middle', 'low', 'lowest'];
-    const shapeWords = shape.split('').map(r => RANK[Math.min(3, Number(r))]).join(', ');
-    for (const f of facts) {
-      if (!f.groups.length) continue;
-      const text = f.moveTo ? `Move the hand: thumb on ${f.moveTo}`
-        : sameShape ? `${f.groups[0]}: ${shapeWords}`
-        : repeats ? `${f.groups.length === 1 ? 'Once' : `${f.groups.length} times`}: ${f.groups[0]}`
-        : `One little group on each beat`;
-      cues.push({ bar: f.bar, text });
-    }
-    return {
-      title: `Part ${part}: right hand`,
-      hook: repeats ? `One pattern, again and again: ${fig}` : sameShape ? `One shape all the way: ${shapeWords}` : 'The right hand, beat by beat',
-      cues,
-      tip: sameShape ? 'Same shape on every chord. Find the first note and the hand knows the rest.' : repeats ? 'Keep the hand still over the keys and let the pattern roll.' : 'Look for the shapes that come back.',
-    };
-  }
-  for (const f of facts) cues.push({ bar: f.bar, text: `Left ${f.chord} on beat 1, the right hand keeps going` });
+  const octaves = facts.filter(f => f.octave).length >= facts.length / 2;
+  const held = facts.some(f => f.held);
+  const all = facts.flatMap(f => f.groups);
+  const count = (xs: string[]) => { const m = new Map<string, number>(); xs.forEach(x => m.set(x, (m.get(x) ?? 0) + 1)); return [...m.entries()].sort((a, b) => b[1] - a[1])[0]; };
+  const [fig, figN] = count(all) ?? ['', 0];
+  const contour = (ps: number[]) => { const u = [...new Set(ps)].sort((a, b) => b - a); return ps.map(p => u.indexOf(p)).join(''); };
+  const [shape, shapeN] = count(facts.flatMap(f => f.pitches).filter(ps => ps.length >= 3).map(contour)) ?? ['', 0];
+  const repeats = !!fig && figN >= all.length * 0.6;
+  const sameShape = !repeats && !!shape && shapeN >= all.length * 0.6;
+  const RANK = ['top', 'middle', 'low', 'lowest'];
+  const shapeWords = shape.split('').map(r => RANK[Math.min(3, Number(r))]).join(', ');
+  const right = repeats ? `One pattern, again and again: ${fig}` : sameShape ? `One shape on every beat: ${shapeWords}` : 'The right hand, beat by beat';
+  const left = octaves ? `Octaves carry it: ${seq}` : `The bass line: ${seq}`;
+  const cues: Record<number, string> = {};
+  for (const f of facts) if (f.moveTo) cues[f.bar] = `Move the right hand: thumb on ${f.moveTo}`;
   return {
-    title: `Part ${part}: both hands`,
-    hook: 'Now put them together',
+    from, to,
+    title: `Phase ${n}`,
+    hook: twoHands ? (repeats || sameShape ? right : left) : right,
+    tricks: twoHands ? [`Left: ${left.charAt(0).toLowerCase()}${left.slice(1)}`, `Right: ${right.charAt(0).toLowerCase()}${right.slice(1)}`] : [right],
+    L: octaves ? `Octaves ${seq}: little finger low, thumb high` : `Bass ${seq}${held ? ', each held for the bar' : ''}`,
+    R: sameShape ? `${facts.find(f => f.groups.length)?.groups[0] ?? ''}: ${shapeWords}` : repeats ? `${fig}, again and again` : 'Look for the shapes that come back',
     cues,
-    tip: 'Slow is fine. Land both hands on beat 1 together.',
+    tip: sameShape ? 'Same shape on every chord. Find the top note and the hand knows the rest.' : held ? 'Play on beat 1 and hold until the next one.' : 'Slow first. Land both hands on beat 1 together.',
   };
+}
+
+// ---------- The written scripts ----------
+
+/** The song's script if it fits these notes: the exact version, or the bass at the fingerprint bars. */
+function scriptFor(song: Song, bars: BarFacts[]): PhaseWords[] | null {
+  const s = SCRIPTS[song.entry.slot ?? song.entry.id];
+  if (!s) return null;
+  if (s.version && s.version !== readSong(song).version) return null;
+  if (s.fingerprint) {
+    const marks = Object.entries(s.fingerprint);
+    const same = marks.filter(([bar, bass]) => bars[Number(bar) - 1]?.chord === bass).length;
+    if (same < marks.length * 0.7) return null;
+  }
+  const phases = s.phases.filter(p => p.from <= bars.length).map(p => ({ ...p, to: Math.min(p.to, bars.length) }));
+  return phases.length ? phases : null;
 }
 
 // ---------- The reels of a song ----------
 
-/** Fit a reel in about 30 seconds: a slow pass of the first bars, then the whole stretch at full speed. */
-function fitPasses(song: Song, grid: BarGrid, from: number, to: number) {
-  const secs = (a: number, b: number) => { let s = 0; for (let x = a; x <= b; x++) s += barSeconds(song, grid, x); return s; };
-  let real = to;
-  while (real > from && secs(from, real) > 16) real--;
-  const slow = secs(from, from) > 6 ? 0.75 : 0.6;
-  let slowTo = Math.min(real, from + 3);
-  while (slowTo > from && secs(from, slowTo) / slow > 14) slowTo--;
-  return { real, slowTo, slow };
+/** Seconds from the start of bar a to the end of bar b at full speed. */
+function seconds(song: Song, grid: BarGrid, a: number, b: number) {
+  return song.ticksToSeconds(barStart(grid, b)) - song.ticksToSeconds(barStart(grid, a - 1));
 }
 
 const cache = new WeakMap<Song, Reel[]>();
 
-/** The song's reels in the order to watch them: the opening, then per part each hand and both. */
+/** One reel per phase, in order. */
 export function reelsOf(song: Song): Reel[] {
   const hit = cache.get(song);
   if (hit) return hit;
-  const course = buildCourse(song);
   const { bars, grid } = songFacts(song);
   const songBars = splitBars(song).bars;
-  const plan = strategyOf(song);
   const twoHands = song.hands.length === 2;
-  const stored = scriptOf(song);
-  const byBar = barScriptOf(song, bars);
-  const reels: Reel[] = [];
-  const add = (r: Omit<Reel, 'words' | 'chords'>, title: string) => {
-    const facts = bars.slice(r.from - 1, r.to);
-    const rules = ruleWords(r.kind, facts, r.part, title);
-    const words = stored?.[r.id] ?? byBar?.(r, rules) ?? rules;
-    reels.push({ ...r, words, chords: facts.map(f => ({ bar: f.bar, name: f.chord })) });
+  const scripted = scriptFor(song, bars);
+  const phases = scripted ?? rulePhases(song).map((p, i) => ruleWords(bars.slice(p.from - 1, p.to), i + 1, p.from, p.to, twoHands));
+  const plays = (bar: number, h: Hand) => songBars[bar - 1]?.notes.some(n => n.hand === h);
+  // A stretch that fits its time: from the first bar the hand plays, as many bars as the budget allows.
+  const fit = (from: number, to: number, speed: number, budget: number, maxBars: number, h?: Hand) => {
+    let a = from;
+    if (h) while (a < to && !plays(a, h)) a++;
+    let b = a;
+    while (b < to && b - a + 1 < maxBars && seconds(song, grid, a, b + 1) / speed <= budget) b++;
+    return { from: a, to: b };
   };
-
-  const firstPart = course.parts[0];
-  if (firstPart) {
-    const p = fitPasses(song, grid, firstPart.from, Math.min(course.parts[course.parts.length - 1].to, firstPart.from + 7));
-    add({ id: 'intro', part: 0, kind: 'intro', from: firstPart.from, to: p.real, slowTo: 0, slow: 1, practice: { section: `p${firstPart.n}` } }, song.entry.title);
-  }
-  for (const part of course.parts) {
-    if (part.sameAs) continue;
-    const steps = course.steps.filter(s => s.part === part.n);
-    const stepFor = (h: 'L' | 'R' | 'both') => steps.find(s => s.hands === h)?.id ?? steps[0]?.id;
-    const p = fitPasses(song, grid, part.from, part.to);
-    const lead = plan.parts.find(x => x.n === part.n)?.lead ?? 'R';
-    const hands: Hand[] = twoHands ? (lead === 'L' ? ['L', 'R'] : ['R', 'L']) : song.hands;
-    for (const h of hands) {
-      // A hand's reel starts where that hand comes in: no bars of silence to watch.
-      let from = part.from;
-      while (from < part.to && !songBars[from - 1]?.notes.some(n => n.hand === h)) from++;
-      const q = from === part.from ? p : fitPasses(song, grid, from, part.to);
-      add({ id: `p${part.n}-${h}`, part: part.n, kind: twoHands ? h : 'both', from, to: q.real, slowTo: q.slowTo, slow: q.slow, practice: { section: `p${part.n}`, step: stepFor(twoHands ? h : 'both') } }, `Part ${part.n}`);
-    }
+  const reels = phases.map((p, i): Reel => {
+    const words = (scripted && cleanPhase(p)) || (scripted ? ruleWords(bars.slice(p.from - 1, p.to), i + 1, p.from, p.to, twoHands) : p);
+    const segments: Segment[] = [];
     if (twoHands) {
-      add({ id: `p${part.n}-both`, part: part.n, kind: 'both', from: part.from, to: p.real, slowTo: p.slowTo, slow: p.slow, practice: { section: `p${part.n}`, step: stepFor('both') } }, `Part ${part.n}`);
+      for (const h of ['L', 'R'] as Hand[]) {
+        if (!bars.slice(p.from - 1, p.to).length || !songBars.slice(p.from - 1, p.to).some(b => b.notes.some(n => n.hand === h))) continue;
+        segments.push({ kind: h, ...fit(p.from, p.to, 0.7, 10, 2, h), speed: 0.7, label: h === 'L' ? 'Left hand, slow' : 'Right hand, slow' });
+      }
+    } else {
+      segments.push({ kind: 'both', ...fit(p.from, p.to, 0.7, 10, 2), speed: 0.7, label: 'Slow' });
     }
-  }
+    segments.push({ kind: 'both', ...fit(p.from, p.to, 1, 20, 12), speed: 1, label: twoHands ? 'Both hands' : 'Full speed' });
+    return {
+      id: `phase-${i + 1}`, n: i + 1, from: p.from, to: p.to, words, segments,
+      chords: bars.slice(p.from - 1, p.to).map(f => ({ bar: f.bar, name: f.chord })),
+    };
+  });
   cache.set(song, reels);
   return reels;
 }
 
 // ---------- Timeline: what plays when ----------
 
-export interface ReelNote { t: number; dur: number; midi: number; hand: Hand; finger?: number; vel: number; pass: number; bar: number; /** Beat of the bar, from 0. */ beat: number; }
-export interface ReelCard { t: number; until: number; kind: 'title' | 'speed' | 'end'; }
-export interface ReelTimeline { notes: ReelNote[]; cards: ReelCard[]; passes: { t: number; until: number; speed: number }[]; duration: number; lo: Record<Hand, number>; hi: Record<Hand, number>; }
+export interface ReelNote { t: number; dur: number; midi: number; hand: Hand; finger?: number; vel: number; seg: number; bar: number; /** Beat of the bar, from 0. */ beat: number; }
+export interface ReelCard { t: number; until: number; kind: 'title' | 'label' | 'end'; seg?: number; }
+export interface ReelTimeline { notes: ReelNote[]; cards: ReelCard[]; passes: { t: number; until: number; speed: number; seg: number }[]; duration: number; lo: Record<Hand, number>; hi: Record<Hand, number>; }
 
-const TITLE = 2.2, GAP = 1.8, END = 2.5, LEAD = 0.35;
+const TITLE = 3, LABEL = 1.4, END = 3, LEAD = 0.35;
 
 export function timelineOf(song: Song, reel: Reel): ReelTimeline {
   const { grid } = splitBars(song);
   const at = (bar: number) => song.ticksToSeconds(barStart(grid, bar - 1));
-  const hands: Hand[] = reel.kind === 'L' ? ['L'] : reel.kind === 'R' ? ['R'] : song.hands;
-  const notesIn = (a: number, b: number) => song.notes.filter(n => hands.includes(n.hand) && n.ticks >= barStart(grid, a - 1) - 1 && n.ticks < barStart(grid, b) - 1);
   const placeOf = (ticks: number) => { const i = barIndex(grid, ticks); return { bar: i + 1, beat: Math.floor((ticks - barStart(grid, i)) / (song.ppq * 4 / grid.sigs[i][1]) + 1e-6) }; };
   const notes: ReelNote[] = [], cards: ReelCard[] = [], passes: ReelTimeline['passes'] = [];
   let t = 0;
   cards.push({ t, until: TITLE, kind: 'title' });
   t = TITLE;
-  const pass = (a: number, b: number, speed: number, k: number) => {
-    const start = at(a);
-    const ns = notesIn(a, b);
-    const end = Math.max(at(b + 1), ...ns.map(n => n.time + n.duration));
-    for (const n of ns) {
-      notes.push({ t: t + LEAD + (n.time - start) / speed, dur: n.duration / speed, midi: n.midi, hand: n.hand, finger: n.finger, vel: n.velocity, pass: k, ...placeOf(n.ticks) });
-    }
-    const until = t + LEAD + (end - start) / speed;
-    passes.push({ t, until, speed });
+  reel.segments.forEach((sg, k) => {
+    cards.push({ t, until: t + LABEL, kind: 'label', seg: k });
+    t += LABEL;
+    const hands: Hand[] = sg.kind === 'both' ? song.hands : [sg.kind];
+    const ns = song.notes.filter(n => hands.includes(n.hand) && n.ticks >= barStart(grid, sg.from - 1) - 1 && n.ticks < barStart(grid, sg.to) - 1);
+    const start = at(sg.from);
+    const end = Math.max(at(sg.to + 1), ...ns.map(n => n.time + n.duration));
+    for (const n of ns) notes.push({ t: t + LEAD + (n.time - start) / sg.speed, dur: n.duration / sg.speed, midi: n.midi, hand: n.hand, finger: n.finger, vel: n.velocity, seg: k, ...placeOf(n.ticks) });
+    const until = t + LEAD + (end - start) / sg.speed;
+    passes.push({ t, until, speed: sg.speed, seg: k });
     t = until;
-  };
-  if (reel.slowTo && reel.slow < 1) {
-    pass(reel.from, reel.slowTo, reel.slow, 0);
-    cards.push({ t, until: t + GAP, kind: 'speed' });
-    t += GAP;
-  }
-  pass(reel.from, reel.to, 1, passes.length);
+  });
   cards.push({ t, until: t + END, kind: 'end' });
   t += END;
   const lo = { R: 127, L: 127 } as Record<Hand, number>, hi = { R: 0, L: 0 } as Record<Hand, number>;
@@ -301,50 +270,13 @@ export function timelineOf(song: Song, reel: Reel): ReelTimeline {
   return { notes, cards, passes, duration: t, lo, hi };
 }
 
-// ---------- The written scripts ----------
-
-/**
- * The words on a song's reels, written by hand after reading its score bar by bar (the bank in
- * reelScripts.ts), for the exact version of the notes they were written for: another MIDI file of
- * the same piece gets the rules' words. A reel the bank leaves out, or a line too long for the
- * screen, falls back to the rules too.
- */
-function scriptOf(song: Song): Record<string, ReelWords> | null {
-  const s = REEL_SCRIPTS[song.entry.slot ?? song.entry.id];
-  if (!s || s.version !== readSong(song).version) return null;
-  const out: Record<string, ReelWords> = {};
-  for (const [id, w] of Object.entries(s.reels)) { const c = cleanWords(w); if (c) out[id] = c; }
-  return out;
-}
-
-/**
- * A script written from a printed score, by bar number (BAR_SCRIPTS): it fits any MIDI file of that
- * score, however its parts are cut, as long as the bass of the file's bars matches the score's (so
- * another arrangement of the same piece never gets the wrong words). Each reel takes the hook and
- * tip of the section it starts in, for its hand, and the cues of its own bars.
- */
-function barScriptOf(song: Song, bars: BarFacts[]): ((r: Omit<Reel, 'words' | 'chords'>, rules: ReelWords) => ReelWords | undefined) | null {
-  const s: BarScript | undefined = BAR_SCRIPTS[song.entry.slot ?? song.entry.id];
-  if (!s) return null;
-  const marks = Object.entries(s.fingerprint);
-  const same = marks.filter(([bar, bass]) => bars[Number(bar) - 1]?.chord === bass).length;
-  if (same < marks.length * 0.7) return null;
-  return (r, rules) => {
-    if (r.kind === 'intro') return cleanWords({ ...s.intro, title: song.entry.title }) ?? undefined;
-    const sec = s.sections.find(x => r.from >= x.from && r.from <= x.to);
-    if (!sec) return undefined;
-    const cues = Object.entries(s.cues[r.kind]).map(([bar, text]) => ({ bar: Number(bar), text })).filter(c => c.bar >= r.from && c.bar <= r.to);
-    return cleanWords({ title: rules.title, hook: sec[r.kind].hook, tip: sec[r.kind].tip, cues: cues.length ? cues : rules.cues }) ?? undefined;
-  };
-}
-
-/** What each reel shows, bar by bar: what the scripts are written from (see scripts/reel-facts). */
-export function reelFacts(song: Song): ReelFacts[] {
+/** What every bar holds, to write a script from (window.__reelFacts in the dev console). */
+export function reelFacts(song: Song) {
   const { bars } = songFacts(song);
-  return reelsOf(song).map(r => ({
-    id: r.id, kind: r.kind, part: r.part, from: r.from, to: r.to,
-    bars: bars.slice(r.from - 1, r.to).map(f => ({ bar: f.bar, bass: f.chord, octave: f.octave, held: f.held, right: f.groups.join(' | '), moveTo: f.moveTo })),
-  }));
+  return {
+    phases: reelsOf(song).map(r => ({ n: r.n, from: r.from, to: r.to, title: r.words.title, segments: r.segments })),
+    bars: bars.map(f => ({ bar: f.bar, bass: f.chord, octave: f.octave, held: f.held, right: f.groups.join(' | '), moveTo: f.moveTo })),
+  };
 }
 
 // ---------- What he has watched ----------

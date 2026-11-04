@@ -1,41 +1,43 @@
 /**
- * The words on a song's reels: written by hand in reelScripts.ts, checked here before they show.
+ * The words of a song's phase videos: written by hand in reelScripts.ts, checked here before they show.
  */
 
-export interface ReelWords {
-  /** Small label over the reel ("Part 1: left hand"). */
+/** One phase of a song, as its video explains it. */
+export interface PhaseWords {
+  /** Bars, 1-based, inclusive. */
+  from: number;
+  to: number;
+  /** The phase's name ("The melody"). */
   title: string;
-  /** The big line at the top, what this reel is about. */
+  /** The big line at the top: the idea of the phase. */
   hook: string;
-  /** One short caption per bar, shown while that bar plays. */
-  cues: { bar: number; text: string }[];
+  /** The tricks, one short line each, shown while the video plays. */
+  tricks: string[];
+  /** What to see while the left hand plays alone, and the right hand alone. */
+  L: string;
+  R: string;
+  /** A caption for some bars, shown while both hands play them. */
+  cues: Record<number, string>;
   /** One line at the end, before he plays it himself. */
   tip: string;
 }
 
-/** What one reel shows, bar by bar: what a script is written from. */
-export interface ReelFacts {
-  id: string;
-  kind: 'intro' | 'L' | 'R' | 'both';
-  part: number;
-  from: number;
-  to: number;
-  bars: { bar: number; bass: string; octave: boolean; held: boolean; right: string; moveTo?: string }[];
-}
+export const LIMITS = { title: 32, hook: 52, line: 56, tip: 80 };
 
-/** No em or en dashes on screen, and nothing longer than the reel has room for. */
+/** No em or en dashes on screen, and nothing longer than the video has room for. */
 const clean = (s: unknown, max: number) => {
   if (typeof s !== 'string') return null;
-  const t = s.replace(/\s*[\u2013\u2014]\s*/g, ', ').replace(/\s+/g, ' ').trim();
+  const t = s.replace(/\s*[–—]\s*/g, ', ').replace(/\s+/g, ' ').trim();
   return t && t.length <= max ? t : null;
 };
 
-export const LIMITS = { title: 32, hook: 48, cue: 56, tip: 80 };
-
-/** A script's words if they fit the reel; null sends the reel back to the rules' words. */
-export function cleanWords(w: ReelWords): ReelWords | null {
+/** A phase's words if they fit the screen; null sends the phase back to the rules' words. */
+export function cleanPhase(w: PhaseWords): PhaseWords | null {
   const title = clean(w.title, LIMITS.title), hook = clean(w.hook, LIMITS.hook), tip = clean(w.tip, LIMITS.tip);
-  if (!title || !hook || !tip) return null;
-  const cues = w.cues.map(c => ({ bar: c.bar, text: clean(c.text, LIMITS.cue) })).filter((c): c is { bar: number; text: string } => !!c.text);
-  return { title, hook, cues, tip };
+  const L = clean(w.L, LIMITS.line), R = clean(w.R, LIMITS.line);
+  if (!title || !hook || !tip || !L || !R) return null;
+  const tricks = w.tricks.map(t => clean(t, LIMITS.line)).filter((t): t is string => !!t);
+  const cues: Record<number, string> = {};
+  for (const [bar, text] of Object.entries(w.cues)) { const c = clean(text, LIMITS.line); if (c) cues[Number(bar)] = c; }
+  return { from: w.from, to: w.to, title, hook, tricks, L, R, cues, tip };
 }

@@ -21,8 +21,6 @@ function palette() {
   };
 }
 
-const kindLabel = (r: Reel) => (r.kind === 'intro' ? 'Listen' : r.kind === 'L' ? 'Left hand' : r.kind === 'R' ? 'Right hand' : 'Both hands');
-
 /**
  * The reel's clock: the audio clock while it plays, so the keys and the sound never drift apart.
  * Notes are scheduled on the piano a fifth of a second ahead.
@@ -197,20 +195,23 @@ function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[
   return <canvas ref={ref} className="reel-lanes" aria-hidden="true" />;
 }
 
-/** The bar and beat under the clock, for the captions and the strips (changes a few times a second). */
+/** Where the clock is: the segment, the bar, the note just played, the card showing (changes a few times a second). */
 function usePlace(tl: ReelTimeline, now: () => number, playing: boolean) {
-  const [place, setPlace] = useState({ pass: -1, bar: 0, note: -1, card: tl.cards[0]?.kind as string | undefined });
+  const [place, setPlace] = useState({ seg: -1, playing: false, bar: 0, note: -1, card: tl.cards[0]?.kind as string | undefined });
   useEffect(() => {
     let raf = 0;
     const tick = () => {
       const t = now();
-      const card = tl.cards.find(c => t >= c.t && t < c.until)?.kind ?? (t >= tl.duration - 0.01 ? 'end' : undefined);
+      const c = tl.cards.find(x => t >= x.t && t < x.until);
+      const card = c?.kind ?? (t >= tl.duration - 0.01 ? 'end' : undefined);
       let note = -1;
       for (let i = 0; i < tl.notes.length && tl.notes[i].t <= t + 0.02; i++) note = i;
+      const pass = tl.passes.find(x => t >= x.t && t < x.until);
+      const seg = pass?.seg ?? c?.seg ?? -1;
       const n = tl.notes[note];
-      const pass = tl.passes.findIndex(p => t >= p.t && t < p.until);
-      const next = { pass, bar: n && n.pass === pass ? n.bar : tl.notes.find(x => x.pass === pass)?.bar ?? 0, note, card };
-      setPlace(p => (p.pass === next.pass && p.bar === next.bar && p.note === next.note && p.card === next.card ? p : next));
+      const bar = n && n.seg === seg ? n.bar : tl.notes.find(x => x.seg === seg)?.bar ?? 0;
+      const next = { seg, playing: !!pass, bar, note, card };
+      setPlace(p => (p.seg === next.seg && p.playing === next.playing && p.bar === next.bar && p.note === next.note && p.card === next.card ? p : next));
       if (playing) raf = requestAnimationFrame(tick);
     };
     tick();
@@ -229,8 +230,12 @@ interface PlayerProps {
   onNext?: () => void;
 }
 
-/** One reel: a 9 by 16 frame that plays by itself when it is on screen. Tap to pause. */
-export function ReelPlayer({ song, reel, index, count, active, onPractice, onNext }: PlayerProps) {
+/**
+ * One phase of the song as a TikTok-style video: a 9 by 16 frame that plays by itself when it is
+ * on screen. The idea and its tricks, the left hand slow, the right hand slow, both hands at full
+ * speed, then the tip. Tap to pause.
+ */
+export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: PlayerProps) {
   const tl = useMemo(() => timelineOf(song, reel), [song, reel]);
   const lanes = useMemo<Lane[]>(() => (['R', 'L'] as Hand[]).filter(h => tl.hi[h] > 0).map(h => {
     const [lo, hi] = pickRange(tl.lo[h], tl.hi[h], 14);
@@ -250,14 +255,22 @@ export function ReelPlayer({ song, reel, index, count, active, onPractice, onNex
 
   const toggle = () => { if (clock.playing) clock.pause(); else { unlockAudio(); clock.play(); } };
   const replay = () => { unlockAudio(); setEnded(false); clock.play(0); };
-  const pass = tl.passes[place.pass];
-  const speedLabel = pass ? (pass.speed < 1 ? 'Slow' : 'Full speed') : tl.passes.length > 1 ? 'Slow first' : 'Full speed';
-  const cue = [...reel.words.cues].reverse().find(c => c.bar <= place.bar && c.bar >= reel.from) ?? (place.pass >= 0 ? reel.words.cues[0] : undefined);
+  const w = reel.words;
+  const seg = reel.segments[place.seg];
+  const handLine = seg?.kind === 'L' ? w.L : seg?.kind === 'R' ? w.R : undefined;
+  // While both hands play: the caption of the bar (or the one just before it), else the tricks in turn.
+  const cue = useMemo(() => {
+    if (!seg || !place.playing) return undefined;
+    if (handLine) return handLine;
+    for (let b = place.bar; b >= Math.max(seg.from, place.bar - 1); b--) if (w.cues[b]) return w.cues[b];
+    return w.tricks.length ? w.tricks[Math.floor((place.bar - seg.from) / 2) % w.tricks.length] : undefined;
+  }, [seg, place.playing, place.bar, handLine, w]);
+  const chords = seg ? reel.chords.filter(c => c.bar >= seg.from && c.bar <= seg.to) : reel.chords.slice(0, 8);
   // The right hand beat by beat in the current bar, the note now playing marked.
   const groups = useMemo(() => {
     const cur = tl.notes[place.note];
-    if (!cur || reel.kind === 'L') return null;
-    const inBar = tl.notes.map((n, i) => ({ n, i })).filter(({ n }) => n.hand === 'R' && n.pass === cur.pass && n.bar === cur.bar);
+    if (!cur || !seg || seg.kind === 'L') return null;
+    const inBar = tl.notes.map((n, i) => ({ n, i })).filter(({ n }) => n.hand === 'R' && n.seg === cur.seg && n.bar === cur.bar);
     if (!inBar.length) return null;
     const onsets: { i: number; m: number; beat: number }[] = [];
     for (const { n, i } of inBar) {
@@ -269,15 +282,15 @@ export function ReelPlayer({ song, reel, index, count, active, onPractice, onNex
     for (const o of onsets) by.set(o.beat, [...(by.get(o.beat) ?? []), o]);
     const curT = cur.t;
     return [...by.values()].map(g => g.map(o => ({ l: letter(o.m, song.fifths < 0), on: Math.abs(tl.notes[o.i].t - curT) < 0.02 || (cur.hand === 'R' && o.i === place.note), past: tl.notes[o.i].t < curT - 0.02 })));
-  }, [tl, place.note, reel.kind, song.fifths]);
+  }, [tl, place.note, seg, song.fifths]);
   const pct = tl.duration ? Math.min(1, clock.now() / tl.duration) : 0;
   const showTitle = place.card === 'title';
-  const showSpeed = place.card === 'speed';
+  const showLabel = place.card === 'label' && seg;
   const showEnd = ended || place.card === 'end';
 
   return (
     <div className={`reel-slide ${active ? 'active' : ''}`}>
-      <div className="reel-frame" onClick={toggle} role="group" aria-label={`Video ${index + 1} of ${count}: ${reel.words.title}`}>
+      <div className="reel-frame" onClick={toggle} role="group" aria-label={`Phase ${reel.n} of ${count}: ${w.title}`}>
         <div className="reel-progress" aria-hidden="true">
           {tl.passes.map((p, i) => {
             const v = clock.now();
@@ -286,14 +299,14 @@ export function ReelPlayer({ song, reel, index, count, active, onPractice, onNex
           })}
         </div>
         <header className="reel-head">
-          <span className="reel-kicker">{reel.part ? `Part ${reel.part}` : 'The song'}<i>{kindLabel(reel)}</i></span>
-          <motion.span key={speedLabel} className={`reel-speed ${pass?.speed === 1 ? 'full' : ''}`} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING}>{speedLabel}</motion.span>
+          <span className="reel-kicker">Phase {reel.n}<i>{w.title}</i></span>
+          {seg && <motion.span key={seg.label} className={`reel-speed ${seg.speed === 1 ? 'full' : ''} hand-${seg.kind}`} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING}>{seg.label}</motion.span>}
         </header>
-        <h2 className="reel-hook">{reel.words.hook}</h2>
-        {reel.chords.length > 1 && (
+        <h2 className="reel-hook">{w.hook}</h2>
+        {chords.length > 1 && (
           <ol className="reel-chords" aria-label="The bass, bar by bar">
-            {reel.chords.map((c, i) => (
-              <li key={c.bar} className={c.bar === place.bar && place.pass >= 0 ? 'on' : c.bar < place.bar && place.pass >= 0 ? 'past' : ''}>
+            {chords.map((c, i) => (
+              <li key={c.bar} className={c.bar === place.bar && place.playing ? 'on' : c.bar < place.bar && place.playing ? 'past' : ''}>
                 {i > 0 && <span className="arrow" aria-hidden="true" />}
                 <b>{c.name}</b>
               </li>
@@ -310,8 +323,8 @@ export function ReelPlayer({ song, reel, index, count, active, onPractice, onNex
             </p>
           )}
           <AnimatePresence mode="wait">
-            {cue && place.pass >= 0 && (
-              <motion.p key={cue.text} className="reel-cue" initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }} transition={SOFT}>{cue.text}</motion.p>
+            {cue && (
+              <motion.p key={cue} className="reel-cue" initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }} transition={SOFT}>{cue}</motion.p>
             )}
           </AnimatePresence>
         </div>
@@ -320,24 +333,27 @@ export function ReelPlayer({ song, reel, index, count, active, onPractice, onNex
           {showTitle && (
             <motion.div key="title" className="reel-card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <motion.div initial={{ y: 24, scale: 0.92 }} animate={{ y: 0, scale: 1 }} transition={SPRING}>
-                <small>{reel.words.title}</small>
-                <h3>{reel.words.hook}</h3>
-                <p>{tl.passes.length > 1 ? 'Slow first, then at full speed' : 'Watch the keys light up'}</p>
+                <small>Phase {reel.n} of {count}: {w.title}</small>
+                <h3>{w.hook}</h3>
+                <ul className="reel-tricks">{w.tricks.map(t => <li key={t}>{t}</li>)}</ul>
               </motion.div>
             </motion.div>
           )}
-          {showSpeed && (
-            <motion.div key="speed" className="reel-card light" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.h3 initial={{ scale: 0.5 }} animate={{ scale: 1 }} transition={SPRING}>Now at full speed</motion.h3>
+          {showLabel && (
+            <motion.div key={`label-${place.seg}`} className="reel-card light" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div initial={{ scale: 0.6 }} animate={{ scale: 1 }} transition={SPRING}>
+                <h3 className={`reel-label hand-${seg.kind}`}>{seg.label}</h3>
+              </motion.div>
             </motion.div>
           )}
           {showEnd && (
             <motion.div key="end" className="reel-card end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={e => e.stopPropagation()}>
               <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={SPRING}>
                 <small>Your turn</small>
-                <h3>{reel.words.tip}</h3>
+                <h3>{w.tip}</h3>
                 <div className="reel-end-actions">
-                  <button className="btn go big" onClick={onPractice}><IconKeys size={20} />{reel.kind === 'intro' ? 'Start learning' : 'Practise it'}</button>
+                  <button className="btn go big" onClick={onPractice}><IconKeys size={20} />Practise this phase</button>
+                  {onNext && <button className="btn ghost-light" onClick={onNext}><IconArrowRight size={18} />Next phase</button>}
                   <button className="btn ghost-light" onClick={replay}><IconRestart size={18} />Watch again</button>
                 </div>
               </motion.div>
@@ -354,10 +370,10 @@ export function ReelPlayer({ song, reel, index, count, active, onPractice, onNex
       </div>
 
       <aside className="reel-side">
-        <button className="reel-act go" onClick={onPractice} aria-label="Practise this part"><span><IconKeys size={26} /></span>Practise</button>
+        <button className="reel-act go" onClick={onPractice} aria-label="Practise this phase"><span><IconKeys size={26} /></span>Practise</button>
         <button className="reel-act" onClick={toggle} aria-label={clock.playing ? 'Pause' : 'Play'}><span>{clock.playing ? <IconPause size={24} /> : <IconPlay size={24} />}</span>{clock.playing ? 'Pause' : 'Play'}</button>
         <button className="reel-act" onClick={replay} aria-label="Watch again"><span><IconRestart size={24} /></span>Again</button>
-        {onNext && <button className="reel-act" onClick={onNext} aria-label="Next video"><span><IconArrowRight size={24} /></span>Next</button>}
+        {onNext && <button className="reel-act" onClick={onNext} aria-label="Next phase"><span><IconArrowRight size={24} /></span>Next</button>}
       </aside>
     </div>
   );
