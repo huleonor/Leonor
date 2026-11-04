@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
 import { meterOf, pctOf } from '../lib/mastery';
-import { onSeen, reelsOf, seenReels, type Reel } from '../lib/reels';
+import { clipsOf, onSeen, reelsOf, seenReels, type Reel } from '../lib/reels';
 import { askStrategy } from '../lib/strategy';
 import type { SongEntry } from '../lib/types';
 import { IconImport, IconKeysFill, IconPlay, IconStar } from './Icons';
@@ -103,7 +103,8 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
   const rows = reels.map((r, i) => {
     const section = practiceFor(info, r);
     const stars = section?.steps.length ? Math.min(...section.steps.map(s => info.prog[s.id]?.stars ?? 0)) : 0;
-    return { r, i, watched: seen.includes(r.id), section, stars, practised: !!section?.learnt };
+    const clips = clipsOf(song).filter(c => c.phase.id === r.id);
+    return { r, i, watched: seen.includes(r.id), section, stars, practised: !!section?.learnt, of: clips.length, seenN: clips.filter(c => seen.includes(c.id)).length };
   });
   // The next thing to do: the first phase not watched, or watched but not practised.
   const next = rows.find(x => !x.watched || (x.section && !x.practised));
@@ -111,10 +112,11 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
   const bars = reels.length ? reels[reels.length - 1].to : 0;
   const status = (x: (typeof rows)[number]) => {
     const where = `bars ${x.r.from}-${x.r.to}`;
-    if (next === x) return !x.watched ? `Next: watch it, ${where}` : `Next: practise it, ${where}`;
+    if (next === x) return !x.watched ? `Next: video ${Math.min(x.of, x.seenN + 1)} of ${x.of}, ${where}` : `Next: practise it, ${where}`;
     if (x.watched && (x.practised || !x.section)) return `Learnt, ${where}`;
     if (x.watched) return `Watched, ${where}`;
-    return `Bars ${x.r.from}-${x.r.to}`;
+    if (x.seenN) return `${x.seenN} of ${x.of} videos watched, ${where}`;
+    return `${x.of} videos, ${where}`;
   };
 
   return (

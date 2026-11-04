@@ -235,9 +235,6 @@ export function reelsOf(song: Song): Reel[] {
     const written = (scripted && cleanPhase(p)) || (scripted ? ruleWords(bars.slice(p.from - 1, p.to), i + 1, p.from, p.to, twoHands) : p);
     const words = written.talk ? written : { ...written, talk: ruleTalk(written, twoHands) };
     const segments: Segment[] = [];
-    // First he hears it: the phase at full speed while the voice gives the idea (after the title).
-    const introLen = words.talk ? estimate(words.talk.intro) : 0;
-    if (introLen > TITLE + 1) segments.push({ kind: 'both', ...fit(p.from, p.to, 1, introLen - TITLE + 1.5, 8), speed: 1, label: 'Listen', listen: true });
     if (twoHands) {
       for (const h of ['L', 'R'] as Hand[]) {
         if (!bars.slice(p.from - 1, p.to).length || !songBars.slice(p.from - 1, p.to).some(b => b.notes.some(n => n.hand === h))) continue;
@@ -256,54 +253,205 @@ export function reelsOf(song: Song): Reel[] {
   return reels;
 }
 
+// ---------- The videos: each phase in small steps, slow first ----------
+
+/**
+ * One short video of the feed. Each phase is cut into small steps he copies as they loop, TikTok
+ * style: first the idea (the phase heard once), then two bars at a time, a hand alone and slow
+ * (only for a shape he has not met yet), both hands slow, and at the end the whole phase, still
+ * below full speed. A shape that comes back (the same notes, or the same shape from another note)
+ * is not taught again: only both hands, with the voice saying where it starts now.
+ */
+export interface Clip extends Reel {
+  /** The phase it belongs to. */
+  phase: Reel;
+  /** Its place in the phase, from 1, and how many the phase has. */
+  k: number;
+  of: number;
+  kind: 'intro' | 'L' | 'R' | 'both' | 'run';
+  /** The big line of the video: the idea, or the notes of the step. */
+  head: string;
+  /** What the voice says. */
+  say: string;
+}
+
+// Speeds: a hand alone at half speed, both hands a little faster, the whole phase at three quarters.
+const SLOW_HAND = 0.5, SLOW_BOTH = 0.6, RUN = 0.75;
+
+const clipCache = new WeakMap<Song, Clip[]>();
+
+const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+const barsText = (a: number, b: number) => (a === b ? `bar ${a}` : b === a + 1 ? `bars ${a} and ${b}` : `bars ${a} to ${b}`);
+const listOf = (xs: string[]) => xs.join(', ');
+
+/**
+ * The right hand of a stretch in words, the way a teacher says it: a figure that keeps its shape is
+ * named once (top, middle, low, middle) with the note that moves; a melody is read note by note.
+ */
+function rightWords(facts: BarFacts[], flats: boolean) {
+  const groups = facts.flatMap(f => f.pitches);
+  const RANK = ['top', 'middle', 'low', 'lowest'];
+  const contour = (ps: number[]) => { const u = [...new Set(ps)].sort((x, y) => y - x); return ps.map(p => u.indexOf(p)).join(''); };
+  const figure = groups.length >= 2 && groups.every(g => g.length >= 3 && contour(g) === contour(groups[0]));
+  if (figure) {
+    const shape = contour(groups[0]).split('').map(r => RANK[Math.min(3, Number(r))]).join(', ');
+    const first = groups[0].map(m => letter(m, flats));
+    const moves = groups[0].map((_, i) => new Set(groups.map(g => g[i])).size > 1);
+    const tops: string[] = [];
+    for (const g of groups) { const l = letter(g[0], flats); if (tops[tops.length - 1] !== l) tops.push(l); }
+    const moving = moves.filter(Boolean).length;
+    const tail = moving === 0 ? 'The same notes on every beat.' : moves[0] && moving === 1 ? `Only the top note moves: ${listOf(tops.slice(0, 6))}.` : 'The shape stays, the notes move with the chord.';
+    return { said: `${cap(shape)}, on every beat. Start with ${listOf(first)}. ${tail}`, head: first.join(' ') };
+  }
+  const notes: string[] = [];
+  for (const g of groups) for (const m of g) { const l = letter(m, flats); if (notes[notes.length - 1] !== l) notes.push(l); }
+  return { said: `${listOf(notes.slice(0, 8))}${notes.length > 8 ? ', and on' : ''}.`, head: notes.slice(0, 6).join(' ') };
+}
+
+/** The left hand of a stretch in words: its bass notes, as octaves or held when they are. */
+function leftWords(facts: BarFacts[]) {
+  const bass: string[] = [];
+  for (const f of facts) if (bass[bass.length - 1] !== f.chord) bass.push(f.chord);
+  const octaves = facts.every(f => f.octave), held = facts.every(f => f.held);
+  const what = octaves ? `An octave on ${bass.join(', then ')}` : `The bass: ${listOf(bass)}`;
+  return { said: `${what}${held ? ', held for the whole bar' : ''}. ${octaves ? 'Little finger low, thumb on top.' : ''}`.trim(), head: octaves ? `${bass.join(' ')} octaves` : bass.join(' ') };
+}
+
+/** Every video of a song, phase by phase, in the order he watches them. */
+export function clipsOf(song: Song): Clip[] {
+  const hit = clipCache.get(song);
+  if (hit) return hit;
+  const reels = reelsOf(song);
+  const { bars, grid } = songFacts(song);
+  const songBars = splitBars(song).bars;
+  const twoHands = song.hands.length === 2;
+  const handNotes = (a: number, b: number, h?: Hand) => songBars.slice(a - 1, b).flatMap(x => x.notes).filter(n => !h || n.hand === h).sort((x, y) => x.ticks - y.ticks || x.midi - y.midi);
+  // A bar's shape for one hand, whatever note it starts from: its rhythm, and its intervals from the
+  // lowest note; for a figure (six notes or more over three pitches or more, like top, middle, low,
+  // middle) the order of its pitches from the top, so the same figure over a new chord counts as known.
+  const barShape = (bar: number, h?: Hand) => {
+    const ns = handNotes(bar, bar, h);
+    if (!ns.length) return null;
+    const t0 = barStart(grid, bar - 1);
+    const pitches = [...new Set(ns.map(n => n.midi))].sort((x, y) => y - x);
+    const onsets = new Set(ns.map(n => n.ticks)).size;
+    const figure = onsets >= 6 && pitches.length >= 3;
+    const low = pitches[pitches.length - 1];
+    return `${figure ? 'f' : 'i'}${ns.map(n => `${n.ticks - t0}:${figure ? pitches.indexOf(n.midi) : n.midi - low}`).join(',')}`;
+  };
+  // Every bar of the stretch already met, for that hand (bars it does not play count as met).
+  const known = (a: number, b: number, h: Hand | undefined, set: Set<string>) => {
+    let any = false;
+    for (let bar = a; bar <= b; bar++) { const x = barShape(bar, h); if (x) { any = true; if (!set.has(x)) return false; } }
+    return any;
+  };
+  const remember = (a: number, b: number, h: Hand | undefined, set: Set<string>) => { for (let bar = a; bar <= b; bar++) { const x = barShape(bar, h); if (x) set.add(x); } };
+  const plays = (a: number, b: number, h?: Hand) => handNotes(a, b, h).length > 0;
+  const seen = { L: new Set<string>(), R: new Set<string>(), both: new Set<string>() };
+  const out: Clip[] = [];
+  for (const r of reels) {
+    const talk = r.words.talk;
+    const mine: Omit<Clip, 'k' | 'of'>[] = [];
+    const make = (kind: Clip['kind'], from: number, to: number, speed: number, label: string, head: string, say: string, listen = false): Omit<Clip, 'k' | 'of'> => ({
+      ...r, id: `${r.id}-${mine.length + 1}`, phase: r, kind, head, say, from, to,
+      segments: [{ kind: kind === 'L' || kind === 'R' ? kind : 'both', from, to, speed, label, listen }],
+      chords: r.chords.filter(c => c.bar >= from && c.bar <= to),
+    });
+    // The idea: the opening of the phase heard once, at its real speed, while the voice explains.
+    let a0 = r.from, b0 = r.from;
+    while (b0 < r.to && seconds(song, grid, a0, b0 + 1) <= Math.max(6, (talk ? estimate(talk.intro) : 6) - 2)) b0++;
+    mine.push(make('intro', a0, b0, 1, 'Listen', r.words.hook, talk?.intro ?? r.words.hook, true));
+    // Two bars at a time (four when the bars are short); a last bar alone joins the stretch before it.
+    const step = barSeconds(song, grid, r.from) >= 1.6 ? 2 : 4;
+    const chunks: [number, number][] = [];
+    for (let a = r.from; a <= r.to; a += step) chunks.push([a, Math.min(r.to, a + step - 1)]);
+    if (chunks.length > 1 && chunks[chunks.length - 1][0] === chunks[chunks.length - 1][1]) { const last = chunks.pop()!; chunks[chunks.length - 1][1] = last[1]; }
+    let firstBoth = true;
+    chunks.forEach(([a, b], ci) => {
+      const firstChunk = ci === 0;
+      const facts = bars.slice(a - 1, b);
+      const hR: Hand | undefined = twoHands ? 'R' : undefined;
+      // The very same notes again (a repeat in the score): nothing new to show.
+      const exact = handNotes(a, b).map(n => `${n.ticks - barStart(grid, a - 1)}:${n.midi}:${n.hand}`).join(',');
+      if (seen.both.has(exact)) return;
+      const newL = twoHands && plays(a, b, 'L') && !known(a, b, 'L', seen.L);
+      const newR = plays(a, b, hR) && !known(a, b, hR, seen.R);
+      const where = barsText(a, b);
+      if (twoHands && newL) {
+        const w = leftWords(facts);
+        mine.push(make('L', a, b, SLOW_HAND, 'Left hand, slow', w.head, `${firstChunk && talk?.L ? talk.L : `Left hand, ${where}. ${w.said}`}`));
+      }
+      if (newR) {
+        const w = rightWords(facts, song.fifths < 0);
+        mine.push(make('R', a, b, SLOW_HAND, twoHands ? 'Right hand, slow' : 'Slow', w.head, `${firstChunk && talk?.R ? talk.R : `${twoHands ? 'Right hand' : 'Now'}, ${where}. ${w.said}`}`));
+      }
+      if (twoHands) {
+        const bass: string[] = [];
+        for (const f of facts) if (bass[bass.length - 1] !== f.chord) bass.push(f.chord);
+        const say = !newL && !newR
+          ? `Same shapes as before, now starting on ${bass.join(', then ')}. Both hands, slowly.`
+          : firstBoth ? `Now put the hands together, slowly. ${cap(where)}. Land them on beat one together.`
+            : [`Both hands together now, ${where}. Nice and slow.`, `Put them together. ${cap(where)}, slowly, both hands landing on beat one.`, `Now both hands, ${where}. Take your time.`][ci % 3];
+        mine.push(make('both', a, b, SLOW_BOTH, 'Both hands, slow', `Both hands, ${where}`, say));
+        firstBoth = false;
+      }
+      if (twoHands) remember(a, b, 'L', seen.L);
+      remember(a, b, hR, seen.R);
+      seen.both.add(exact);
+    });
+    // The whole phase, still below full speed, at most sixteen bars a video (split evenly).
+    const len = r.to - r.from + 1, parts = Math.ceil(len / 16), size = Math.ceil(len / parts);
+    for (let a = r.from; a <= r.to; a += size) {
+      const b = Math.min(r.to, a + size - 1);
+      const whole = a === r.from && b === r.to;
+      mine.push(make('run', a, b, RUN, 'Three quarter speed', whole ? 'The whole phase' : `Bars ${a} to ${b}`,
+        `${whole ? 'Now the whole phase' : `Now ${barsText(a, b)}`}, a little slower than the real thing. ${b === r.to ? (talk?.outro ?? r.words.tip) : 'Keep going.'}`));
+    }
+    mine.forEach((c, i) => out.push({ ...c, k: i + 1, of: mine.length }));
+  }
+  clipCache.set(song, out);
+  return out;
+}
+
 // ---------- Timeline: what plays when ----------
 
 export interface ReelNote { t: number; dur: number; midi: number; hand: Hand; finger?: number; vel: number; seg: number; bar: number; /** Beat of the bar, from 0. */ beat: number; }
 export interface ReelCard { t: number; until: number; kind: 'title' | 'end'; }
 /** A line the voice says, from this time; `until` is about when it ends. */
 export interface ReelLine { t: number; until: number; text: string; seg?: number }
-export interface ReelTimeline { notes: ReelNote[]; cards: ReelCard[]; lines: ReelLine[]; passes: { t: number; until: number; speed: number; seg: number }[]; duration: number; lo: Record<Hand, number>; hi: Record<Hand, number>; }
+export interface ReelTimeline { notes: ReelNote[]; cards: ReelCard[]; lines: ReelLine[]; passes: { t: number; until: number; speed: number; seg: number }[]; duration: number; lo: Record<Hand, number>; hi: Record<Hand, number>; /** Where a loop starts again. */ loopFrom: number; }
 
-// The idea shows at least three seconds and as long as the voice needs; before each pass a short
-// breath while the notes already fall in; the send-off as long as its line.
-const TITLE = 3, BREATH = 0.9, END = 3.2, LEAD = 0.35;
+// A video: the idea's title for a moment (first video of a phase), a breath while the voice
+// starts and the notes already fall in, the music, and a second of rest before it loops.
+const TITLE = 3, BREATH = 1, REST = 1.2, LEAD = 0.35;
 
-export function timelineOf(song: Song, reel: Reel): ReelTimeline {
+export function timelineOf(song: Song, clip: Clip): ReelTimeline {
   const { grid } = splitBars(song);
   const at = (bar: number) => song.ticksToSeconds(barStart(grid, bar - 1));
   const placeOf = (ticks: number) => { const i = barIndex(grid, ticks); return { bar: i + 1, beat: Math.floor((ticks - barStart(grid, i)) / (song.ppq * 4 / grid.sigs[i][1]) + 1e-6) }; };
   const notes: ReelNote[] = [], cards: ReelCard[] = [], lines: ReelLine[] = [], passes: ReelTimeline['passes'] = [];
-  const talk = reel.words.talk;
-  const line = (t: number, text: string | undefined, seg?: number) => { if (text) lines.push({ t, until: t + estimate(text), text, seg }); return text ? estimate(text) : 0; };
   let t = 0;
-  const intro = line(0.4, talk?.intro);
-  // With a listen pass the idea goes on over the music; without one the title waits for the voice.
-  const title = reel.segments[0]?.listen ? TITLE : Math.max(TITLE, 0.4 + intro + 0.5);
-  cards.push({ t, until: title, kind: 'title' });
-  t = title;
-  reel.segments.forEach((sg, k) => {
-    const hands: Hand[] = sg.kind === 'both' ? song.hands : [sg.kind];
-    const ns = song.notes.filter(n => hands.includes(n.hand) && n.ticks >= barStart(grid, sg.from - 1) - 1 && n.ticks < barStart(grid, sg.to) - 1);
-    const start = at(sg.from);
-    const end = Math.max(at(sg.to + 1), ...ns.map(n => n.time + n.duration));
-    const length = (end - start) / sg.speed;
-    // The voice starts in the breath and goes on over the music; a long line gets a longer breath
-    // so it ends before the pass does.
-    // The listen pass plays under the idea already being said: no line, no breath of its own.
-    const said = sg.listen ? 0 : line(t + 0.15, sg.kind === 'L' ? talk?.L : sg.kind === 'R' ? talk?.R : talk?.both, k);
-    const breath = sg.listen ? 0.2 : Math.min(4, Math.max(BREATH, said - length + 1));
-    t += breath;
-    for (const n of ns) notes.push({ t: t + LEAD + (n.time - start) / sg.speed, dur: n.duration / sg.speed, midi: n.midi, hand: n.hand, finger: n.finger, vel: n.velocity, seg: k, ...placeOf(n.ticks) });
-    const until = t + LEAD + length;
-    passes.push({ t: t - breath, until, speed: sg.speed, seg: k });
-    t = until;
-  });
-  const outro = line(t + 0.3, talk?.outro);
-  cards.push({ t, until: t + Math.max(END, outro + 0.8), kind: 'end' });
-  t += Math.max(END, outro + 0.8);
+  const said = estimate(clip.say);
+  lines.push({ t: 0.3, until: 0.3 + said, text: clip.say, seg: clip.kind === 'intro' ? undefined : 0 });
+  if (clip.kind === 'intro') { cards.push({ t: 0, until: TITLE, kind: 'title' }); t = TITLE; }
+  const sg = clip.segments[0];
+  const hands: Hand[] = sg.kind === 'both' ? song.hands : [sg.kind];
+  const ns = song.notes.filter(n => hands.includes(n.hand) && n.ticks >= barStart(grid, sg.from - 1) - 1 && n.ticks < barStart(grid, sg.to) - 1);
+  const start = at(sg.from);
+  const end = Math.max(at(sg.to + 1), ...ns.map(n => n.time + n.duration));
+  const length = (end - start) / sg.speed;
+  // The voice mostly speaks before the notes land, the rest over the music.
+  const breath = clip.kind === 'intro' ? 0.2 : Math.min(5, Math.max(BREATH, said * 0.6));
+  const passStart = t;
+  t += breath;
+  for (const n of ns) notes.push({ t: t + LEAD + (n.time - start) / sg.speed, dur: n.duration / sg.speed, midi: n.midi, hand: n.hand, finger: n.finger, vel: n.velocity, seg: 0, ...placeOf(n.ticks) });
+  const until = t + LEAD + length;
+  passes.push({ t: passStart, until, speed: sg.speed, seg: 0 });
+  t = Math.max(until, 0.3 + said) + REST;
   const lo = { R: 127, L: 127 } as Record<Hand, number>, hi = { R: 0, L: 0 } as Record<Hand, number>;
   for (const n of notes) { lo[n.hand] = Math.min(lo[n.hand], n.midi); hi[n.hand] = Math.max(hi[n.hand], n.midi); }
-  return { notes, cards, lines, passes, duration: t, lo, hi };
+  // It loops from the music (the breath before it, without the voice), TikTok style.
+  return { notes, cards, lines, passes, duration: t, lo, hi, loopFrom: passStart + (clip.kind === 'intro' ? 0 : breath - 0.6) };
 }
 
 /** What every bar holds, to write a script from (window.__reelFacts in the dev console). */
