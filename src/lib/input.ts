@@ -354,3 +354,11 @@ if (import.meta.env.DEV) {
   (window as unknown as { __hpNote: (midi: number, on?: boolean) => void }).__hpNote = (midi, on = true) =>
     emit({ type: on ? 'on' : 'off', midi, velocity: 90, source: 'midi' });
 }
+
+// In development: a pretend piano for tests (window.__piano.connect(), window.__piano.note(64)).
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (window as unknown as { __piano: unknown }).__piano = {
+    connect: () => setState('midi', { status: 'on', name: 'Test piano' } as LinkState),
+    note: (midi: number) => { emit({ type: 'on', midi, velocity: 80, source: 'midi' } as NoteEvent); window.setTimeout(() => emit({ type: 'off', midi, velocity: 0, source: 'midi' } as NoteEvent), 300); },
+  };
+}

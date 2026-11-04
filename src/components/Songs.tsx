@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
+import { FIRST_SONG } from './Journey';
 import { addToLibrary, myLibrary, onLibrary, removeFromLibrary } from '../lib/library';
 import { keyName } from '../lib/analysis';
 import { meterOf, pctOf } from '../lib/mastery';
@@ -69,6 +70,10 @@ export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }:
   const [market, setMarket] = useState(false);
   const mine = entries.filter(e => !e.missing && (!e.builtIn || lib.includes(e.id) || (e.slot && lib.includes(e.slot)))).map(e => infos[e.id]).filter(Boolean);
 
+  // Interstellar Experience is always in his library: until his MIDI file is in, a card asks for it
+  // (the song is under copyright, so nothing of it ships with the app).
+  const filled = mine.some(info => (info.entry.slot ?? info.entry.id) === FIRST_SONG || /interstellar/i.test(info.entry.title));
+  const waiting = filled ? undefined : entries.find(e => e.id === FIRST_SONG || e.slot === FIRST_SONG);
   const now = mine.find(info => current === (info.entry.slot ?? info.entry.id));
   const rest = mine.filter(info => info !== now);
 
@@ -79,7 +84,15 @@ export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }:
         <button className="btn" onClick={() => setMarket(true)}><IconPlus size={16} />Add songs</button>
       </header>
       {!ready && <div aria-busy="true">{Array.from({ length: 4 }, (_, i) => <span key={i} className="lib-skeleton" style={{ display: 'block' }} />)}</div>}
-      {ready && !mine.length && (
+      {ready && waiting && (
+        <button className="lib-now waiting" onClick={() => onAdd(waiting)} aria-label={`${waiting.title}: add your MIDI file`}>
+          <span className="lib-now-foot">
+            <span><b>{waiting.title}</b><small>{[waiting.composer, 'Add your MIDI file of it and its videos are ready'].filter(Boolean).join('. ')}</small></span>
+            <span className="btn go"><IconImport size={16} />Add the MIDI file</span>
+          </span>
+        </button>
+      )}
+      {ready && !mine.length && !waiting && (
         <section className="empty-library">
           <h2>Your library is empty</h2>
           <p className="sub">Pick songs from the marketplace, or upload a MIDI file of your own.</p>

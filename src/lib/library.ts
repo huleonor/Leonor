@@ -183,7 +183,10 @@ const LIBRARY = 'hugos-piano:library';
 const libListeners = new Set<() => void>();
 export function myLibrary(): string[] {
   // A new library starts with the one song the app teaches for now.
-  try { return JSON.parse(localStorage.getItem(LIBRARY) ?? '["interstellar-experience","gymnopedie-1"]'); } catch { return ['interstellar-experience', 'gymnopedie-1']; }
+  // Interstellar Experience is always in it (the user's choice), even in a library saved before.
+  let ids: string[];
+  try { ids = JSON.parse(localStorage.getItem(LIBRARY) ?? '["interstellar-experience","gymnopedie-1"]'); } catch { ids = ['interstellar-experience', 'gymnopedie-1']; }
+  return ids.includes('interstellar-experience') ? ids : ['interstellar-experience', ...ids];
 }
 function saveLibrary(ids: string[]) {
   try { localStorage.setItem(LIBRARY, JSON.stringify(ids)); } catch { /* storage unavailable */ }
