@@ -574,6 +574,8 @@ export interface ReelTimeline {
 // along, the piano only guiding; then it stops by itself for him to practise on his own, two more
 // times, and says what comes next. The idea (first video of a phase) is only heard.
 const TITLE = 3, BREATH = 1, REST = 1.2, LEAD = 0.35;
+/** Seconds a note takes to fall onto the keys in a video (Reels.tsx draws this much ahead). */
+export const FALL = 2;
 const TURN = ['Your turn. Play it with me.', 'Now you. Play along with me.', 'Your turn, together with me.'];
 const PRACTISE = ['Now pause, and play it two more times on your own.', 'Pause here, and practise it two more times.', 'Your turn alone now. Two more times.'];
 
@@ -622,10 +624,13 @@ export function timelineOf(song: Song, clip: Clip): ReelTimeline {
   t = Math.max(until, 0.3 + said) + 0.5;
   const turn = line(t, TURN[clip.k % TURN.length], 0);
   const beat = Math.max(0.45, Math.min(1, song.ticksToSeconds(song.ppq) / sg.speed));
-  const n = Math.max(2, Math.min(4, grid.sigs[Math.max(0, sg.from - 1)]?.[0] ?? 4));
+  // Count 1, 2, 3 (the user's choice), then the notes start falling: the clicks keep the beat
+  // while they fall, so the first one still lands on a beat.
+  const n = 3;
   const ci = t + turn + 0.2;
-  for (let k = 0; k < n; k++) sfx.push({ t: ci + k * beat, name: 'click-soft', gain: k === 0 ? 0.6 : 0.4 });
-  const trainStart = ci + n * beat - LEAD;
+  const fallBeats = Math.ceil(FALL / beat);
+  for (let k = 0; k < n + fallBeats; k++) sfx.push({ t: ci + k * beat, name: 'click-soft', gain: k === 0 ? 0.6 : k < n ? 0.4 : 0.25 });
+  const trainStart = ci + (n + fallBeats) * beat - LEAD;
   lay(trainStart, true);
   until = trainStart + LEAD + length;
   passes.push({ t: ci, until, speed: sg.speed, seg: 0 });

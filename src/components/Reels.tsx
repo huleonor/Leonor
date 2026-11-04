@@ -4,13 +4,13 @@ import { audioContext, loadPiano, pianoReady, playNote, playSfx, stopAll, stopSf
 import { linkState, onLinkState, onNote } from '../lib/input';
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
-import { letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
+import { FALL, letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
 import { anyVoice, hush, onVoice, pauseVoice, prepareVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
 import { IconArrowDown, IconCheck, IconClose, IconKeys, IconPause, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
 import { SOFT, SPRING } from './Motion';
 
-const LOOK = 2; // seconds of falling notes above the keys
+const LOOK = FALL; // seconds of falling notes above the keys
 
 /** Colours for the canvas, read from the design tokens where the canvas sits (a canvas cannot read CSS variables itself). */
 function palette(el: Element) {
@@ -158,6 +158,8 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
       const sounding = new Map<number, ReelNote>();
       for (const n of tl.notes) {
         if (n.t > t + LOOK || n.t + n.dur < t - 0.05) continue;
+        // His turn's notes start falling only once the count-in (1, 2, 3) is over.
+        if (n.train && tl.countIn && t < tl.countIn.t + tl.countIn.n * tl.countIn.beat) continue;
         const k = X(n.midi);
         if (!k) continue;
         const on = n.t <= t && n.t + n.dur > t;
