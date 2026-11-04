@@ -1,11 +1,11 @@
 import { motion } from 'motion/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
 import { meterOf, pctOf } from '../lib/mastery';
 import { clipsOf, onSeen, reelsOf, seenReels, type Reel } from '../lib/reels';
 import { askStrategy } from '../lib/strategy';
 import type { SongEntry } from '../lib/types';
-import { IconImport, IconKeysFill, IconPlay, IconStar } from './Icons';
+import { IconCheck, IconImport, IconKeysFill, IconPlay } from './Icons';
 import { SOFT, SPRING } from './Motion';
 import { type Section } from './SongScreen';
 
@@ -140,32 +140,79 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
         </div>
       </section>
 
-      <ol className="phase-list">
-        {rows.map(x => {
-          const { r, i, watched, section, stars, practised } = x;
-          return (
-            <motion.li key={r.id} className={`phase-row ${next === x ? 'next' : ''} ${watched && (practised || !section) ? 'done' : ''}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ ...SOFT, delay: i * 0.03 }}>
-              <button className="phase-open" onClick={() => onWatch(song.entry.id, i)} aria-label={`Watch phase ${r.n}: ${r.words.title}`}>
-                <span className="num" aria-hidden="true">{r.n}</span>
-                <span className="phase-text"><b>{r.words.title}</b><small>{status(x)}</small></span>
-              </button>
-              {section && (
-                <button className="phase-practise" onClick={() => onPractice(song.entry.id, r)} aria-label={`Practise phase ${r.n}, ${stars} of 3 stars`}>
-                  Practise
-                  <span className="tile-stars" aria-hidden="true">{[1, 2, 3].map(k => <IconStar key={k} size={11} className={k <= stars ? 'on' : ''} />)}</span>
-                </button>
-              )}
-            </motion.li>
-          );
-        })}
-        <li className="phase-row finale">
-          <button className="phase-open" onClick={() => onWholeSong(info)}>
-            <span className="num" aria-hidden="true">{bars}</span>
-            <span className="phase-text"><b>The whole song</b><small>All {bars} bars, start to finish, with the beat</small></span>
-          </button>
-          <button className="phase-practise" onClick={() => onWholeSong(info)} aria-label="Play the whole song"><IconKeysFill size={20} />Play</button>
-        </li>
-      </ol>
+      <PhasePath
+        nodes={[
+          ...rows.map(x => ({
+            key: x.r.id, n: String(x.r.n), title: x.r.words.title, line: status(x),
+            state: next === x ? 'next' as const : x.watched && (x.practised || !x.section) ? 'done' as const : 'ahead' as const,
+            onWatch: () => onWatch(song.entry.id, x.i), onPractice: x.section ? () => onPractice(song.entry.id, x.r) : undefined,
+          })),
+          { key: 'whole', n: String(bars), title: 'The whole song', line: `All ${bars} bars, with the beat`, state: 'finale' as const, onPractice: () => onWholeSong(info) },
+        ]}
+      />
     </div>
+  );
+}
+
+interface PathNode {
+  key: string; n: string; title: string; line: string;
+  state: 'done' | 'next' | 'ahead' | 'finale';
+  onWatch?: () => void; onPractice?: () => void;
+}
+
+/**
+ * The song's phases as a path of levels: square cards swinging left and right down the page, joined
+ * by a dashed curve, the next one pink and taped with its "Start" tag, those done ticked, the whole
+ * song at the end in ink. Tapping a card opens its two ways in: watch its videos, or practise it.
+ */
+function PhasePath({ nodes }: { nodes: PathNode[] }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const box = useRef<HTMLOListElement>(null);
+  const [w, setW] = useState(360);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setW(el.clientWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const STEP = 132, TOP = 60;
+  // Where each card sits across the page, as a share of the width: a wave, never a straight line.
+  const WAVE = [0.26, 0.5, 0.74, 0.62, 0.36, 0.2, 0.44, 0.7];
+  const xs = nodes.map((_, i) => WAVE[i % WAVE.length]);
+  const h = TOP + (nodes.length - 1) * STEP + 90;
+  // The dashed trail through the centres, curving from card to card (in a 100-wide box).
+  const d = nodes.map((_, i) => {
+    const x = xs[i] * 100, y = TOP + i * STEP;
+    if (!i) return `M ${x} ${y}`;
+    const px = xs[i - 1] * 100, py = TOP + (i - 1) * STEP;
+    return `C ${px} ${py + STEP * 0.55}, ${x} ${y - STEP * 0.55}, ${x} ${y}`;
+  }).join(' ');
+  return (
+    <ol className="phase-path" ref={box} style={{ height: h }}>
+      <svg className="path-trail" viewBox={`0 0 100 ${h}`} preserveAspectRatio="none" aria-hidden="true"><path d={d} /></svg>
+      {nodes.map((x, i) => {
+        // The words go on the side with more room.
+        const left = xs[i] < 0.5;
+        const room = Math.max(90, Math.min(220, (left ? (1 - xs[i]) : xs[i]) * w - 56));
+        const isOpen = open === x.key;
+        return (
+          <motion.li key={x.key} className={`path-node ${x.state} ${left ? 'left' : 'right'}`} style={{ top: TOP + i * STEP, left: `${xs[i] * 100}%` }}
+            initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ ...SPRING, delay: i * 0.04 }}>
+            {x.state === 'next' && <span className="path-start" aria-hidden="true">Start</span>}
+            <button className="path-card" onClick={() => setOpen(isOpen ? null : x.key)} aria-expanded={isOpen} aria-label={`${x.n === String(i + 1) ? `Phase ${x.n}: ` : ''}${x.title}. ${x.line}`}>
+              {x.state === 'done' ? <IconCheck size={30} /> : x.state === 'finale' ? <IconKeysFill size={28} /> : <span className="num">{x.n}</span>}
+            </button>
+            <span className="path-label" aria-hidden="true" style={{ width: room }}><b>{x.title}</b><small>{x.line}</small></span>
+            {isOpen && (
+              <motion.div className="path-pop" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}>
+                {x.onWatch && <button className="btn go" onClick={x.onWatch}><IconPlay size={16} />Watch the videos</button>}
+                {x.onPractice && <button className="btn" onClick={x.onPractice}><IconKeysFill size={16} />{x.state === 'finale' ? 'Play the whole song' : 'Practise'}</button>}
+              </motion.div>
+            )}
+          </motion.li>
+        );
+      })}
+    </ol>
   );
 }

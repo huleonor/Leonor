@@ -633,6 +633,32 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
   );
 }
 
+/**
+ * A still of a video for the home page: its kicker, its notes, and one frame of its keyboard with
+ * the notes falling onto it (drawn by the same canvas, the clock stopped a moment into the music).
+ */
+export function ReelPreview({ song, reel }: { song: Song; reel: Clip }) {
+  const tl = useMemo(() => timelineOf(song, reel), [song, reel]);
+  const range = useMemo<[number, number]>(() => {
+    const ms = tl.notes.map(n => n.midi);
+    return ms.length ? pickRange(Math.min(...ms), Math.max(...ms), 14) : [60, 76];
+  }, [tl]);
+  const at = (tl.notes.find(n => !n.train)?.t ?? 0) + 0.6;
+  const now = useCallback(() => at, [at]);
+  const held = useRef(new Set<number>()), named = useRef(new Map<number, number>());
+  const seg = reel.segments[0];
+  const words = reel.head.split(' ').some(x => !/^[A-G](?:#|b)?m?$/.test(x) && x !== 'octaves');
+  return (
+    <div className="reel-preview reel-slide" aria-hidden="true">
+      <div className="reel-preview-head">
+        <p className="reel-kicker">{seg.label}</p>
+        <p className={`reel-hook hand-${seg.kind} ${words ? 'words' : ''}`}>{reel.head}</p>
+      </div>
+      <div className="reel-preview-stage"><Lanes tl={tl} range={range} now={now} held={held} flats={song.fifths < 0} named={named} namedUntil={0} /></div>
+    </div>
+  );
+}
+
 interface FeedProps {
   /** Inside the Watch tab (no close button, the tab bar stays), instead of over the whole app. */
   embedded?: boolean;
@@ -641,10 +667,12 @@ interface FeedProps {
   start: number;
   onClose: () => void;
   onPractice: (reel: Clip, index: number) => void;
+  /** The video on screen changed (to remember where he was, for the home page). */
+  onActive?: (index: number) => void;
 }
 
 /** The song's reels in a vertical feed: swipe up for the next one, TikTok style. */
-export function ReelFeed({ embedded, song, reels, start, onClose, onPractice }: FeedProps) {
+export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, onActive }: FeedProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(start);
   useEffect(() => {
@@ -656,6 +684,7 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice }: 
     el.querySelectorAll('[data-i]').forEach(s => io.observe(s));
     return () => io.disconnect();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { onActive?.(active); }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
   const goTo = (i: number) => { const el = ref.current!; el.scrollTo({ top: i * el.clientHeight, behavior: 'smooth' }); };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {

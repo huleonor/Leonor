@@ -4,6 +4,7 @@ import { onStats } from './lib/stats';
 import { scheduleReminders, startWebReminders } from './lib/reminders';
 import { currentSongId, Journey, practiceFor, setCurrentSong } from './components/Journey';
 import { ReelFeed } from './components/Reels';
+import { HomePage, lastReel, rememberReel } from './components/HomePage';
 import { clipsOf, seenReels, type Reel } from './lib/reels';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
@@ -12,7 +13,7 @@ import { EditSong } from './components/EditSong';
 import { SongScreen, sectionsOf, type Section } from './components/SongScreen';
 import { Songs } from './components/Songs';
 import { AnimatePresence, motion } from 'motion/react';
-import { IconClose, IconMenu, IconReel, IconTabLibrary, IconTabLibraryFill, IconTabSettings, IconTabSong, IconTabSongFill, IconTabWatch } from './components/Icons';
+import { IconClose, IconHome, IconHomeFill, IconMenu, IconReel, IconTabLibrary, IconTabLibraryFill, IconTabSettings, IconTabSong, IconTabSongFill, IconTabWatch } from './components/Icons';
 import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
 import { I18nContext, makeT } from './lib/i18n';
@@ -22,21 +23,23 @@ import { addToLibrary, loadSettings, removeSong, renameSong, saveSettings } from
 import type { Settings, SongEntry } from './lib/types';
 
 /** Watch is the reel feed of the song being learnt; Song is its map; Library his songs. */
-type Tab = 'watch' | 'song' | 'library';
+type Tab = 'home' | 'watch' | 'song' | 'library';
 // The tab bar along the bottom, like an app's: a Phosphor mark over a short word, filled for the tab he is on.
 const TABS: [Tab, string][] = [
+  ['home', 'Home'],
   ['watch', 'Watch'],
   ['song', 'Song'],
   ['library', 'Library'],
 ];
 const tabIcon = (id: Tab, on: boolean) =>
-  id === 'watch' ? (on ? <IconReel /> : <IconTabWatch />)
+  id === 'home' ? (on ? <IconHomeFill /> : <IconHome />)
+  : id === 'watch' ? (on ? <IconReel /> : <IconTabWatch />)
     : id === 'song' ? (on ? <IconTabSongFill /> : <IconTabSong />)
       : on ? <IconTabLibraryFill /> : <IconTabLibrary />;
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [tab, setTab] = useState<Tab>('watch');
+  const [tab, setTab] = useState<Tab>('home');
   // The song being learnt: one at a time, Interstellar Experience first.
   const [current, setCurrent] = useState(currentSongId);
   const choose = (id: string) => { setCurrent(id); setCurrentSong(id); };
@@ -147,6 +150,10 @@ export default function App() {
   // The feed opens on the first video he has not watched.
   const feedStart = () => {
     if (watch) return Math.min(watch.start, currentReels.length - 1);
+    // Where he was last, if that video still exists; else the first he has not watched.
+    const last = currentInfo?.song ? lastReel(currentInfo.song.entry.id) : null;
+    const k = last ? currentReels.findIndex(r => r.id === last) : -1;
+    if (k >= 0) return k;
     const seen = currentInfo?.song ? seenReels(currentInfo.song.entry.id) : [];
     const i = currentReels.findIndex(r => !seen.includes(r.id));
     return Math.max(0, i);
@@ -229,7 +236,7 @@ export default function App() {
         />
       ) : (
         <div className={`app ${watching ? 'watching' : ''}`}>
-          {!watching && nav}
+          {!watching && tab !== 'home' && nav}
           {watching && (
             <button className="nav-toggle" onClick={() => setDrawer(true)} aria-label="Menu" aria-expanded={drawer}><IconMenu size={24} /></button>
           )}
@@ -244,13 +251,19 @@ export default function App() {
             )}
           </AnimatePresence>
           <main className={`content ${watching ? 'tab-watch' : ''}`}>
-            {tab === 'watch' ? (
+            {tab === 'home' ? (
+              <HomePage title={currentEntry?.title} song={currentInfo?.song} clips={currentReels} at={currentReels.length ? feedStart() : 0}
+                onContinue={() => { unlockAudio(); setWatch(null); setTab('watch'); }}
+                onTab={(t: Tab) => go(t)} onSettings={() => setSheet('settings')}
+                onAddMidi={() => { const slot = currentEntry ?? entries.find(e => e.slot); if (slot) pickFile(slot); }} />
+            ) : tab === 'watch' ? (
               currentInfo?.song && currentReels.length ? (
                 <ReelFeed
                   key={`${currentInfo.entry.id}-${watch?.n ?? 0}`} embedded
                   song={currentInfo.song} reels={currentReels} start={feedStart()}
                   onClose={() => setTab('song')}
                   onPractice={reel => practise(currentInfo.entry.id, reel.phase)}
+                  onActive={i => { const c = currentReels[i]; if (c) rememberReel(currentInfo.entry.id, c.id); }}
                 />
               ) : journey
             ) : tab === 'song' ? journey : (
