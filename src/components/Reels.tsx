@@ -86,19 +86,34 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void) {
     return () => cancelAnimationFrame(raf);
   }, [playing, tl]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { playing, ready, now, play, pause };
+  // Scrubbing, TikTok style: jump anywhere in the video and play on from there.
+  const seek = (to: number) => { const s = state.current; if (s.playing) { s.playing = false; stopAll(); } play(Math.max(0, Math.min(tl.duration - 0.05, to))); };
+
+  return { playing, ready, now, play, pause, seek };
 }
 
 interface Lane { hand: Hand; lo: number; hi: number; }
 
+/** The camera's ease both ways (power2.inOut), for a move that starts and lands. */
+const inOut = (x: number) => (x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2);
+
 /** Falling notes onto a keyboard, one lane per hand (right above left), drawn every frame. */
-function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[]; now: () => number; held: React.RefObject<Set<number>>; flats: boolean }) {
+/**
+ * Falling notes onto a keyboard, one lane per hand (right above left), drawn every frame from the
+ * clock, so any moment of the video is the same picture (it can be scrubbed). The camera opens
+ * wide on the keyboard and pushes in on the keys the video is about; while the voice names notes,
+ * each key lights as it is named, numbered in order, before the music plays them.
+ */
+function Lanes({ tl, lanes, now, held, flats, named, namedUntil }: { tl: ReelTimeline; lanes: Lane[]; now: () => number; held: React.RefObject<Set<number>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current!;
     const ctx = cv.getContext('2d')!;
     const pal = palette(cv);
-    const layouts = lanes.map(l => keyLayout(l.lo, l.hi));
+    // Each lane is laid out wide (a few keys of context on each side) and framed on its own keys.
+    const wide = lanes.map(l => pickRange(l.lo - 7, l.hi + 7, 30));
+    const layouts = wide.map(([lo, hi]) => keyLayout(lo, hi));
+    const frames = lanes.map((l, i) => { const lay = layouts[i]; return [lay[l.lo]?.x ?? 0, (lay[l.hi]?.x ?? 1) + (lay[l.hi]?.w ?? 0)] as [number, number]; });
     let raf = 0;
     const draw = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -115,10 +130,15 @@ function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[
         const fall = kbTop - top - 6;
         const pps = fall / LOOK;
         const lay = layouts[li];
-        const X = (m: number) => lay[m] ? { x: lay[m].x * W, w: lay[m].w * W } : null;
+        // The push in: from the wide keyboard to the lane's own keys over the first second.
+        const z = inOut(Math.max(0, Math.min(1, (t - 0.15) / 0.9)));
+        const v0 = frames[li][0] * z, v1 = 1 + (frames[li][1] - 1) * z;
+        const X = (m: number) => lay[m] ? { x: ((lay[m].x - v0) / (v1 - v0)) * W, w: (lay[m].w / (v1 - v0)) * W } : null;
+        const [wLo, wHi] = wide[li];
+        const naming = t < namedUntil ? named.current ?? new Map<number, number>() : new Map<number, number>();
         // Lane guides at every C, like the lines of a falling-notes screen.
         ctx.fillStyle = pal.lane;
-        for (let m = lane.lo; m <= lane.hi; m++) if (m % 12 === 0) { const k = X(m); if (k) ctx.fillRect(k.x, top + 6, 1, fall); }
+        for (let m = wLo; m <= wHi; m++) if (m % 12 === 0) { const k = X(m); if (k) ctx.fillRect(k.x, top + 6, 1, fall); }
         // The notes.
         const sounding = new Map<number, number | undefined>();
         for (const n of tl.notes) {
@@ -151,12 +171,13 @@ function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[
         // The keyboard: what sounds is lit in the hand's colour with its finger; what he plays is green.
         const mine = held.current ?? new Set<number>();
         for (const black of [false, true]) {
-          for (let m = lane.lo; m <= lane.hi; m++) {
+          for (let m = wLo; m <= wHi; m++) {
             if (isBlack(m) !== black) continue;
             const k = X(m);
             if (!k) continue;
             const h = black ? kbH * 0.62 : kbH;
-            const lit = sounding.has(m);
+            const order = naming.get(m);
+            const lit = sounding.has(m) || order !== undefined;
             const litKey = lane.hand === 'R' ? pal.keyR : pal.keyL;
             ctx.fillStyle = mine.has(m) ? pal.ok : lit ? litKey : black ? pal.black : pal.white;
             ctx.strokeStyle = pal.whiteEdge;
@@ -164,7 +185,7 @@ function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[
             ctx.fillRect(k.x + (black ? 0 : 0.5), kbTop, k.w - (black ? 0 : 1), h);
             if (!black) ctx.strokeRect(k.x + 0.5, kbTop, k.w - 1, h);
             if (lit) {
-              const f = sounding.get(m);
+              const f = sounding.has(m) ? sounding.get(m) : order;
               const r = Math.min(11, k.w * 0.36);
               const cy = kbTop + h - r - 6;
               if (f) {
@@ -189,7 +210,7 @@ function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [tl, lanes, now, held, flats]);
+  }, [tl, lanes, now, held, flats, named, namedUntil]);
   return <canvas ref={ref} className="reel-lanes" aria-hidden="true" />;
 }
 
@@ -241,31 +262,21 @@ function useNarration(tl: ReelTimeline, line: number, playing: boolean, active: 
   return { word, on };
 }
 
-/**
- * The caption of what the voice is saying, TikTok style: a few words at a time, the word being
- * said lit. It follows the voice's own word marks, or the clock when the voice gives none.
- */
-function Caption({ line, index, now, word }: { line: ReelLine; index: number; now: () => number; word: React.RefObject<{ line: number; char: number }> }) {
-  const words = useMemo(() => {
-    const out: { w: string; at: number }[] = [];
-    const re = /\S+/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(line.text))) out.push({ w: m[0], at: m.index });
-    return out;
-  }, [line.text]);
-  // Chunks of up to six words, broken after a full stop or a comma once there are three.
-  const chunks = useMemo(() => {
-    const out: number[][] = [];
-    let cur: number[] = [];
-    words.forEach((x, i) => {
-      cur.push(i);
-      if (cur.length >= 6 || (cur.length >= 3 && /[.,:;!?]$/.test(x.w))) { out.push(cur); cur = []; }
-    });
-    if (cur.length) out.push(cur);
-    return out;
-  }, [words]);
-  const [at, setAt] = useState(0);
+/** A line's words with where each starts, for the captions and for the keys the voice names. */
+function wordsOf(text: string) {
+  const out: { w: string; at: number }[] = [];
+  const re = /\S+/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) out.push({ w: m[0], at: m.index });
+  return out;
+}
+
+/** The word the voice is on: from its own word marks, or from the clock when it gives none. */
+function useWordAt(line: ReelLine | undefined, index: number, now: () => number, word: React.RefObject<{ line: number; char: number }>) {
+  const words = useMemo(() => (line ? wordsOf(line.text) : []), [line]);
+  const [at, setAt] = useState(-1);
   useEffect(() => {
+    if (!line) { setAt(-1); return; }
     let raf = 0;
     const tick = () => {
       const w = word.current;
@@ -274,8 +285,8 @@ function Caption({ line, index, now, word }: { line: ReelLine; index: number; no
         i = 0;
         while (i + 1 < words.length && words[i + 1].at <= w.char) i++;
       } else {
-        const f = Math.max(0, Math.min(1, (now() - line.t) / Math.max(0.5, line.until - line.t)));
-        i = Math.min(words.length - 1, Math.floor(f * words.length));
+        const f = (now() - line.t) / Math.max(0.5, line.until - line.t);
+        i = f < 0 ? -1 : Math.min(words.length - 1, Math.floor(f * words.length));
       }
       setAt(i);
       raf = requestAnimationFrame(tick);
@@ -283,11 +294,36 @@ function Caption({ line, index, now, word }: { line: ReelLine; index: number; no
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [line, index, now, word, words]);
-  const chunk = chunks.findIndex(c => c.includes(at));
+  return { words, at };
+}
+
+// Eases by role (measured craft, after HyperFrames): arrivals land on a long tail, exits are short.
+const ARRIVE = [0.16, 1, 0.3, 1] as const; // expo.out
+const LEAVE = [0.4, 0, 1, 1] as const;
+
+/**
+ * The caption of what the voice is saying, TikTok style: groups of three to five words, broken
+ * at a comma or a full stop; each word blurs in as it comes (0.13 s, 70 ms apart), the word being
+ * said lit, and the group leaves in 0.12 s before the next.
+ */
+function Caption({ words, at, index }: { words: { w: string }[]; at: number; index: number }) {
+  const chunks = useMemo(() => {
+    const out: number[][] = [];
+    let cur: number[] = [];
+    words.forEach((x, i) => {
+      cur.push(i);
+      if (cur.length >= 5 || (cur.length >= 3 && /[.,:;!?]$/.test(x.w))) { out.push(cur); cur = []; }
+    });
+    if (cur.length) out.push(cur);
+    return out;
+  }, [words]);
+  const chunk = Math.max(0, chunks.findIndex(c => c.includes(Math.max(0, at))));
   return (
     <AnimatePresence mode="wait">
-      <motion.p key={`${index}-${chunk}`} className="reel-say" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -6, opacity: 0 }} transition={{ duration: 0.18 }}>
-        {(chunks[chunk] ?? []).map(i => <span key={i} className={i === at ? 'on' : i < at ? 'past' : ''}>{words[i].w} </span>)}
+      <motion.p key={`${index}-${chunk}`} className="reel-say" exit={{ opacity: 0, filter: 'blur(4px)', transition: { duration: 0.12, ease: LEAVE } }}>
+        {(chunks[chunk] ?? []).map((i, j) => (
+          <motion.span key={i} className={i === at ? 'on' : i < at ? 'past' : ''} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: j * 0.07, ease: ARRIVE }}>{words[i].w} </motion.span>
+        ))}
       </motion.p>
     </AnimatePresence>
   );
@@ -339,6 +375,28 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
   const toggle = () => { unlockVoice(); if (clock.playing) clock.pause(); else { unlockAudio(); clock.play(); } };
   const replay = () => { unlockAudio(); unlockVoice(); hush(); setLoops(0); setEpoch(e => e + 1); clock.play(0); };
   const sayLine = place.line >= 0 && loops === 0 ? tl.lines[place.line] : undefined;
+  const spoken = useWordAt(sayLine, place.line, clock.now, voice.word);
+  // The keys the voice has named so far, numbered in the order it named them (E, C, A, C: 1 2 3 4),
+  // lit before the music plays them: the explanation drawn on the keyboard as it is said.
+  const named = useRef(new Map<number, number>());
+  useEffect(() => {
+    const map = new Map<number, number>();
+    if (sayLine && spoken.at >= 0) {
+      const flats = song.fifths < 0;
+      let ptr = 0, n = 0;
+      for (const { w } of spoken.words.slice(0, spoken.at + 1)) {
+        const m = /^([A-G](?:#|b)?)[,.:;]?$/.exec(w);
+        if (!m) continue;
+        let i = tl.notes.findIndex((x, k) => k >= ptr && letter(x.midi, flats) === m[1]);
+        if (i < 0) i = tl.notes.findIndex(x => letter(x.midi, flats) === m[1]);
+        if (i < 0) continue;
+        ptr = i + 1;
+        if (!map.has(tl.notes[i].midi)) map.set(tl.notes[i].midi, ++n);
+      }
+    }
+    named.current = map;
+  }, [sayLine, spoken.at, spoken.words, tl, song.fifths]);
+  const firstNote = tl.notes[0]?.t ?? 0;
   const w = reel.words;
   const seg = reel.segments[0];
   // While both hands play the whole phase: the caption of the bar (or the one just before it).
@@ -378,12 +436,12 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
         </div>
         <header className="reel-head">
           {/* The bar being played, set as big as a poster's date: the one number to follow. */}
-          <motion.b className="reel-bar" key={bar} initial={{ y: 6, opacity: 0.4 }} animate={{ y: 0, opacity: 1 }} transition={SPRING} aria-label={`Bar ${bar}`}>{String(bar).padStart(2, '0')}</motion.b>
+          <motion.b className="reel-bar" key={bar} initial={{ y: 8, opacity: 0, filter: 'blur(4px)' }} animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.35, ease: ARRIVE }} aria-label={`Bar ${bar}`}>{String(bar).padStart(2, '0')}</motion.b>
           <span className="reel-where">
             <small>Phase {reel.n}, {reel.k} of {reel.of}</small>
             <span>{w.title}</span>
-            <motion.span key={seg.label} className={`reel-speed hand-${seg.kind}`} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING}>{seg.label}</motion.span>
-            {loops > 0 && <motion.small key={loops} initial={{ y: 4, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={SPRING}>Round {loops + 1}</motion.small>}
+            <motion.span key={seg.label} className={`reel-speed hand-${seg.kind}`} initial={{ opacity: 0, filter: 'blur(4px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.2, ease: ARRIVE }}>{seg.label}</motion.span>
+            {loops > 0 && <motion.small key={loops} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25, ease: ARRIVE }}>Round {loops + 1}</motion.small>}
           </span>
         </header>
         <h2 className="reel-hook">{reel.head}</h2>
@@ -395,7 +453,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
           </ol>
         )}
         <div className="reel-stage">
-          <Lanes tl={tl} lanes={lanes} now={clock.now} held={held} flats={song.fifths < 0} />
+          <Lanes tl={tl} lanes={lanes} now={clock.now} held={held} flats={song.fifths < 0} named={named} namedUntil={firstNote} />
         </div>
         <div className="reel-foot">
           {groups && (
@@ -404,7 +462,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
             </p>
           )}
           {sayLine && !showTitle ? (
-            <Caption line={sayLine} index={place.line} now={clock.now} word={voice.word} />
+            <Caption words={spoken.words} at={spoken.at} index={place.line} />
           ) : (
             <AnimatePresence mode="wait">
               {cue && (
@@ -416,12 +474,13 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
 
         <AnimatePresence>
           {showTitle && (
-            <motion.div key="title" className="reel-card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div initial={{ y: 24, scale: 0.96 }} animate={{ y: 0, scale: 1 }} transition={SPRING}>
-                <small>Phase {reel.n}: {w.title}</small>
-                <h3>{w.hook}</h3>
-                {sayLine && <Caption line={sayLine} index={place.line} now={clock.now} word={voice.word} />}
-              </motion.div>
+            <motion.div key="title" className="reel-card" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: 'blur(8px)', transition: { duration: 0.18, ease: LEAVE } }}>
+              <div>
+                <motion.small initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>Phase {reel.n}: {w.title}</motion.small>
+                {/* The idea lands word by word, then holds dead still. */}
+                <h3>{w.hook.split(' ').map((x, i) => <motion.span key={i} style={{ display: 'inline-block' }} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x}&nbsp;</motion.span>)}</h3>
+                {sayLine && <Caption words={spoken.words} at={spoken.at} index={place.line} />}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -431,7 +490,14 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
           )}
         </AnimatePresence>
         {!clock.ready && active && <span className="reel-loading" role="status">Loading the piano</span>}
-        <span className="reel-time" aria-hidden="true" style={{ transform: `scaleX(${pct})` }} />
+        {/* Scrub: drag along the bottom to go back to any moment, like TikTok. */}
+        <div className="reel-scrub" role="slider" aria-label="Where in the video" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct * 100)} tabIndex={0}
+          onClick={e => e.stopPropagation()}
+          onKeyDown={e => { if (e.key === 'ArrowLeft') clock.seek(clock.now() - 2); if (e.key === 'ArrowRight') clock.seek(clock.now() + 2); }}
+          onPointerDown={e => { e.stopPropagation(); (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); hush(); const r = e.currentTarget.getBoundingClientRect(); clock.seek(pass.t + (pass.until - pass.t) * ((e.clientX - r.left) / r.width)); }}
+          onPointerMove={e => { if (!e.buttons) return; const r = e.currentTarget.getBoundingClientRect(); clock.seek(pass.t + (pass.until - pass.t) * Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); }}>
+          <span className="reel-time" aria-hidden="true" style={{ transform: `scaleX(${pct})` }} />
+        </div>
       </div>
 
       <aside className="reel-side">

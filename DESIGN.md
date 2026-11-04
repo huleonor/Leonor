@@ -82,3 +82,16 @@ State-driven only (`src/components/Motion.tsx`): a bar number that changes slide
 10. No invented numbers, quotes or logos. Every number shown is the user's own (bars, phases, percent, stars).
 11. Body text passes WCAG AA on its ground (paper text on red and green is used only at 15px and up, or bold display sizes).
 12. No purple, no blue-to-purple, no AI sparkle.
+
+## Video craft (after HyperFrames)
+
+The phase videos follow the production craft of HyperFrames (heygen-com/hyperframes, Apache-2.0), the user's choice (2026-11): its rules, not its renderer. The videos stay live (drawn from his own MIDI, which never leaves his device, and lit by the keys he plays), so nothing is rendered to MP4.
+
+1. **Everything is a function of the clock.** Notes, keys, the camera, the captions and the named keys are drawn from the video's time, never from timers, so any moment is the same picture: the video can be scrubbed (drag along its bottom edge) and loops exactly.
+2. **The voice is the clock.** Each piece appears when the voice names it: as it says "E, C, A, C", each key lights in turn, numbered 1, 2, 3, 4, before the music plays them. Nothing waits on screen before it is named.
+3. **One move with a cause.** The camera opens wide on the keyboard and pushes in on the video's own keys over the first second (ease both ways, power2.inOut); then it holds still while the music plays.
+4. **Eases by role.** Arrivals land on a long tail (expo.out), exits are 40 to 50% shorter (0.12 to 0.2 s), nothing on the UI bounces, a landed title is dead still.
+5. **Titles and captions word by word.** The idea blurs in word by word (6 px to 0, 0.13 s, 67 ms apart). Captions come in groups of three to five words, broken at a comma or a full stop, each word blurring in 70 ms after the last; the word being said is blue, said words ink, words to come muted; a group leaves in 0.12 s before the next. The title card leaves with a blur swap (8 px, 0.18 s), never a slide.
+6. **Pacing.** A line holds about 0.5 s plus 0.3 s a word; the speech estimate is 2.4 words a second; a video's line stays short (about 19 words at most) so the music is never padded with idle drift.
+7. **Vertical frame.** Frame 0 is the hook (the idea or the notes, already on screen, never blank); text stays out of the right-hand action rail; one subject, stacked.
+
