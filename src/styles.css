@@ -449,13 +449,16 @@ p { margin: 0; }
 .reel-progress b { display: block; height: 100%; background: var(--field-ink); }
 .reel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 16px 0; }
 .reel-screen:not(.embedded) .reel-head { padding-left: 64px; }
-.reel-bar { font-family: var(--font-display); font-weight: 700; font-size: clamp(64px, 13vh, 128px); line-height: .82; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
-.reel-where { display: grid; justify-items: end; gap: 4px; padding-top: 6px; text-align: right; font-size: 14px; line-height: 1.25; }
+.reel-bar { display: grid; justify-items: end; font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 4.5vh, 44px); line-height: .9; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.reel-bar small { font-family: var(--font); font-weight: 500; font-size: 13px; letter-spacing: 0; color: var(--field-muted); }
+.reel-where { display: grid; justify-items: start; gap: 6px; padding-top: 4px; text-align: left; font-size: 14px; line-height: 1.25; }
 .reel-where small { color: var(--field-muted); font-size: 13px; }
 .reel-where span { font-weight: 500; }
 .reel-speed { padding: 4px 8px; background: var(--field-ink); color: var(--field); font-size: 13px; font-weight: 500; white-space: nowrap; }
 .reel-speed.hand-L { background: var(--mark); color: var(--mark-ink); }
-.reel-hook { padding: 12px 16px 0; color: var(--field-ink); font-size: clamp(22px, 3.6vh, 32px); line-height: 1; max-width: 22ch; word-spacing: .2em; }
+.reel-speed.train { background: var(--blue); color: var(--paper); }
+.reel-hook { padding: 10px 16px 0; color: var(--field-ink); font-size: clamp(34px, 6.4vh, 64px); line-height: .92; letter-spacing: -.04em; max-width: 14ch; }
+.reel-hook span { display: inline-block; white-space: pre; }
 .reel-chords { list-style: none; margin: 0; padding: 12px 16px 0; display: flex; flex-wrap: wrap; gap: 0; }
 .reel-chords li { display: flex; }
 .reel-chords b { min-width: 34px; height: 34px; padding: 0 6px; display: grid; place-items: center; border: 1px solid var(--field-rule); margin-left: -1px; font-family: var(--font-display); font-size: 18px; color: var(--field-muted); transition: background-color 120ms, color 120ms; }
@@ -477,6 +480,16 @@ p { margin: 0; }
 .reel-say .past { color: var(--field-ink); }
 .reel-say .on { color: var(--blue); }
 .reel-card .reel-say { font-size: clamp(20px, 3vh, 26px); }
+.reel-countin { position: absolute; left: 50%; top: 44%; z-index: 6; translate: -50% -50%; pointer-events: none; font-family: var(--font-display); font-weight: 700; font-size: clamp(120px, 26vh, 260px); line-height: 1; letter-spacing: -.05em; color: var(--blue); font-variant-numeric: tabular-nums; }
+/* Pause and practise: the video stops by itself; a card over the top of the frame counts his clean runs. */
+.reel-hold { position: absolute; left: 0; right: 0; top: 0; z-index: 7; display: grid; gap: 10px; justify-items: start; padding: 20px 16px 18px; background: var(--paper); border-bottom: 1px solid var(--ink); cursor: default; }
+.reel-hold small { color: var(--muted); font-size: 14px; }
+.reel-hold h3 { font-size: clamp(32px, 5.5vh, 52px); line-height: .92; letter-spacing: -.04em; color: var(--ink); }
+.reel-hold p { color: var(--ink-2); font-size: 15px; }
+.reel-reps { list-style: none; margin: 0; padding: 0; display: flex; gap: 10px; }
+.reel-reps li { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--rule-2); font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--muted); }
+.reel-reps li.on { background: var(--ok); border-color: var(--ok); color: var(--ok-ink); }
+.reel-hold-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .reel-scrub { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; height: 22px; cursor: pointer; touch-action: none; }
 .reel-scrub:focus-visible { outline-offset: -2px; }
 .reel-time { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--field-ink); transform-origin: left; transition: height 120ms var(--ease); }

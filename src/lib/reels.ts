@@ -273,6 +273,10 @@ export interface Clip extends Reel {
   head: string;
   /** What the voice says. */
   say: string;
+  /** The stretch in words ("bars 3 and 4"). */
+  where: string;
+  /** What the next video teaches, said at the end so the series carries on ("the left hand, bars 3 and 4"). */
+  next?: string;
 }
 
 // Speeds: a hand alone at half speed, both hands a little faster, the whole phase at three quarters.
@@ -353,7 +357,7 @@ export function clipsOf(song: Song): Clip[] {
     const talk = r.words.talk;
     const mine: Omit<Clip, 'k' | 'of'>[] = [];
     const make = (kind: Clip['kind'], from: number, to: number, speed: number, label: string, head: string, say: string, listen = false): Omit<Clip, 'k' | 'of'> => ({
-      ...r, id: `${r.id}-${mine.length + 1}`, phase: r, kind, head, say, from, to,
+      ...r, id: `${r.id}-${mine.length + 1}`, phase: r, kind, head, say, from, to, where: barsText(from, to),
       segments: [{ kind: kind === 'L' || kind === 'R' ? kind : 'both', from, to, speed, label, listen }],
       chords: r.chords.filter(c => c.bar >= from && c.bar <= to),
     });
@@ -409,30 +413,50 @@ export function clipsOf(song: Song): Clip[] {
     }
     mine.forEach((c, i) => out.push({ ...c, k: i + 1, of: mine.length }));
   }
+  // Each video says what the next one teaches, so the series reads as one lesson.
+  const about = (c: Clip) => c.kind === 'intro' ? `phase ${c.n}, ${c.words.title.toLowerCase()}` : c.kind === 'L' ? `the left hand, ${c.where}` : c.kind === 'R' ? `the right hand, ${c.where}` : c.kind === 'both' ? `both hands, ${c.where}` : `the whole phase`;
+  out.forEach((c, i) => { if (out[i + 1]) c.next = about(out[i + 1]); });
   clipCache.set(song, out);
   return out;
 }
 
 // ---------- Timeline: what plays when ----------
 
-export interface ReelNote { t: number; dur: number; midi: number; hand: Hand; finger?: number; vel: number; seg: number; bar: number; /** Beat of the bar, from 0. */ beat: number; }
+export interface ReelNote { t: number; dur: number; midi: number; hand: Hand; finger?: number; vel: number; seg: number; bar: number; /** Beat of the bar, from 0. */ beat: number; /** In "Train with me": he plays it, the piano only guides. */ train?: boolean; }
 export interface ReelCard { t: number; until: number; kind: 'title' | 'end'; }
 /** A line the voice says, from this time; `until` is about when it ends. */
 export interface ReelLine { t: number; until: number; text: string; seg?: number }
-export interface ReelTimeline { notes: ReelNote[]; cards: ReelCard[]; lines: ReelLine[]; passes: { t: number; until: number; speed: number; seg: number }[]; duration: number; lo: Record<Hand, number>; hi: Record<Hand, number>; /** Where a loop starts again. */ loopFrom: number; }
+/** A sound effect on a visible action (HyperFrames' rule: few and exact). */
+export interface ReelSfx { t: number; name: 'whoosh-short' | 'whoosh' | 'pop' | 'click-soft' | 'riser' | 'impact'; gain: number }
+export interface ReelTimeline {
+  notes: ReelNote[]; cards: ReelCard[]; lines: ReelLine[]; sfx: ReelSfx[];
+  passes: { t: number; until: number; speed: number; seg: number }[];
+  /** "Train with me": the count-in, then the same music for him to play along with. */
+  countIn?: { t: number; beat: number; n: number };
+  train?: { t: number; until: number };
+  /** Where the video stops by itself for him to practise on his own ("two more times"). */
+  hold?: { t: number; reps: number };
+  duration: number; lo: Record<Hand, number>; hi: Record<Hand, number>;
+  /** Where a loop starts again. */ loopFrom: number;
+}
 
-// A video: the idea's title for a moment (first video of a phase), a breath while the voice
-// starts and the notes already fall in, the music, and a second of rest before it loops.
+// A video teaches in four beats: the voice explains (keys lit as it names them) while the notes
+// fall in; the music, slow; "Train with me": a count-in and the same music again for him to play
+// along, the piano only guiding; then it stops by itself for him to practise on his own, two more
+// times, and says what comes next. The idea (first video of a phase) is only heard.
 const TITLE = 3, BREATH = 1, REST = 1.2, LEAD = 0.35;
+const TURN = ['Your turn. Play it with me.', 'Now you. Play along with me.', 'Your turn, together with me.'];
+const PRACTISE = ['Now pause, and play it two more times on your own.', 'Pause here, and practise it two more times.', 'Your turn alone now. Two more times.'];
 
 export function timelineOf(song: Song, clip: Clip): ReelTimeline {
   const { grid } = splitBars(song);
   const at = (bar: number) => song.ticksToSeconds(barStart(grid, bar - 1));
   const placeOf = (ticks: number) => { const i = barIndex(grid, ticks); return { bar: i + 1, beat: Math.floor((ticks - barStart(grid, i)) / (song.ppq * 4 / grid.sigs[i][1]) + 1e-6) }; };
-  const notes: ReelNote[] = [], cards: ReelCard[] = [], lines: ReelLine[] = [], passes: ReelTimeline['passes'] = [];
+  const notes: ReelNote[] = [], cards: ReelCard[] = [], lines: ReelLine[] = [], passes: ReelTimeline['passes'] = [], sfx: ReelSfx[] = [];
+  const line = (t: number, text: string, seg?: number) => { const d = estimate(text); lines.push({ t, until: t + d, text, seg }); return d; };
   let t = 0;
-  const said = estimate(clip.say);
-  lines.push({ t: 0.3, until: 0.3 + said, text: clip.say, seg: clip.kind === 'intro' ? undefined : 0 });
+  const said = line(0.3, clip.say, clip.kind === 'intro' ? undefined : 0);
+  sfx.push({ t: 0.05, name: clip.k % 2 ? 'whoosh-short' : 'whoosh', gain: 0.35 });
   if (clip.kind === 'intro') { cards.push({ t: 0, until: TITLE, kind: 'title' }); t = TITLE; }
   const sg = clip.segments[0];
   const hands: Hand[] = sg.kind === 'both' ? song.hands : [sg.kind];
@@ -440,18 +464,44 @@ export function timelineOf(song: Song, clip: Clip): ReelTimeline {
   const start = at(sg.from);
   const end = Math.max(at(sg.to + 1), ...ns.map(n => n.time + n.duration));
   const length = (end - start) / sg.speed;
-  // The voice mostly speaks before the notes land, the rest over the music.
+  const lay = (t0: number, train = false) => { for (const n of ns) notes.push({ t: t0 + LEAD + (n.time - start) / sg.speed, dur: n.duration / sg.speed, midi: n.midi, hand: n.hand, finger: n.finger, vel: n.velocity, seg: 0, ...placeOf(n.ticks), train }); };
+  // The payoff (the whole phase): a riser into an impact as the music starts.
+  // 1. The voice explains while the notes fall in; 2. the music.
   const breath = clip.kind === 'intro' ? 0.2 : Math.min(5, Math.max(BREATH, said * 0.6));
   const passStart = t;
   t += breath;
-  for (const n of ns) notes.push({ t: t + LEAD + (n.time - start) / sg.speed, dur: n.duration / sg.speed, midi: n.midi, hand: n.hand, finger: n.finger, vel: n.velocity, seg: 0, ...placeOf(n.ticks) });
-  const until = t + LEAD + length;
+  if (clip.kind === 'run') { sfx.push({ t: t + LEAD - 2.4, name: 'riser', gain: 0.22 }, { t: t + LEAD - 0.02, name: 'impact', gain: 0.25 }); }
+  lay(t);
+  let until = t + LEAD + length;
   passes.push({ t: passStart, until, speed: sg.speed, seg: 0 });
-  t = Math.max(until, 0.3 + said) + REST;
+  if (clip.kind === 'intro') {
+    t = Math.max(until, 0.3 + said) + REST;
+    const lo0 = { R: 127, L: 127 } as Record<Hand, number>, hi0 = { R: 0, L: 0 } as Record<Hand, number>;
+    for (const n of notes) { lo0[n.hand] = Math.min(lo0[n.hand], n.midi); hi0[n.hand] = Math.max(hi0[n.hand], n.midi); }
+    return { notes, cards, lines, sfx, passes, duration: t, lo: lo0, hi: hi0, loopFrom: passStart };
+  }
+  // 3. Train with me: "your turn", a bar of count-in on the beat, the same music again for him.
+  t = Math.max(until, 0.3 + said) + 0.5;
+  const turn = line(t, TURN[clip.k % TURN.length], 0);
+  const beat = Math.max(0.45, Math.min(1, song.ticksToSeconds(song.ppq) / sg.speed));
+  const n = Math.max(2, Math.min(4, grid.sigs[Math.max(0, sg.from - 1)]?.[0] ?? 4));
+  const ci = t + turn + 0.2;
+  for (let k = 0; k < n; k++) sfx.push({ t: ci + k * beat, name: 'click-soft', gain: k === 0 ? 0.6 : 0.4 });
+  const trainStart = ci + n * beat - LEAD;
+  lay(trainStart, true);
+  until = trainStart + LEAD + length;
+  passes.push({ t: ci, until, speed: sg.speed, seg: 0 });
+  // 4. It stops by itself for him to practise alone; then it says what comes next.
+  const holdAt = until + 0.8;
+  line(holdAt - 0.6, PRACTISE[clip.k % PRACTISE.length], 0);
+  const after = holdAt + 0.3;
+  const nextLine = clip.next ? `Nice. Next up, ${clip.next}. Swipe up.` : 'Nice. That is this phase. Now practise it in the lessons.';
+  const nextSaid = line(after, nextLine, 0);
+  const duration = after + nextSaid + REST;
   const lo = { R: 127, L: 127 } as Record<Hand, number>, hi = { R: 0, L: 0 } as Record<Hand, number>;
-  for (const n of notes) { lo[n.hand] = Math.min(lo[n.hand], n.midi); hi[n.hand] = Math.max(hi[n.hand], n.midi); }
-  // It loops from the music (the breath before it, without the voice), TikTok style.
-  return { notes, cards, lines, passes, duration: t, lo, hi, loopFrom: passStart + (clip.kind === 'intro' ? 0 : breath - 0.6) };
+  for (const x of notes) { lo[x.hand] = Math.min(lo[x.hand], x.midi); hi[x.hand] = Math.max(hi[x.hand], x.midi); }
+  // The loop is Train with me again: the count-in and his turn, without the voice.
+  return { notes, cards, lines, sfx, passes, countIn: { t: ci, beat, n }, train: { t: trainStart + LEAD, until }, hold: { t: holdAt, reps: 2 }, duration, lo, hi, loopFrom: ci - 0.2 };
 }
 
 /** What every bar holds, to write a script from (window.__reelFacts in the dev console). */

@@ -82,3 +82,39 @@ export function playClick(accent = false) {
     osc.stop(t + 0.06);
   } catch { /* audio unavailable */ }
 }
+
+// ---------- Sound effects for the videos (public/sfx, Pixabay licence) ----------
+const sfxBuffers = new Map<string, Promise<AudioBuffer | null>>();
+
+/** Loads a sound effect once; a missing file just plays nothing. */
+export function loadSfx(name: string): Promise<AudioBuffer | null> {
+  let p = sfxBuffers.get(name);
+  if (!p) {
+    p = fetch(`/sfx/${name}.mp3`).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.statusText))))
+      .then(b => audioContext().decodeAudioData(b)).catch(() => null);
+    sfxBuffers.set(name, p);
+  }
+  return p;
+}
+
+const sfxPlaying = new Set<AudioBufferSourceNode>();
+
+/** Plays a sound effect at `time` on the audio clock (now when omitted). */
+export async function playSfx(name: string, gain = 0.5, time?: number) {
+  const buf = await loadSfx(name);
+  if (!buf) return;
+  try {
+    const c = audioContext();
+    const src = c.createBufferSource();
+    const g = c.createGain();
+    g.gain.value = gain;
+    src.buffer = buf;
+    src.connect(g).connect(c.destination);
+    src.onended = () => sfxPlaying.delete(src);
+    sfxPlaying.add(src);
+    src.start(Math.max(c.currentTime, time ?? c.currentTime));
+  } catch { /* audio unavailable */ }
+}
+
+/** Stops every sound effect still to play (a video paused or left). */
+export function stopSfx() { for (const s of sfxPlaying) { try { s.stop(); } catch { /* already done */ } } sfxPlaying.clear(); }
