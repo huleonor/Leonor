@@ -4,9 +4,10 @@ import { audioContext, loadPiano, pianoReady, playNote, stopAll, unlockAudio } f
 import { onNote } from '../lib/input';
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
-import { letter, markSeen, timelineOf, type Reel, type ReelTimeline } from '../lib/reels';
+import { letter, markSeen, timelineOf, type Reel, type ReelLine, type ReelTimeline } from '../lib/reels';
+import { hush, onVoice, pauseVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn, voiceSupported } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
-import { IconArrowRight, IconClose, IconKeys, IconPause, IconPlay, IconRestart } from './Icons';
+import { IconArrowRight, IconClose, IconKeys, IconPause, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
 import { SOFT, SPRING } from './Motion';
 
 const LOOK = 2.4; // seconds of falling notes above the keys
@@ -75,7 +76,8 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void) {
       const t = now();
       while (s.next < tl.notes.length && tl.notes[s.next].t < t + 0.2) {
         const n = tl.notes[s.next++];
-        playNote(n.midi, Math.round(20 + n.vel * 100), Math.max(0.1, n.dur), s.start + n.t);
+        // The piano steps back a little while the voice talks, like music under a voice-over.
+        playNote(n.midi, Math.round((20 + n.vel * 100) * (speaking() ? 0.7 : 1)), Math.max(0.1, n.dur), s.start + n.t);
       }
       if (t >= tl.duration) { s.t = tl.duration; s.playing = false; setPlaying(false); onEnd(); return; }
       raf = requestAnimationFrame(tick);
@@ -193,7 +195,7 @@ function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[
 
 /** Where the clock is: the segment, the bar, the note just played, the card showing (changes a few times a second). */
 function usePlace(tl: ReelTimeline, now: () => number, playing: boolean) {
-  const [place, setPlace] = useState({ seg: -1, playing: false, bar: 0, note: -1, card: tl.cards[0]?.kind as string | undefined });
+  const [place, setPlace] = useState({ seg: -1, playing: false, bar: 0, note: -1, card: tl.cards[0]?.kind as string | undefined, line: -1 });
   useEffect(() => {
     let raf = 0;
     const tick = () => {
@@ -203,17 +205,92 @@ function usePlace(tl: ReelTimeline, now: () => number, playing: boolean) {
       let note = -1;
       for (let i = 0; i < tl.notes.length && tl.notes[i].t <= t + 0.02; i++) note = i;
       const pass = tl.passes.find(x => t >= x.t && t < x.until);
-      const seg = pass?.seg ?? c?.seg ?? -1;
+      const seg = pass?.seg ?? -1;
       const n = tl.notes[note];
       const bar = n && n.seg === seg ? n.bar : tl.notes.find(x => x.seg === seg)?.bar ?? 0;
-      const next = { seg, playing: !!pass, bar, note, card };
-      setPlace(p => (p.seg === next.seg && p.playing === next.playing && p.bar === next.bar && p.note === next.note && p.card === next.card ? p : next));
+      // The voice line being said (its caption stays a moment after the voice ends).
+      let line = -1;
+      tl.lines.forEach((l, i) => { if (t >= l.t && t < l.until + 0.8) line = i; });
+      const next = { seg, playing: !!pass, bar, note, card, line };
+      setPlace(p => (p.seg === next.seg && p.playing === next.playing && p.bar === next.bar && p.note === next.note && p.card === next.card && p.line === next.line ? p : next));
       if (playing) raf = requestAnimationFrame(tick);
     };
     tick();
     return () => cancelAnimationFrame(raf);
   }, [tl, now, playing]);
   return place;
+}
+
+/** The voice: each line is said when the clock reaches it; it pauses with the reel and stops when the reel leaves. */
+function useNarration(tl: ReelTimeline, line: number, playing: boolean, active: boolean) {
+  const word = useRef({ line: -1, char: -1 });
+  const said = useRef(-1);
+  const [on, setOn] = useState(voiceOn);
+  useEffect(() => onVoice(() => setOn(voiceOn())), []);
+  useEffect(() => {
+    if (!active || !on) return;
+    if (line < 0 || line === said.current || !playing) return;
+    said.current = line;
+    word.current = { line, char: -1 };
+    say(tl.lines[line].text, c => { word.current = { line, char: c }; });
+  }, [line, playing, active, on, tl]);
+  // A new play-through says every line again.
+  useEffect(() => { if (line < said.current) said.current = -1; }, [line]);
+  useEffect(() => { if (!active) return; if (playing) resumeVoice(); else pauseVoice(); }, [playing, active]);
+  useEffect(() => { if (!active) { hush(); said.current = -1; } return () => hush(); }, [active]);
+  return { word, on };
+}
+
+/**
+ * The caption of what the voice is saying, TikTok style: a few words at a time, the word being
+ * said lit. It follows the voice's own word marks, or the clock when the voice gives none.
+ */
+function Caption({ line, index, now, word }: { line: ReelLine; index: number; now: () => number; word: React.RefObject<{ line: number; char: number }> }) {
+  const words = useMemo(() => {
+    const out: { w: string; at: number }[] = [];
+    const re = /\S+/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(line.text))) out.push({ w: m[0], at: m.index });
+    return out;
+  }, [line.text]);
+  // Chunks of up to six words, broken after a full stop or a comma once there are three.
+  const chunks = useMemo(() => {
+    const out: number[][] = [];
+    let cur: number[] = [];
+    words.forEach((x, i) => {
+      cur.push(i);
+      if (cur.length >= 6 || (cur.length >= 3 && /[.,:;!?]$/.test(x.w))) { out.push(cur); cur = []; }
+    });
+    if (cur.length) out.push(cur);
+    return out;
+  }, [words]);
+  const [at, setAt] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const w = word.current;
+      let i: number;
+      if (w && w.line === index && w.char >= 0) {
+        i = 0;
+        while (i + 1 < words.length && words[i + 1].at <= w.char) i++;
+      } else {
+        const f = Math.max(0, Math.min(1, (now() - line.t) / Math.max(0.5, line.until - line.t)));
+        i = Math.min(words.length - 1, Math.floor(f * words.length));
+      }
+      setAt(i);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [line, index, now, word, words]);
+  const chunk = chunks.findIndex(c => c.includes(at));
+  return (
+    <AnimatePresence mode="wait">
+      <motion.p key={`${index}-${chunk}`} className="reel-say" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -6, opacity: 0 }} transition={{ duration: 0.18 }}>
+        {(chunks[chunk] ?? []).map(i => <span key={i} className={i === at ? 'on' : i < at ? 'past' : ''}>{words[i].w} </span>)}
+      </motion.p>
+    </AnimatePresence>
+  );
 }
 
 interface PlayerProps {
@@ -240,6 +317,7 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
   const [ended, setEnded] = useState(false);
   const clock = useReelClock(tl, active, () => { setEnded(true); markSeen(song.entry.id, reel.id); });
   const place = usePlace(tl, clock.now, clock.playing);
+  const voice = useNarration(tl, place.line, clock.playing, active);
   const held = useRef(new Set<number>());
 
   // Keys he plays along light up green on the reel's keyboard.
@@ -249,8 +327,9 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
   }, [active]);
   useEffect(() => { if (clock.playing) setEnded(false); }, [clock.playing]);
 
-  const toggle = () => { if (clock.playing) clock.pause(); else { unlockAudio(); clock.play(); } };
-  const replay = () => { unlockAudio(); setEnded(false); clock.play(0); };
+  const toggle = () => { unlockVoice(); if (clock.playing) clock.pause(); else { unlockAudio(); clock.play(); } };
+  const replay = () => { unlockAudio(); unlockVoice(); hush(); setEnded(false); clock.play(0); };
+  const sayLine = place.line >= 0 ? tl.lines[place.line] : undefined;
   const w = reel.words;
   const seg = reel.segments[place.seg];
   const handLine = seg?.kind === 'L' ? w.L : seg?.kind === 'R' ? w.R : undefined;
@@ -282,7 +361,6 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
   const pct = tl.duration ? Math.min(1, clock.now() / tl.duration) : 0;
   const bar = place.playing && place.bar ? place.bar : seg?.from ?? reel.from;
   const showTitle = place.card === 'title';
-  const showLabel = place.card === 'label' && seg;
   const showEnd = ended || place.card === 'end';
 
   return (
@@ -324,11 +402,15 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
               {groups.map((g, i) => <span key={i}>{g.map((x, j) => <b key={j} className={x.on ? 'on' : x.past ? 'past' : ''}>{x.l}</b>)}</span>)}
             </p>
           )}
-          <AnimatePresence mode="wait">
-            {cue && (
-              <motion.p key={cue} className="reel-cue" initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }} transition={SOFT}>{cue}</motion.p>
-            )}
-          </AnimatePresence>
+          {sayLine && !showTitle ? (
+            <Caption line={sayLine} index={place.line} now={clock.now} word={voice.word} />
+          ) : (
+            <AnimatePresence mode="wait">
+              {cue && (
+                <motion.p key={cue} className="reel-cue" initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }} transition={SOFT}>{cue}</motion.p>
+              )}
+            </AnimatePresence>
+          )}
         </div>
 
         <AnimatePresence>
@@ -337,14 +419,9 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
               <motion.div initial={{ y: 24, scale: 0.92 }} animate={{ y: 0, scale: 1 }} transition={SPRING}>
                 <small>Phase {reel.n} of {count}: {w.title}</small>
                 <h3>{w.hook}</h3>
-                <ul className="reel-tricks">{w.tricks.map(t => <li key={t}>{t}</li>)}</ul>
-              </motion.div>
-            </motion.div>
-          )}
-          {showLabel && (
-            <motion.div key={`label-${place.seg}`} className="reel-card light" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div initial={{ scale: 0.6 }} animate={{ scale: 1 }} transition={SPRING}>
-                <h3 className={`reel-label hand-${seg.kind}`}>{seg.label}</h3>
+                {sayLine
+                  ? <Caption line={sayLine} index={place.line} now={clock.now} word={voice.word} />
+                  : <ul className="reel-tricks">{w.tricks.map(t => <li key={t}>{t}</li>)}</ul>}
               </motion.div>
             </motion.div>
           )}
@@ -375,6 +452,11 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
         <button className="reel-act go" onClick={onPractice} aria-label="Practise this phase"><span><IconKeys size={26} /></span>Practise</button>
         <button className="reel-act" onClick={toggle} aria-label={clock.playing ? 'Pause' : 'Play'}><span>{clock.playing ? <IconPause size={24} /> : <IconPlay size={24} />}</span>{clock.playing ? 'Pause' : 'Play'}</button>
         <button className="reel-act" onClick={replay} aria-label="Watch again"><span><IconRestart size={24} /></span>Again</button>
+        {voiceSupported() && (
+          <button className="reel-act" onClick={e => { e.stopPropagation(); unlockVoice(); setVoiceOn(!voice.on); }} aria-pressed={voice.on} aria-label={voice.on ? 'Turn the voice off' : 'Turn the voice on'}>
+            <span>{voice.on ? <IconSpeaker size={24} /> : <IconSpeakerOff size={24} />}</span>Voice
+          </button>
+        )}
         {onNext && <button className="reel-act" onClick={onNext} aria-label="Next phase"><span><IconArrowRight size={24} /></span>Next</button>}
       </aside>
     </div>

@@ -469,6 +469,11 @@ p { margin: 0; }
 .reel-groups b.past { color: var(--field-ink); }
 .reel-groups b.on { background: var(--field-ink); color: var(--field); }
 .reel-cue { font-family: var(--font-display); font-weight: 700; font-size: clamp(18px, 2.6vh, 22px); line-height: 1.1; letter-spacing: -.015em; max-width: 26ch; }
+.reel-say { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 3.2vh, 30px); line-height: 1.08; letter-spacing: -.015em; max-width: 24ch; color: var(--field-muted); }
+.reel-say span { transition: color 120ms var(--ease); }
+.reel-say .past { color: var(--field-ink); }
+.reel-say .on { color: var(--key-next); }
+.reel-card .reel-say { font-size: clamp(20px, 3vh, 26px); }
 .reel-time { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--field-ink); transform-origin: left; }
 
 /* Cards over the reel: the idea, a hand's name, your turn. Printed on the field, set flush left. */
@@ -635,29 +640,29 @@ p { margin: 0; }
 }
 .help-keys .keyboard { height: 100%; overflow: hidden; }
 .help-keys .klabel { display: block; font-size: 10px; }
-.help-keys.wide { bottom: calc(10px + var(--safe-b)); width: min(980px, calc(100vw - 24px)); height: clamp(52px, 14vh, 110px); }
+.help-keys.wide { left: 0; right: 0; bottom: 0; translate: none; width: auto; height: clamp(64px, 15vh, 120px); padding: 0 0 var(--safe-b); border: 0; border-top: 1px solid var(--rule-2); background: var(--white); }
 @media (max-width: 640px) { .help-keys { bottom: calc(150px + var(--safe-b)); } }
 
-/* ---------- Lessons: the staff on white bands across the field ---------- */
+/* ---------- Lessons: Simply Piano's page, white, the staff big across it, the keys as a strip along the bottom ---------- */
 .lesson.simply {
-  --now-line: var(--mark);
+  --now-line: var(--field);
   position: relative; height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr);
-  background: var(--field); color: var(--field-ink); padding: 0 var(--safe-r) var(--safe-b) var(--safe-l);
+  background: var(--white); color: var(--ink); padding: 0 var(--safe-r) var(--safe-b) var(--safe-l);
 }
-.lesson.simply.view-notes { grid-template-rows: auto minmax(0, 1fr) clamp(78px, 21vh, 130px); background: var(--ink); }
+.lesson.simply.view-notes { grid-template-rows: auto minmax(0, 1fr) clamp(78px, 21vh, 130px); background: var(--field); color: var(--field-ink); }
 .lesson-bar { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: calc(12px + var(--safe-t)) 24px 6px; }
-.lesson-pause, .lesson-arrow { flex: none; display: grid; place-items: center; color: var(--field-ink); border: 1px solid var(--field-rule); transition: background-color var(--dur); }
+.lesson-pause, .lesson-arrow { flex: none; display: grid; place-items: center; color: var(--ink); border: 1px solid var(--rule-2); background: var(--white); transition: background-color var(--dur); }
 .lesson-pause { width: 44px; height: 44px; }
 .lesson-arrow { width: 34px; height: 34px; }
-.lesson-pause:hover, .lesson-arrow:hover:not(:disabled) { background: var(--field-2); }
-.lesson-arrow:disabled { color: var(--field-rule); border-color: var(--field-2); }
+.lesson-pause:hover, .lesson-arrow:hover:not(:disabled) { background: var(--paper-2); }
+.lesson-arrow:disabled { color: var(--rule-2); border-color: var(--rule); }
 .lesson-say { flex: 1; min-width: 0; }
 .lesson-nav { position: relative; display: flex; align-items: center; gap: 10px; flex: none; }
-.lesson-count { position: relative; width: 132px; height: 34px; overflow: hidden; display: flex; align-items: center; justify-content: flex-end; padding: 0 12px; border: 1px solid var(--field-rule); font-family: var(--font-display); font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; }
-.lesson-count i { position: absolute; inset: 0 auto 0 0; background: var(--field-2); }
+.lesson-count { position: relative; width: 132px; height: 34px; overflow: hidden; display: flex; align-items: center; justify-content: flex-end; padding: 0 12px; border: 1px solid var(--rule-2); font-family: var(--font-display); font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; }
+.lesson-count i { position: absolute; inset: 0 auto 0 0; background: var(--paper-3); }
 .lesson-count span { position: relative; }
 .rep-dots { position: absolute; right: 44px; top: calc(100% + 6px); z-index: 7; width: 132px; display: flex; justify-content: center; gap: 6px; }
-.rep-dots i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--field-rule); color: var(--field-ink); font-style: normal; font-size: 12px; font-weight: 700; }
+.rep-dots i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--rule-2); color: var(--ink-2); font-style: normal; font-size: 12px; font-weight: 700; }
 .rep-dots i.on { background: var(--ok); border-color: var(--ok); color: var(--ok-ink); }
 .rep-mark { position: absolute; top: 14px; right: 20px; z-index: 8; display: grid; place-items: center; width: 56px; height: 56px; pointer-events: none; }
 .rep-mark.good { background: var(--ok); color: var(--ok-ink); }
@@ -672,7 +677,7 @@ p { margin: 0; }
 .lesson-line .abcjs-time-signature, .clef-panel .abcjs-time-signature { visibility: hidden; }
 .staff-ext { position: absolute; left: 0; right: 0; z-index: 5; pointer-events: none; background-image: linear-gradient(to bottom, var(--staff-line) 0, var(--staff-line) var(--thick, 1px), transparent var(--thick, 1px)); background-repeat: repeat-y; }
 .staff-band { position: absolute; left: 0; right: 0; z-index: 1; background: var(--staff-ground); pointer-events: none; }
-.clef-panel { position: absolute; left: 0; z-index: 4; overflow: hidden; background: var(--field); pointer-events: none; }
+.clef-panel { position: absolute; left: 0; z-index: 4; overflow: hidden; background: var(--staff-ground); pointer-events: none; }
 .clef-panel .staff-band { z-index: 0; }
 .clef-panel svg { position: relative; z-index: 1; display: block; overflow: visible; }
 .past-fade { position: absolute; top: 0; z-index: 4; pointer-events: none; background: linear-gradient(to right, color-mix(in srgb, var(--staff-ground) 94%, transparent), color-mix(in srgb, var(--staff-ground) 55%, transparent) 60%, transparent); }
@@ -688,8 +693,6 @@ p { margin: 0; }
 .lesson-actions { position: absolute; left: 0; right: 0; bottom: calc(24px + var(--safe-b)); z-index: 6; display: flex; justify-content: center; pointer-events: none; }
 .lesson-actions > * { pointer-events: auto; }
 .lesson-start { display: flex; gap: 10px; }
-.lesson-start .btn { background: transparent; color: var(--field-ink); border-color: var(--field-rule); }
-.lesson-start .btn.go { background: var(--field-ink); color: var(--field); border-color: var(--field-ink); }
 .lesson-listening { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 3; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--ink); color: var(--paper); font-weight: 500; font-size: 15px; white-space: nowrap; }
 .lesson-listening.slip { background: var(--paper); color: var(--ink); }
 .lesson-listening.zoom { max-width: min(560px, calc(100% - 32px)); white-space: normal; background: var(--paper); color: var(--ink); }
