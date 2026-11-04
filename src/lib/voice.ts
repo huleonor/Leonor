@@ -37,7 +37,7 @@ function pick(): SpeechSynthesisVoice | null {
 if (voiceSupported()) speechSynthesis.addEventListener?.('voiceschanged', () => { chosen = null; });
 
 // Note letters are read as letters: a lone capital A would be read as the word "a".
-const spoken = (text: string) => text.replace(/\bA\b/g, 'ay').replace(/#/g, ' sharp');
+const spoken = (text: string) => text.replace(/\b([A-G])b\b/g, '$1 flat').replace(/\bA\b/g, 'ay').replace(/#/g, ' sharp');
 
 /** Seconds a line takes to say, at the pace the voice speaks. */
 export function estimate(text: string) {

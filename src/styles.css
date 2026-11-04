@@ -29,7 +29,8 @@
   --rule: oklch(87.5% .008 90);
   --rule-2: oklch(72% .01 266);
   /* Field: the ultramarine the music is printed on (reels, lessons, the song being learnt) */
-  --field: oklch(44% .2 266);
+  --blue: oklch(44% .2 266);
+  --field: var(--blue);
   --field-2: oklch(38% .19 266);
   --field-ink: oklch(97.5% .005 90);
   --field-muted: oklch(85% .06 266);
@@ -420,7 +421,12 @@ p { margin: 0; }
   .upload-preview { position: static; max-width: 260px; }
 }
 
-/* ---------- Watch: the phase videos, printed on the field ---------- */
+/* ---------- Watch: the videos, printed on paper (the user found the full blue too strong): the field
+   tokens are remapped to the paper here, so the same rules print ink on paper, the hands in blue and red ---------- */
+.reel-slide {
+  --field: var(--paper); --field-2: var(--paper-2); --field-ink: var(--ink); --field-muted: var(--muted); --field-rule: var(--rule);
+  --right: var(--blue); --left: var(--mark); --right-ink: var(--paper); --left-ink: var(--mark-ink); --now-line: var(--ink);
+}
 .reel-screen { position: fixed; inset: 0; z-index: 20; background: var(--paper); }
 .reel-screen.embedded { position: relative; inset: auto; z-index: 0; height: 100%; background: transparent; }
 .reel-feed { height: 100dvh; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain; scrollbar-width: none; }
@@ -433,11 +439,8 @@ p { margin: 0; }
 .reel-slide { height: 100%; display: flex; align-items: center; justify-content: center; gap: 20px; }
 
 .reel-frame {
-  /* On the field the right hand prints in paper; its lit keys in a pale blue. */
-  --right: var(--field-ink); --left: var(--mark); --right-ink: var(--field); --left-ink: var(--mark-ink);
-  --now-line: var(--field-ink);
   position: relative; height: calc(100dvh - 20px); aspect-ratio: 9 / 16; max-width: calc(100vw - 120px);
-  overflow: hidden; background: var(--field); color: var(--field-ink); cursor: pointer;
+  overflow: hidden; background: var(--field); color: var(--field-ink); cursor: pointer; border: 1px solid var(--rule-2);
   display: grid; grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
 }
 .reel-screen.embedded .reel-frame { height: calc(100% - 20px); }
@@ -472,7 +475,7 @@ p { margin: 0; }
 .reel-say { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 3.2vh, 30px); line-height: 1.08; letter-spacing: -.015em; max-width: 24ch; color: var(--field-muted); }
 .reel-say span { transition: color 120ms var(--ease); }
 .reel-say .past { color: var(--field-ink); }
-.reel-say .on { color: var(--key-next); }
+.reel-say .on { color: var(--blue); }
 .reel-card .reel-say { font-size: clamp(20px, 3vh, 26px); }
 .reel-time { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--field-ink); transform-origin: left; }
 
@@ -503,7 +506,7 @@ p { margin: 0; }
 /* Phones held upright: the reel is the whole screen, the actions float on its right. */
 @media (max-aspect-ratio: 10 / 16), (max-width: 640px) and (orientation: portrait) {
   .reel-slide { position: relative; width: 100%; }
-  .reel-frame { height: 100dvh; width: 100vw; max-width: none; aspect-ratio: auto; }
+  .reel-frame { height: 100dvh; width: 100vw; max-width: none; aspect-ratio: auto; border: 0; }
   .reel-screen.embedded .reel-frame { height: 100%; }
   .reel-screen.embedded .reel-count { display: none; }
   .reel-side { position: absolute; right: 10px; top: 40%; z-index: 6; gap: 12px; }

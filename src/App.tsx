@@ -4,7 +4,7 @@ import { onStats } from './lib/stats';
 import { scheduleReminders, startWebReminders } from './lib/reminders';
 import { currentSongId, Journey, practiceFor, setCurrentSong } from './components/Journey';
 import { ReelFeed } from './components/Reels';
-import { reelsOf, seenReels, type Reel } from './lib/reels';
+import { clipsOf, seenReels, type Reel } from './lib/reels';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
 import { SettingsSheet } from './components/SettingsSheet';
@@ -120,32 +120,44 @@ export default function App() {
   // Opening a song shows its sheet music; Teach me opens a section's lesson on top of it.
   const openSheet = (info: SongInfo) => { unlockAudio(); ensureInput(); openSong(info); };
 
-  // After a phase's video: that phase's practice; when it is done, the next phase's video.
-  const practise = (id: string, reel: Reel, i: number) => {
+  // A phase's practice, from its videos or the Song page. Back from it: the phase's last video;
+  // when it is done: the next phase's first video.
+  const practise = (id: string, reel: Reel) => {
     const info = infos[id];
     if (!info?.song) return;
     const only = practiceFor(info, reel);
     if (!only) return;
     unlockAudio(); ensureInput();
-    setLesson({ id, section: only.id, n: Date.now(), only, back: i });
+    const clips = clipsOf(info.song);
+    const last = clips.map(c => c.phase.id).lastIndexOf(reel.id);
+    setLesson({ id, section: only.id, n: Date.now(), only, back: Math.max(0, last) });
   };
   const watchFrom = (i: number) => { unlockAudio(); setWatch({ start: i, n: Date.now() }); setTab('watch'); };
   // The song he is learning, and where its feed starts: the first reel he has not watched.
   const currentEntry = entries.find(e => e.id === current || e.slot === current);
   const currentInfo = currentEntry ? infos[currentEntry.id] : undefined;
-  const currentReels = useMemo(() => (currentInfo?.song ? reelsOf(currentInfo.song) : []), [currentInfo?.song, infos]); // eslint-disable-line react-hooks/exhaustive-deps
+  const currentReels = useMemo(() => (currentInfo?.song ? clipsOf(currentInfo.song) : []), [currentInfo?.song, infos]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The feed opens on the first video he has not watched.
   const feedStart = () => {
     if (watch) return Math.min(watch.start, currentReels.length - 1);
     const seen = currentInfo?.song ? seenReels(currentInfo.song.entry.id) : [];
     const i = currentReels.findIndex(r => !seen.includes(r.id));
     return Math.max(0, i);
   };
+  // A phase from the Song page: its first video he has not watched (or its first).
+  const phaseStart = (id: string, phase: number) => {
+    const song = infos[id]?.song;
+    if (!song) return 0;
+    const clips = clipsOf(song), seen = seenReels(id);
+    const mine = clips.map((c, i) => ({ c, i })).filter(x => x.c.n === phase + 1);
+    return (mine.find(x => !seen.includes(x.c.id)) ?? mine[0])?.i ?? 0;
+  };
   const journey = (
     <Journey
       songId={current} onChoose={choose}
       infos={infos} entries={entries} ready={ready}
-      onWatch={(_id, i) => watchFrom(i)}
-      onPractice={(id, reel) => practise(id, reel, reelsOf(infos[id].song!).indexOf(reel))}
+      onWatch={(id, i) => watchFrom(phaseStart(id, i))}
+      onPractice={(id, reel) => practise(id, reel)}
       onWholeSong={info => openSheet(info)}
       onBringMidi={slot => pickFile(slot)}
       onSongs={() => setTab('library')}
@@ -214,7 +226,7 @@ export default function App() {
                   key={`${currentInfo.entry.id}-${watch?.n ?? 0}`} embedded
                   song={currentInfo.song} reels={currentReels} start={feedStart()}
                   onClose={() => setTab('song')}
-                  onPractice={(reel, i) => practise(currentInfo.entry.id, reel, i)}
+                  onPractice={reel => practise(currentInfo.entry.id, reel.phase)}
                 />
               ) : journey
             ) : tab === 'song' ? journey : (

@@ -4,10 +4,10 @@ import { audioContext, loadPiano, pianoReady, playNote, stopAll, unlockAudio } f
 import { onNote } from '../lib/input';
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
-import { letter, markSeen, timelineOf, type Reel, type ReelLine, type ReelTimeline } from '../lib/reels';
+import { letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelTimeline } from '../lib/reels';
 import { hush, onVoice, pauseVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn, voiceSupported } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
-import { IconArrowRight, IconClose, IconKeys, IconPause, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
+import { IconArrowDown, IconClose, IconKeys, IconPause, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
 import { SOFT, SPRING } from './Motion';
 
 const LOOK = 2.4; // seconds of falling notes above the keys
@@ -222,7 +222,7 @@ function usePlace(tl: ReelTimeline, now: () => number, playing: boolean) {
 }
 
 /** The voice: each line is said when the clock reaches it; it pauses with the reel and stops when the reel leaves. */
-function useNarration(tl: ReelTimeline, line: number, playing: boolean, active: boolean) {
+function useNarration(tl: ReelTimeline, line: number, playing: boolean, active: boolean, epoch = 0) {
   const word = useRef({ line: -1, char: -1 });
   const said = useRef(-1);
   const [on, setOn] = useState(voiceOn);
@@ -234,8 +234,8 @@ function useNarration(tl: ReelTimeline, line: number, playing: boolean, active: 
     word.current = { line, char: -1 };
     say(tl.lines[line].text, c => { word.current = { line, char: c }; });
   }, [line, playing, active, on, tl]);
-  // A new play-through says every line again.
-  useEffect(() => { if (line < said.current) said.current = -1; }, [line]);
+  // From the start again (Again): the voice says it again.
+  useEffect(() => { said.current = -1; }, [epoch]);
   useEffect(() => { if (!active) return; if (playing) resumeVoice(); else pauseVoice(); }, [playing, active]);
   useEffect(() => { if (!active) { hush(); said.current = -1; } return () => hush(); }, [active]);
   return { word, on };
@@ -295,7 +295,7 @@ function Caption({ line, index, now, word }: { line: ReelLine; index: number; no
 
 interface PlayerProps {
   song: Song;
-  reel: Reel;
+  reel: Clip;
   index: number;
   count: number;
   active: boolean;
@@ -304,48 +304,55 @@ interface PlayerProps {
 }
 
 /**
- * One phase of the song as a TikTok-style video: a 9 by 16 frame that plays by itself when it is
- * on screen. The idea and its tricks, the left hand slow, the right hand slow, both hands at full
- * speed, then the tip. Tap to pause.
+ * One small step of the song as a TikTok-style video: it plays by itself when it is on screen and
+ * loops until he scrolls on, so he copies it on his piano as many times as he likes. The voice
+ * says it once; the loops are the music alone. Tap to pause.
  */
-export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: PlayerProps) {
+export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerProps) {
   const tl = useMemo(() => timelineOf(song, reel), [song, reel]);
   const lanes = useMemo<Lane[]>(() => (['R', 'L'] as Hand[]).filter(h => tl.hi[h] > 0).map(h => {
     const [lo, hi] = pickRange(tl.lo[h], tl.hi[h], 14);
     return { hand: h, lo, hi };
   }), [tl]);
-  const [ended, setEnded] = useState(false);
-  const clock = useReelClock(tl, active, () => { setEnded(true); markSeen(song.entry.id, reel.id); });
+  const [loops, setLoops] = useState(0);
+  const [epoch, setEpoch] = useState(0);
+  const clockRef = useRef<{ play: (from?: number) => void } | null>(null);
+  const clock = useReelClock(tl, active, () => {
+    markSeen(song.entry.id, reel.id);
+    if (reel.k === reel.of) markSeen(song.entry.id, reel.phase.id);
+    setLoops(n => n + 1);
+    // TikTok: it starts again by itself, from the music.
+    window.setTimeout(() => clockRef.current?.play(tl.loopFrom), 0);
+  });
+  clockRef.current = clock;
   const place = usePlace(tl, clock.now, clock.playing);
-  const voice = useNarration(tl, place.line, clock.playing, active);
+  const voice = useNarration(tl, place.line, clock.playing, active, epoch);
   const held = useRef(new Set<number>());
+  useEffect(() => { if (!active) setLoops(0); }, [active]);
 
   // Keys he plays along light up green on the reel's keyboard.
   useEffect(() => {
     if (!active) return;
     return onNote(e => { if (e.type === 'on') held.current.add(e.midi); else held.current.delete(e.midi); });
   }, [active]);
-  useEffect(() => { if (clock.playing) setEnded(false); }, [clock.playing]);
 
   const toggle = () => { unlockVoice(); if (clock.playing) clock.pause(); else { unlockAudio(); clock.play(); } };
-  const replay = () => { unlockAudio(); unlockVoice(); hush(); setEnded(false); clock.play(0); };
-  const sayLine = place.line >= 0 ? tl.lines[place.line] : undefined;
+  const replay = () => { unlockAudio(); unlockVoice(); hush(); setLoops(0); setEpoch(e => e + 1); clock.play(0); };
+  const sayLine = place.line >= 0 && loops === 0 ? tl.lines[place.line] : undefined;
   const w = reel.words;
-  const seg = reel.segments[place.seg];
-  const handLine = seg?.kind === 'L' ? w.L : seg?.kind === 'R' ? w.R : undefined;
-  // While both hands play: the caption of the bar (or the one just before it), else the tricks in turn.
+  const seg = reel.segments[0];
+  // While both hands play the whole phase: the caption of the bar (or the one just before it).
   const cue = useMemo(() => {
-    if (!seg || !place.playing) return undefined;
-    if (handLine) return handLine;
+    if (!place.playing || (reel.kind !== 'run' && reel.kind !== 'both')) return undefined;
     for (let b = place.bar; b >= Math.max(seg.from, place.bar - 1); b--) if (w.cues[b]) return w.cues[b];
-    return w.tricks.length ? w.tricks[Math.floor((place.bar - seg.from) / 2) % w.tricks.length] : undefined;
-  }, [seg, place.playing, place.bar, handLine, w]);
-  const chords = seg ? reel.chords.filter(c => c.bar >= seg.from && c.bar <= seg.to) : reel.chords.slice(0, 8);
+    return undefined;
+  }, [place.playing, place.bar, reel.kind, seg.from, w]);
+  const chords = reel.chords;
   // The right hand beat by beat in the current bar, the note now playing marked.
   const groups = useMemo(() => {
     const cur = tl.notes[place.note];
-    if (!cur || !seg || seg.kind === 'L') return null;
-    const inBar = tl.notes.map((n, i) => ({ n, i })).filter(({ n }) => n.hand === 'R' && n.seg === cur.seg && n.bar === cur.bar);
+    if (!cur || seg.kind === 'L') return null;
+    const inBar = tl.notes.map((n, i) => ({ n, i })).filter(({ n }) => n.hand === 'R' && n.bar === cur.bar);
     if (!inBar.length) return null;
     const onsets: { i: number; m: number; beat: number }[] = [];
     for (const { n, i } of inBar) {
@@ -357,39 +364,33 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
     for (const o of onsets) by.set(o.beat, [...(by.get(o.beat) ?? []), o]);
     const curT = cur.t;
     return [...by.values()].map(g => g.map(o => ({ l: letter(o.m, song.fifths < 0), on: Math.abs(tl.notes[o.i].t - curT) < 0.02 || (cur.hand === 'R' && o.i === place.note), past: tl.notes[o.i].t < curT - 0.02 })));
-  }, [tl, place.note, seg, song.fifths]);
-  const pct = tl.duration ? Math.min(1, clock.now() / tl.duration) : 0;
-  const bar = place.playing && place.bar ? place.bar : seg?.from ?? reel.from;
-  const showTitle = place.card === 'title';
-  const showEnd = ended || place.card === 'end';
+  }, [tl, place.note, seg.kind, song.fifths]);
+  const pass = tl.passes[0];
+  const pct = pass ? Math.max(0, Math.min(1, (clock.now() - pass.t) / (pass.until - pass.t))) : 0;
+  const bar = place.playing && place.bar ? place.bar : seg.from;
+  const showTitle = place.card === 'title' && loops === 0;
 
   return (
     <div className={`reel-slide ${active ? 'active' : ''}`}>
-      <div className="reel-frame" onClick={toggle} role="group" aria-label={`Phase ${reel.n} of ${count}: ${w.title}`}>
+      <div className="reel-frame" onClick={toggle} role="group" aria-label={`Phase ${reel.n}, video ${reel.k} of ${reel.of}: ${reel.head}`}>
         <div className="reel-progress" aria-hidden="true">
-          {tl.passes.map((p, i) => {
-            const v = clock.now();
-            const f = Math.max(0, Math.min(1, (v - p.t) / (p.until - p.t)));
-            return <i key={i}><b style={{ width: `${(showEnd ? 1 : f) * 100}%` }} /></i>;
-          })}
+          {Array.from({ length: reel.of }, (_, i) => <i key={i}><b style={{ width: `${i < reel.k - 1 ? 100 : i === reel.k - 1 ? pct * 100 : 0}%` }} /></i>)}
         </div>
         <header className="reel-head">
           {/* The bar being played, set as big as a poster's date: the one number to follow. */}
           <motion.b className="reel-bar" key={bar} initial={{ y: 6, opacity: 0.4 }} animate={{ y: 0, opacity: 1 }} transition={SPRING} aria-label={`Bar ${bar}`}>{String(bar).padStart(2, '0')}</motion.b>
           <span className="reel-where">
-            <small>Phase {reel.n} of {count}</small>
+            <small>Phase {reel.n}, {reel.k} of {reel.of}</small>
             <span>{w.title}</span>
-            {seg && <motion.span key={seg.label} className={`reel-speed hand-${seg.kind}`} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING}>{seg.label}</motion.span>}
+            <motion.span key={seg.label} className={`reel-speed hand-${seg.kind}`} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING}>{seg.label}</motion.span>
+            {loops > 0 && <motion.small key={loops} initial={{ y: 4, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={SPRING}>Round {loops + 1}</motion.small>}
           </span>
         </header>
-        <h2 className="reel-hook">{w.hook}</h2>
+        <h2 className="reel-hook">{reel.head}</h2>
         {chords.length > 1 && (
           <ol className="reel-chords" aria-label="The bass, bar by bar">
-            {chords.map((c, i) => (
-              <li key={c.bar} className={c.bar === place.bar && place.playing ? 'on' : c.bar < place.bar && place.playing ? 'past' : ''}>
-                {i > 0 && <span className="arrow" aria-hidden="true" />}
-                <b>{c.name}</b>
-              </li>
+            {chords.map(c => (
+              <li key={c.bar} className={c.bar === place.bar && place.playing ? 'on' : c.bar < place.bar && place.playing ? 'past' : ''}><b>{c.name}</b></li>
             ))}
           </ol>
         )}
@@ -416,31 +417,16 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
         <AnimatePresence>
           {showTitle && (
             <motion.div key="title" className="reel-card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div initial={{ y: 24, scale: 0.92 }} animate={{ y: 0, scale: 1 }} transition={SPRING}>
-                <small>Phase {reel.n} of {count}: {w.title}</small>
+              <motion.div initial={{ y: 24, scale: 0.96 }} animate={{ y: 0, scale: 1 }} transition={SPRING}>
+                <small>Phase {reel.n}: {w.title}</small>
                 <h3>{w.hook}</h3>
-                {sayLine
-                  ? <Caption line={sayLine} index={place.line} now={clock.now} word={voice.word} />
-                  : <ul className="reel-tricks">{w.tricks.map(t => <li key={t}>{t}</li>)}</ul>}
-              </motion.div>
-            </motion.div>
-          )}
-          {showEnd && (
-            <motion.div key="end" className="reel-card end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={e => e.stopPropagation()}>
-              <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={SPRING}>
-                <small>Your turn</small>
-                <h3>{w.tip}</h3>
-                <div className="reel-end-actions">
-                  <button className="btn go big" onClick={onPractice}><IconKeys size={20} />Practise this phase</button>
-                  {onNext && <button className="btn ghost-light" onClick={onNext}><IconArrowRight size={18} />Next phase</button>}
-                  <button className="btn ghost-light" onClick={replay}><IconRestart size={18} />Watch again</button>
-                </div>
+                {sayLine && <Caption line={sayLine} index={place.line} now={clock.now} word={voice.word} />}
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
         <AnimatePresence>
-          {active && !clock.playing && !showEnd && clock.ready && (
+          {active && !clock.playing && clock.ready && (
             <motion.span className="reel-paused" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={SPRING} aria-hidden="true"><IconPlay size={34} /></motion.span>
           )}
         </AnimatePresence>
@@ -449,15 +435,15 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
       </div>
 
       <aside className="reel-side">
-        <button className="reel-act go" onClick={onPractice} aria-label="Practise this phase"><span><IconKeys size={26} /></span>Practise</button>
+        <button className="reel-act go" onClick={onPractice} aria-label={`Practise phase ${reel.n}`}><span><IconKeys size={26} /></span>Practise</button>
         <button className="reel-act" onClick={toggle} aria-label={clock.playing ? 'Pause' : 'Play'}><span>{clock.playing ? <IconPause size={24} /> : <IconPlay size={24} />}</span>{clock.playing ? 'Pause' : 'Play'}</button>
-        <button className="reel-act" onClick={replay} aria-label="Watch again"><span><IconRestart size={24} /></span>Again</button>
+        <button className="reel-act" onClick={replay} aria-label="From the start, with the voice"><span><IconRestart size={24} /></span>Again</button>
         {voiceSupported() && (
           <button className="reel-act" onClick={e => { e.stopPropagation(); unlockVoice(); setVoiceOn(!voice.on); }} aria-pressed={voice.on} aria-label={voice.on ? 'Turn the voice off' : 'Turn the voice on'}>
             <span>{voice.on ? <IconSpeaker size={24} /> : <IconSpeakerOff size={24} />}</span>Voice
           </button>
         )}
-        {onNext && <button className="reel-act" onClick={onNext} aria-label="Next phase"><span><IconArrowRight size={24} /></span>Next</button>}
+        {onNext && <button className="reel-act" onClick={onNext} aria-label="Next video"><span><IconArrowDown size={24} /></span>Next</button>}
       </aside>
     </div>
   );
@@ -467,10 +453,10 @@ interface FeedProps {
   /** Inside the Watch tab (no close button, the tab bar stays), instead of over the whole app. */
   embedded?: boolean;
   song: Song;
-  reels: Reel[];
+  reels: Clip[];
   start: number;
   onClose: () => void;
-  onPractice: (reel: Reel, index: number) => void;
+  onPractice: (reel: Clip, index: number) => void;
 }
 
 /** The song's reels in a vertical feed: swipe up for the next one, TikTok style. */
