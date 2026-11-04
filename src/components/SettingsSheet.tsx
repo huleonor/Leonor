@@ -106,7 +106,7 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
               {copied ? 'Link copied' : 'Copy the SideStore link'}
             </button>
           )}
-          <p className="fine credits">Sheet music engraved with abcjs. Type: Nunito by Vernon Adams and the Nunito Project.</p>
+          <p className="fine credits">Sheet music engraved with abcjs. Type: Radio Canada and Radio Canada Big by Charles Daoud.</p>
         </section>
       </div>
     </div>

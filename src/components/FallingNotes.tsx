@@ -7,12 +7,17 @@ import { AUTO, HIT, MISS, type FingerMode, type NoteNaming } from '../lib/types'
 
 interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; fingers: FingerMode; inset: number; onTap: () => void; }
 
-// Right hand sky, left hand amber; the gate is the go-green of a correct note.
-const C = {
-  display: '#100d24', lane: '#151231', bar: 'rgba(255,255,255,.1)', barText: 'rgba(214,209,255,.6)', white: '#ffffff', ink: '#14112b',
-  right: '#4fb6ff', rightLit: '#a9dcff', left: '#ffb547', leftLit: '#ffd99a', red: '#ff5d73', gate: '#3fd07a',
-};
-const SANS = '"Nunito Variable", Nunito, ui-rounded, system-ui, sans-serif';
+// Printed on the field like the reels: the right hand in paper, the left in the red; the gate is
+// the green of a right note. Read from the design tokens (a canvas cannot read CSS variables).
+function palette() {
+  const css = getComputedStyle(document.documentElement);
+  const v = (k: string) => css.getPropertyValue(k).trim();
+  return {
+    display: v('--field'), lane: v('--field-2'), bar: v('--field-rule'), barText: v('--field-muted'), white: v('--paper'), ink: v('--ink'),
+    right: v('--paper'), rightLit: v('--right-key'), left: v('--mark'), leftLit: v('--left-lit'), leftInk: v('--mark-ink'), red: v('--mark'), gate: v('--ok'),
+  };
+}
+const SANS = "'Radio Canada Big', 'Radio Canada', ui-sans-serif, system-ui, sans-serif";
 const VISIBLE_SECONDS = 3.2;
 
 export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: Props) {
@@ -25,6 +30,7 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
     const ctx = canvas.getContext('2d')!;
     const notes = engine.song.notes;
     const maxDur = Math.max(...notes.map(n => n.duration));
+    const C = palette();
     let raf = 0;
 
     const frame = () => {
@@ -62,7 +68,7 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
       });
 
       // Octave guides at every C.
-      ctx.fillStyle = 'rgba(255,255,255,.06)';
+      ctx.fillStyle = C.bar;
       for (let m = lo; m <= hi; m++) if (m % 12 === 0 && layout[m]) ctx.fillRect(inset + layout[m].x * kw, 0, 1, H);
 
       // Notes: binary search the first one that can be on screen.
@@ -100,7 +106,7 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
           // The other hand, played by the app: present but quiet.
           ctx.globalAlpha = 0.28;
           ctx.fillStyle = base;
-          ctx.beginPath(); ctx.roundRect(x, top, w, h, 6); ctx.fill();
+          ctx.beginPath(); ctx.rect(x, top, w, h); ctx.fill();
           ctx.globalAlpha = 1;
           continue;
         }
@@ -108,13 +114,13 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
           ctx.strokeStyle = C.red;
           ctx.lineWidth = 1.5;
           ctx.setLineDash([4, 3]);
-          ctx.beginPath(); ctx.roundRect(x + 0.75, top + 0.75, w - 1.5, h - 1.5, 6); ctx.stroke();
+          ctx.beginPath(); ctx.rect(x + 0.75, top + 0.75, w - 1.5, h - 1.5); ctx.stroke();
           ctx.setLineDash([]);
         } else {
           const done = st === HIT || (listen && st === AUTO);
           ctx.globalAlpha = done && !sounding ? 0.35 : 1;
           ctx.fillStyle = done && sounding ? lit : base;
-          ctx.beginPath(); ctx.roundRect(x, top, w, h, 6); ctx.fill();
+          ctx.beginPath(); ctx.rect(x, top, w, h); ctx.fill();
           if ((done && sounding) || waitingIds.has(n.id)) {
             ctx.fillStyle = C.white;
             ctx.fillRect(x + 3, bot - 3, w - 6, 2);
@@ -122,7 +128,7 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
           if (waitingIds.has(n.id) && wrongFresh) {
             ctx.strokeStyle = C.red;
             ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.roundRect(x - 1, top - 1, w + 2, h + 2, 7); ctx.stroke();
+            ctx.beginPath(); ctx.rect(x - 1, top - 1, w + 2, h + 2); ctx.stroke();
           }
           ctx.globalAlpha = 1;
         }
@@ -132,7 +138,7 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
           const r = Math.min(10, w / 2 - 1.5);
           const cy = bot - 30 - r;
           ctx.fillStyle = C.white;
-          ctx.beginPath(); ctx.arc(x + w / 2, cy, r, 0, Math.PI * 2); ctx.fill();
+          ctx.fillRect(x + w / 2 - r, cy - r, r * 2, r * 2);
           ctx.fillStyle = C.ink;
           ctx.font = `700 ${Math.round(r * 1.25)}px ${SANS}`;
           ctx.textAlign = 'center';
@@ -144,9 +150,9 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
           // Sized to the lane so it reads from the music stand. A short bar shows the finger instead.
           const label = showFinger && h <= 40 ? String(n.finger) : noteName(n.midi, naming);
           let size = Math.max(11, Math.min(16, w * 0.6));
-          ctx.font = `800 ${size}px ${SANS}`;
-          while (size > 9 && ctx.measureText(label).width > w - 3) { size -= 1; ctx.font = `800 ${size}px ${SANS}`; }
-          ctx.fillStyle = st === MISS ? C.red : C.ink;
+          ctx.font = `700 ${size}px ${SANS}`;
+          while (size > 9 && ctx.measureText(label).width > w - 3) { size -= 1; ctx.font = `700 ${size}px ${SANS}`; }
+          ctx.fillStyle = st === MISS ? C.red : R ? C.ink : C.leftInk;
           ctx.textAlign = 'center';
           ctx.fillText(label, x + w / 2, bot - 7);
         }
@@ -160,7 +166,7 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
       if (wrongFresh && layout[engine.lastWrong.midi]) {
         const g = layout[engine.lastWrong.midi];
         ctx.fillStyle = C.red;
-        ctx.beginPath(); ctx.roundRect(inset + g.x * kw + 1, H - 16, g.w * kw - 2, 14, 3); ctx.fill();
+        ctx.beginPath(); ctx.rect(inset + g.x * kw + 1, H - 16, g.w * kw - 2, 14); ctx.fill();
       }
 
       // Waiting: an LCD plate over the gate names the notes it is waiting for.
@@ -173,13 +179,12 @@ export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: 
           ctx.font = `700 15px ${SANS}`;
           const tw = ctx.measureText(text).width;
           const bx = W / 2 - tw / 2 - 16, by = H - 54;
-          ctx.fillStyle = 'rgba(20,17,43,.92)';
-          ctx.beginPath(); ctx.roundRect(bx, by, tw + 32, 32, 16); ctx.fill();
-          ctx.strokeStyle = wrongFresh ? C.red : 'rgba(63,208,122,.7)';
+          ctx.fillStyle = C.ink;
+          ctx.beginPath(); ctx.rect(bx, by, tw + 32, 32); ctx.fill();
+          ctx.strokeStyle = wrongFresh ? C.red : C.gate;
           ctx.lineWidth = 1.5;
           ctx.stroke();
-          const alpha = 0.78 + 0.22 * Math.sin(performance.now() / 160);
-          ctx.fillStyle = wrongFresh ? '#ff8a9a' : `rgba(140,236,178,${alpha})`;
+          ctx.fillStyle = wrongFresh ? C.red : C.white;
           ctx.textAlign = 'center';
           ctx.fillText(text, W / 2, by + 21);
         }

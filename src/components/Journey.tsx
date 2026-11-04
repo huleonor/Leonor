@@ -5,10 +5,9 @@ import { meterOf, pctOf } from '../lib/mastery';
 import { onSeen, reelsOf, seenReels, type Reel } from '../lib/reels';
 import { askStrategy } from '../lib/strategy';
 import type { SongEntry } from '../lib/types';
-import { IconCheck, IconImport, IconKeysFill, IconPlay, IconReel, IconStar } from './Icons';
+import { IconImport, IconKeysFill, IconPlay, IconStar } from './Icons';
 import { SOFT, SPRING } from './Motion';
 import { type Section } from './SongScreen';
-import { SongCover } from './SongCover';
 
 const CURRENT = 'hugos-piano:current-song';
 export const FIRST_SONG = 'interstellar-experience';
@@ -78,16 +77,13 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
     return (
       <div className="page journey">
         {slot && (
-          <section className="journey-hero waiting">
-            <span className="journey-cover"><SongCover entry={slot} /></span>
-            <div className="journey-title">
-              <small>Your first song</small>
-              <h1>{slot.title}</h1>
-              <p>{slot.composer}</p>
-              <p className="sub">The videos and the lessons are made from the song's own notes. Add a MIDI file of it and they are ready in a second.</p>
-              <button className="btn go big" onClick={() => onBringMidi(slot)}><IconImport size={18} />Add the MIDI file</button>
-              {info?.error && <p className="error-line">That file could not be read. Try another MIDI file.</p>}
-            </div>
+          <section className="journey-hero waiting on-field">
+            <p className="sub">Your first song</p>
+            <h1>{slot.title}</h1>
+            <p className="journey-by">{slot.composer}</p>
+            <p className="sub">The videos and the lessons are made from the song's own notes. Add a MIDI file of it and they are ready in a second.</p>
+            <div className="journey-actions"><button className="btn go big" onClick={() => onBringMidi(slot)}><IconImport size={18} />Add the MIDI file</button></div>
+            {info?.error && <p className="error-line">That file could not be read. Try another MIDI file.</p>}
           </section>
         )}
         {others.length > 0 && (
@@ -95,7 +91,7 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
             <h2 id="others-title">Or start with one of these</h2>
             <ul>
               {others.map(e => (
-                <li key={e.id}><button className="other-song" onClick={() => onChoose(e.id)}><span className="cover"><SongCover entry={e} song={infos[e.id]?.song} /></span><b>{e.title}</b><small>{e.composer}</small></button></li>
+                <li key={e.id}><button className="other-song" onClick={() => onChoose(e.id)}><b>{e.title}</b><small>{e.composer}</small></button></li>
               ))}
             </ul>
           </section>
@@ -112,57 +108,60 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
   // The next thing to do: the first phase not watched, or watched but not practised.
   const next = rows.find(x => !x.watched || (x.section && !x.practised));
   const pct = pctOf(meterOf(song).value);
+  const bars = reels.length ? reels[reels.length - 1].to : 0;
+  const status = (x: (typeof rows)[number]) => {
+    const where = `bars ${x.r.from}-${x.r.to}`;
+    if (next === x) return !x.watched ? `Next: watch it, ${where}` : `Next: practise it, ${where}`;
+    if (x.watched && (x.practised || !x.section)) return `Learnt, ${where}`;
+    if (x.watched) return `Watched, ${where}`;
+    return `Bars ${x.r.from}-${x.r.to}`;
+  };
 
   return (
     <div className="page journey">
       <section className="journey-hero">
-        <span className="journey-cover"><SongCover entry={entry} song={song} /></span>
-        <div className="journey-title">
-          <small>Now learning</small>
-          <h1>{entry.title}</h1>
-          <p>{entry.composer}</p>
-          <div className="journey-meter" aria-label={`${pct}% of the song`}><i><motion.b initial={{ width: 0 }} animate={{ width: `${Math.max(2, pct)}%` }} transition={SOFT} /></i></div>
-          <p className="journey-meta"><span>{next ? `Phase ${next.r.n} of ${reels.length}` : 'Every phase done'}</span><span>{pct}%</span></p>
-          <div className="journey-actions">
-            {next ? (
-              <button className="btn go big" onClick={() => (!next.watched ? onWatch(song.entry.id, next.i) : onPractice(song.entry.id, next.r))}>
-                <IconPlay size={18} />{!next.watched ? `Watch phase ${next.r.n}` : `Practise phase ${next.r.n}`}
-              </button>
-            ) : (
-              <button className="btn go big" onClick={() => onWholeSong(info)}><IconKeysFill size={18} />Play the whole song</button>
-            )}
-            <button className="btn" onClick={onSongs}>Change song</button>
-          </div>
+        <h1>{entry.title}</h1>
+        <p className="journey-by">{entry.composer}{reels.length ? `. ${reels.length} phases, ${bars} bars` : ''}</p>
+        <p className="num-line" aria-label={`${pct}% of the song learnt`}>
+          <motion.span className="num" key={pct} initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING}>{pct}</motion.span>
+          <span>percent learnt{next ? `, phase ${next.r.n} next` : ''}</span>
+        </p>
+        <div className="journey-actions">
+          {next ? (
+            <button className="btn go big" onClick={() => (!next.watched ? onWatch(song.entry.id, next.i) : onPractice(song.entry.id, next.r))}>
+              {!next.watched ? <IconPlay size={18} /> : <IconKeysFill size={18} />}{!next.watched ? `Watch phase ${next.r.n}` : `Practise phase ${next.r.n}`}
+            </button>
+          ) : (
+            <button className="btn go big" onClick={() => onWholeSong(info)}><IconKeysFill size={18} />Play the whole song</button>
+          )}
+          <button className="btn quiet" onClick={onSongs}>Change song</button>
         </div>
       </section>
 
       <ol className="phase-list">
-        {rows.map(({ r, i, watched, section, stars, practised }) => {
-          const isNext = next?.r === r;
+        {rows.map(x => {
+          const { r, i, watched, section, stars, practised } = x;
           return (
-            <motion.li key={r.id} className={`phase-card ${isNext ? 'next' : ''} ${watched && practised ? 'done' : ''}`} initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...SOFT, delay: i * 0.04 }}>
-              <motion.button className="phase-video" whileTap={{ scale: 0.96 }} transition={SPRING} onClick={() => onWatch(song.entry.id, i)} aria-label={`Watch phase ${r.n}: ${r.words.title}`}>
-                <IconReel size={30} />
-                {watched && <i className="tick"><IconCheck size={14} /></i>}
-              </motion.button>
-              <div className="phase-text">
-                <small>Phase {r.n}, bars {r.from}-{r.to}</small>
-                <b>{r.words.title}</b>
-                <span>{r.words.hook}</span>
-              </div>
+            <motion.li key={r.id} className={`phase-row ${next === x ? 'next' : ''} ${watched && (practised || !section) ? 'done' : ''}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ ...SOFT, delay: i * 0.03 }}>
+              <button className="phase-open" onClick={() => onWatch(song.entry.id, i)} aria-label={`Watch phase ${r.n}: ${r.words.title}`}>
+                <span className="num" aria-hidden="true">{r.n}</span>
+                <span className="phase-text"><b>{r.words.title}</b><small>{status(x)}</small></span>
+              </button>
               {section && (
-                <button className={`phase-practise ${practised ? 'done' : ''}`} onClick={() => onPractice(song.entry.id, r)} aria-label={`Practise phase ${r.n}, ${stars} of 3 stars`}>
-                  <IconKeysFill size={20} />
+                <button className="phase-practise" onClick={() => onPractice(song.entry.id, r)} aria-label={`Practise phase ${r.n}, ${stars} of 3 stars`}>
+                  Practise
                   <span className="tile-stars" aria-hidden="true">{[1, 2, 3].map(k => <IconStar key={k} size={11} className={k <= stars ? 'on' : ''} />)}</span>
                 </button>
               )}
-              {isNext && <motion.span className="step-bubble" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}>{watched ? 'PLAY' : 'WATCH'}</motion.span>}
             </motion.li>
           );
         })}
-        <li className={`journey-part finale ${!next ? 'ready' : ''}`}>
-          <header><h2>The whole song</h2><small>Start to finish, with the beat</small></header>
-          <button className={`btn ${!next ? 'go' : ''} big`} onClick={() => onWholeSong(info)}><IconKeysFill size={18} />Play the whole song</button>
+        <li className="phase-row finale">
+          <button className="phase-open" onClick={() => onWholeSong(info)}>
+            <span className="num" aria-hidden="true">{bars}</span>
+            <span className="phase-text"><b>The whole song</b><small>All {bars} bars, start to finish, with the beat</small></span>
+          </button>
+          <button className="phase-practise" onClick={() => onWholeSong(info)} aria-label="Play the whole song"><IconKeysFill size={20} />Play</button>
         </li>
       </ol>
     </div>

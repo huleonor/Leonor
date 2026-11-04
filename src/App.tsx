@@ -5,7 +5,6 @@ import { scheduleReminders, startWebReminders } from './lib/reminders';
 import { currentSongId, Journey, practiceFor, setCurrentSong } from './components/Journey';
 import { ReelFeed } from './components/Reels';
 import { reelsOf, seenReels, type Reel } from './lib/reels';
-import { IconGearFill, IconLibraryFill, IconPathFill, IconReel } from './components/Icons';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
 import { SettingsSheet } from './components/SettingsSheet';
@@ -23,10 +22,11 @@ import type { Settings, SongEntry } from './lib/types';
 
 /** Watch is the reel feed of the song being learnt; Song is its map; Library his songs. */
 type Tab = 'watch' | 'song' | 'library';
-const TABS: [Tab, string, (p: { size?: number }) => React.ReactElement][] = [
-  ['watch', 'Watch', IconReel],
-  ['song', 'Song', IconPathFill],
-  ['library', 'Library', IconLibraryFill],
+// The tabs are words, set like a poster's index: no icons.
+const TABS: [Tab, string][] = [
+  ['watch', 'Watch'],
+  ['song', 'Song'],
+  ['library', 'Library'],
 ];
 
 export default function App() {
@@ -199,15 +199,15 @@ export default function App() {
         <div className="app">
           <nav className="rail" aria-label="Main">
             <Logo size={40} className="rail-logo" />
-            {TABS.map(([id, label, Icon]) => (
+            {TABS.map(([id, label]) => (
               <button key={id} className={`rail-btn tab-${id} ${tab === id ? 'on' : ''}`} aria-current={tab === id ? 'page' : undefined}
                 onClick={() => { if (id === 'watch' && tab === 'watch') setWatch(null); setTab(id); setOpenId(null); }}>
-                <Icon size={26} /><span>{label}</span>
+                {label}
               </button>
             ))}
-            <button className="rail-btn settings" onClick={() => setSheet('settings')}><IconGearFill size={26} /><span>Settings</span></button>
+            <button className="rail-btn settings" onClick={() => setSheet('settings')}>Settings</button>
           </nav>
-          <main className={`content tab-${tab}`}>
+          <main className={`content ${tab === 'watch' && currentInfo?.song && currentReels.length ? 'tab-watch' : ''}`}>
             {tab === 'watch' ? (
               currentInfo?.song && currentReels.length ? (
                 <ReelFeed
