@@ -1,87 +1,87 @@
 ---
 name: Leonor
-description: "Cartaz (2026-11): Leonor set like a Swiss poster. White poster stock, blue-black ink, one ultramarine field the music is printed on (the videos, the lessons, the song being learnt), one red mark for the left hand and a wrong note. Radio Canada Big for heads and big numbers, Radio Canada for words. Square corners, hairline rules, no shadows, no gradients. The structure comes from type, rules and numbers set big, not from cards."
-source: "The user chose direction C, Cartaz, out of four mockups. It follows the Grid theme of Hallmark (Nutlope/hallmark, an anti AI-slop design skill) and the Swiss style; the brand DESIGN.md files of VoltAgent/awesome-design-md were the other references. Nothing is copied from a brand."
+description: "Lo-Fi (2026-11): Leonor as a practice notebook. Paper-yellow page, three system faces colliding (Times for titles, Helvetica for words and the big note letters, Courier for labels and numbers), index cards taped on a little off the grid, riso pink for the right hand and riso teal for the left, halftone dots on the song cards, titles printed slightly off register. A bottom tab bar like an app's. No logo."
+source: "The user chose anchor C, Lo-Fi, out of three mockups made with the frontend-design skill (Ilm-Alan/frontend-design) and its anti-slop rules; it replaces Cartaz. Nothing is copied from a brand."
 colors:
-  paper: "oklch(97.5% .005 90)   #f8f7f3  the ground"
-  paper-2: "oklch(94.2% .006 90)  wells, the default control"
-  paper-3: "oklch(90.5% .008 90)  pressed, tracks"
-  white: "oklch(99.6% .002 90)  staff bands, keys, inputs"
-  ink: "oklch(19% .022 266)    #0f141e  type, the primary control"
-  ink-2: "oklch(31% .02 266)    secondary text"
-  muted: "oklch(47% .016 266)   #575b64  hints and labels only"
-  rule: "oklch(87.5% .008 90)   hairlines"
-  rule-2: "oklch(72% .01 266)   control edges, fresh numbers"
-  field: "oklch(44% .2 266)     #1f40be  the ultramarine"
-  field-2: "oklch(38% .19 266)   pressed on the field"
-  field-ink: "= paper"
-  field-muted: "oklch(85% .06 266)  #bbcef6  small text on the field"
-  field-rule: "oklch(55% .17 266)  hairlines on the field"
-  mark: "oklch(54% .215 29)    the red: left hand, wrong note"
-  ok: "oklch(51% .15 150)     the green: a right note, a good run"
+  paper: "#EDE4CF  the notebook page (paper-yellow, never cream)"
+  paper-2: "#E2D7BB  wells"
+  paper-3: "#D6C9A8  pressed, tracks"
+  white: "#F5EDD8  index cards, keys, inputs, the lesson page"
+  desk: "#D9CCAA  the desk around the page on a wide screen, with a fine dot"
+  ink: "#1B1A17  type, edges, the primary control"
+  ink-2: "#3C3931  secondary text"
+  muted: "#625A49  hints and labels only"
+  rule: "#C4B796 / rule-2 #8C8068  dashed rules"
+  pink: "#FF006E  riso pink: the right hand, what is next (text in pink-text #C2004F, tint pink-soft #FFD6E6)"
+  teal: "#00A99D  riso teal: the left hand (text teal-text #00756D, tint teal-soft #CDEDE7)"
+  marker: "#FFE45C  the yellow highlighter: the tab he is on, the word being said, the next key, hover"
+  tape: "translucent yellow strip holding the current card down"
+  mark: "#E0301E  a wrong note"
+  ok: "#1E8A44  a right note, a good run"
 typography:
-  display: { fontFamily: "Radio Canada Big", weight: 700, tracking: "-0.035em", lineHeight: 0.95, use: "page titles, phase names on the reels, every big number" }
-  body: { fontFamily: "Radio Canada", weight: "400 text, 500 labels and buttons", size: "16px" }
-  scale: "13 / 14 / 16 / 18 / 22 / 28 / 34 / 48 / 56 / 64-128 (the bar number)"
-rounded: { all: 0, dots: "50% (status and rep dots only)" }
+  display: { fontFamily: "Times New Roman, Times", weight: 700, use: "page titles, song and phase names, captions (italic on the videos)" }
+  body: { fontFamily: "Helvetica Neue, Helvetica, Arial", weight: "400 text, 700 buttons, 900 the huge note letters and count-in", size: "16px" }
+  mono: { fontFamily: "Courier New, Courier", weight: 700, use: "labels, meta lines, tab labels, numbers, percents" }
+rounded: { all: 0, dots: "50% (status dots only)" }
 spacing: "10px unit: 10 / 20 / 30 / 40"
-edges: { rule: "1px solid --rule", control: "1px solid --rule or --rule-2", dialog: "1px solid --ink" }
+edges: { card: "2px solid ink", rule: "1px dashed rule-2", control: "2px solid ink" }
 ---
 
-# Design System: Leonor (Cartaz)
+# Design System: Leonor (Lo-Fi)
 
 ## The idea
 
-A poster for one song. The paper is quiet; the music is printed on one ultramarine field: the phase videos fill it, the lessons put their white staff bands across it, and the song being learnt sits on it at the top of the Library. Everything around it is set in type: titles big and tight, numbers bigger (the bar playing in a video, the phase number in a row, the percent learnt), words small and plain. Lines are hairlines. Nothing floats, glows or bounces for decoration.
+A practice notebook on a music stand. The page is paper-yellow; what he works on is an index card taped onto it, a little crooked; the notes are printed in two riso inks, pink for the right hand and teal for the left, the other ink's plate a few pixels off register under each falling note. Three system faces collide on purpose: Times for names, Helvetica for words and the huge note letters, Courier for labels and numbers. Titles carry the riso misregistration (`--riso`, a pink and a teal ghost three pixels either side). It is an app: one page column, the tabs along the bottom.
 
 ## Colour, by job
 
-- **Paper** is the ground of every page. **Ink** is text and the primary control. **Muted** is only for hints and labels.
-- **Field** (ultramarine): the falling-notes view, the next phase on the Song page, the song learnt now in the Library, a chosen option. On the field, text is paper, small text `--field-muted`, rules `--field-rule`.
-- **Mark** (red) is the left hand and a wrong note. **Ok** (green) is a right note, a played key, a good run. Neither is decoration.
-- Hands: on paper the right hand is the field blue, the left the red; on the field the right hand prints in paper (its lit keys `--right-key`), the left stays red.
-- Song covers are flat poster tiles (field, ink, red) with the song's own opening notes on a staff in paper. The Library and the Song page show the opening across a wide staff instead (`<OpeningStaff />`).
-- Colours only through the tokens in `src/styles.css`; a canvas reads them with `getComputedStyle` on its own element, so a context (the reel frame) can redefine them.
-
-## Type
-
-- Radio Canada Big 700 for heads and numbers: page titles 44 to 76px, the bar number on a reel 64 to 128px, phase numbers 48px, percents 32 to 80px. Tracking -0.035em, line-height about 0.95, sentence case.
-- Radio Canada 400 for text (16px), 500 for labels and buttons. Never tracked, never uppercase.
-- Figures are tabular. Hierarchy comes from size and weight, never from colour alone.
+- **Paper** is the page, **white** the cards on it, **ink** the type and every edge.
+- **Pink** is the right hand and what comes next (the next phase card is pink-soft and taped, the now line and the video's time bar are pink). **Teal** is the left hand. Body text in either ink uses the darker `-text` shades; the bright inks are for notes, keys, fills and large letters.
+- **Marker** yellow is the highlighter: the tab he is on, the word the voice is saying, the next key, the percent, hover.
+- **Mark** red is a wrong note; **ok** green a right note, a played key, a good run, a switch that is on is teal.
+- `--field` now means the highlighted card (pink-soft with ink on it); the reels remap it to the paper.
+- Colours only through the tokens in `src/styles.css`; a canvas reads them with `getComputedStyle` on its own element.
 
 ## Shape and structure
 
-- Square corners everywhere. Circles only for small status and rep dots.
-- Rows, not cards: a list is hairline rules between rows (phases, songs, settings, sections). The one thing that is current is a field-coloured row or block; the whole song is an ink row.
-- One primary button style: ink fill, paper text (on the field: paper fill, field text). The default button is a paper-2 cell with a hairline; quiet buttons are underlined text.
-- Tabs are words (Watch, Song, Library, Settings), a 3px ink bar marks the current one: on the left edge in the side rail, on the top edge along the bottom on phones.
-- Dialogs and sheets are paper with a 1px ink edge, set flush left.
+- Cards, not hairline rows: phases, songs, settings groups and dialogs are index cards with a 2px ink edge, each turned 0.5 to 2 degrees (by `nth-child`), never all square to the grid.
+- Tape (`--tape`) holds down the one card that is current (the next phase, the song learnt now, the practise card on a video). Nothing else is taped.
+- Halftone dots (a radial-gradient tile) print the Library cards and song covers, in pink or teal.
+- Square corners. Circles only for small status dots.
+- One primary style: ink fill, paper text, a 3px pink offset block behind it. The default button is a white card with an ink edge, turned a little; quiet buttons are Courier words with a wavy pink underline.
+- Dashed rules inside cards (a list in a dialog, the line between a phase and its Practise).
+
+## Navigation
+
+- A bottom tab bar on every screen size, like an app's: Watch, Song, Library, Settings, each a Phosphor bold glyph over a Courier label; the current tab's glyph is filled and its label sits on the marker.
+- On a wide screen the app is one page column (560px) with an ink edge, on the dotted desk. A phone on its side takes the full width.
+- No logo anywhere in the shell.
 
 ## The screens
 
-- **Watch**: short videos on paper (the field tokens are remapped to paper inside `.reel-slide`), ink text, the right hand in blue, the left in red; each loops until he scrolls on. The reel fills the screen. Top left the bar being played, huge; top right the phase (n of N), its name and the segment tag (paper, or red for the left hand). The hook under it in display type; the bass of each bar as square cells; the falling notes onto square keys; the caption at the foot in display type. Cards (the idea, your turn) are the field itself with the words set flush left. A voice explains every phase; its caption sits at the foot in display type, a few words at a time, the word being said in `--key-next` yellow, the words said in paper, the ones to come in `--field-muted`. Between passes there is only a breath while the notes fall in, never a full-screen card.
-- **Song**: the title huge, the composer with the number of phases and bars, the percent as a big number, one primary action, then the phases as numbered rows (number, name, where it is; Practise with its stars on the right). The next phase is the field row; the whole song closes the list as an ink row headed by its number of bars.
-- **Library**: the song learnt now as a field block with its opening on a staff and its percent huge; the rest as rows with the percent on the right; the marketplace below.
-- **Lessons**: Simply Piano's page (the user's choice): white, the grand staff big across it (about half the stage's height), a blue now line, square pause, arrows and step counter, and the help keys as a white strip along the bottom edge. The result is a paper poster: the headline big, the accuracy as a big number, the stars in field blue.
+- **Watch**: the videos on the page: the kicker in Courier on a marker strip, the notes huge in Helvetica 900 with the riso offset (teal for a left-hand step), the meta in Courier, one keyboard with the notes falling onto it in their ink, the caption in italic Times, the word being said on the marker. Side actions are white squares turned a few degrees, Next inked with a pink offset. The practise stop is an index card taped over the top with two dashed squares that fill green.
+- **Song**: the composer and size in Courier, the title huge in Times with the riso offset, the percent in Courier on a marker strip, one primary action, then the phases as crooked index cards (number in Courier, name in Times, where it is in Courier; Practise behind a dashed line). The next phase is pink-soft and taped; the whole song closes the list as an ink card.
+- **Library**: the song learnt now as a big taped card printed with pink halftone, its opening on a staff and its percent; the others as a two-column grid of halftone cards; the marketplace behind a dashed card.
+- **Lessons**: Simply Piano's page (the user's choice), on the white card stock: the staff big across it, a pink now line, square pause, arrows and a Courier step counter filled with marker as he goes. The result: the headline big with the riso offset, the numbers in Courier.
 
 ## Motion
 
-State-driven only (`src/components/Motion.tsx`): a bar number that changes slides in, a percent that changes bumps, a verdict pops, sheets rise. CSS transitions 300ms ease on colours. No confetti, no bobbing bubbles, no glows. Everything sits inside `<MotionConfig reducedMotion="user">`.
+State-driven only (`src/components/Motion.tsx`), as before. CSS transitions step like stop-motion (`steps(3)`, 240ms) instead of gliding. No loops, no confetti. Everything sits inside `<MotionConfig reducedMotion="user">`.
 
 ## Anti-slop rules (fixed)
 
-1. No gradient, glow, blur or glass used as decoration. The only colour fields are flat.
-2. Two families: Radio Canada Big for display, Radio Canada for text. No rounded fonts.
-3. One primary action per screen, in the one primary style. No 3D buttons that press into an edge.
-4. Structure from type, hairlines and numbers set big. No grid of identical cards with an icon, a title and a line.
-5. No icons in tinted circles, no mascots, no bouncing bubbles, no confetti. Icons are Phosphor bold, only inside controls.
-6. Labels in sentence case at the body size or a step smaller, untracked. No eyebrows in capitals, no chips for decoration.
-7. No middle dots or arrows joining meta text; use a comma or a full stop. No em or en dashes, no emoji.
+1. No gradient, glow, blur or glass for decoration. The only radial gradients are the halftone dot tiles; the only shadows are the hard riso offsets.
+2. Three system faces, each with its job; no web font, no rounded font.
+3. One primary action per screen, in the one primary style.
+4. No grid of identical icon-title-line cards: cards carry their own content (notes on a staff, numbers, his progress) and sit crooked.
+5. No icons in tinted circles, no mascots, no confetti. Icons are Phosphor bold, only inside controls and the tab bar.
+6. Labels in sentence case, never uppercase, never tracked. No eyebrows in capitals.
+7. No middle dots or arrows joining meta text; a comma or a full stop. No em or en dashes, no emoji.
 8. Square corners; circles only for dots.
 9. About 80 words on a screen at most; one idea per screen.
-10. No invented numbers, quotes or logos. Every number shown is the user's own (bars, phases, percent, stars).
-11. Body text passes WCAG AA on its ground (paper text on red and green is used only at 15px and up, or bold display sizes).
-12. No purple, no blue-to-purple, no AI sparkle.
+10. No invented numbers, quotes or logos. Every number shown is his own.
+11. Body text passes WCAG AA on its ground; the bright pink and teal are never body text.
+12. No purple, no cream: the page is paper-yellow.
 
 ## Video craft (after HyperFrames)
 
@@ -91,10 +91,10 @@ The phase videos follow the production craft of HyperFrames (heygen-com/hyperfra
 2. **The voice is the clock.** Each piece appears when the voice names it: as it says "E, C, A, C", each key lights in turn, numbered 1, 2, 3, 4, before the music plays them. Nothing waits on screen before it is named.
 3. **One move with a cause.** The camera opens wide on the keyboard and pushes in on the video's own keys over the first second (ease both ways, power2.inOut); then it holds still while the music plays.
 4. **Eases by role.** Arrivals land on a long tail (expo.out), exits are 40 to 50% shorter (0.12 to 0.2 s), nothing on the UI bounces, a landed title is dead still.
-5. **Titles and captions word by word.** The idea blurs in word by word (6 px to 0, 0.13 s, 67 ms apart). Captions come in groups of three to five words, broken at a comma or a full stop, each word blurring in 70 ms after the last; the word being said is blue, said words ink, words to come muted; a group leaves in 0.12 s before the next. The title card leaves with a blur swap (8 px, 0.18 s), never a slide.
+5. **Titles and captions word by word.** The idea blurs in word by word (6 px to 0, 0.13 s, 67 ms apart). Captions come in groups of three to five words, broken at a comma or a full stop, each word blurring in 70 ms after the last; the word being said is marked in yellow, said words ink, words to come muted; a group leaves in 0.12 s before the next. The title card leaves with a blur swap (8 px, 0.18 s), never a slide.
 6. **Pacing.** A line holds about 0.5 s plus 0.3 s a word; the speech estimate is 2.4 words a second; a video's line stays short (about 19 words at most) so the music is never padded with idle drift.
 7. **Vertical frame.** Frame 0 is the hook (the idea or the notes, already on screen, never blank); text stays out of the right-hand action rail; one subject, stacked.
-8. **Teach, then train with him.** Each video: explain (keys lit as named), show (slow), "Train with me" (a bar of count-in, the count big in the field blue, the notes drawn open for him to fill, the piano at 40% as a guide), then it stops by itself on a paper card over the top of the frame: "Pause and practise", "Play it 2 more times", two squares that turn green as his clean runs count, Done and Train with me again. The end line names the next video. The header is the step set like a TikTok title: the kicker (phase, the hand, the speed or Train with me) small, the notes huge, the bar small on the right.
+8. **Teach, then train with him.** Each video: explain (keys lit as named), show (slow), "Train with me" (a bar of count-in, the count huge in ink with the riso offset, the notes drawn open for him to fill, the piano at 40% as a guide), then it stops by itself on an index card taped over the top of the frame: "Pause and practise", "Play it 2 more times", two dashed squares that turn green as his clean runs count, Done and Train with me again. The end line names the next video. The header is the step set like a TikTok title: the kicker (phase, the hand, the speed or Train with me) small, the notes huge, the bar small on the right.
 9. **Sound on visible actions only** (HyperFrames' sound rules): a whoosh when a title arrives, a click on a count-in beat, a pop when a run is counted, a riser into an impact when the whole phase starts. The piano under the voice steps back; nothing chimes.
 10. **The app's videos are the TikToks.** Same layout as the Für Elise videos rendered with HyperFrames: kicker and huge notes on top, one keyboard for both hands in the middle, the caption under it, air below; only the side actions are added.
 

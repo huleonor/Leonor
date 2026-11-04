@@ -3,7 +3,7 @@
  * play, stop, star, flame, bolt). Never draw icon paths by hand; add a Phosphor glyph here instead.
  */
 import {
-  ArrowCounterClockwise, ArrowDown, ArrowLeft, ArrowRight, ArrowsDownUp, Barbell, Bell, Bluetooth, CaretDown, CaretLeft, CaretUp, ChartBar,
+  ArrowCounterClockwise, ArrowDown, ArrowLeft, ArrowRight, ArrowsDownUp, Barbell, Bell, Bluetooth, Books, CaretDown, CaretLeft, CaretUp, ChartBar,
   Check, Checks, DotsThree, DownloadSimple, Equalizer, Fire, Gauge, Gear, GraduationCap, HandPalm, Headphones, House, Lightning,
   FilmStrip, Lock, MagicWand, Microphone, Moon, MusicNote, MusicNotes, MusicNotesSimple, Path, Notepad, Pause, PencilSimple, PianoKeys, Play, PlayCircle, Plus, Repeat, Rewind,
   SignOut, Snowflake, SpeakerHigh, SpeakerSlash, Star, Stop, Target, Trash, X, type Icon as PhIcon, type IconProps,
@@ -72,3 +72,10 @@ export const IconFilm = make(FilmStrip, 'fill');
 export const IconKeysFill = make(PianoKeys, 'fill');
 export const IconPathFill = make(Path, 'fill');
 export const IconLibraryFill = make(MusicNotes, 'fill');
+/* The tab bar: outline when idle, filled for the tab he is on. */
+export const IconTabWatch = make(PlayCircle);
+export const IconTabSong = make(MusicNotes);
+export const IconTabLibrary = make(Books);
+export const IconTabSettings = make(Gear);
+export const IconTabLibraryFill = make(Books, 'fill');
+export const IconTabSongFill = make(MusicNotes, 'fill');

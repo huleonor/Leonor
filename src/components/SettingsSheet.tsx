@@ -108,7 +108,7 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
               {copied ? 'Link copied' : 'Copy the SideStore link'}
             </button>
           )}
-          <p className="fine credits">Sheet music engraved with abcjs. Type: Radio Canada and Radio Canada Big by Charles Daoud.</p>
+          <p className="fine credits">Sheet music engraved with abcjs. Type: the system's Times, Helvetica and Courier.</p>
         </section>
       </div>
     </div>

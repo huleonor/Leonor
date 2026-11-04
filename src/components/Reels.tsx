@@ -19,10 +19,10 @@ function palette(el: Element) {
   return {
     R: v('--right'), L: v('--left'), keyR: v('--right-key'), keyL: v('--left'), inkR: v('--right-ink'), inkL: v('--left-ink'),
     ok: v('--ok'), white: v('--key-white'), whiteEdge: v('--key-edge'), black: v('--key-black'),
-    ink: v('--key-ink'), paper: v('--paper'), lane: v('--reel-lane'), now: v('--now-line'),
+    ink: v('--key-ink'), paper: v('--paper'), tR: v('--pink-text'), tL: v('--teal-text'), lane: v('--reel-lane'), now: v('--now-line'),
   };
 }
-const FACE = "'Radio Canada Big', 'Radio Canada', sans-serif";
+const FACE = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
 /**
  * The reel's clock: the audio clock while it plays, so the keys and the sound never drift apart.
@@ -172,12 +172,17 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
           ctx.strokeStyle = colour(n.hand); ctx.lineWidth = 3;
           ctx.strokeRect(k.x + pad + 1.5, yTop + 1.5, bw - 3, yB - yTop - 3);
         } else {
+          // Printed like a risograph: the other ink's plate a little off register under the note.
+          ctx.globalAlpha = 0.45;
+          ctx.fillStyle = n.hand === 'L' ? pal.R : pal.L;
+          ctx.fillRect(k.x + pad + 3, yTop + 2, bw, yB - yTop);
+          ctx.globalAlpha = 1;
           ctx.fillStyle = colour(n.hand);
           ctx.fillRect(k.x + pad, yTop, bw, yB - yTop);
         }
         if (yB - yTop > 24 && bw > 12) {
-          ctx.fillStyle = n.train ? colour(n.hand) : pal.paper;
-          ctx.font = `700 ${Math.round(Math.min(17, bw * 0.55))}px ${FACE}`;
+          ctx.fillStyle = n.train ? (n.hand === 'L' ? pal.tL : pal.tR) : pal.ink;
+          ctx.font = `900 ${Math.round(Math.min(17, bw * 0.55))}px ${FACE}`;
           ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
           ctx.fillText(letter(n.midi, flats), k.x + k.w / 2, yB - 7);
         }
@@ -200,9 +205,9 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
           if (!black) { ctx.strokeStyle = pal.whiteEdge; ctx.lineWidth = 1; ctx.strokeRect(k.x + 0.5, kbTop, k.w - 1, h); }
           if (!s && order !== undefined) { ctx.strokeStyle = colour(hand); ctx.lineWidth = Math.max(3, k.w * 0.12); ctx.strokeRect(k.x + 3, kbTop + 3, k.w - 6, h - 6); }
           if (s || order !== undefined) {
-            ctx.fillStyle = s || mine.has(m) ? pal.paper : colour(hand);
+            ctx.fillStyle = mine.has(m) ? pal.paper : s ? pal.ink : hand === 'L' ? pal.tL : pal.tR;
             ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-            ctx.font = `700 ${Math.round(Math.min(22, k.w * 0.5))}px ${FACE}`;
+            ctx.font = `900 ${Math.round(Math.min(22, k.w * 0.5))}px ${FACE}`;
             ctx.fillText(letter(m, flats), k.x + k.w / 2, kbTop + h - 10);
             const top = s?.finger ?? order;
             if (top) { ctx.font = `700 ${Math.round(Math.min(15, k.w * 0.36))}px ${FACE}`; ctx.fillText(String(top), k.x + k.w / 2, kbTop + 20); }

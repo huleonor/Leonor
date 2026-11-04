@@ -7,17 +7,17 @@ import { AUTO, HIT, MISS, type FingerMode, type NoteNaming } from '../lib/types'
 
 interface Props { engine: Engine; lo: number; hi: number; naming: NoteNaming; fingers: FingerMode; inset: number; onTap: () => void; }
 
-// Printed on the field like the reels: the right hand in paper, the left in the red; the gate is
-// the green of a right note. Read from the design tokens (a canvas cannot read CSS variables).
+// Printed on the notebook page like the reels: the right hand in riso pink, the left in teal; the
+// gate is the green of a right note. Read from the design tokens (a canvas cannot read CSS variables).
 function palette() {
   const css = getComputedStyle(document.documentElement);
   const v = (k: string) => css.getPropertyValue(k).trim();
   return {
-    display: v('--field'), lane: v('--field-2'), bar: v('--field-rule'), barText: v('--field-muted'), white: v('--paper'), ink: v('--ink'),
-    right: v('--paper'), rightLit: v('--right-key'), left: v('--mark'), leftLit: v('--left-lit'), leftInk: v('--mark-ink'), red: v('--mark'), gate: v('--ok'),
+    display: v('--paper'), lane: v('--paper-2'), bar: v('--rule-2'), barText: v('--muted'), white: v('--white'), ink: v('--ink'),
+    right: v('--pink'), rightLit: v('--pink-soft'), left: v('--teal'), leftLit: v('--teal-soft'), leftInk: v('--ink'), red: v('--mark'), gate: v('--ok'),
   };
 }
-const SANS = "'Radio Canada Big', 'Radio Canada', ui-sans-serif, system-ui, sans-serif";
+const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 const VISIBLE_SECONDS = 3.2;
 
 export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: Props) {
