@@ -19,7 +19,7 @@ function palette(el: Element) {
   return {
     R: v('--right'), L: v('--left'), keyR: v('--right-key'), keyL: v('--left'), inkR: v('--right-ink'), inkL: v('--left-ink'),
     ok: v('--ok'), white: v('--key-white'), whiteEdge: v('--key-edge'), black: v('--key-black'),
-    ink: v('--key-ink'), paper: v('--paper'), tR: v('--pink-text'), tL: v('--teal-text'), lane: v('--reel-lane'), now: v('--now-line'),
+    ink: v('--key-ink'), paper: v('--paper'), muted: v('--muted'), tR: v('--pink-text'), tL: v('--teal-text'), lane: v('--reel-lane'), now: v('--now-line'),
   };
 }
 const FACE = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -138,7 +138,14 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
     const of = (h: Hand) => tl.notes.filter(n => n.hand === h).map(n => n.midi);
     const ls = of('L'), rs = of('R');
     if (ls.length && rs.length && hi - lo > 26) {
-      const A = pickRange(Math.min(...ls), Math.max(...ls), 7), B = pickRange(Math.min(...rs), Math.max(...rs), 7);
+      // Just the keys each hand plays, a white key either side (not whole octaves).
+      const tight = (ms: number[]): [number, number] => {
+        let a = Math.min(...ms) - 1, z = Math.max(...ms) + 1;
+        while (isBlack(a)) a--;
+        while (isBlack(z)) z++;
+        return [Math.max(21, a), Math.min(108, z)];
+      };
+      const A = tight(ls), B = tight(rs);
       if (A[1] < B[0] - 4) {
         const whites = (x: [number, number]) => { let k = 0; for (let m = x[0]; m <= x[1]; m++) if (!isBlack(m)) k++; return k; };
         const wa = whites(A), wb = whites(B), gap = 1.2, total = wa + wb + gap;
@@ -164,7 +171,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
       const v0 = frame[0] * z, v1 = 1 + (frame[1] - 1) * z;
       const X = (m: number) => lay[m] ? { x: ((lay[m].x - v0) / (v1 - v0)) * W, w: (lay[m].w / (v1 - v0)) * W } : null;
       const unitW = (X(60)?.w ?? W / 20);
-      const kbH = Math.min(H * 0.36, unitW * 5.2);
+      const kbH = Math.min(H * 0.36, Math.max(unitW * 5.2, H * 0.24));
       const kbTop = H - kbH;
       const fall = kbTop - 4, pps = fall / LOOK;
       const colour = (h: Hand) => (h === 'L' ? pal.L : pal.R);
@@ -201,7 +208,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
         }
         if (yB - yTop > 24 && bw > 12) {
           ctx.fillStyle = n.train ? (n.hand === 'L' ? pal.tL : pal.tR) : pal.ink;
-          ctx.font = `900 ${Math.round(Math.min(17, bw * 0.55))}px ${FACE}`;
+          ctx.font = `900 ${Math.round(Math.max(11, Math.min(17, bw * 0.55)))}px ${FACE}`;
           ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
           ctx.fillText(letter(n.midi, flats), k.x + k.w / 2, yB - 7);
         }
@@ -226,10 +233,16 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
           if (s || order !== undefined) {
             ctx.fillStyle = mine.has(m) ? pal.paper : s ? pal.ink : hand === 'L' ? pal.tL : pal.tR;
             ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-            ctx.font = `900 ${Math.round(Math.min(22, k.w * 0.5))}px ${FACE}`;
+            ctx.font = `900 ${Math.round(Math.max(11, Math.min(22, k.w * 0.5)))}px ${FACE}`;
             ctx.fillText(letter(m, flats), k.x + k.w / 2, kbTop + h - 10);
             const top = s?.finger ?? order;
             if (top) { ctx.font = `700 ${Math.round(Math.min(15, k.w * 0.36))}px ${FACE}`; ctx.fillText(String(top), k.x + k.w / 2, kbTop + 20); }
+          } else if (!black && m % 12 === 0) {
+            // Every C is marked small with its octave (C3, C4 is middle C, C5) to find the place.
+            ctx.fillStyle = mine.has(m) ? pal.paper : pal.muted;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.font = `700 ${Math.round(Math.max(9, Math.min(13, k.w * 0.42)))}px 'Courier New', Courier, monospace`;
+            ctx.fillText(`C${m / 12 - 1}`, k.x + k.w / 2, kbTop + h - 8);
           }
         }
       }
