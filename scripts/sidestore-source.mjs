@@ -1,10 +1,10 @@
 // Writes public/sidestore.json: a SideStore (AltStore-format) source listing the latest .ipa.
-// Add https://hugos-piano.vercel.app/sidestore.json once in SideStore → Sources; new builds then
+// Add https://leonor-three.vercel.app/sidestore.json once in SideStore → Sources; new builds then
 // appear as an Update in SideStore.
 import { writeFileSync } from 'node:fs';
 
 const [version, build, file, size] = process.argv.slice(2);
-const site = 'https://hugos-piano.vercel.app';
+const site = 'https://leonor-three.vercel.app';
 const today = new Date().toISOString().slice(0, 10);
 
 const source = {

@@ -47,7 +47,7 @@ Limite do Apple ID grátis: 3 apps assinadas ao mesmo tempo, e a SideStore conta
 
 ## Atualizar a app
 
-A app carrega o site `hugos-piano.vercel.app`. Para mudanças no código web basta `npm run deploy`: fecha e reabre a app no iPhone e já tens a versão nova. Sem internet, abre a cópia que vem dentro da app.
+A app carrega o site `leonor-three.vercel.app`, que a Vercel publica sozinha a cada mudança no `main` do GitHub: fecha e reabre a app no iPhone e já tens a versão nova. Sem internet, abre a cópia que vem dentro da app.
 
 Só precisas de um `.ipa` novo (`npm run ipa`, depois instalar por cima na SideStore) quando mudar a parte nativa: MIDI em Swift, permissões, ícone.
 

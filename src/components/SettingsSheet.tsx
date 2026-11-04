@@ -6,7 +6,7 @@ import { IconBluetooth, IconClose, IconKeys, IconMic } from './Icons';
 import { Segmented } from './ui';
 import { allowWebReminders } from '../lib/reminders';
 
-const SOURCE_URL = 'https://hugos-piano.vercel.app/sidestore.json';
+const SOURCE_URL = 'https://leonor-three.vercel.app/sidestore.json';
 const INPUTS: [Source, string, (p: { size?: number }) => React.ReactElement][] = [
   ['midi', 'USB cable', IconKeys],
   ['ble', 'Bluetooth', IconBluetooth],

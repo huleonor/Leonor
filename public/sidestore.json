@@ -2,8 +2,8 @@
   "name": "Leonor",
   "identifier": "com.hugoleonor.hugospiano.source",
   "subtitle": "Your songs, part by part.",
-  "iconURL": "https://hugos-piano.vercel.app/icons/icon-512.png",
-  "website": "https://hugos-piano.vercel.app",
+  "iconURL": "https://leonor-three.vercel.app/icons/icon-512.png",
+  "website": "https://leonor-three.vercel.app",
   "tintColor": "#f25c08",
   "apps": [
     {
@@ -12,7 +12,7 @@
       "developerName": "Hugo Leonor",
       "subtitle": "Learn your songs part by part.",
       "localizedDescription": "Falling notes or the score, a course for every song, and your keyboard by cable, Bluetooth or the microphone.",
-      "iconURL": "https://hugos-piano.vercel.app/icons/icon-512.png",
+      "iconURL": "https://leonor-three.vercel.app/icons/icon-512.png",
       "tintColor": "#f25c08",
       "category": "entertainment",
       "screenshotURLs": [],
@@ -22,7 +22,7 @@
           "buildVersion": "2",
           "date": "2026-09-26",
           "localizedDescription": "Version 1.1 (build 2).",
-          "downloadURL": "https://hugos-piano.vercel.app/ipa/HugosPiano-1.1-2.ipa",
+          "downloadURL": "https://leonor-three.vercel.app/ipa/HugosPiano-1.1-2.ipa",
           "size": 1105664,
           "minOSVersion": "15.0"
         }
