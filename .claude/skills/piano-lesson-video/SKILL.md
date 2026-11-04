@@ -32,7 +32,7 @@ Rules: one idea per video; never the hard part first; nothing at full speed but 
 | --- | --- | --- | --- |
 | **Name** | 3 to 6 s | The voice names the shape; each key lights, outlined and numbered, as it is named. | 10 to 19 |
 | **Show** | one pass | The music, slow. The notes fall filled in the hand's colour. | none |
-| **Train with me** | count-in + one pass | "Your turn, play it with me." A count of 1, 2, 3 (a click on each beat, the number big), and only then the notes start falling, quieter clicks keeping the beat until the first one lands. The notes fall open for him; the piano only guides at 40%. **With a piano connected the video waits at a note he has not played a quarter of a second after it should sound, and goes on the moment he plays it.** | 5 to 7 |
+| **Train with me** | count-in + one pass | "Your turn, play it with me." A count of 1, 2, 3 (a click on each beat, the number big), and only then the notes start falling, in silence (no click after the 3). The notes fall open for him; the piano only guides at 40%. **With a piano connected the video waits at a note he has not played a quarter of a second after it should sound, and goes on the moment he plays it.** | 5 to 7 |
 | **Practise** | his time | The video stops by itself: "Now pause, and play it two more times." A card counts his clean runs (every note group in order, at most two slips) or he taps Done. After two it goes on by itself. | 6 to 10 |
 | **Next** | 2 to 4 s | "Nice. Next up, the right hand. Swipe up." | 6 to 12 |
 

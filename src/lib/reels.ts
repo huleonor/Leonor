@@ -624,12 +624,12 @@ export function timelineOf(song: Song, clip: Clip): ReelTimeline {
   t = Math.max(until, 0.3 + said) + 0.5;
   const turn = line(t, TURN[clip.k % TURN.length], 0);
   const beat = Math.max(0.45, Math.min(1, song.ticksToSeconds(song.ppq) / sg.speed));
-  // Count 1, 2, 3 (the user's choice), then the notes start falling: the clicks keep the beat
-  // while they fall, so the first one still lands on a beat.
+  // Count 1, 2, 3 (the user's choice), then the notes start falling in silence (no more clicks
+  // after the 3), landing on the beat the count set.
   const n = 3;
   const ci = t + turn + 0.2;
   const fallBeats = Math.ceil(FALL / beat);
-  for (let k = 0; k < n + fallBeats; k++) sfx.push({ t: ci + k * beat, name: 'click-soft', gain: k === 0 ? 0.6 : k < n ? 0.4 : 0.25 });
+  for (let k = 0; k < n; k++) sfx.push({ t: ci + k * beat, name: 'click-soft', gain: k === 0 ? 0.6 : 0.4 });
   const trainStart = ci + (n + fallBeats) * beat - LEAD;
   lay(trainStart, true);
   until = trainStart + LEAD + length;

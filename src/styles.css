@@ -530,22 +530,26 @@ p { margin: 0; }
    keyboard wide on the right, the whole screen (the app's page column opens up for it). */
 @media (min-aspect-ratio: 5 / 4) {
   .app.watching { max-width: none; border: 0; }
-  .reel-frame {
-    grid-template-columns: minmax(240px, 34%) minmax(0, 1fr);
-    grid-template-rows: auto auto minmax(0, 1fr);
-    grid-template-areas: 'bar bar' 'head stage' 'foot stage';
-  }
-  .reel-progress { grid-area: bar; }
-  .reel-head { grid-area: head; }
-  .reel-foot { grid-area: foot; align-content: end; padding-bottom: 30px; }
-  .reel-stage { grid-area: stage; margin: 10px 16px 16px 0; }
+  /* Wide: the head runs along the top in one line (kicker, notes, where), the keyboard takes the
+     whole width under it, the caption under the keys. */
+  .reel-head { grid-template-columns: auto auto 1fr; align-items: center; column-gap: 18px; padding: 14px 20px 4px; }
+  .reel-head .reel-meta { justify-self: start; }
+  .reel-hook { font-size: clamp(40px, 9vh, 76px); max-width: none; white-space: nowrap; }
+  .reel-hook.words { font-size: clamp(24px, 5vh, 38px); white-space: normal; max-width: 22ch; }
+  .reel-stage { margin: 6px 20px 0; }
+  .reel-foot { min-height: 0; padding: 10px 20px 22px; }
+  .reel-say { max-width: 46ch; }
   .reel-hold { left: auto; right: 16px; width: min(440px, 46%); }
+  .app.watching .reel-head { padding-left: 74px; }
+  .app.watching .reel-kicker { margin-left: 0; }
 }
 @media (min-aspect-ratio: 5 / 4) and (max-height: 500px) {
-  .reel-hook { font-size: 40px; }
-  .reel-hook.words { font-size: 26px; }
+  .reel-hook { font-size: 34px; }
+  .reel-hook.words { font-size: 22px; }
+  .reel-head { padding-top: 10px; }
+  .reel-say { font-size: 20px; }
+  .reel-foot { padding-bottom: 14px; }
   .reel-cue { font-size: 16px; }
-  .reel-foot { min-height: 0; }
   .reel-card h3 { font-size: 26px; }
   .reel-act span { width: 42px; height: 42px; }
   .reel-side { gap: 6px; }

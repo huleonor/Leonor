@@ -129,9 +129,26 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
     const ctx = cv.getContext('2d')!;
     const pal = palette(cv);
     const [lo, hi] = range;
-    const [wLo, wHi] = pickRange(lo - 7, hi + 7, 30);
-    const lay = keyLayout(wLo, wHi);
-    const frame: [number, number] = [lay[lo]?.x ?? 0, (lay[hi]?.x ?? 1) + (lay[hi]?.w ?? 0)];
+    let [wLo, wHi] = pickRange(lo - 7, hi + 7, 30);
+    let lay = keyLayout(wLo, wHi);
+    let frame: [number, number] = [lay[lo]?.x ?? 0, (lay[hi]?.x ?? 1) + (lay[hi]?.w ?? 0)];
+    // Two hands far apart: one keyboard so wide that every key gets thin and hard to read. Then it
+    // is cut in two, the left hand's keys and the right hand's side by side with a gap between,
+    // each as big as it can be (the keys in between are left out).
+    const of = (h: Hand) => tl.notes.filter(n => n.hand === h).map(n => n.midi);
+    const ls = of('L'), rs = of('R');
+    if (ls.length && rs.length && hi - lo > 26) {
+      const A = pickRange(Math.min(...ls), Math.max(...ls), 7), B = pickRange(Math.min(...rs), Math.max(...rs), 7);
+      if (A[1] < B[0] - 4) {
+        const whites = (x: [number, number]) => { let k = 0; for (let m = x[0]; m <= x[1]; m++) if (!isBlack(m)) k++; return k; };
+        const wa = whites(A), wb = whites(B), gap = 1.2, total = wa + wb + gap;
+        const la = keyLayout(A[0], A[1]), lb = keyLayout(B[0], B[1]);
+        const both: Record<number, { x: number; w: number; black: boolean }> = {};
+        for (const [m, g] of Object.entries(la)) both[Number(m)] = { ...g, x: g.x * wa / total, w: g.w * wa / total };
+        for (const [m, g] of Object.entries(lb)) both[Number(m)] = { ...g, x: (wa + gap + g.x * wb) / total, w: g.w * wb / total };
+        lay = both; wLo = A[0]; wHi = B[1]; frame = [0, 1];
+      }
+    }
     // Which hand plays each key in this video (for the colour of a key the voice names).
     const handOf = new Map<number, Hand>();
     for (const n of tl.notes) if (!handOf.has(n.midi)) handOf.set(n.midi, n.hand);
