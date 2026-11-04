@@ -2,6 +2,12 @@
  * The words of a song's phase videos: written by hand in reelScripts.ts, checked here before they show.
  */
 
+/**
+ * What the voice says over a phase's video, like a teacher talking over the keys: the idea while
+ * the title shows, a line as each hand plays alone, one as both play, and the send-off.
+ */
+export interface Talk { intro: string; L?: string; R?: string; both: string; outro: string }
+
 /** One phase of a song, as its video explains it. */
 export interface PhaseWords {
   /** Bars, 1-based, inclusive. */
@@ -20,9 +26,11 @@ export interface PhaseWords {
   cues: Record<number, string>;
   /** One line at the end, before he plays it himself. */
   tip: string;
+  /** What the voice says (the captions show it word by word). */
+  talk?: Talk;
 }
 
-export const LIMITS = { title: 32, hook: 52, line: 56, tip: 80 };
+export const LIMITS = { title: 32, hook: 52, line: 56, tip: 80, talk: 240 };
 
 /** No em or en dashes on screen, and nothing longer than the video has room for. */
 const clean = (s: unknown, max: number) => {
@@ -39,5 +47,11 @@ export function cleanPhase(w: PhaseWords): PhaseWords | null {
   const tricks = w.tricks.map(t => clean(t, LIMITS.line)).filter((t): t is string => !!t);
   const cues: Record<number, string> = {};
   for (const [bar, text] of Object.entries(w.cues)) { const c = clean(text, LIMITS.line); if (c) cues[Number(bar)] = c; }
-  return { from: w.from, to: w.to, title, hook, tricks, L, R, cues, tip };
+  let talk: Talk | undefined;
+  if (w.talk) {
+    const t = (x?: string) => (x ? clean(x, LIMITS.talk) ?? undefined : undefined);
+    const intro = t(w.talk.intro), both = t(w.talk.both), outro = t(w.talk.outro);
+    if (intro && both && outro) talk = { intro, L: t(w.talk.L), R: t(w.talk.R), both, outro };
+  }
+  return { from: w.from, to: w.to, title, hook, tricks, L, R, cues, tip, talk };
 }

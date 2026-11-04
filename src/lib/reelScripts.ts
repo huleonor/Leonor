@@ -14,7 +14,7 @@
  * Limits on screen (reelShape.ts): title 32 characters, hook 52, a trick, hand line or cue 56, the
  * tip 80. No em or en dashes.
  */
-import type { PhaseWords } from './reelShape';
+import type { PhaseWords, Talk } from './reelShape';
 
 export interface SongScript { version?: string; fingerprint?: Record<number, string>; phases: PhaseWords[] }
 
@@ -188,3 +188,124 @@ export const SCRIPTS: Record<string, SongScript> = {
     ],
   },
 };
+
+/**
+ * What the voice says over each phase, written like a teacher talking over the keys: the idea, the
+ * left hand, the right hand, both together, the send-off. Phase by phase, in the order above. Note
+ * names are written as they read ("F sharp"); a capital A alone is read as the letter.
+ */
+const TALK: Record<string, Talk[]> = {
+  'interstellar-experience': [
+    {
+      intro: 'This whole opening is built from one shape. The right hand plays top, middle, low, middle on every beat, and the left hand holds one octave a bar: F, G, A, then E.',
+      L: 'Left hand first. Little finger on the low note, thumb an octave up, and hold it for all four beats. F, G, A, E.',
+      R: 'Now the right hand. E, C, A, C. Top, middle, low, middle. Later it turns into E, B, G, B, and only the top note stays put.',
+      both: 'Both hands together, at full speed. Drop the octave on beat one and let the pattern roll on top.',
+      outro: 'Find the top note, and your hand already knows the rest. Your turn.',
+    },
+    {
+      intro: 'Here the melody arrives. The right hand plays little scales, up and back down, while the left hand breaks each chord into four notes, one on every beat.',
+      L: 'Left hand: F, A, C, A. Then E, A, C, A. One chord a bar, broken into the same up and down shape.',
+      R: 'Right hand: A, B, C, D, E, and back down. It is only a scale, so keep your fingers close to the keys.',
+      both: 'Together now. On every beat both hands move at once. Then the melody comes again, an octave higher.',
+      outro: 'Each run is just a scale. Play it slowly until it feels like walking.',
+    },
+    {
+      intro: 'The opening pattern is back, but now the left hand flows. It climbs up the chord and comes back down, wider than before.',
+      L: 'Left hand: F, C, F, A, C, up and down. The same shape starts on F, then on A, on G, and on E.',
+      R: 'The right hand plays the first pattern again, E, C, A, C, and then opens up with a leap to the high E.',
+      both: 'Both hands. Let your wrist carry the left hand, and get ready for the leap around bar 27.',
+      outro: 'Let the wrist do the work. The leaps can be slower at first.',
+    },
+    {
+      intro: 'The melody comes back, an octave higher. You already know these notes. Only the place on the keyboard is new.',
+      L: 'The left hand waits, plays one chord, and from bar 41 goes back to the broken chords you learnt.',
+      R: 'Right hand: the same little scales, A, B, C, D, E and down again, just higher up.',
+      both: 'Together. It is the melody from phase two, moved up the keyboard.',
+      outro: 'Same notes, higher. Find the first one and the rest follows.',
+    },
+    {
+      intro: 'This is the build. The left hand drives steady eighth notes, and on top the pattern gets louder while its top note climbs: A, then B, then C.',
+      L: 'Left hand: even eighth notes, like a clock ticking. Then F, G and A, still in eighths.',
+      R: 'Right hand: A, E, C, A. Then B, E, D, B. Then C, E, D, C. The top note leads the way up.',
+      both: 'Both hands, loud but not hard. Careful at bars 57 and 58: those two bars have only three beats.',
+      outro: 'Keep the eighths even, like a clock. Loud, not hard.',
+    },
+    {
+      intro: 'Big chords now. The right hand plays full chords on beat one, between two and three, and on four, while the left hand rolls arpeggios underneath.',
+      L: 'Left hand: the arpeggios again, from F, then A, then G, then E. The same shape every time.',
+      R: 'Right hand: shape each chord in the air before you land it. The top notes are the melody.',
+      both: 'Together, at full power. At bar 61, hold the tied chord across the bar line.',
+      outro: 'Loud, but even. Listen for the top notes, they carry the melody.',
+    },
+    {
+      intro: 'The ending. The pattern plays one last time, softer, its top note climbing, A, B, C, D, and then a run to the very top.',
+      L: 'Left hand: one held chord every two bars. One low F octave, then D, G, B, then E, A, C.',
+      R: 'Right hand: A, E, C, A. Then B on top, then C, then D. And at the end, a run all the way up.',
+      both: 'Both hands, softer now. Let it slow down at the end, and let the last notes ring.',
+      outro: 'Slow down and let it ring. The last run is the right hand alone.',
+    },
+  ],
+  'gymnopedie-1': [
+    {
+      intro: 'Two chords rock back and forth, and then a slow tune floats in on top. Count three beats in every bar.',
+      L: 'Left hand: a low G, then jump up to the chord, B, D, F sharp. Then a low D, and up to A, C sharp, F sharp.',
+      R: 'Right hand: rest on beat one, then F sharp and A. Then G, F sharp, C sharp. It never hurries.',
+      both: 'Together. Four bars of left hand alone, and then the tune joins on beat two.',
+      outro: 'Never hurry. Count one, two, three, slow and even.',
+    },
+    {
+      intro: 'Now the bass walks down, one note a bar, while the tune holds long notes above it.',
+      L: 'Left hand: low F sharp, then B, E, D and A. Find each low note before you play it.',
+      R: 'Right hand: C sharp, F sharp, then one long E, held for three bars. Keep counting while it rings.',
+      both: 'Together. The long notes are the music here, so give them their full length.',
+      outro: 'Count the long notes. They are the music here.',
+    },
+    {
+      intro: 'One low D holds everything together here, and the phase ends on two big chords.',
+      L: 'Left hand: the low D never moves. Only the chord on beat two changes. C, E, A, then C, F sharp, A.',
+      R: 'Right hand: a high D held, a low D on beat two, then it climbs, E, F, G.',
+      both: 'Together. Shape your hand for the big chords at the end before you play them.',
+      outro: 'Shape the hand for the big chords before you play them.',
+    },
+    {
+      intro: 'The opening comes back. The same rocking chords, the same tune. You already know this one.',
+      L: 'Left hand: low D, up to A, C sharp, F sharp. Low G, up to B, D, F sharp. Rocking, just like the start.',
+      R: 'Right hand: F sharp and A, then G, F sharp, C sharp, then B, C sharp, D, and down to a long F sharp.',
+      both: 'Together. Let it float, and hold the last F sharp for four bars.',
+      outro: 'You know this one. Let it float.',
+    },
+    {
+      intro: 'Phases two and three come back, with a new ending.',
+      L: 'Left hand: the same walking bass, B, E, D, A, and then the low D under every bar.',
+      R: 'Right hand: F sharp, one long low E, then A, B, C, climbing up.',
+      both: 'Together. It is the same as before, so trust your hands, and hold the G at the end.',
+      outro: 'The same as before. Trust your hands.',
+    },
+    {
+      intro: 'The ending. Little steps down in the right hand, and then the last two chords.',
+      L: 'Left hand: a low E, three times, then A, then D.',
+      R: 'Right hand: B, C, F, then E, D, C, twice. It is the ending of phase three, with F instead of F sharp.',
+      both: 'Together. Slow down at the end, and let the last chord ring.',
+      outro: 'Slow down, and let the last chord ring.',
+    },
+  ],
+  'fur-elise': [
+    {
+      intro: 'The famous turn. The right hand rocks between two neighbour keys, E and D sharp, and then the two hands take turns.',
+      L: 'Left hand: only two shapes. A, E, A, rolling up. Then E, E, G sharp.',
+      R: 'Right hand: E, D sharp, E, D sharp, E, then B, D, C, and land on A. The hand stays still for the turn.',
+      both: 'Together. The left hand rolls up, and the right hand climbs to answer it.',
+      outro: 'Keep it light. The hand stays still for the turn.',
+    },
+    {
+      intro: 'The same tune again, and this time it closes on A.',
+      L: 'Left hand: the same two shapes as before, all the way to the last A.',
+      R: 'Right hand: the turn again. Watch bar 16: it ends C, B, not G sharp, B. That is what closes it.',
+      both: 'Together. Soft at the end, with an A in both hands.',
+      outro: 'Soft at the end. The last A in both hands.',
+    },
+  ],
+};
+for (const [id, talks] of Object.entries(TALK)) SCRIPTS[id]?.phases.forEach((p, i) => { if (talks[i]) p.talk = talks[i]; });
+

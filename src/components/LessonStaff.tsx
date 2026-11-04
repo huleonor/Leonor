@@ -44,18 +44,22 @@ export function LessonStaff({ engine, from, to, feedback, fingers = 'all', only 
     const song = engine.song;
     const bars = to - from + 1;
     // Big, like Simply Piano: the grand staff (about 125 units from the treble's top line to the
-    // bass's bottom line) fills the stage, a few notes to the screen.
-    // Like Simply Piano: about four bars across the whole screen (a shorter step fills it), as big
-    // as the stage's height allows. Engraved once, measured, and engraved again at the size that fits.
+    // bass's bottom line) takes about half the stage's height, so the notes read from the music
+    // stand. A step shorter than the screen grows to fill its width (as tall as the stage allows);
+    // a longer one keeps that size and slides under the now line, never less than a bar on screen.
+    // Engraved once, measured, and engraved again at the size that fits.
     const perBar = Math.max(170, density(song) * 34 + 60);
-    const tallest = Math.min(3.4, (size.h - 110) / 125);
+    const tallest = Math.min(3.6, (size.h - 90) / 125);
+    const tall = Math.max(0.8, Math.min(tallest, (size.h * 0.5) / 125));
     const score = buildScore(song, bars, fingers, { from, to, only, staffSep: 20 });
     const draw = (sc: number) => engrave(line, paper, engine, score, { staffwidth: bars * perBar, scale: sc, stretch: true, feedback: () => feedbackRef.current });
-    let scale = Math.max(0.8, Math.min(tallest, (size.w * 0.9) / (perBar * Math.min(4, bars))));
+    let scale = tall;
     let eg = draw(scale);
     const drawn = paper.getBoundingClientRect().width;
-    const want = size.w * 0.94 * Math.max(1, bars / 4);
-    const fit = Math.max(0.8, Math.min(tallest, scale * want / Math.max(1, drawn)));
+    const oneBar = drawn / Math.max(1, bars);
+    let fit = drawn < size.w * 0.9 ? Math.min(tallest, scale * (size.w * 0.92) / Math.max(1, drawn)) : scale;
+    if (oneBar * (fit / scale) > size.w * 0.92) fit = scale * (size.w * 0.92) / oneBar;
+    fit = Math.max(0.8, fit);
     if (Math.abs(fit - scale) / scale > 0.06) { scale = fit; eg = draw(scale); }
     eg.paintAll();
     let nextIds: number[] = [];

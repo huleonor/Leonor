@@ -37,7 +37,7 @@ A poster for one song. The paper is quiet; the music is printed on one ultramari
 ## Colour, by job
 
 - **Paper** is the ground of every page. **Ink** is text and the primary control. **Muted** is only for hints and labels.
-- **Field** (ultramarine) is where the music is: the reels, the lesson stage, the next phase on the Song page, the song learnt now in the Library, a chosen option. On the field, text is paper, small text `--field-muted`, rules `--field-rule`.
+- **Field** (ultramarine) is where the music is: the reels, the falling-notes view, the next phase on the Song page, the song learnt now in the Library, a chosen option. On the field, text is paper, small text `--field-muted`, rules `--field-rule`.
 - **Mark** (red) is the left hand and a wrong note. **Ok** (green) is a right note, a played key, a good run. Neither is decoration.
 - Hands: on paper the right hand is the field blue, the left the red; on the field the right hand prints in paper (its lit keys `--right-key`), the left stays red.
 - Song covers are flat poster tiles (field, ink, red) with the song's own opening notes on a staff in paper. The Library and the Song page show the opening across a wide staff instead (`<OpeningStaff />`).
@@ -59,10 +59,10 @@ A poster for one song. The paper is quiet; the music is printed on one ultramari
 
 ## The screens
 
-- **Watch**: the reel fills the field. Top left the bar being played, huge; top right the phase (n of N), its name and the segment tag (paper, or red for the left hand). The hook under it in display type; the bass of each bar as square cells; the falling notes onto square keys; the caption at the foot in display type. Cards (the idea and its tricks, a hand's name, your turn) are the field itself with the words set flush left over hairlines.
+- **Watch**: the reel fills the field. Top left the bar being played, huge; top right the phase (n of N), its name and the segment tag (paper, or red for the left hand). The hook under it in display type; the bass of each bar as square cells; the falling notes onto square keys; the caption at the foot in display type. Cards (the idea, your turn) are the field itself with the words set flush left. A voice explains every phase; its caption sits at the foot in display type, a few words at a time, the word being said in `--key-next` yellow, the words said in paper, the ones to come in `--field-muted`. Between passes there is only a breath while the notes fall in, never a full-screen card.
 - **Song**: the title huge, the composer with the number of phases and bars, the percent as a big number, one primary action, then the phases as numbered rows (number, name, where it is; Practise with its stars on the right). The next phase is the field row; the whole song closes the list as an ink row headed by its number of bars.
 - **Library**: the song learnt now as a field block with its opening on a staff and its percent huge; the rest as rows with the percent on the right; the marketplace below.
-- **Lessons**: the stage is the field, the staff on white bands, a red now line, square pause, arrows and step counter. The result is a paper poster: the headline big, the accuracy as a big number, the stars in field blue.
+- **Lessons**: Simply Piano's page (the user's choice): white, the grand staff big across it (about half the stage's height), a blue now line, square pause, arrows and step counter, and the help keys as a white strip along the bottom edge. The result is a paper poster: the headline big, the accuracy as a big number, the stars in field blue.
 
 ## Motion
 
