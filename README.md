@@ -2,7 +2,7 @@
 
 A piano-learning app in the manner of Simply Piano, built around your own songs: each song becomes a course you learn part by part, hand by hand, on a scrolling staff that waits for you, with stars and a daily streak. It listens to your piano over USB MIDI, Bluetooth MIDI or the microphone.
 
-Live: https://hugos-piano.vercel.app
+Live: https://leonor-three.vercel.app
 
 ## Using it
 
