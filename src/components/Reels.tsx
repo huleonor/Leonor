@@ -19,7 +19,7 @@ function palette(el: Element) {
   return {
     R: v('--right'), L: v('--left'), keyR: v('--right-key'), keyL: v('--left'), inkR: v('--right-ink'), inkL: v('--left-ink'),
     ok: v('--ok'), white: v('--key-white'), whiteEdge: v('--key-edge'), black: v('--key-black'),
-    ink: v('--key-ink'), paper: v('--paper'), muted: v('--muted'), tR: v('--pink-text'), tL: v('--teal-text'), lane: v('--reel-lane'), now: v('--now-line'),
+    ink: v('--key-ink'), paper: v('--paper'), muted: v('--muted'), bad: v('--mark'), tR: v('--pink-text'), tL: v('--teal-text'), lane: v('--reel-lane'), now: v('--now-line'),
   };
 }
 const FACE = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -122,7 +122,10 @@ const inOut = (x: number) => (x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2);
  * its letter at the bottom and its finger at the top, and a short flash rises from it; a note for
  * him to play (Train with me) falls open; a key he plays lights green.
  */
-function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTimeline; range: [number, number]; now: () => number; held: React.RefObject<Set<number>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number }) {
+/** A key he pressed on his piano: right or wrong, and when (for the mark that rises from it). */
+export type Press = { midi: number; ok: boolean; at: number };
+
+function Lanes({ tl, range, now, held, flats, named, namedUntil, presses }: { tl: ReelTimeline; range: [number, number]; now: () => number; held: React.RefObject<Map<number, boolean>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number; presses?: React.RefObject<Press[]> }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current!;
@@ -218,7 +221,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
       ctx.fillRect(0, kbTop - 4, W, 3);
       // The keys.
       const naming = t < namedUntil ? named.current ?? new Map<number, number>() : new Map<number, number>();
-      const mine = held.current ?? new Set<number>();
+      const mine = held.current ?? new Map<number, boolean>();
       for (const black of [false, true]) {
         for (let m = wLo; m <= wHi; m++) {
           if (isBlack(m) !== black) continue;
@@ -226,7 +229,8 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
           if (!k || k.x + k.w < -2 || k.x > W + 2) continue;
           const h = black ? kbH * 0.62 : kbH;
           const s = sounding.get(m), order = naming.get(m), hand = s?.hand ?? handOf.get(m) ?? (m < 60 ? 'L' : 'R');
-          ctx.fillStyle = mine.has(m) ? pal.ok : s ? colour(s.hand) : black ? pal.black : pal.white;
+          // His own keys: green when right, red when wrong, whatever the video is doing.
+          ctx.fillStyle = mine.has(m) ? (mine.get(m) ? pal.ok : pal.bad) : s ? colour(s.hand) : black ? pal.black : pal.white;
           ctx.fillRect(k.x + (black ? 0 : 0.5), kbTop, k.w - (black ? 0 : 1), h);
           if (!black) { ctx.strokeStyle = pal.whiteEdge; ctx.lineWidth = 1; ctx.strokeRect(k.x + 0.5, kbTop, k.w - 1, h); }
           if (!s && order !== undefined) { ctx.strokeStyle = colour(hand); ctx.lineWidth = Math.max(3, k.w * 0.12); ctx.strokeRect(k.x + 3, kbTop + 3, k.w - 6, h - 6); }
@@ -258,11 +262,28 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTim
         ctx.fillRect(k.x - k.w * 0.3 * e, kbTop - 16 - 40 * e, k.w * (1 + 0.6 * e), 12 + 40 * e);
         ctx.globalAlpha = 1;
       }
+      // Each key he presses sends up a small mark in green or red with its letter, so he sees what
+      // he played (and if it was right) even while the voice explains.
+      for (const p of presses?.current ?? []) {
+        const a = (performance.now() - p.at) / 800;
+        const k = X(p.midi);
+        if (a > 1 || !k) continue;
+        const e = 1 - Math.pow(1 - a, 3);
+        const bw = Math.max(18, k.w * 0.9), bh = 22;
+        ctx.globalAlpha = 1 - a * a;
+        ctx.fillStyle = p.ok ? pal.ok : pal.bad;
+        ctx.fillRect(k.x + k.w / 2 - bw / 2, kbTop - 30 - 70 * e, bw, bh);
+        ctx.fillStyle = pal.paper;
+        ctx.font = `900 13px ${FACE}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(letter(p.midi, flats), k.x + k.w / 2, kbTop - 30 - 70 * e + bh / 2 + 1);
+        ctx.textBaseline = 'alphabetic';
+        ctx.globalAlpha = 1;
+      }
       raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [tl, range, now, held, flats, named, namedUntil]);
+  }, [tl, range, now, held, flats, named, namedUntil, presses]);
   return <canvas ref={ref} className="reel-lanes" aria-hidden="true" />;
 }
 
@@ -394,6 +415,8 @@ interface PlayerProps {
   active: boolean;
   onPractice: () => void;
   onNext?: () => void;
+  /** Open Settings, where the piano is connected. */
+  onPiano?: () => void;
 }
 
 /**
@@ -401,7 +424,7 @@ interface PlayerProps {
  * loops until he scrolls on, so he copies it on his piano as many times as he likes. The voice
  * says it once; the loops are the music alone. Tap to pause.
  */
-export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerProps) {
+export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano }: PlayerProps) {
   const tl = useMemo(() => timelineOf(song, reel), [song, reel]);
   // One keyboard for both hands, framed on this video's notes.
   const range = useMemo<[number, number]>(() => {
@@ -512,13 +535,27 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
     const id = window.setTimeout(release, 900);
     return () => window.clearTimeout(id);
   }, [reps, holding]); // eslint-disable-line react-hooks/exhaustive-deps
-  const held = useRef(new Set<number>());
+  const held = useRef(new Map<number, boolean>());
+  const presses = useRef<Press[]>([]);
+  const [score, setScore] = useState({ ok: 0, bad: 0 });
+  useEffect(() => { if (!active) setScore({ ok: 0, bad: 0 }); }, [active]);
   useEffect(() => { if (!active) setLoops(0); }, [active]);
 
   // Keys he plays along light up green on the reel's keyboard.
   useEffect(() => {
     if (!active) return;
-    return onNote(e => { if (e.type === 'on') held.current.add(e.midi); else held.current.delete(e.midi); });
+    // Right or wrong at any moment, even while the voice explains: in Train with me, a key of a note
+    // group due about now (half a second either way); otherwise any key this video teaches.
+    const keys = new Set(tl.notes.map(n => n.midi));
+    return onNote(e => {
+      if (e.type !== 'on') { held.current.delete(e.midi); return; }
+      const t = clockRef.current?.now() ?? 0;
+      const turn = tl.train && t >= (tl.countIn?.t ?? tl.train.t) && t <= tl.train.until + 0.5;
+      const ok = turn ? tl.notes.some(n => n.train && n.midi === e.midi && Math.abs(n.t - t) < 0.5) || (waitingRef.current && (waitRef.current?.has(e.midi) ?? false)) : keys.has(e.midi);
+      held.current.set(e.midi, ok);
+      presses.current = [...presses.current.filter(p => performance.now() - p.at < 900), { midi: e.midi, ok, at: performance.now() }];
+      setScore(x => (ok ? { ...x, ok: x.ok + 1 } : { ...x, bad: x.bad + 1 }));
+    });
   }, [active]);
 
   const toggle = () => { unlockVoice(); if (clock.playing) clock.pause(); else { unlockAudio(); clock.play(); } };
@@ -574,10 +611,10 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
         <header className="reel-head">
           <motion.p key={label} className="reel-kicker" initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.18, ease: ARRIVE }}>{label}</motion.p>
           <h2 className={`reel-hook hand-${seg.kind} ${reel.head.split(' ').some(x => !/^[A-G](?:#|b)?m?$/.test(x) && x !== 'octaves') ? 'words' : ''}`}>{reel.head.split(' ').map((x, i) => <motion.span key={`${reel.id}-${i}`} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x} </motion.span>)}</h2>
-          <p className="reel-meta">Phase {reel.n}, {reel.k} of {reel.of}. Bar {bar}</p>
+          <p className="reel-meta">Phase {reel.n}, {reel.k} of {reel.of}. Bar {bar}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">. Your keys: <b className="ok">{score.ok} right</b>, <b className="bad">{score.bad} wrong</b></span>}</p>
         </header>
         <div className="reel-stage">
-          <Lanes tl={tl} range={range} now={clock.now} held={held} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
+          <Lanes tl={tl} range={range} now={clock.now} held={held} presses={presses} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
         </div>
         <div className="reel-foot">
           {sayLine && !showTitle ? (
@@ -633,6 +670,12 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
           )}
         </AnimatePresence>
         {!clock.ready && active && <span className="reel-loading" role="status">Loading the piano</span>}
+        {/* His piano: a key icon with a dot (green when connected) to connect it, and, once he plays
+            along, how many keys were right and how many wrong in this video. */}
+        <button className={`reel-piano ${inputOn ? 'on' : ''}`} onClick={e => { e.stopPropagation(); onPiano?.(); }} aria-label={inputOn ? 'Piano connected. Open settings' : 'Connect your piano'}>
+          <IconKeys size={20} /><i aria-hidden="true" />
+          {!inputOn && <span className="reel-connect">Connect</span>}
+        </button>
         {/* Scrub: drag along the bottom to go back to any moment, like TikTok. */}
         <div className="reel-scrub" role="slider" aria-label="Where in the video" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct * 100)} tabIndex={0}
           onClick={e => e.stopPropagation()}
@@ -675,7 +718,7 @@ export function ReelPreview({ song, reel }: { song: Song; reel: Clip }) {
   }, [tl]);
   const at = (tl.notes.find(n => !n.train)?.t ?? 0) + 0.6;
   const now = useCallback(() => at, [at]);
-  const held = useRef(new Set<number>()), named = useRef(new Map<number, number>());
+  const held = useRef(new Map<number, boolean>()), named = useRef(new Map<number, number>());
   const seg = reel.segments[0];
   const words = reel.head.split(' ').some(x => !/^[A-G](?:#|b)?m?$/.test(x) && x !== 'octaves');
   return (
@@ -699,10 +742,11 @@ interface FeedProps {
   onPractice: (reel: Clip, index: number) => void;
   /** The video on screen changed (to remember where he was, for the home page). */
   onActive?: (index: number) => void;
+  onPiano?: () => void;
 }
 
 /** The song's reels in a vertical feed: swipe up for the next one, TikTok style. */
-export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, onActive }: FeedProps) {
+export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, onActive, onPiano }: FeedProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(start);
   useEffect(() => {
@@ -734,7 +778,7 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
         {reels.map((r, i) => (
           <section key={r.id} data-i={i} className="reel-snap">
             {Math.abs(i - active) <= 1 && (
-              <ReelPlayer song={song} reel={r} index={i} count={reels.length} active={i === active}
+              <ReelPlayer song={song} reel={r} index={i} count={reels.length} active={i === active} onPiano={onPiano}
                 onPractice={() => onPractice(r, i)} onNext={i < reels.length - 1 ? () => goTo(i + 1) : undefined} />
             )}
           </section>

@@ -263,6 +263,7 @@ export default function App() {
                   song={currentInfo.song} reels={currentReels} start={feedStart()}
                   onClose={() => setTab('song')}
                   onPractice={reel => practise(currentInfo.entry.id, reel.phase)}
+                  onPiano={() => setSheet('settings')}
                   onActive={i => { const c = currentReels[i]; if (c) rememberReel(currentInfo.entry.id, c.id); }}
                 />
               ) : journey
