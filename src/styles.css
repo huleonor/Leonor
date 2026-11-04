@@ -27,7 +27,9 @@
   --teal-soft: #CDEDE7;
   --marker: #FFE45C;
   --tape: rgba(255, 233, 150, .78);
-  --riso: 3px 0 rgba(255, 0, 110, .55), -3px 0 rgba(0, 169, 157, .55);
+  /* Type is printed clean, plain ink (the user found the misregistered titles hard to read); only
+     the falling notes keep a riso plate off register. */
+  --riso: none;
   /* "Field" is the highlighted card now: a pink-tinted sheet with ink on it */
   --blue: var(--pink);
   --field: var(--pink-soft);
@@ -460,7 +462,9 @@ p { margin: 0; }
 .reel-speed { padding: 3px 8px; background: var(--ink); color: var(--white); font: 700 12px var(--font-mono); white-space: nowrap; }
 .reel-speed.hand-L { background: var(--teal); color: var(--white); }
 .reel-speed.train { background: var(--pink); color: var(--white); }
-.reel-hook { color: var(--ink); font-family: var(--font); font-weight: 900; font-size: clamp(46px, 8.4vh, 92px); line-height: .9; letter-spacing: -.04em; max-width: 12ch; text-shadow: var(--riso); }
+.reel-hook { color: var(--ink); font-family: var(--font); font-weight: 900; font-size: clamp(46px, 8.4vh, 92px); line-height: .9; letter-spacing: -.02em; max-width: 12ch; }
+/* A head in words (the idea, both hands) is set in Times and smaller: the huge size is for notes. */
+.reel-hook.words { font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 4.6vh, 46px); line-height: 1; letter-spacing: 0; max-width: 18ch; }
 .reel-hook span { display: inline-block; white-space: pre; margin-right: .12em; }
 .reel-hook.hand-L { color: var(--teal-text); }
 .reel-stage { position: relative; min-height: 0; margin-top: 10px; }
@@ -472,7 +476,7 @@ p { margin: 0; }
 .reel-say .past { color: var(--ink); }
 .reel-say .on { color: var(--ink); background: var(--marker); }
 .reel-card .reel-say { font-size: clamp(20px, 3vh, 26px); }
-.reel-countin { position: absolute; left: 50%; top: 44%; z-index: 6; translate: -50% -50%; pointer-events: none; font-family: var(--font); font-weight: 900; font-size: clamp(120px, 26vh, 260px); line-height: 1; letter-spacing: -.05em; color: var(--ink); text-shadow: 6px 0 rgba(255, 0, 110, .6), -6px 0 rgba(0, 169, 157, .6); font-variant-numeric: tabular-nums; }
+.reel-countin { position: absolute; left: 50%; top: 44%; z-index: 6; translate: -50% -50%; pointer-events: none; font-family: var(--font); font-weight: 900; font-size: clamp(120px, 26vh, 260px); line-height: 1; letter-spacing: -.05em; color: var(--ink); font-variant-numeric: tabular-nums; }
 /* Pause and practise: the video stops by itself; an index card taped over the top counts his clean runs. */
 .reel-hold { position: absolute; left: 10px; right: 10px; top: 14px; z-index: 7; display: grid; gap: 10px; justify-items: start; padding: 22px 16px 18px; background: var(--white); border: 2px solid var(--ink); transform: rotate(-1.2deg); cursor: default; }
 .reel-hold::before { content: ''; position: absolute; top: -10px; left: 40%; width: 90px; height: 22px; background: var(--tape); transform: rotate(-4deg); }
@@ -505,61 +509,62 @@ p { margin: 0; }
 .reel-paused { position: absolute; top: 50%; left: 50%; translate: -50% -50%; z-index: 4; width: 76px; height: 76px; display: grid; place-items: center; background: var(--ink); color: var(--white); transform: rotate(-3deg); box-shadow: 4px 4px 0 var(--pink); pointer-events: none; }
 .reel-loading { position: absolute; top: 50%; left: 50%; translate: -50% -50%; z-index: 6; padding: 10px 14px; background: var(--ink); color: var(--white); font: 700 14px var(--font-mono); }
 
-/* The actions beside the reel: paper squares, a little crooked */
-.reel-side { display: grid; gap: 14px; }
-.reel-act { display: grid; justify-items: center; gap: 4px; font: 700 11px var(--font-mono); color: var(--ink); }
-.reel-act span { width: 54px; height: 54px; display: grid; place-items: center; border: 2px solid var(--ink); background: var(--white); color: var(--ink); transition: background-color var(--dur) var(--ease); }
+/* The actions: paper squares, a little crooked, floating on the right edge; they show only while
+   the video is paused (Reels.tsx slides them in), so the video stays clear while it plays. */
+.reel-side { position: absolute; right: 12px; top: 50%; translate: 0 -50%; z-index: 8; display: grid; gap: 12px; }
+.reel-act { display: grid; justify-items: center; gap: 4px; font: 700 11px var(--font-mono); color: var(--ink); background: var(--paper); padding: 2px 0; }
+.reel-act span { width: 50px; height: 50px; display: grid; place-items: center; border: 2px solid var(--ink); background: var(--white); color: var(--ink); transition: background-color var(--dur) var(--ease); }
 .reel-act:nth-child(odd) span { transform: rotate(3deg); }
 .reel-act:nth-child(even) span { transform: rotate(-2deg); }
 .reel-act:hover span { background: var(--marker); }
 .reel-act.go span { background: var(--ink); color: var(--white); box-shadow: 3px 3px 0 var(--pink); }
 .reel-act.go:hover span { background: var(--ink-2); }
 
-/* Phones held upright: the reel is the whole screen, the actions float on its right. */
-@media (max-aspect-ratio: 10 / 16), (max-width: 640px) and (orientation: portrait) {
-  .reel-slide { position: relative; width: 100%; }
-  .reel-frame { height: 100dvh; width: 100%; max-width: none; aspect-ratio: auto; border: 0; }
-  .reel-screen.embedded .reel-frame { height: 100%; }
-  .reel-screen.embedded .reel-count { display: none; }
-  .reel-side { position: absolute; right: 10px; top: 38%; z-index: 6; gap: 12px; }
-  .reel-act span { width: 48px; height: 48px; }
-  .reel-stage { margin-right: 68px; }
-  .reel-foot { padding-right: 76px; }
-  .reel-card { padding-right: 80px; }
-}
-/* In the app's page column on a wide screen the reel fills the column too. */
-@media (min-width: 641px) and (min-aspect-ratio: 10 / 16) {
-  .app .reel-screen.embedded .reel-slide { position: relative; width: 100%; }
-  .app .reel-screen.embedded .reel-frame { width: 100%; max-width: none; height: 100%; aspect-ratio: auto; border: 0; }
-  .app .reel-screen.embedded .reel-count { display: none; }
-  .app .reel-screen.embedded .reel-side { position: absolute; right: 12px; top: 38%; z-index: 6; }
-  .app .reel-screen.embedded .reel-stage { margin-right: 74px; }
-  .app .reel-screen.embedded .reel-foot { padding-right: 80px; }
-}
-/* Phone on its side on the music stand: the words on the left, the keys on the right. */
-@media (min-aspect-ratio: 5 / 4) and (max-height: 500px) {
+/* Upright (a phone, or the page column): the reel is the whole screen. */
+.reel-slide { position: relative; width: 100%; }
+.reel-frame { height: 100dvh; width: 100%; max-width: none; aspect-ratio: auto; border: 0; }
+.reel-screen.embedded .reel-frame { height: 100%; }
+.reel-screen.embedded .reel-count { display: none; }
+
+/* Wider than tall (a phone on its side on the music stand, a computer): the words on the left, the
+   keyboard wide on the right, the whole screen (the app's page column opens up for it). */
+@media (min-aspect-ratio: 5 / 4) {
+  .app.watching { max-width: none; border: 0; }
   .reel-frame {
-    width: calc(100vw - 120px - var(--safe-l) - var(--safe-r)); max-width: 1100px; height: calc(100dvh - 20px); aspect-ratio: auto;
-    grid-template-columns: minmax(240px, 38%) minmax(0, 1fr);
+    grid-template-columns: minmax(240px, 34%) minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr);
     grid-template-areas: 'bar bar' 'head stage' 'foot stage';
   }
-  .reel-screen.embedded .reel-frame { width: calc(100% - 110px); height: calc(100% - 16px); border: 2px solid var(--ink); }
-  .reel-screen.embedded .reel-slide { width: 100%; padding: 0 10px; }
-  .app .reel-screen.embedded .reel-side { position: static; }
-  .app .reel-screen.embedded .reel-stage { margin: 10px 12px 12px 0; }
-  .app .reel-screen.embedded .reel-foot { padding-right: 18px; }
   .reel-progress { grid-area: bar; }
   .reel-head { grid-area: head; }
-  .reel-foot { grid-area: foot; align-content: end; }
-  .reel-stage { grid-area: stage; margin: 10px 12px 12px 0; }
-  .reel-side { gap: 10px; }
-  .reel-act span { width: 44px; height: 44px; }
+  .reel-foot { grid-area: foot; align-content: end; padding-bottom: 30px; }
+  .reel-stage { grid-area: stage; margin: 10px 16px 16px 0; }
+  .reel-hold { left: auto; right: 16px; width: min(440px, 46%); }
+}
+@media (min-aspect-ratio: 5 / 4) and (max-height: 500px) {
   .reel-hook { font-size: 40px; }
+  .reel-hook.words { font-size: 26px; }
   .reel-cue { font-size: 16px; }
   .reel-foot { min-height: 0; }
   .reel-card h3 { font-size: 26px; }
+  .reel-act span { width: 42px; height: 42px; }
+  .reel-side { gap: 6px; }
 }
+
+/* The menu on Watch: three lines at the top left; the tabs slide in from the left as a sheet. */
+.nav-toggle { position: fixed; top: calc(18px + var(--safe-t)); left: calc(12px + var(--safe-l)); z-index: 12; width: 44px; height: 44px; display: grid; place-items: center; background: var(--white); border: 2px solid var(--ink); color: var(--ink); transform: rotate(-2deg); }
+.nav-toggle:hover { background: var(--marker); }
+.app.watching { grid-template-rows: minmax(0, 1fr); }
+.app.watching .reel-kicker { margin-left: 52px; }
+.nav-scrim { position: fixed; inset: 0; z-index: 25; background: var(--scrim); }
+.nav-drawer { position: absolute; top: 0; bottom: 0; left: 0; width: min(280px, 80vw); display: grid; align-content: start; gap: 20px; padding: calc(18px + var(--safe-t)) 18px 20px calc(18px + var(--safe-l)); background: var(--paper); border-right: 2px solid var(--ink); }
+.nav-close { justify-self: start; }
+.nav-drawer .rail { grid-row: auto; flex-direction: column; align-items: stretch; gap: 8px; padding: 0; border: 0; background: none; }
+.nav-drawer .rail-btn { grid-auto-flow: column; justify-content: start; justify-items: start; gap: 14px; min-height: 52px; padding: 0 12px; font-size: 16px; border: 2px solid var(--ink); background: var(--white); color: var(--ink); }
+.nav-drawer .rail-btn:nth-child(odd) { transform: rotate(-.8deg); }
+.nav-drawer .rail-btn:nth-child(even) { transform: rotate(.8deg); }
+.nav-drawer .rail-btn.on { background: var(--marker); }
+.nav-drawer .rail-btn.on span { background: none; padding: 0; }
 
 /* ---------- The whole song ---------- */
 .song-screen { --pad: max(14px, calc((100vw - 1100px) / 2)); height: 100dvh; display: flex; flex-direction: column; background: var(--paper); }

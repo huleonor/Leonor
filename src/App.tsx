@@ -11,7 +11,8 @@ import { SettingsSheet } from './components/SettingsSheet';
 import { EditSong } from './components/EditSong';
 import { SongScreen, sectionsOf, type Section } from './components/SongScreen';
 import { Songs } from './components/Songs';
-import { IconReel, IconTabLibrary, IconTabLibraryFill, IconTabSettings, IconTabSong, IconTabSongFill, IconTabWatch } from './components/Icons';
+import { AnimatePresence, motion } from 'motion/react';
+import { IconClose, IconMenu, IconReel, IconTabLibrary, IconTabLibraryFill, IconTabSettings, IconTabSong, IconTabSongFill, IconTabWatch } from './components/Icons';
 import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
 import { I18nContext, makeT } from './lib/i18n';
@@ -47,6 +48,8 @@ export default function App() {
   const [mastery, setMastery] = useState<{ id: string; n: number; session: MasterySession } | null>(null);
   const [editing, setEditing] = useState<SongEntry | null>(null);
   const [sheet, setSheet] = useState<'settings' | 'check' | null>(null);
+  // On Watch the videos take the whole screen: the tabs hide behind a menu button and slide in.
+  const [drawer, setDrawer] = useState(false);
   const [adding, setAdding] = useState<{ file: File; slot?: SongEntry } | null>(null);
   const [links, setLinks] = useState<Record<Source, LinkState>>(linkState);
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
@@ -176,6 +179,19 @@ export default function App() {
   const masteryInfo = mastery ? infos[mastery.id] : undefined;
   const masterySection = useMemo(() => mastery?.session.section, [mastery?.session]);
 
+  const watching = tab === 'watch' && !!currentInfo?.song && currentReels.length > 0;
+  const go = (id: Tab) => { if (id === 'watch' && tab === 'watch') setWatch(null); setTab(id); setOpenId(null); setDrawer(false); };
+  const nav = (
+    <nav className="rail" aria-label="Main">
+      {TABS.map(([id, label]) => (
+        <button key={id} className={`rail-btn tab-${id} ${tab === id ? 'on' : ''}`} aria-current={tab === id ? 'page' : undefined} onClick={() => go(id)}>
+          {tabIcon(id, tab === id)}<span>{label}</span>
+        </button>
+      ))}
+      <button className="rail-btn settings" onClick={() => { setDrawer(false); setSheet('settings'); }}><IconTabSettings /><span>Settings</span></button>
+    </nav>
+  );
+
   return (
     <I18nContext.Provider value={i18n}>
       {mastery && masteryInfo?.song && masterySection?.steps.length ? (
@@ -212,17 +228,22 @@ export default function App() {
           onSettings={() => setSheet('settings')}
         />
       ) : (
-        <div className="app">
-          <nav className="rail" aria-label="Main">
-            {TABS.map(([id, label]) => (
-              <button key={id} className={`rail-btn tab-${id} ${tab === id ? 'on' : ''}`} aria-current={tab === id ? 'page' : undefined}
-                onClick={() => { if (id === 'watch' && tab === 'watch') setWatch(null); setTab(id); setOpenId(null); }}>
-                {tabIcon(id, tab === id)}<span>{label}</span>
-              </button>
-            ))}
-            <button className="rail-btn settings" onClick={() => setSheet('settings')}><IconTabSettings /><span>Settings</span></button>
-          </nav>
-          <main className={`content ${tab === 'watch' && currentInfo?.song && currentReels.length ? 'tab-watch' : ''}`}>
+        <div className={`app ${watching ? 'watching' : ''}`}>
+          {!watching && nav}
+          {watching && (
+            <button className="nav-toggle" onClick={() => setDrawer(true)} aria-label="Menu" aria-expanded={drawer}><IconMenu size={24} /></button>
+          )}
+          <AnimatePresence>
+            {watching && drawer && (
+              <motion.div key="drawer" className="nav-scrim" onClick={() => setDrawer(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                <motion.div className="nav-drawer" onClick={e => e.stopPropagation()} initial={{ x: '-105%' }} animate={{ x: 0 }} exit={{ x: '-105%', transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }} transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}>
+                  <button className="icon-btn ghost nav-close" onClick={() => setDrawer(false)} aria-label="Close the menu"><IconClose size={22} /></button>
+                  {nav}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <main className={`content ${watching ? 'tab-watch' : ''}`}>
             {tab === 'watch' ? (
               currentInfo?.song && currentReels.length ? (
                 <ReelFeed

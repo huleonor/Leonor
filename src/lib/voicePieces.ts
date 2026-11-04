@@ -9,7 +9,7 @@
  */
 
 /** A note name or a shape word as a list item, with what follows it. */
-const ITEM = /(?<![\w#'])([A-G](?:#|b)?m?|[Tt]op|[Mm]iddle|[Ll]owest|[Ll]ow)([,.:;!?]?)(?=\s|$)/g;
+const ITEM = /(?<![\w#'])(?<![Mm]iddle )([A-G](?:#|b)?m?|[Tt]op|[Mm]iddle|[Ll]owest|[Ll]ow)([,.:;!?]?)(?=\s|$)/g;
 const NOTE = /^[A-G](?:#|b)?m?$/;
 
 export type Piece = { key: string; gap: number };

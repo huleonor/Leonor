@@ -14,10 +14,13 @@ A song is cut into phases (where the music changes). Each phase is a run of vide
 | Video | Speed | What it does |
 | --- | --- | --- |
 | The idea | 100% | The phase heard once while the voice says what it is made of. Only heard, never played. |
-| Left hand, one step | 50% | Only when the left hand plays a shape he has not met **and has something to learn**: six notes or more over three keys or more. |
-| Right hand, one step | 50% | Same rule. A figure over a new chord (top, middle, low, middle) counts as met, and so does a bar three quarters the same (an inner note more or less). |
-| Both hands, one step | 60% | Always, unless only the right hand plays there. A hand that only holds a note or an octave is said here ("The left hand only holds an octave: E, F."). Steps of known shapes in a row become one video up to eight bars: "Same shapes as before, now on new chords: G, D." |
+| The pattern | 30 to 50% | Before the first hand video of a step that brings a new figure (a beat of three notes or more that the bar repeats): that one beat alone, four times in a row, then Train with me four times. The voice names its keys, which finger on which key and where it sits from middle C: "First, just the pattern. E, C, A, C. Finger 3 on E. Finger 2 on C. Thumb on A. It sits just above middle C." |
+| Left hand, one step | 50% at most | Only when the left hand plays a shape he has not met **and has something to learn**: six notes or more over three keys or more. |
+| Right hand, one step | 50% at most | Same rule. A figure over a new chord (top, middle, low, middle) counts as met, and so does a bar three quarters the same (an inner note more or less). |
+| Both hands, one step | 60% at most | Always, unless only the right hand plays there. A hand that only holds a note or an octave is said here ("The left hand only holds an octave: E, F."). Steps of known shapes in a row become one video up to eight bars: "Same shapes as before, now on new chords: G, D." |
 | The whole phase | 75% | At most sixteen bars a video. The payoff of the phase. |
+
+**Patterns first, slow, and always which keys** (the user, 2026-11: "the goal is to learn the patterns from the start; it goes to a part that is too hard; explain which keys"): a new figure is learnt on its own before the bars that use it; the speed is set by how many notes go by, about 2.5 a second for a hand alone, 3 for both hands, 2 for a pattern (never above 50% for a hand, 60% for both, never under 30%); and every new shape is said with its keys, the finger on each and where the hand sits on the keyboard (from middle C), not only its letters.
 
 A **step** is a musical phrase, never a fixed count: two bars at least, more (up to four) until it holds a dozen notes and four seconds of music. So no video is one held note (the user, 2026-11: "videos that are literally pressing one note"). When a step opens with a bar he knows, the voice starts from the new one ("You know the first bar already. Here is the new one.").
 
@@ -43,6 +46,7 @@ The voice is the clock (HyperFrames): each piece appears when it is named.
 - One idea per sentence, one sentence per visual beat. Never read the screen word for word.
 - Name notes as letters with commas ("E, C, A, C") so each key lights on its word and the recorded voice can read the list from its pieces; in hand-written lines write sharps and flats as they read ("F sharp", "B flat"). A lone capital A is read as the letter (the voice is given "eigh": "ay" comes out as "eye").
 - Say the shape before the notes ("Top, middle, low, middle, on every beat"), and what moves ("Only the top note moves").
+- Say which keys: the finger on each key ("Finger 3 on E. Thumb on A.") and where the hand sits ("It sits just above middle C."), so he can find them without the screen. Write them in that form (a short sentence per key, the note last) so the recorded voice can play them from its pieces.
 - Pacing: 120 to 150 words a minute for teaching (the timeline estimates 2.4 words a second, `estimate` in `src/lib/voice.ts`). A scene line stays under about 19 words.
 - Punctuation is pacing: a full stop is a medium pause, a comma a short one, an ellipsis a long one. No exclamation marks on every line; one at a real payoff.
 - Standard words for standard actions: "Your turn", "Pause", "Next up". No hype, no filler, no emoji, no em or en dashes.
