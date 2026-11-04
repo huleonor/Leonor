@@ -441,39 +441,25 @@ p { margin: 0; }
 .reel-frame {
   position: relative; height: calc(100dvh - 20px); aspect-ratio: 9 / 16; max-width: calc(100vw - 120px);
   overflow: hidden; background: var(--field); color: var(--field-ink); cursor: pointer; border: 1px solid var(--rule-2);
-  display: grid; grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
 .reel-screen.embedded .reel-frame { height: calc(100% - 20px); }
 .reel-progress { display: flex; gap: 4px; padding: 12px 16px 0; }
 .reel-progress i { flex: 1; height: 2px; background: var(--field-rule); overflow: hidden; }
 .reel-progress b { display: block; height: 100%; background: var(--field-ink); }
-.reel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 16px 0; }
+.reel-head { display: grid; gap: 6px; align-content: start; padding: 18px 18px 8px; }
+.reel-kicker { font: 500 clamp(15px, 2.3vh, 20px)/1.15 var(--font); color: var(--ink-2); }
+.reel-meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .reel-screen:not(.embedded) .reel-head { padding-left: 64px; }
-.reel-bar { display: grid; justify-items: end; font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 4.5vh, 44px); line-height: .9; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-.reel-bar small { font-family: var(--font); font-weight: 500; font-size: 13px; letter-spacing: 0; color: var(--field-muted); }
-.reel-where { display: grid; justify-items: start; gap: 6px; padding-top: 4px; text-align: left; font-size: 14px; line-height: 1.25; }
-.reel-where small { color: var(--field-muted); font-size: 13px; }
-.reel-where span { font-weight: 500; }
 .reel-speed { padding: 4px 8px; background: var(--field-ink); color: var(--field); font-size: 13px; font-weight: 500; white-space: nowrap; }
 .reel-speed.hand-L { background: var(--mark); color: var(--mark-ink); }
 .reel-speed.train { background: var(--blue); color: var(--paper); }
-.reel-hook { padding: 10px 16px 0; color: var(--field-ink); font-size: clamp(34px, 6.4vh, 64px); line-height: .92; letter-spacing: -.04em; max-width: 14ch; }
-.reel-hook span { display: inline-block; white-space: pre; }
-.reel-chords { list-style: none; margin: 0; padding: 12px 16px 0; display: flex; flex-wrap: wrap; gap: 0; }
-.reel-chords li { display: flex; }
-.reel-chords b { min-width: 34px; height: 34px; padding: 0 6px; display: grid; place-items: center; border: 1px solid var(--field-rule); margin-left: -1px; font-family: var(--font-display); font-size: 18px; color: var(--field-muted); transition: background-color 120ms, color 120ms; }
-.reel-chords li:first-child b { margin-left: 0; }
-.reel-chords li.past b { color: var(--field-ink); }
-.reel-chords li.on b { background: var(--field-ink); color: var(--field); border-color: var(--field-ink); }
-.reel-chords .arrow { display: none; }
+.reel-hook { color: var(--field-ink); font-size: clamp(46px, 8.4vh, 92px); line-height: .9; letter-spacing: -.04em; max-width: 12ch; }
+.reel-hook span { display: inline-block; white-space: pre; margin-right: .12em; }
+.reel-hook.hand-L { color: var(--left); }
 .reel-stage { position: relative; min-height: 0; margin-top: 10px; }
 .reel-lanes { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.reel-foot { min-height: 96px; padding: 8px 16px 18px; display: grid; gap: 8px; align-content: start; }
-.reel-groups { display: flex; flex-wrap: wrap; gap: 4px 14px; font-family: var(--font-display); font-size: 18px; }
-.reel-groups span { display: inline-flex; gap: 2px; }
-.reel-groups b { min-width: 20px; text-align: center; color: var(--field-muted); transition: background-color 120ms, color 120ms; }
-.reel-groups b.past { color: var(--field-ink); }
-.reel-groups b.on { background: var(--field-ink); color: var(--field); }
+.reel-foot { min-height: clamp(110px, 20%, 220px); padding: 14px 18px 18px; display: grid; gap: 8px; align-content: start; }
 .reel-cue { font-family: var(--font-display); font-weight: 700; font-size: clamp(18px, 2.6vh, 22px); line-height: 1.1; letter-spacing: -.015em; max-width: 26ch; }
 .reel-say { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 3.2vh, 30px); line-height: 1.08; letter-spacing: -.015em; max-width: 24ch; color: var(--field-muted); }
 .reel-say span { display: inline-block; white-space: pre; transition: color 120ms var(--ease); }
@@ -539,25 +525,20 @@ p { margin: 0; }
   .reel-frame {
     width: calc(100vw - 120px - var(--safe-l) - var(--safe-r)); max-width: 1100px; height: calc(100dvh - 20px); aspect-ratio: auto;
     grid-template-columns: minmax(240px, 38%) minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto minmax(0, 1fr);
-    grid-template-areas: 'bar bar' 'head stage' 'hook stage' 'chords stage' 'foot stage';
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas: 'bar bar' 'head stage' 'foot stage';
   }
   .reel-screen.embedded .reel-frame { width: calc(100% - 110px); }
   .reel-screen.embedded .reel-slide { width: 100%; padding: 0 10px; }
   .reel-progress { grid-area: bar; }
   .reel-head { grid-area: head; }
-  .reel-hook { grid-area: hook; }
-  .reel-chords { grid-area: chords; }
   .reel-foot { grid-area: foot; align-content: end; }
   .reel-stage { grid-area: stage; margin: 10px 12px 12px 0; }
   .reel-side { gap: 10px; }
   .reel-act span { width: 48px; height: 48px; }
 }
 @media (min-aspect-ratio: 5 / 4) and (max-height: 430px) {
-  .reel-bar { font-size: 64px; }
-  .reel-hook { font-size: 20px; padding-top: 8px; }
-  .reel-chords b { min-width: 28px; height: 28px; font-size: 15px; }
-  .reel-groups { font-size: 15px; }
+  .reel-hook { font-size: 40px; }
   .reel-cue { font-size: 16px; }
   .reel-foot { min-height: 0; }
   .reel-card h3 { font-size: 26px; }

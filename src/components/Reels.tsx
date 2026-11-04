@@ -4,13 +4,13 @@ import { audioContext, loadPiano, pianoReady, playNote, playSfx, stopAll, stopSf
 import { linkState, onLinkState, onNote } from '../lib/input';
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
-import { letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelTimeline } from '../lib/reels';
+import { letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
 import { hush, onVoice, pauseVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn, voiceSupported } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
 import { IconArrowDown, IconCheck, IconClose, IconKeys, IconPause, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
 import { SOFT, SPRING } from './Motion';
 
-const LOOK = 2.4; // seconds of falling notes above the keys
+const LOOK = 2; // seconds of falling notes above the keys
 
 /** Colours for the canvas, read from the design tokens where the canvas sits (a canvas cannot read CSS variables itself). */
 function palette(el: Element) {
@@ -108,28 +108,33 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void, onHo
   return { playing, ready, now, play, pause, seek };
 }
 
-interface Lane { hand: Hand; lo: number; hi: number; }
 
 /** The camera's ease both ways (power2.inOut), for a move that starts and lands. */
 const inOut = (x: number) => (x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2);
 
 /** Falling notes onto a keyboard, one lane per hand (right above left), drawn every frame. */
 /**
- * Falling notes onto a keyboard, one lane per hand (right above left), drawn every frame from the
- * clock, so any moment of the video is the same picture (it can be scrubbed). The camera opens
- * wide on the keyboard and pushes in on the keys the video is about; while the voice names notes,
- * each key lights as it is named, numbered in order, before the music plays them.
+ * The video's picture, drawn as the Für Elise TikToks are (HyperFrames): one keyboard for both
+ * hands, the notes falling onto it in the hand's colour with their letter, from the clock alone,
+ * so any moment is the same picture (it can be scrubbed). The camera opens wide and pushes in on
+ * the video's keys over the first second. While the voice names notes, each key is outlined in its
+ * hand's colour and numbered in order, before it sounds; a key that sounds fills with the colour,
+ * its letter at the bottom and its finger at the top, and a short flash rises from it; a note for
+ * him to play (Train with me) falls open; a key he plays lights green.
  */
-function Lanes({ tl, lanes, now, held, flats, named, namedUntil }: { tl: ReelTimeline; lanes: Lane[]; now: () => number; held: React.RefObject<Set<number>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number }) {
+function Lanes({ tl, range, now, held, flats, named, namedUntil }: { tl: ReelTimeline; range: [number, number]; now: () => number; held: React.RefObject<Set<number>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current!;
     const ctx = cv.getContext('2d')!;
     const pal = palette(cv);
-    // Each lane is laid out wide (a few keys of context on each side) and framed on its own keys.
-    const wide = lanes.map(l => pickRange(l.lo - 7, l.hi + 7, 30));
-    const layouts = wide.map(([lo, hi]) => keyLayout(lo, hi));
-    const frames = lanes.map((l, i) => { const lay = layouts[i]; return [lay[l.lo]?.x ?? 0, (lay[l.hi]?.x ?? 1) + (lay[l.hi]?.w ?? 0)] as [number, number]; });
+    const [lo, hi] = range;
+    const [wLo, wHi] = pickRange(lo - 7, hi + 7, 30);
+    const lay = keyLayout(wLo, wHi);
+    const frame: [number, number] = [lay[lo]?.x ?? 0, (lay[hi]?.x ?? 1) + (lay[hi]?.w ?? 0)];
+    // Which hand plays each key in this video (for the colour of a key the voice names).
+    const handOf = new Map<number, Hand>();
+    for (const n of tl.notes) if (!handOf.has(n.midi)) handOf.set(n.midi, n.hand);
     let raf = 0;
     const draw = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -138,102 +143,89 @@ function Lanes({ tl, lanes, now, held, flats, named, namedUntil }: { tl: ReelTim
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
       const t = now();
-      const laneH = H / lanes.length;
-      lanes.forEach((lane, li) => {
-        const top = li * laneH;
-        const kbH = Math.min(laneH * 0.42, W * 0.34);
-        const kbTop = top + laneH - kbH - 4;
-        const fall = kbTop - top - 6;
-        const pps = fall / LOOK;
-        const lay = layouts[li];
-        // The push in: from the wide keyboard to the lane's own keys over the first second.
-        const z = inOut(Math.max(0, Math.min(1, (t - 0.15) / 0.9)));
-        const v0 = frames[li][0] * z, v1 = 1 + (frames[li][1] - 1) * z;
-        const X = (m: number) => lay[m] ? { x: ((lay[m].x - v0) / (v1 - v0)) * W, w: (lay[m].w / (v1 - v0)) * W } : null;
-        const [wLo, wHi] = wide[li];
-        const naming = t < namedUntil ? named.current ?? new Map<number, number>() : new Map<number, number>();
-        // Lane guides at every C, like the lines of a falling-notes screen.
-        ctx.fillStyle = pal.lane;
-        for (let m = wLo; m <= wHi; m++) if (m % 12 === 0) { const k = X(m); if (k) ctx.fillRect(k.x, top + 6, 1, fall); }
-        // The notes.
-        const sounding = new Map<number, number | undefined>();
-        for (const n of tl.notes) {
-          if (n.hand !== lane.hand) continue;
-          if (n.t > t + LOOK || n.t + n.dur < t - 0.05) continue;
-          const k = X(n.midi);
-          if (!k) continue;
-          const on = n.t <= t && n.t + n.dur > t;
-          if (on) sounding.set(n.midi, n.finger);
-          const yBottom = kbTop - (n.t - t) * pps;
-          const yTop = Math.max(top + 6, yBottom - Math.max(8, n.dur * pps - 2));
-          const yB = Math.min(kbTop, yBottom);
-          if (yB <= yTop) continue;
-          const pad = k.w * 0.12;
-          ctx.globalAlpha = on ? 1 : 0.88;
-          if (n.train) {
-            // His turn: the note drawn open, for him to fill by playing it.
-            ctx.strokeStyle = pal[lane.hand];
-            ctx.lineWidth = 3;
-            ctx.strokeRect(k.x + pad + 1.5, yTop + 1.5, k.w - pad * 2 - 3, yB - yTop - 3);
-          } else {
-            ctx.fillStyle = pal[lane.hand];
-            ctx.fillRect(k.x + pad, yTop, k.w - pad * 2, yB - yTop);
-          }
-          ctx.globalAlpha = 1;
-          if (n.finger && yB - yTop > k.w * 0.8) {
-            ctx.fillStyle = n.train ? pal[lane.hand] : lane.hand === 'R' ? pal.inkR : pal.inkL;
-            ctx.font = `700 ${Math.round(Math.min(18, k.w * 0.55))}px ${FACE}`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(String(n.finger), k.x + k.w / 2, yB - k.w * 0.45);
+      const z = inOut(Math.max(0, Math.min(1, (t - 0.15) / 0.9)));
+      const v0 = frame[0] * z, v1 = 1 + (frame[1] - 1) * z;
+      const X = (m: number) => lay[m] ? { x: ((lay[m].x - v0) / (v1 - v0)) * W, w: (lay[m].w / (v1 - v0)) * W } : null;
+      const unitW = (X(60)?.w ?? W / 20);
+      const kbH = Math.min(H * 0.36, unitW * 5.2);
+      const kbTop = H - kbH;
+      const fall = kbTop - 4, pps = fall / LOOK;
+      const colour = (h: Hand) => (h === 'L' ? pal.L : pal.R);
+      // Octave guides at every C.
+      ctx.fillStyle = pal.lane;
+      for (let m = wLo; m <= wHi; m++) if (m % 12 === 0) { const k = X(m); if (k) ctx.fillRect(k.x, 0, 1, fall); }
+      // The notes.
+      const sounding = new Map<number, ReelNote>();
+      for (const n of tl.notes) {
+        if (n.t > t + LOOK || n.t + n.dur < t - 0.05) continue;
+        const k = X(n.midi);
+        if (!k) continue;
+        const on = n.t <= t && n.t + n.dur > t;
+        if (on) sounding.set(n.midi, n);
+        const yBottom = kbTop - 4 - (n.t - t) * pps;
+        const yTop = Math.max(0, yBottom - Math.max(14, n.dur * pps - 3));
+        const yB = Math.min(kbTop - 4, yBottom);
+        if (yB <= yTop) continue;
+        const pad = k.w * 0.1, bw = k.w - pad * 2;
+        if (n.train) {
+          // His turn: the note drawn open, for him to fill by playing it.
+          ctx.strokeStyle = colour(n.hand); ctx.lineWidth = 3;
+          ctx.strokeRect(k.x + pad + 1.5, yTop + 1.5, bw - 3, yB - yTop - 3);
+        } else {
+          ctx.fillStyle = colour(n.hand);
+          ctx.fillRect(k.x + pad, yTop, bw, yB - yTop);
+        }
+        if (yB - yTop > 24 && bw > 12) {
+          ctx.fillStyle = n.train ? colour(n.hand) : pal.paper;
+          ctx.font = `700 ${Math.round(Math.min(17, bw * 0.55))}px ${FACE}`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText(letter(n.midi, flats), k.x + k.w / 2, yB - 7);
+        }
+      }
+      // The now line.
+      ctx.fillStyle = pal.now;
+      ctx.fillRect(0, kbTop - 4, W, 3);
+      // The keys.
+      const naming = t < namedUntil ? named.current ?? new Map<number, number>() : new Map<number, number>();
+      const mine = held.current ?? new Set<number>();
+      for (const black of [false, true]) {
+        for (let m = wLo; m <= wHi; m++) {
+          if (isBlack(m) !== black) continue;
+          const k = X(m);
+          if (!k || k.x + k.w < -2 || k.x > W + 2) continue;
+          const h = black ? kbH * 0.62 : kbH;
+          const s = sounding.get(m), order = naming.get(m), hand = s?.hand ?? handOf.get(m) ?? (m < 60 ? 'L' : 'R');
+          ctx.fillStyle = mine.has(m) ? pal.ok : s ? colour(s.hand) : black ? pal.black : pal.white;
+          ctx.fillRect(k.x + (black ? 0 : 0.5), kbTop, k.w - (black ? 0 : 1), h);
+          if (!black) { ctx.strokeStyle = pal.whiteEdge; ctx.lineWidth = 1; ctx.strokeRect(k.x + 0.5, kbTop, k.w - 1, h); }
+          if (!s && order !== undefined) { ctx.strokeStyle = colour(hand); ctx.lineWidth = Math.max(3, k.w * 0.12); ctx.strokeRect(k.x + 3, kbTop + 3, k.w - 6, h - 6); }
+          if (s || order !== undefined) {
+            ctx.fillStyle = s || mine.has(m) ? pal.paper : colour(hand);
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.font = `700 ${Math.round(Math.min(22, k.w * 0.5))}px ${FACE}`;
+            ctx.fillText(letter(m, flats), k.x + k.w / 2, kbTop + h - 10);
+            const top = s?.finger ?? order;
+            if (top) { ctx.font = `700 ${Math.round(Math.min(15, k.w * 0.36))}px ${FACE}`; ctx.fillText(String(top), k.x + k.w / 2, kbTop + 20); }
           }
         }
-        // The now line: a plain rule where the notes land.
-        ctx.fillStyle = pal.now;
-        ctx.fillRect(0, kbTop - 3, W, 2);
-        // The keyboard: what sounds is lit in the hand's colour with its finger; what he plays is green.
-        const mine = held.current ?? new Set<number>();
-        for (const black of [false, true]) {
-          for (let m = wLo; m <= wHi; m++) {
-            if (isBlack(m) !== black) continue;
-            const k = X(m);
-            if (!k) continue;
-            const h = black ? kbH * 0.62 : kbH;
-            const order = naming.get(m);
-            const lit = sounding.has(m) || order !== undefined;
-            const litKey = lane.hand === 'R' ? pal.keyR : pal.keyL;
-            ctx.fillStyle = mine.has(m) ? pal.ok : lit ? litKey : black ? pal.black : pal.white;
-            ctx.strokeStyle = pal.whiteEdge;
-            ctx.lineWidth = 1;
-            ctx.fillRect(k.x + (black ? 0 : 0.5), kbTop, k.w - (black ? 0 : 1), h);
-            if (!black) ctx.strokeRect(k.x + 0.5, kbTop, k.w - 1, h);
-            if (lit) {
-              const f = sounding.has(m) ? sounding.get(m) : order;
-              const r = Math.min(11, k.w * 0.36);
-              const cy = kbTop + h - r - 6;
-              if (f) {
-                ctx.fillStyle = pal.ink;
-                ctx.fillRect(k.x + k.w / 2 - r, cy - r, r * 2, r * 2);
-                ctx.fillStyle = pal.paper;
-                ctx.font = `700 ${Math.round(r * 1.25)}px ${FACE}`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(String(f), k.x + k.w / 2, cy + 1);
-              }
-              if (!black) {
-                ctx.fillStyle = lane.hand === 'R' ? pal.ink : pal.inkL;
-                ctx.font = `700 ${Math.round(Math.min(14, k.w * 0.45))}px ${FACE}`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(letter(m, flats), k.x + k.w / 2, cy - r - 10);
-              }
-            }
-          }
-        }
-      });
+      }
+      // A key struck: a short flash rising from it (0.3 s), the hit made visible.
+      for (const n of tl.notes) {
+        const a = t - n.t;
+        if (a < 0 || a > 0.3) continue;
+        const k = X(n.midi);
+        if (!k) continue;
+        const e = 1 - Math.pow(2, -10 * (a / 0.3));
+        ctx.globalAlpha = 0.3 * (1 - e);
+        ctx.fillStyle = colour(n.hand);
+        ctx.fillRect(k.x - k.w * 0.3 * e, kbTop - 16 - 40 * e, k.w * (1 + 0.6 * e), 12 + 40 * e);
+        ctx.globalAlpha = 1;
+      }
       raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [tl, lanes, now, held, flats, named, namedUntil]);
+  }, [tl, range, now, held, flats, named, namedUntil]);
   return <canvas ref={ref} className="reel-lanes" aria-hidden="true" />;
 }
 
@@ -374,10 +366,11 @@ interface PlayerProps {
  */
 export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerProps) {
   const tl = useMemo(() => timelineOf(song, reel), [song, reel]);
-  const lanes = useMemo<Lane[]>(() => (['R', 'L'] as Hand[]).filter(h => tl.hi[h] > 0).map(h => {
-    const [lo, hi] = pickRange(tl.lo[h], tl.hi[h], 14);
-    return { hand: h, lo, hi };
-  }), [tl]);
+  // One keyboard for both hands, framed on this video's notes.
+  const range = useMemo<[number, number]>(() => {
+    const ms = tl.notes.map(n => n.midi);
+    return ms.length ? pickRange(Math.min(...ms), Math.max(...ms), 14) : [60, 76];
+  }, [tl]);
   const [loops, setLoops] = useState(0);
   const [epoch, setEpoch] = useState(0);
   const clockRef = useRef<{ play: (from?: number) => void } | null>(null);
@@ -481,24 +474,6 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
     for (let b = place.bar; b >= Math.max(seg.from, place.bar - 1); b--) if (w.cues[b]) return w.cues[b];
     return undefined;
   }, [place.playing, place.bar, reel.kind, seg.from, w]);
-  const chords = reel.chords;
-  // The right hand beat by beat in the current bar, the note now playing marked.
-  const groups = useMemo(() => {
-    const cur = tl.notes[place.note];
-    if (!cur || seg.kind === 'L') return null;
-    const inBar = tl.notes.map((n, i) => ({ n, i })).filter(({ n }) => n.hand === 'R' && n.bar === cur.bar);
-    if (!inBar.length) return null;
-    const onsets: { i: number; m: number; beat: number }[] = [];
-    for (const { n, i } of inBar) {
-      const last = onsets[onsets.length - 1];
-      if (last && Math.abs(tl.notes[last.i].t - n.t) < 0.02) { if (n.midi > last.m) { last.m = n.midi; last.i = i; } continue; }
-      onsets.push({ i, m: n.midi, beat: n.beat });
-    }
-    const by = new Map<number, typeof onsets>();
-    for (const o of onsets) by.set(o.beat, [...(by.get(o.beat) ?? []), o]);
-    const curT = cur.t;
-    return [...by.values()].map(g => g.map(o => ({ l: letter(o.m, song.fifths < 0), on: Math.abs(tl.notes[o.i].t - curT) < 0.02 || (cur.hand === 'R' && o.i === place.note), past: tl.notes[o.i].t < curT - 0.02 })));
-  }, [tl, place.note, seg.kind, song.fifths]);
   const pass = tl.passes[0];
   const pct = pass ? Math.max(0, Math.min(1, (clock.now() - pass.t) / (pass.until - pass.t))) : 0;
   const bar = place.playing && place.bar ? place.bar : seg.from;
@@ -515,31 +490,16 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
         <div className="reel-progress" aria-hidden="true">
           {Array.from({ length: reel.of }, (_, i) => <i key={i}><b style={{ width: `${i < reel.k - 1 ? 100 : i === reel.k - 1 ? pct * 100 : 0}%` }} /></i>)}
         </div>
+        {/* Set like the Für Elise TikToks: the step's kicker small, its notes huge, nothing else. */}
         <header className="reel-head">
-          <span className="reel-where">
-            <small>Phase {reel.n}, {reel.k} of {reel.of}: {w.title}</small>
-            <motion.span key={label} className={`reel-speed hand-${seg.kind} ${training ? 'train' : ''}`} initial={{ opacity: 0, filter: 'blur(4px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.2, ease: ARRIVE }}>{label}</motion.span>
-          </span>
-          <motion.b className="reel-bar" key={bar} initial={{ y: 6, opacity: 0, filter: 'blur(4px)' }} animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.3, ease: ARRIVE }} aria-label={`Bar ${bar}`}><small>Bar</small>{bar}</motion.b>
+          <motion.p key={label} className="reel-kicker" initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.18, ease: ARRIVE }}>{label}</motion.p>
+          <h2 className={`reel-hook hand-${seg.kind}`}>{reel.head.split(' ').map((x, i) => <motion.span key={`${reel.id}-${i}`} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x} </motion.span>)}</h2>
+          <p className="reel-meta">Phase {reel.n}, {reel.k} of {reel.of}. Bar {bar}</p>
         </header>
-        {/* The step, set like the title of a TikTok: what to play, big. */}
-        <h2 className="reel-hook">{reel.head.split(' ').map((x, i) => <motion.span key={`${reel.id}-${i}`} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x} </motion.span>)}</h2>
-        {chords.length > 1 && (
-          <ol className="reel-chords" aria-label="The bass, bar by bar">
-            {chords.map(c => (
-              <li key={c.bar} className={c.bar === place.bar && place.playing ? 'on' : c.bar < place.bar && place.playing ? 'past' : ''}><b>{c.name}</b></li>
-            ))}
-          </ol>
-        )}
         <div className="reel-stage">
-          <Lanes tl={tl} lanes={lanes} now={clock.now} held={held} flats={song.fifths < 0} named={named} namedUntil={firstNote} />
+          <Lanes tl={tl} range={range} now={clock.now} held={held} flats={song.fifths < 0} named={named} namedUntil={firstNote} />
         </div>
         <div className="reel-foot">
-          {groups && (
-            <p className="reel-groups" aria-hidden="true">
-              {groups.map((g, i) => <span key={i}>{g.map((x, j) => <b key={j} className={x.on ? 'on' : x.past ? 'past' : ''}>{x.l}</b>)}</span>)}
-            </p>
-          )}
           {sayLine && !showTitle ? (
             <Caption words={spoken.words} at={spoken.at} index={place.line} />
           ) : (
