@@ -18,8 +18,25 @@ export function audioContext(): AudioContext {
   if (!ctx) {
     setAudioSession('playback');
     ctx = new AudioContext({ latencyHint: 'interactive' });
+    keepAwake(ctx);
   }
   return ctx;
+}
+
+/**
+ * The sound must never stay off. iOS suspends or "interrupts" the audio when the screen locks, a
+ * call or another app takes it, or the page goes to the background, and does not bring it back by
+ * itself: the context is resumed whenever that happens and the page is visible, on the next touch
+ * or key, and checked every two seconds.
+ */
+function keepAwake(c: AudioContext) {
+  const wake = () => { if (c.state !== 'running' && (c.state as string) !== 'closed' && !document.hidden) c.resume().catch(() => {}); };
+  c.addEventListener('statechange', () => { if (c.state !== 'running') window.setTimeout(wake, 250); });
+  document.addEventListener('visibilitychange', wake);
+  window.addEventListener('focus', wake);
+  window.addEventListener('pageshow', wake);
+  for (const e of ['pointerdown', 'touchend', 'keydown']) window.addEventListener(e, wake, { capture: true, passive: true });
+  window.setInterval(wake, 2000);
 }
 
 /** Must be called from a user gesture at least once (iOS unlock). */

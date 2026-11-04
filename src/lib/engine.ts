@@ -253,14 +253,13 @@ export class Engine {
   }
 
   /**
-   * A count-in in tempo, one bar of beats (two bars in 2/4 or less), so he feels where beat 1
-   * lands and can come in with it, instead of seconds that have nothing to do with the music.
+   * A count-in in tempo: 1, 2, 3 on the beat (the user's choice, the same as the videos), then the
+   * music, so he feels the beat and comes in with it, instead of seconds that have nothing to do
+   * with the music.
    */
   private countIn() {
-    const [num, den] = this.sigNow();
-    const perBar = den === 8 && num % 3 === 0 && num > 3 ? num / 3 : num;
     this.countBeat = this.beatSeconds();
-    this.countTotal = perBar < 3 ? perBar * 2 : perBar;
+    this.countTotal = 3;
     this.countdown = this.countTotal * this.countBeat;
   }
 
