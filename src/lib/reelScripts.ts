@@ -198,8 +198,8 @@ const TALK: Record<string, Talk[]> = {
   'interstellar-experience': [
     {
       intro: 'This whole opening is built from one shape. The right hand plays top, middle, low, middle on every beat, and the left hand holds one octave a bar: F, G, A, then E.',
-      L: 'Left hand first. Little finger on the low note, thumb an octave up, and hold it for all four beats. F, G, A, E.',
-      R: 'Now the right hand. E, C, A, C. Top, middle, low, middle. Later it turns into E, B, G, B, and only the top note stays put.',
+      L: 'The left hand only holds an octave: little finger on the low note, thumb an octave up, for all four beats. F, G, A, E.',
+      R: 'Right hand first. E, C, A, C. Top, middle, low, middle. Later it turns into E, B, G, B, and only the top note stays put.',
       both: 'Both hands together, at full speed. Drop the octave on beat one and let the pattern roll on top.',
       outro: 'Find the top note, and your hand already knows the rest. Your turn.',
     },

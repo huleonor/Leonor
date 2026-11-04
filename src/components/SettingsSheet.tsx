@@ -115,12 +115,12 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
   );
 }
 
-/** The natural voice of the videos: on the device, fetched once (about 90 MB). */
+/** The natural voice of the videos: recorded with the app; a line it lacks is made on the device. */
 function NaturalVoiceRow() {
   const [, bump] = useState(0);
   useEffect(() => onVoice(() => bump(x => x + 1)), []);
   const st = naturalState();
-  const hint = st === 'ready' ? 'Ready. It runs on this device.' : st === 'loading' ? 'Downloading the voice, about 90 MB, once.' : st === 'failed' ? 'This device cannot run it; the system voice speaks instead.' : 'A human-sounding voice for the videos. Downloads about 90 MB once.';
+  const hint = !naturalVoiceWanted() ? 'Off: the system voice speaks instead.' : st === 'loading' ? 'Making a new line on this device, a moment.' : 'A recorded human voice. Lines it has not recorded yet are made on this device.';
   return (
     <label className="toggle-row">
       <span><b>Natural voice in the videos</b><small>{hint}</small></span>
