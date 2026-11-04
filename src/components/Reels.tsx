@@ -11,15 +11,17 @@ import { SOFT, SPRING } from './Motion';
 
 const LOOK = 2.4; // seconds of falling notes above the keys
 
-/** Colours for the canvas, read from the design tokens (a canvas cannot read CSS variables itself). */
-function palette() {
-  const css = getComputedStyle(document.documentElement);
+/** Colours for the canvas, read from the design tokens where the canvas sits (a canvas cannot read CSS variables itself). */
+function palette(el: Element) {
+  const css = getComputedStyle(el);
   const v = (k: string) => css.getPropertyValue(k).trim();
   return {
-    R: v('--right'), L: v('--left'), ok: v('--ok'), white: v('--key-white'), whiteEdge: v('--key-edge'), black: v('--key-black'),
-    ink: v('--key-ink'), lane: v('--reel-lane'), now: v('--now-line'), fingerInk: v('--on-blue'),
+    R: v('--right'), L: v('--left'), keyR: v('--right-key'), keyL: v('--left'), inkR: v('--right-ink'), inkL: v('--left-ink'),
+    ok: v('--ok'), white: v('--key-white'), whiteEdge: v('--key-edge'), black: v('--key-black'),
+    ink: v('--key-ink'), paper: v('--paper'), lane: v('--reel-lane'), now: v('--now-line'),
   };
 }
+const FACE = "'Radio Canada Big', 'Radio Canada', sans-serif";
 
 /**
  * The reel's clock: the audio clock while it plays, so the keys and the sound never drift apart.
@@ -93,7 +95,7 @@ function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[
   useEffect(() => {
     const cv = ref.current!;
     const ctx = cv.getContext('2d')!;
-    const pal = palette();
+    const pal = palette(cv);
     const layouts = lanes.map(l => keyLayout(l.lo, l.hi));
     let raf = 0;
     const draw = () => {
@@ -131,24 +133,19 @@ function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[
           const pad = k.w * 0.12;
           ctx.globalAlpha = on ? 1 : 0.88;
           ctx.fillStyle = pal[lane.hand];
-          ctx.beginPath();
-          ctx.roundRect(k.x + pad, yTop, k.w - pad * 2, yB - yTop, Math.min(8, k.w / 3));
-          ctx.fill();
+          ctx.fillRect(k.x + pad, yTop, k.w - pad * 2, yB - yTop);
           ctx.globalAlpha = 1;
           if (n.finger && yB - yTop > k.w * 0.8) {
-            ctx.fillStyle = pal.fingerInk;
-            ctx.font = `900 ${Math.round(Math.min(18, k.w * 0.55))}px Nunito Variable, Nunito, sans-serif`;
+            ctx.fillStyle = lane.hand === 'R' ? pal.inkR : pal.inkL;
+            ctx.font = `700 ${Math.round(Math.min(18, k.w * 0.55))}px ${FACE}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(String(n.finger), k.x + k.w / 2, yB - k.w * 0.45);
           }
         }
-        // The now line, Simply Piano's glowing bar.
+        // The now line: a plain rule where the notes land.
         ctx.fillStyle = pal.now;
-        ctx.shadowColor = pal.now;
-        ctx.shadowBlur = 12;
-        ctx.fillRect(0, kbTop - 3, W, 3);
-        ctx.shadowBlur = 0;
+        ctx.fillRect(0, kbTop - 3, W, 2);
         // The keyboard: what sounds is lit in the hand's colour with its finger; what he plays is green.
         const mine = held.current ?? new Set<number>();
         for (const black of [false, true]) {
@@ -158,28 +155,27 @@ function Lanes({ tl, lanes, now, held, flats }: { tl: ReelTimeline; lanes: Lane[
             if (!k) continue;
             const h = black ? kbH * 0.62 : kbH;
             const lit = sounding.has(m);
-            ctx.fillStyle = mine.has(m) ? pal.ok : lit ? pal[lane.hand] : black ? pal.black : pal.white;
+            const litKey = lane.hand === 'R' ? pal.keyR : pal.keyL;
+            ctx.fillStyle = mine.has(m) ? pal.ok : lit ? litKey : black ? pal.black : pal.white;
             ctx.strokeStyle = pal.whiteEdge;
             ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.roundRect(k.x + (black ? 0 : 0.5), kbTop, k.w - (black ? 0 : 1), h, [0, 0, 5, 5]);
-            ctx.fill();
-            if (!black) ctx.stroke();
+            ctx.fillRect(k.x + (black ? 0 : 0.5), kbTop, k.w - (black ? 0 : 1), h);
+            if (!black) ctx.strokeRect(k.x + 0.5, kbTop, k.w - 1, h);
             if (lit) {
               const f = sounding.get(m);
               const r = Math.min(11, k.w * 0.36);
               const cy = kbTop + h - r - 6;
               if (f) {
-                ctx.fillStyle = pal.white;
-                ctx.beginPath(); ctx.arc(k.x + k.w / 2, cy, r, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = pal.ink;
-                ctx.font = `900 ${Math.round(r * 1.25)}px Nunito Variable, Nunito, sans-serif`;
+                ctx.fillRect(k.x + k.w / 2 - r, cy - r, r * 2, r * 2);
+                ctx.fillStyle = pal.paper;
+                ctx.font = `700 ${Math.round(r * 1.25)}px ${FACE}`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText(String(f), k.x + k.w / 2, cy + 1);
               }
               if (!black) {
-                ctx.fillStyle = pal.fingerInk;
-                ctx.font = `900 ${Math.round(Math.min(14, k.w * 0.45))}px Nunito Variable, Nunito, sans-serif`;
+                ctx.fillStyle = lane.hand === 'R' ? pal.ink : pal.inkL;
+                ctx.font = `700 ${Math.round(Math.min(14, k.w * 0.45))}px ${FACE}`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText(letter(m, flats), k.x + k.w / 2, cy - r - 10);
               }
@@ -284,6 +280,7 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
     return [...by.values()].map(g => g.map(o => ({ l: letter(o.m, song.fifths < 0), on: Math.abs(tl.notes[o.i].t - curT) < 0.02 || (cur.hand === 'R' && o.i === place.note), past: tl.notes[o.i].t < curT - 0.02 })));
   }, [tl, place.note, seg, song.fifths]);
   const pct = tl.duration ? Math.min(1, clock.now() / tl.duration) : 0;
+  const bar = place.playing && place.bar ? place.bar : seg?.from ?? reel.from;
   const showTitle = place.card === 'title';
   const showLabel = place.card === 'label' && seg;
   const showEnd = ended || place.card === 'end';
@@ -299,8 +296,13 @@ export function ReelPlayer({ song, reel, count, active, onPractice, onNext }: Pl
           })}
         </div>
         <header className="reel-head">
-          <span className="reel-kicker">Phase {reel.n}<i>{w.title}</i></span>
-          {seg && <motion.span key={seg.label} className={`reel-speed ${seg.speed === 1 ? 'full' : ''} hand-${seg.kind}`} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING}>{seg.label}</motion.span>}
+          {/* The bar being played, set as big as a poster's date: the one number to follow. */}
+          <motion.b className="reel-bar" key={bar} initial={{ y: 6, opacity: 0.4 }} animate={{ y: 0, opacity: 1 }} transition={SPRING} aria-label={`Bar ${bar}`}>{String(bar).padStart(2, '0')}</motion.b>
+          <span className="reel-where">
+            <small>Phase {reel.n} of {count}</small>
+            <span>{w.title}</span>
+            {seg && <motion.span key={seg.label} className={`reel-speed hand-${seg.kind}`} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING}>{seg.label}</motion.span>}
+          </span>
         </header>
         <h2 className="reel-hook">{w.hook}</h2>
         {chords.length > 1 && (

@@ -6,7 +6,7 @@ import { readMidi, saveImported } from '../lib/library';
 import { formatTime } from '../lib/names';
 import type { Song, SongEntry } from '../lib/types';
 import { IconClose } from './Icons';
-import { Difficulty, SheetThumb } from './SheetThumb';
+import { SheetThumb } from './SheetThumb';
 
 interface Props {
   file: File;
@@ -69,11 +69,7 @@ export function AddSong({ file, slot, onDone, onClose }: Props) {
             <form onSubmit={e => { e.preventDefault(); save(); }}>
               <label className="field">Title<input value={title} onChange={e => setTitle(e.target.value)} required /></label>
               <label className="field">Composer<input value={composer} onChange={e => setComposer(e.target.value)} placeholder="Optional" /></label>
-              <div className="field">
-                Difficulty
-                <div className="field-static"><Difficulty level={facts.level} /><small>Worked out from the notes</small></div>
-              </div>
-              <p className="fine">{formatTime(read.song.duration)} · {facts.hands === 2 ? 'two hands' : 'one hand'} · {facts.parts} sections to learn, each right hand, left hand, together and in tempo.</p>
+              <p className="fine">{formatTime(read.song.duration)} long, for {facts.hands === 2 ? 'two hands' : 'one hand'}. Its videos and lessons are made from these notes.</p>
               <div className="upload-actions">
                 <button className="btn go big" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add to my songs'}</button>
                 <button className="btn outline big" type="button" onClick={onClose}>Cancel</button>

@@ -15,7 +15,7 @@ import { usePracticeClock } from '../lib/practiceClock';
 import { addPractice } from '../lib/stats';
 import type { FingerMode, Settings } from '../lib/types';
 import { AnimatePresence, motion } from 'motion/react';
-import { Confetti, CountUp } from './Confetti';
+import { CountUp } from './Confetti';
 import { Bump, Cheer, SOFT, SPRING } from './Motion';
 import { HelpKeys } from './HelpKeys';
 import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
@@ -423,7 +423,6 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
 
       {result && (
         <div className="lesson-done" role="dialog" aria-labelledby="lesson-result-title">
-          {result.stars >= 2 && <Confetti />}
           <div className="result-stars" aria-label={`${result.stars} of 3 stars`}>
             {[0, 1, 2].map(i => (
               <motion.span key={i} className={`big-star ${i < result.stars ? 'won' : ''}`} initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ ...SPRING, delay: 0.12 + i * 0.16 }}><IconStar size={56} /></motion.span>

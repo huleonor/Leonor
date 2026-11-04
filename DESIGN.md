@@ -1,154 +1,84 @@
 ---
 name: Leonor
-description: A piano-learning app in Simply Piano's look (2026-11 redesign): a deep navy app, one vivid blue for every action, the piano screens on Simply's blue-to-teal gradient with the staff on white strips, and each song taught by short vertical reels drawn from its notes. The older Duolingo notes below describe the components' shapes; the colours are now the dark tokens in src/styles.css. White pages, one bright owl green for every action and every right note, macaw blue for choices, gold stars, an orange streak flame; chunky uppercase buttons on a 4px edge that press down; a coloured unit banner over a winding path of round lesson nodes. The piano screens (song sheet and Teach me lesson) keep their Simply Piano look.
-source: Duolingo-inspired, after the open "Lingo" DESIGN.md (bergside/awesome-design-md-skills, MIT) and Duolingo's public visual language; no Duolingo assets, mascot, logo or proprietary fonts are used.
+description: "Cartaz (2026-11): Leonor set like a Swiss poster. White poster stock, blue-black ink, one ultramarine field the music is printed on (the videos, the lessons, the song being learnt), one red mark for the left hand and a wrong note. Radio Canada Big for heads and big numbers, Radio Canada for words. Square corners, hairline rules, no shadows, no gradients. The structure comes from type, rules and numbers set big, not from cards."
+source: "The user chose direction C, Cartaz, out of four mockups. It follows the Grid theme of Hallmark (Nutlope/hallmark, an anti AI-slop design skill) and the Swiss style; the brand DESIGN.md files of VoltAgent/awesome-design-md were the other references. Nothing is copied from a brand."
 colors:
-  white: "#ffffff"
-  polar: "#f7f7f7"
-  swan: "#e5e5e5"
-  hare: "#cecece"
-  heading: "#3c3c3c"
-  eel: "#4b4b4b"
-  wolf: "#777777"
-  ink-3: "#8f8f8f"
-  owl: "#58cc02"
-  owl-hi: "#61e002"
-  owl-edge: "#58a700"
-  owl-soft: "#d7ffb8"
-  macaw: "#1cb0f6"
-  macaw-edge: "#1899d6"
-  macaw-soft: "#ddf4ff"
-  macaw-line: "#84d8ff"
-  beetle: "#ce82ff"
-  beetle-edge: "#a568cc"
-  bee: "#ffc800"
-  bee-edge: "#e5a800"
-  fox: "#ff9600"
-  fox-edge: "#e58700"
-  cardinal: "#ff4b4b"
-  cardinal-edge: "#ea2b2b"
-  unit-pink: "#ff86d0"
-  unit-teal: "#00cd9c"
-  hint: "#ffd25e"
-  lesson-grey-band: "#ecebe7"
-  lesson-count: "#4a3f61"
+  paper: "oklch(97.5% .005 90)   #f8f7f3  the ground"
+  paper-2: "oklch(94.2% .006 90)  wells, the default control"
+  paper-3: "oklch(90.5% .008 90)  pressed, tracks"
+  white: "oklch(99.6% .002 90)  staff bands, keys, inputs"
+  ink: "oklch(19% .022 266)    #0f141e  type, the primary control"
+  ink-2: "oklch(31% .02 266)    secondary text"
+  muted: "oklch(47% .016 266)   #575b64  hints and labels only"
+  rule: "oklch(87.5% .008 90)   hairlines"
+  rule-2: "oklch(72% .01 266)   control edges, fresh numbers"
+  field: "oklch(44% .2 266)     #1f40be  the ultramarine"
+  field-2: "oklch(38% .19 266)   pressed on the field"
+  field-ink: "= paper"
+  field-muted: "oklch(85% .06 266)  #bbcef6  small text on the field"
+  field-rule: "oklch(55% .17 266)  hairlines on the field"
+  mark: "oklch(54% .215 29)    the red: left hand, wrong note"
+  ok: "oklch(51% .15 150)     the green: a right note, a good run"
 typography:
-  display: { fontFamily: "Nunito", weight: 700, use: "page titles, card titles, unit names, plan names, celebration titles" }
-  body: { fontFamily: "Nunito", weight: "600 body, 800 labels, 900 numbers" }
-  button: { fontFamily: "Nunito", weight: 800, size: 14.5px, transform: uppercase, letterSpacing: 0.06em }
-  scale: "12 / 13 / 14.5 / 16 / 19 / 21 / 28 / 30"
-rounded: { sm: 12px, md: 16px, lg: 20px, pill: 999px, node: 50% }
-spacing: "4 / 8 / 12 / 16 / 22 / 26"
-edges: { button: "0 4px 0 <edge>", node: "0 8px 0 <edge>", card: "2px solid swan" }
+  display: { fontFamily: "Radio Canada Big", weight: 700, tracking: "-0.035em", lineHeight: 0.95, use: "page titles, phase names on the reels, every big number" }
+  body: { fontFamily: "Radio Canada", weight: "400 text, 500 labels and buttons", size: "16px" }
+  scale: "13 / 14 / 16 / 18 / 22 / 28 / 34 / 48 / 56 / 64-128 (the bar number)"
+rounded: { all: 0, dots: "50% (status and rep dots only)" }
+spacing: "10px unit: 10 / 20 / 30 / 40"
+edges: { rule: "1px solid --rule", control: "1px solid --rule or --rule-2", dialog: "1px solid --ink" }
 ---
 
-# Design System: Hugo's Piano
+# Design System: Leonor (Cartaz)
 
-## Tokens
+## The idea
 
-2026-11, Leonor: the app is renamed Leonor, with a new logo (a white key and its black key forming an L on the gradient, `public/brand/leonor-mark.svg`). The ground is navy #0c1330 under a soft blue light from the top; the stage gradient is layered (teal glow across the middle, cool blue light from the top corner, indigo ramp #111850, #16388a, #1b62a2, #17438e, #0d1446). No game elements anywhere. The tabs are Watch, Song, Library (no profile).
+A poster for one song. The paper is quiet; the music is printed on one ultramarine field: the phase videos fill it, the lessons put their white staff bands across it, and the song being learnt sits on it at the top of the Library. Everything around it is set in type: titles big and tight, numbers bigger (the bar playing in a video, the phase number in a row, the percent learnt), words small and plain. Lines are hairlines. Nothing floats, glows or bounces for decoration.
 
-2026-11: Simply Piano's dark look replaces the white Duolingo ground. Navy ground #121b3e with a soft gradient, cards #1b2752 with a 1px #2c3a6b border, primary blue #1d8cf8 (edge #1466c2) with white bold uppercase text, green #58cc02 only for right notes, white text, muted #9aa5d4 for hints. Piano screens and reels on the gradient #1f3a7d, #2b6f9c, #43a7a7 and back; staff on white strips; glowing now line #2a8cff; right hand #3ec1ff, left hand #ff9f43. Everything else below (shape, type, spacing, motion) still holds.
+## Colour, by job
 
-Before:
+- **Paper** is the ground of every page. **Ink** is text and the primary control. **Muted** is only for hints and labels.
+- **Field** (ultramarine) is where the music is: the reels, the lesson stage, the next phase on the Song page, the song learnt now in the Library, a chosen option. On the field, text is paper, small text `--field-muted`, rules `--field-rule`.
+- **Mark** (red) is the left hand and a wrong note. **Ok** (green) is a right note, a played key, a good run. Neither is decoration.
+- Hands: on paper the right hand is the field blue, the left the red; on the field the right hand prints in paper (its lit keys `--right-key`), the left stays red.
+- Song covers are flat poster tiles (field, ink, red) with the song's own opening notes on a staff in paper. The Library and the Song page show the opening across a wide staff instead (`<OpeningStaff />`).
+- Colours only through the tokens in `src/styles.css`; a canvas reads them with `getComputedStyle` on its own element, so a context (the reel frame) can redefine them.
 
-White ground like the Duolingo app, in the logo's blue: cards and dialogs white with a 2px #e5e5e5 border, wells #f7f7f7; primary brand blue #2b93ba (edge #1f7395) with white bold uppercase text on 3D buttons, also the interactive accent; green #58cc02 only for right answers, red #ff4b4b only for wrong ones; text #3c3c3c, muted #777777 for hints. One family, Nunito bold: body 700, headings 900 with 0.8px tracking. Radius 12px for every control, card and dialog. Spacing unit 10px. State-driven motion with springs (see CLAUDE.md); CSS transitions 300ms ease. Focus ring 2px accent, 2px offset. Icons are Phosphor, bold. The logo is the penguin with round glasses; no characters in the UI for now. No em or en dashes in visible text. See CLAUDE.md for the full rule list.
+## Type
 
-## Overview
+- Radio Canada Big 700 for heads and numbers: page titles 44 to 76px, the bar number on a reel 64 to 128px, phase numbers 48px, percents 32 to 80px. Tracking -0.035em, line-height about 0.95, sentence case.
+- Radio Canada 400 for text (16px), 500 for labels and buttons. Never tracked, never uppercase.
+- Figures are tabular. Hierarchy comes from size and weight, never from colour alone.
 
-Around the piano the app is Duolingo: white, friendly, bold, gamified, every screen one obvious green action. At the piano it is Simply Piano: the score, the keys and nothing else. The two meet in the lesson's result card, which is pure Duolingo (stars, confetti, XP counting up) floating over the Simply Piano lesson.
+## Shape and structure
 
-The logo, a penguin with round glasses on the brand blue, is the app's face: the sidebar, the icon, the placement card, the Premium card. There are no characters in the UI for now; big Phosphor icons on tinted discs stand in for illustrations.
+- Square corners everywhere. Circles only for small status and rep dots.
+- Rows, not cards: a list is hairline rules between rows (phases, songs, settings, sections). The one thing that is current is a field-coloured row or block; the whole song is an ink row.
+- One primary button style: ink fill, paper text (on the field: paper fill, field text). The default button is a paper-2 cell with a hairline; quiet buttons are underlined text.
+- Tabs are words (Watch, Song, Library, Settings), a 3px ink bar marks the current one: on the left edge in the side rail, on the top edge along the bottom on phones.
+- Dialogs and sheets are paper with a 1px ink edge, set flush left.
 
-The feel comes from three things more than colour: chunky buttons that sit on a darker 4px edge and press down into it; grey 2px borders instead of shadows; and motion that bounces (the "Start" bubble bobbing over the next lesson, celebrations popping in, confetti on a good result).
+## The screens
 
-## Colors
-
-- **Owl green** is the action and the right note: primary buttons, the next lesson node of unit 1, the daily session's current item, progress bars, the right-first-time key.
-- **Macaw blue** is choice and navigation: secondary button text, the selected rail item (pale blue fill with a blue line), the selected segment, the chosen plan, song-screen modes and floating buttons.
-- **Bee gold** is reward: stars, XP, the "best value" flag, finished lesson nodes.
-- **Fox orange** is the streak flame and the daily-goal celebration.
-- **Cardinal red** is a wrong note and a failed step.
-- **Beetle purple** marks Premium (with blue in the badge's gradient) and is unit 2's colour.
-- **Energy pink** (#ff7ad9, edge #e05bbd) is the energy battery and everything that gives or costs energy. **Gem blue** is gems.
-- Each unit has its own colour for its banner, its open nodes and its node cards, in a cycle of ten: green, purple, teal, blue, orange, pink, red, navy, magenta, gold.
-- Neutrals: white pages, polar for wells and the song screen's ground, swan for every border and edge, eel for text, wolf for secondary text, heading grey for titles.
-
-White text on owl green is Duolingo's choice and is kept on large bold uppercase buttons only; small text is never set on green.
-
-## Typography
-
-- **Nunito** (self-hosted, `/fonts/fredoka-latin.woff2`) stands in for Duolingo's Feather Bold: rounded, chunky, for titles only.
-- **Nunito** (self-hosted) stands in for DIN Round: rounded body text at 600, labels at 800, numbers at 900 with tabular figures.
-- Buttons and links are uppercase with 0.06em tracking. Section labels (WARM-UP, UNIT 3) are uppercase 12–13px.
-
-## Components
-
-### Buttons
-50px tall (54 big, 38 small), 16px radius, 2px border, a 4px edge below in the darker shade. Press: down 4px, edge gone, in 60ms. Variants: **go** (green, white text), **blue**, **gold**, default (white, swan border, blue text), **quiet** (blue text, no box). Disabled: swan fill, hare text.
-
-### Cards
-White, 2px swan border, 16px radius (20 for dialogs, which also get a 6px swan edge). No drop shadows except the celebration toast.
-
-### Navigation rail
-White with a 2px swan line on its right. The current page: pale blue fill, 2px blue line, blue icon and label.
-
-### Game bar
-No boxes, Nunito numbers beside chunky filled icons: the flame and streak (grey until today counts, then orange; a blue snowflake chip shows streak freezes), the blue gem and its count (opens the shop), the pink battery and energy (opens the energy sheet; it blinks grey at zero, shows ∞ with Premium). On phones it is sticky at the top of the path; on wide screens it heads the right-hand column over the daily goal, today's practice and the Premium card.
-
-### Progress bars
-12px, swan track, green fill with a light 3px highlight along its top; song and unit meters fill gold or white on a banner.
-
-### The path (signature)
-Home is the path. Sections are separated by a centred label (SECTION 2, a Nunito title, one line) between two swan rules. A unit is a sticky coloured banner (16px radius, 4px darker edge, white text): SECTION 1, UNIT 2 and its name, with an outlined GUIDEBOOK button. Nodes are 70×62 discs on an 8px edge with a small white glint, winding left and right (0, 44, 70, 44, 0, −44, −70, −44 px). Each kind has its glyph: book (theory), star (lesson; a crown once aced), headphones (listening), hand (technique), dumbbell (personal practice), note (song), trophy (unit test). Open and done nodes take the unit colour, songs and tests turn gold when done, locked nodes are swan grey with a grey lock. The current node gets a swan progress ring that fills in the unit colour and a white START bubble that bobs above it. Chests are gold and wiggle when they can be opened, grey when locked, faded once opened. Tapping a node opens a card in the unit colour under it (kind and number, title, one line, a white START button with the XP it earns); a locked node's card is grey. A floating white arrow button brings the current node back into view.
-
-### Theory lesson
-Duolingo's lesson frame: a close X and a thick brand-blue progress bar that springs forward; a heading (NEW IDEA, CHOOSE THE ANSWER, PLAY IT) and the idea in plain text; an engraved staff on a white card and a small tappable keyboard (marked keys gold, right ones green, a wrong one red); answers as big bordered option buttons that turn blue when chosen; a footer whose verdict sheet slides up green (✓ Nice!) or red (✗ Correct answer: …) with CONTINUE, a wrong answer shaking once. The finish screen: a gold star popping in, LESSON COMPLETE (or PERFECT LESSON) in gold, and three reward tiles (XP gold, gems blue, mistakes green).
-
-### Energy, chests and the shop
-The energy sheet rises from the bottom on phones: a battery icon on a pink disc, a title ("You need energy to do lessons" when empty), a pink battery bar with n / 25, the refill timer, three ways to earn energy, then REFILL (white, gem price in blue), UNLIMITED ENERGY (navy, PREMIUM chip) and a way to the Practice tab. A chest opens to a dialog with the open chest and loot chips that pop in (pink energy, blue gems). The shop has a navy Premium card with the logo, then rows of white cards with a big icon and a white price button.
-
-### Today's session
-On the Practice tab. A card with a blue Start and three tiles (Warm-up, Lesson, Review); the current tile is pale green with a green border, done tiles go quiet with a green check.
-
-### Paywall
-A full white page: PREMIUM badge, a Nunito title, the reason it opened, a Free/Premium comparison table (Premium column tinted purple), three plan cards (12 months chosen by default with a gold "best value" flag, 1 month, family), one full-width green button ("Start my free week"), plain test-mode fine print, Restore and Not now.
-
-### Result card
-White dialog with three stars that pop in, a Nunito headline, a gold XP badge that counts up, blue gems and pink energy chips, confetti from the top on two stars or more, the green next button, Try again, and a quiet way out.
-
-### Celebrations
-A white card that bounces in at the top: a coloured round icon (flame for the goal, gold star for the session, blue snowflake for freezes), a Nunito title and one line.
-
-### Piano screens (kept)
-The song sheet keeps Misolla's layout (score card over a full keyboard) with blue modes; the Teach me lesson keeps Simply Piano's grey page, big single-line staff, now-line and light beam, plain n/N bar and cream keyboard. Path lessons add only a pink energy chip (with a +1 that floats up) and an orange "n in a row" chip in the top bar, and a blue LISTEN FIRST pill while a listening step plays.
+- **Watch**: the reel fills the field. Top left the bar being played, huge; top right the phase (n of N), its name and the segment tag (paper, or red for the left hand). The hook under it in display type; the bass of each bar as square cells; the falling notes onto square keys; the caption at the foot in display type. Cards (the idea and its tricks, a hand's name, your turn) are the field itself with the words set flush left over hairlines.
+- **Song**: the title huge, the composer with the number of phases and bars, the percent as a big number, one primary action, then the phases as numbered rows (number, name, where it is; Practise with its stars on the right). The next phase is the field row; the whole song closes the list as an ink row headed by its number of bars.
+- **Library**: the song learnt now as a field block with its opening on a staff and its percent huge; the rest as rows with the percent on the right; the marketplace below.
+- **Lessons**: the stage is the field, the staff on white bands, a red now line, square pause, arrows and step counter. The result is a paper poster: the headline big, the accuracy as a big number, the stars in field blue.
 
 ## Motion
 
-- Buttons press in 60ms; nodes in 80ms.
-- Pages slide up 10px and fade in (350ms, ease-out).
-- Dialogs and celebrations rise with a slight overshoot (`cubic-bezier(.34, 1.56, .64, 1)`).
-- The Start bubble bobs 6px every 1.6s; the stuck light breathes.
-- Stars pop in one after another; XP counts up over 700ms; confetti falls for 1.6s.
-- Everything decorative stops under `prefers-reduced-motion`.
+State-driven only (`src/components/Motion.tsx`): a bar number that changes slides in, a percent that changes bumps, a verdict pops, sheets rise. CSS transitions 300ms ease on colours. No confetti, no bobbing bubbles, no glows. Everything sits inside `<MotionConfig reducedMotion="user">`.
 
-## Do's and Don'ts
+## Anti-slop rules (fixed)
 
-Do:
-- Keep one green action per screen; everything else is white or quiet.
-- Use borders and edges for depth, not drop shadows.
-- Keep the difficulty invisible: the path just gets a little harder or easier, never a setting or a note about it.
-- Give every screen a little life with Pip, but only one Pip per screen.
-- Keep the piano screens free of chrome: the score and the keys.
-
-Don't:
-- Use Duolingo's mascot, logo, name or proprietary fonts.
-- Put small text on green or white text on gold below 14px bold.
-- Animate anything without a reason: motion rewards, guides or confirms.
-- Hide what Premium costs, or make the course itself Premium: energy is the only limit.
-
-### Lessons at the piano
-Simply Piano's page in Duolingo's white: a top bar with the pause button, the step name (FREE PLAY: RIGHT HAND, WITH THE BEAT), the streak chip, the energy chip, the piano-status icon, and the n/N pill (brand-blue fill that springs forward) between two arrows. The staff fills the stage and grows with the screen; its five lines run on edge to edge, the clef and key signature are pinned at the left on a white panel, and played notes slide under a white fade beside it. A thin blue now-line marks where the next notes arrive. The keyboard is hidden while he reads; a wrong note or a stall raises a compact strip of every key the piece needs, next key gold, which sinks again once he plays right. Tempo steps tick a metronome. Praise pops over the staff at 5, 10, 15, 20 and 30 in a row; a finished step pops a green "Great!" (or a red "Let's try that again") pill.
-
-### Songs and the marketplace
-My songs: square covers (the song's photo on a collection tint: purple film, teal modern, gold classical, blue mine), title and composer, stars once started, no difficulty, three across on phones; an "Add songs" tile. The marketplace slides up from the bottom: songs by collection, each with ADD that flips to ADDED with a pop. A song opens in the lesson frame: close, progress, gear for options (hands, waits or in tempo, speed, colours, keyboard on screen, loop), the score on a card, and LISTEN plus LEARN STEP BY STEP below; the keyboard rises only when needed, and "Play the first note to start" waits on the score until he does.
+1. No gradient, glow, blur or glass used as decoration. The only colour fields are flat.
+2. Two families: Radio Canada Big for display, Radio Canada for text. No rounded fonts.
+3. One primary action per screen, in the one primary style. No 3D buttons that press into an edge.
+4. Structure from type, hairlines and numbers set big. No grid of identical cards with an icon, a title and a line.
+5. No icons in tinted circles, no mascots, no bouncing bubbles, no confetti. Icons are Phosphor bold, only inside controls.
+6. Labels in sentence case at the body size or a step smaller, untracked. No eyebrows in capitals, no chips for decoration.
+7. No middle dots or arrows joining meta text; use a comma or a full stop. No em or en dashes, no emoji.
+8. Square corners; circles only for dots.
+9. About 80 words on a screen at most; one idea per screen.
+10. No invented numbers, quotes or logos. Every number shown is the user's own (bars, phases, percent, stars).
+11. Body text passes WCAG AA on its ground (paper text on red and green is used only at 15px and up, or bold display sizes).
+12. No purple, no blue-to-purple, no AI sparkle.

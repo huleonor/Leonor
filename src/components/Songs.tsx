@@ -5,10 +5,9 @@ import { addToLibrary, myLibrary, onLibrary, removeFromLibrary } from '../lib/li
 import { keyName } from '../lib/analysis';
 import { meterOf, pctOf } from '../lib/mastery';
 import type { Song, SongEntry } from '../lib/types';
-import { Spot } from './Brand';
-import { IconCheck, IconClose, IconImport, IconMore, IconMusic, IconPlus } from './Icons';
+import { IconCheck, IconClose, IconImport, IconMore, IconPlus } from './Icons';
 import { SOFT, SPRING } from './Motion';
-import { SongCover } from './SongCover';
+import { OpeningStaff, SongCover } from './SongCover';
 
 const COLLECTIONS: [NonNullable<SongEntry['collection']>, string][] = [['classical', 'Classical'], ['film', 'Film scores'], ['modern', 'Modern piano']];
 
@@ -28,33 +27,28 @@ function Cover({ entry, song }: { entry: SongEntry; song?: Song }) {
 /** Minutes and seconds, for how long a piece plays. */
 const length = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
 
-/** A song in my library: its cover (its own opening notes), title, composer, and how far Mastery has come. */
-export function SongCard({ info, now, onOpen, onEdit }: { info: SongInfo; now?: boolean; onOpen: () => void; onEdit?: () => void }) {
-  const e = info.entry;
-  return (
-    <motion.div className="song-card" layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={SOFT}>
-      <motion.button className="song-open" onClick={onOpen} aria-label={`Open ${e.title}`} whileTap={{ scale: 0.96 }}>
-        <Cover entry={e} song={info.song} />
-        <span className="song-text">
-          {now && <small className="now-chip">Learning now</small>}
-          <b>{e.title}</b>
-          <span>{e.composer ?? (e.builtIn ? '' : 'Imported')}</span>
-          {info.song && <SongMeter song={info.song} />}
-        </span>
-      </motion.button>
-      {onEdit && <button className="card-more" onClick={onEdit} aria-label={`Edit ${e.title}`}><IconMore size={20} /></button>}
-    </motion.div>
-  );
+/** How far Mastery has come on a song, as a number (0 when not started). */
+function pctFor(song?: Song) { return song ? pctOf(meterOf(song).value) : 0; }
+
+/** The line under a song's title: who wrote it, and its length while it is not started. */
+function lineFor(e: SongEntry, song?: Song) {
+  const who = e.composer ?? (e.builtIn ? '' : 'Imported');
+  if (song && meterOf(song).value <= 0) return [who, `${length(song.duration)}, not started`].filter(Boolean).join('. ');
+  return who;
 }
 
-/** Mastery on the card: a thin bar and the percent, once he has started. */
-function SongMeter({ song }: { song: Song }) {
-  const v = meterOf(song).value;
-  if (v <= 0) return <span className="song-fresh">{length(song.duration)}, not started</span>;
+/** A song in my library, as a row: title and composer, and its percent set big on the right. */
+function LibRow({ info, onOpen, onEdit }: { info: SongInfo; onOpen: () => void; onEdit?: () => void }) {
+  const e = info.entry;
+  const pct = pctFor(info.song);
   return (
-    <span className="song-meter" aria-label={`Mastery ${pctOf(v)}%`}>
-      <i><b style={{ width: `${Math.max(4, v * 100)}%` }} /></i>{pctOf(v)}%
-    </span>
+    <motion.li className="lib-row" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={SOFT}>
+      <button className="lib-open" onClick={onOpen} aria-label={`Learn ${e.title}, ${pct}% learnt`}>
+        <span><b>{e.title}</b><small>{lineFor(e, info.song)}</small></span>
+        <span className={`num ${pct ? '' : 'fresh'}`} aria-hidden="true">{pct}%</span>
+      </button>
+      {onEdit && <button className="icon-btn ghost" onClick={onEdit} aria-label={`Edit ${e.title}`}><IconMore size={20} /></button>}
+    </motion.li>
   );
 }
 
@@ -75,16 +69,18 @@ export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }:
   const [market, setMarket] = useState(false);
   const mine = entries.filter(e => !e.missing && (!e.builtIn || lib.includes(e.id) || (e.slot && lib.includes(e.slot)))).map(e => infos[e.id]).filter(Boolean);
 
+  const now = mine.find(info => current === (info.entry.slot ?? info.entry.id));
+  const rest = mine.filter(info => info !== now);
+
   return (
     <div className="page songs">
       <header className="page-head">
         <h1>Library</h1>
-        <button className="btn go" onClick={() => setMarket(true)}><IconPlus size={16} />Add songs</button>
+        <button className="btn" onClick={() => setMarket(true)}><IconPlus size={16} />Add songs</button>
       </header>
-      {!ready && <div className="song-grid" aria-busy="true">{Array.from({ length: 6 }, (_, i) => <span key={i} className="song-card skeleton" />)}</div>}
+      {!ready && <div aria-busy="true">{Array.from({ length: 4 }, (_, i) => <span key={i} className="lib-skeleton" style={{ display: 'block' }} />)}</div>}
       {ready && !mine.length && (
         <section className="empty-library">
-          <Spot size={96}><IconMusic size={44} /></Spot>
           <h2>Your library is empty</h2>
           <p className="sub">Pick songs from the marketplace, or upload a MIDI file of your own.</p>
           <div className="actions">
@@ -93,16 +89,22 @@ export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }:
           </div>
         </section>
       )}
+      {ready && now && (
+        <button className="lib-now" onClick={() => onOpen(now)} aria-label={`Learning now: ${now.entry.title}, ${pctFor(now.song)}% learnt`}>
+          <OpeningStaff song={now.song} />
+          <span className="lib-now-foot">
+            <span><b>{now.entry.title}</b><small>Learning now. {now.entry.composer}</small></span>
+            <span className="num" aria-hidden="true">{pctFor(now.song)}<i>%</i></span>
+          </span>
+        </button>
+      )}
       {ready && mine.length > 0 && (
-        <motion.div className="song-grid" layout>
+        <ul className="lib-list">
           <AnimatePresence>
-            {mine.map(info => <SongCard key={info.entry.id} info={info} now={current === (info.entry.slot ?? info.entry.id)} onOpen={() => onOpen(info)} onEdit={info.entry.builtIn ? undefined : () => onEdit(info.entry)} />)}
+            {rest.map(info => <LibRow key={info.entry.id} info={info} onOpen={() => onOpen(info)} onEdit={info.entry.builtIn ? undefined : () => onEdit(info.entry)} />)}
           </AnimatePresence>
-          <motion.button layout className="song-card add-tile" onClick={() => setMarket(true)} whileTap={{ scale: 0.96 }}>
-            <span className="cover add"><IconPlus size={28} /></span>
-            <span className="song-text"><b>Add songs</b><span>From the marketplace</span></span>
-          </motion.button>
-        </motion.div>
+          <li><button className="lib-add" onClick={() => setMarket(true)}><IconPlus size={18} />Add songs from the marketplace</button></li>
+        </ul>
       )}
       <AnimatePresence>
         {market && <Marketplace entries={entries} infos={infos} lib={lib} onClose={() => setMarket(false)} onUpload={onAdd} />}

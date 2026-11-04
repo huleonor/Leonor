@@ -73,3 +73,31 @@ export function SongCover({ entry, song, className = '' }: { entry: Pick<SongEnt
     </span>
   );
 }
+
+/**
+ * The song's opening across a wide staff, in the colour of the text around it: the picture of the
+ * song on the Song and Library pages. Nothing when its notes are not loaded.
+ */
+export function OpeningStaff({ song, count = 10 }: { song?: Song; count?: number }) {
+  const steps = useMemo(() => (song ? opening(song, count) : []), [song, count]);
+  if (steps.length < 3) return null;
+  const W = 300, gap = 8, mid = 30;
+  const centre = Math.round((Math.min(...steps) + Math.max(...steps)) / 2);
+  const dx = (W - 40) / Math.max(1, steps.length - 1);
+  return (
+    <svg className="opening-staff" viewBox={`0 0 ${W} 60`} aria-hidden="true">
+      {[-2, -1, 0, 1, 2].map(k => <line key={k} x1={0} x2={W} y1={mid + k * gap} y2={mid + k * gap} />)}
+      {steps.map((st, i) => {
+        const y = Math.max(mid - 3.2 * gap, Math.min(mid + 3.2 * gap, mid - (st - centre) * gap / 2));
+        const x = 20 + i * dx;
+        const up = y >= mid;
+        return (
+          <g key={i} className="n">
+            <ellipse cx={x} cy={y} rx={4.8} ry={3.5} transform={`rotate(-22 ${x} ${y})`} />
+            <line x1={up ? x + 4.2 : x - 4.2} x2={up ? x + 4.2 : x - 4.2} y1={y} y2={up ? y - 22 : y + 22} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
