@@ -11,7 +11,7 @@ import { SettingsSheet } from './components/SettingsSheet';
 import { EditSong } from './components/EditSong';
 import { SongScreen, sectionsOf, type Section } from './components/SongScreen';
 import { Songs } from './components/Songs';
-import { Logo } from './components/Brand';
+import { IconReel, IconTabLibrary, IconTabLibraryFill, IconTabSettings, IconTabSong, IconTabSongFill, IconTabWatch } from './components/Icons';
 import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
 import { I18nContext, makeT } from './lib/i18n';
@@ -22,12 +22,16 @@ import type { Settings, SongEntry } from './lib/types';
 
 /** Watch is the reel feed of the song being learnt; Song is its map; Library his songs. */
 type Tab = 'watch' | 'song' | 'library';
-// The tabs are words, set like a poster's index: no icons.
+// The tab bar along the bottom, like an app's: a Phosphor mark over a short word, filled for the tab he is on.
 const TABS: [Tab, string][] = [
   ['watch', 'Watch'],
   ['song', 'Song'],
   ['library', 'Library'],
 ];
+const tabIcon = (id: Tab, on: boolean) =>
+  id === 'watch' ? (on ? <IconReel /> : <IconTabWatch />)
+    : id === 'song' ? (on ? <IconTabSongFill /> : <IconTabSong />)
+      : on ? <IconTabLibraryFill /> : <IconTabLibrary />;
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
@@ -210,14 +214,13 @@ export default function App() {
       ) : (
         <div className="app">
           <nav className="rail" aria-label="Main">
-            <Logo size={40} className="rail-logo" />
             {TABS.map(([id, label]) => (
               <button key={id} className={`rail-btn tab-${id} ${tab === id ? 'on' : ''}`} aria-current={tab === id ? 'page' : undefined}
                 onClick={() => { if (id === 'watch' && tab === 'watch') setWatch(null); setTab(id); setOpenId(null); }}>
-                {label}
+                {tabIcon(id, tab === id)}<span>{label}</span>
               </button>
             ))}
-            <button className="rail-btn settings" onClick={() => setSheet('settings')}>Settings</button>
+            <button className="rail-btn settings" onClick={() => setSheet('settings')}><IconTabSettings /><span>Settings</span></button>
           </nav>
           <main className={`content ${tab === 'watch' && currentInfo?.song && currentReels.length ? 'tab-watch' : ''}`}>
             {tab === 'watch' ? (
