@@ -2267,3 +2267,35 @@ body { background: var(--bg); }
   .reel-screen.embedded .reel-count { display: none; }
 }
 .now-chip { white-space: nowrap; font-size: 10px; }
+
+/* =====================================================================
+   Round 8: one TikTok-style video per phase of the song
+   ===================================================================== */
+.phase-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.phase-card { position: relative; display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); box-shadow: 0 8px 24px rgb(4 8 30 / .3); }
+.phase-card.next { box-shadow: 0 0 0 2px var(--go), 0 0 24px color-mix(in srgb, var(--go) 45%, transparent); }
+.phase-video { position: relative; width: 76px; height: 100px; border-radius: var(--r); background: var(--stage); display: grid; place-items: center; color: var(--heading); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .14); }
+.phase-video .tick { top: 6px; right: 6px; }
+.phase-text { display: grid; gap: 2px; min-width: 0; }
+.phase-text small { color: var(--ink-3); font-size: 12px; }
+.phase-text b { color: var(--heading); font-size: 17px; }
+.phase-text span { color: var(--ink-2); font-size: 13.5px; line-height: 1.3; }
+.phase-practise { display: grid; justify-items: center; gap: 4px; width: 64px; padding: 10px 0; border-radius: var(--r); background: var(--raised); color: var(--go-text); box-shadow: 0 4px 0 var(--raised-edge); }
+.phase-practise.done { color: var(--ok-text); }
+.phase-card.next .phase-practise:not(.done) { background: var(--go); color: var(--go-ink); box-shadow: 0 4px 0 var(--go-edge); }
+.phase-card .step-bubble { top: -10px; left: 50px; translate: 0 0; }
+.reel-tricks { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 8px; text-align: left; max-width: 34ch; }
+.reel-tricks li { padding: 10px 14px; border-radius: var(--r); background: rgb(255 255 255 / .1); font-size: 15px; line-height: 1.3; }
+.reel-label { padding: 12px 22px; border-radius: 999px; background: var(--heading); color: var(--bg); font-size: 20px; }
+.reel-label.hand-L { background: var(--left); color: var(--key-ink); }
+.reel-label.hand-R { background: var(--right); color: var(--key-ink); }
+.reel-speed.hand-L { background: var(--left); color: var(--key-ink); }
+.reel-speed.hand-R { background: var(--right); color: var(--key-ink); }
+@media (max-width: 640px) and (orientation: portrait) {
+  .phase-card { grid-template-columns: 64px minmax(0, 1fr) auto; gap: 12px; }
+  .phase-video { width: 64px; height: 86px; }
+}
+@media (max-aspect-ratio: 10 / 16), (max-width: 640px) and (orientation: portrait) {
+  .reel-card { padding-right: 80px; }
+  .reel-card h3 { font-size: 24px; }
+}

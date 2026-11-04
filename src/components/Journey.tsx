@@ -7,7 +7,7 @@ import { askStrategy } from '../lib/strategy';
 import type { SongEntry } from '../lib/types';
 import { IconCheck, IconImport, IconKeysFill, IconPlay, IconReel, IconStar } from './Icons';
 import { SOFT, SPRING } from './Motion';
-import { sectionsOf, type Section } from './SongScreen';
+import { type Section } from './SongScreen';
 import { SongCover } from './SongCover';
 
 const CURRENT = 'hugos-piano:current-song';
@@ -21,15 +21,20 @@ export function setCurrentSong(id: string) {
   try { localStorage.setItem(CURRENT, id); } catch { /* storage blocked: stays for this visit */ }
 }
 
-/** The practice that follows a reel: that part's steps for the same hand (both hands: together and with the beat). */
+/**
+ * The practice for a phase: the steps of every course part inside it (hand by hand, together, with
+ * the beat), the normal lessons, so he plays right away what the video just explained.
+ */
 export function practiceFor(info: SongInfo, reel: Reel): Section | undefined {
-  const sc = sectionsOf(info).find(s => s.id === reel.practice.section);
-  if (!sc) return undefined;
-  const hands = reel.kind === 'intro' ? null : reel.kind === 'both' || info.song!.hands.length === 1 ? 'both' : reel.kind;
-  const steps = hands ? sc.steps.filter(s => (hands === 'both' ? s.hands === 'both' || info.song!.hands.length === 1 : s.hands === hands)) : sc.steps;
-  if (!steps.length) return sc;
-  const label = reel.kind === 'L' ? 'left hand' : reel.kind === 'R' ? 'right hand' : 'both hands';
-  return { ...sc, id: `${sc.id}-${reel.kind}`, title: `${sc.title}, ${label}`, steps, done: steps.filter(s => (info.prog[s.id]?.stars ?? 0) > 0).length, learnt: steps.every(s => (info.prog[s.id]?.stars ?? 0) > 0) };
+  const course = info.course;
+  if (!course) return undefined;
+  const parts = course.parts.filter(p => p.to >= reel.from && p.from <= reel.to);
+  // A part that repeats an earlier one has no steps of its own: practise the one it repeats.
+  const ids = [...new Set(parts.map(p => p.sameAs ?? p.n))];
+  const steps = course.steps.filter(s => s.part !== undefined && ids.includes(s.part));
+  if (!steps.length) return undefined;
+  const done = steps.filter(s => (info.prog[s.id]?.stars ?? 0) > 0).length;
+  return { id: reel.id, title: `Phase ${reel.n}: ${reel.words.title}`, bars: `Bars ${reel.from}-${reel.to}`, from: reel.from, steps, done, learnt: done === steps.length };
 }
 
 function useBump(sub: (fn: () => void) => () => void) {
@@ -51,12 +56,9 @@ interface Props {
   onSongs: () => void;
 }
 
-type Item = { kind: 'reel'; reel: Reel; i: number; done: boolean } | { kind: 'practice'; reel: Reel; section: Section; done: boolean; stars: number };
-
 /**
- * Learn: one song at a time. Each part is a few short videos, one pattern each (the left hand, the
- * right hand, both), and after each video the practice that drills exactly that. The next thing to
- * do is lit; what is done carries a tick or its stars.
+ * Song: the song being learnt, phase by phase. Every phase is one video that explains its patterns
+ * and tricks, and its practice; the next thing to do is lit.
  */
 export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, onPractice, onWholeSong, onBringMidi, onSongs }: Props) {
   useBump(onSeen);
@@ -64,7 +66,6 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
   const info = entry ? infos[entry.id] : undefined;
   const song = info?.song;
   useEffect(() => { if (song) askStrategy(song); }, [song]);
-  const choose = onChoose;
 
   const reels = useMemo(() => (song ? reelsOf(song) : []), [song, infos]); // eslint-disable-line react-hooks/exhaustive-deps
   const seen = song ? seenReels(song.entry.id) : [];
@@ -94,7 +95,7 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
             <h2 id="others-title">Or start with one of these</h2>
             <ul>
               {others.map(e => (
-                <li key={e.id}><button className="other-song" onClick={() => choose(e.id)}><span className="cover"><SongCover entry={e} song={infos[e.id]?.song} /></span><b>{e.title}</b><small>{e.composer}</small></button></li>
+                <li key={e.id}><button className="other-song" onClick={() => onChoose(e.id)}><span className="cover"><SongCover entry={e} song={infos[e.id]?.song} /></span><b>{e.title}</b><small>{e.composer}</small></button></li>
               ))}
             </ul>
           </section>
@@ -103,28 +104,14 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
     );
   }
 
-  // The path through the song: per part, each reel then its practice.
-  const parts: { n: number; bars: string; chords: string; items: Item[] }[] = [];
-  reels.forEach((r, i) => {
-    if (r.kind === 'intro') return;
-    let p = parts.find(x => x.n === r.part);
-    if (!p) {
-      p = { n: r.part, bars: `Bars ${sectionsOf(info).find(s => s.id === r.practice.section)?.bars.replace('Bars ', '') ?? ''}`, chords: [...new Set(r.chords.map(c => c.name))].slice(0, 5).join('  '), items: [] };
-      parts.push(p);
-    }
-    p.items.push({ kind: 'reel', reel: r, i, done: seen.includes(r.id) });
+  const rows = reels.map((r, i) => {
     const section = practiceFor(info, r);
-    if (section) {
-      const stars = section.steps.length ? Math.min(...section.steps.map(s => info.prog[s.id]?.stars ?? 0)) : 0;
-      p.items.push({ kind: 'practice', reel: r, section, done: section.learnt, stars });
-    }
+    const stars = section?.steps.length ? Math.min(...section.steps.map(s => info.prog[s.id]?.stars ?? 0)) : 0;
+    return { r, i, watched: seen.includes(r.id), section, stars, practised: !!section?.learnt };
   });
-  const flat = parts.flatMap(p => p.items);
-  const next = flat.find(x => !x.done);
-  const intro = reels.findIndex(r => r.kind === 'intro');
+  // The next thing to do: the first phase not watched, or watched but not practised.
+  const next = rows.find(x => !x.watched || (x.section && !x.practised));
   const pct = pctOf(meterOf(song).value);
-  const allDone = !next;
-  const nextPart = next ? parts.find(p => p.items.includes(next))?.n : undefined;
 
   return (
     <div className="page journey">
@@ -135,11 +122,11 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
           <h1>{entry.title}</h1>
           <p>{entry.composer}</p>
           <div className="journey-meter" aria-label={`${pct}% of the song`}><i><motion.b initial={{ width: 0 }} animate={{ width: `${Math.max(2, pct)}%` }} transition={SOFT} /></i></div>
-          <p className="journey-meta"><span>{nextPart ? `Part ${nextPart} of ${parts.length}` : 'Every part done'}</span><span>{pct}%</span></p>
+          <p className="journey-meta"><span>{next ? `Phase ${next.r.n} of ${reels.length}` : 'Every phase done'}</span><span>{pct}%</span></p>
           <div className="journey-actions">
             {next ? (
-              <button className="btn go big" onClick={() => (next.kind === 'reel' ? onWatch(song.entry.id, !seen.length && intro >= 0 ? intro : next.i) : onPractice(song.entry.id, next.reel))}>
-                <IconPlay size={18} />{next.kind === 'reel' ? (seen.length ? 'Continue' : 'Start with the intro') : 'Continue: practise'}
+              <button className="btn go big" onClick={() => (!next.watched ? onWatch(song.entry.id, next.i) : onPractice(song.entry.id, next.r))}>
+                <IconPlay size={18} />{!next.watched ? `Watch phase ${next.r.n}` : `Practise phase ${next.r.n}`}
               </button>
             ) : (
               <button className="btn go big" onClick={() => onWholeSong(info)}><IconKeysFill size={18} />Play the whole song</button>
@@ -149,50 +136,33 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
         </div>
       </section>
 
-      <ol className="journey-parts">
-        {parts.map((p, pi) => (
-          <motion.li key={p.n} className="journey-part" initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...SOFT, delay: pi * 0.05 }}>
-            <header>
-              <h2>Part {p.n}</h2>
-              <small>{p.bars}</small>
-              {p.chords && <span className="part-chords" aria-label={`Bass: ${p.chords}`}>{p.chords}</span>}
-            </header>
-            <ol className="part-steps">
-              {p.items.map(item => {
-                const isNext = item === next;
-                const locked = !isNext && !item.done && flat.indexOf(item) > flat.indexOf(next!);
-                const hand = item.reel.kind === 'L' ? 'Left hand' : item.reel.kind === 'R' ? 'Right hand' : 'Both hands';
-                return (
-                  <li key={`${item.kind}-${item.reel.id}`} className={`part-step ${item.kind} hand-${item.reel.kind} ${item.done ? 'done' : ''} ${isNext ? 'next' : ''} ${locked ? 'later' : ''}`}>
-                    {isNext && <motion.span className="step-bubble" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}>{item.kind === 'reel' ? 'WATCH' : 'PLAY'}</motion.span>}
-                    <motion.button whileTap={{ scale: 0.95 }} transition={SPRING}
-                      onClick={() => (item.kind === 'reel' ? onWatch(song.entry.id, item.i) : onPractice(song.entry.id, item.reel))}
-                      aria-label={item.kind === 'reel' ? `Watch: ${item.reel.words.hook}` : `Practise ${hand.toLowerCase()}, part ${p.n}`}>
-                      {item.kind === 'reel' ? (
-                        <span className="step-tile reel-tile">
-                          <IconReel size={30} />
-                          <b>{hand}</b>
-                          <small>{item.reel.words.hook}</small>
-                          {item.done && <i className="tick"><IconCheck size={14} /></i>}
-                        </span>
-                      ) : (
-                        <span className="step-tile practice-tile">
-                          <IconKeysFill size={28} />
-                          <b>Practise</b>
-                          <small>{item.section.steps.length === 1 ? 'One step' : `${item.section.steps.length} steps`}</small>
-                          <span className="tile-stars" aria-label={`${item.stars} of 3 stars`}>{[1, 2, 3].map(k => <IconStar key={k} size={13} className={k <= item.stars ? 'on' : ''} />)}</span>
-                        </span>
-                      )}
-                    </motion.button>
-                  </li>
-                );
-              })}
-            </ol>
-          </motion.li>
-        ))}
-        <li className={`journey-part finale ${allDone ? 'ready' : ''}`}>
+      <ol className="phase-list">
+        {rows.map(({ r, i, watched, section, stars, practised }) => {
+          const isNext = next?.r === r;
+          return (
+            <motion.li key={r.id} className={`phase-card ${isNext ? 'next' : ''} ${watched && practised ? 'done' : ''}`} initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...SOFT, delay: i * 0.04 }}>
+              <motion.button className="phase-video" whileTap={{ scale: 0.96 }} transition={SPRING} onClick={() => onWatch(song.entry.id, i)} aria-label={`Watch phase ${r.n}: ${r.words.title}`}>
+                <IconReel size={30} />
+                {watched && <i className="tick"><IconCheck size={14} /></i>}
+              </motion.button>
+              <div className="phase-text">
+                <small>Phase {r.n}, bars {r.from}-{r.to}</small>
+                <b>{r.words.title}</b>
+                <span>{r.words.hook}</span>
+              </div>
+              {section && (
+                <button className={`phase-practise ${practised ? 'done' : ''}`} onClick={() => onPractice(song.entry.id, r)} aria-label={`Practise phase ${r.n}, ${stars} of 3 stars`}>
+                  <IconKeysFill size={20} />
+                  <span className="tile-stars" aria-hidden="true">{[1, 2, 3].map(k => <IconStar key={k} size={11} className={k <= stars ? 'on' : ''} />)}</span>
+                </button>
+              )}
+              {isNext && <motion.span className="step-bubble" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}>{watched ? 'PLAY' : 'WATCH'}</motion.span>}
+            </motion.li>
+          );
+        })}
+        <li className={`journey-part finale ${!next ? 'ready' : ''}`}>
           <header><h2>The whole song</h2><small>Start to finish, with the beat</small></header>
-          <button className={`btn ${allDone ? 'go' : ''} big`} onClick={() => onWholeSong(info)}><IconKeysFill size={18} />Play the whole song</button>
+          <button className={`btn ${!next ? 'go' : ''} big`} onClick={() => onWholeSong(info)}><IconKeysFill size={18} />Play the whole song</button>
         </li>
       </ol>
     </div>

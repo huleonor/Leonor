@@ -120,11 +120,10 @@ export default function App() {
   // Opening a song shows its sheet music; Teach me opens a section's lesson on top of it.
   const openSheet = (info: SongInfo) => { unlockAudio(); ensureInput(); openSong(info); };
 
-  // After a reel: the practice for that pattern; when it is done, the next video.
+  // After a phase's video: that phase's practice; when it is done, the next phase's video.
   const practise = (id: string, reel: Reel, i: number) => {
     const info = infos[id];
     if (!info?.song) return;
-    if (reel.kind === 'intro') { setWatch({ start: i + 1, n: Date.now() }); return; }
     const only = practiceFor(info, reel);
     if (!only) return;
     unlockAudio(); ensureInput();
@@ -181,7 +180,7 @@ export default function App() {
           settings={settings} update={update} links={links}
           onExit={() => { if (lesson.back !== undefined) { setWatch({ start: lesson.back, n: Date.now() }); setTab('watch'); } setLesson(null); }}
           exitLabel={lesson.back !== undefined ? 'Back to the videos' : undefined}
-          nextLabel={lesson.back !== undefined ? 'Next video' : undefined}
+          nextLabel={lesson.back !== undefined ? 'Next phase' : undefined}
           onNextSection={lesson.back !== undefined ? () => { setWatch({ start: lesson.back! + 1, n: Date.now() }); setTab('watch'); setLesson(null); }
             : nextSection ? () => setLesson(l => l && { ...l, section: nextSection.id, step: undefined, n: l.n + 1 }) : undefined}
           onRecorded={() => refreshSong(lesson.id)}
