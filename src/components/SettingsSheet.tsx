@@ -1,3 +1,4 @@
+import { naturalState, naturalVoiceWanted, onVoice, setNaturalVoice } from '../lib/voice';
 import { useEffect, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { isNative, nativeMidiStatus, support, type LinkState, type Source } from '../lib/input';
@@ -92,6 +93,7 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
             <span><b>Hear the keys I play</b><small>{t('localSoundHint')}</small></span>
             <input className="switch" type="checkbox" checked={settings.localSound} onChange={e => update({ localSound: e.target.checked })} />
           </label>
+          <NaturalVoiceRow />
           <label className="toggle-row">
             <span><b>App plays the other hand</b><small>{t('accompanimentHint')}</small></span>
             <input className="switch" type="checkbox" checked={settings.accompaniment} onChange={e => update({ accompaniment: e.target.checked })} />
@@ -112,3 +114,18 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
     </div>
   );
 }
+
+/** The natural voice of the videos: on the device, fetched once (about 90 MB). */
+function NaturalVoiceRow() {
+  const [, bump] = useState(0);
+  useEffect(() => onVoice(() => bump(x => x + 1)), []);
+  const st = naturalState();
+  const hint = st === 'ready' ? 'Ready. It runs on this device.' : st === 'loading' ? 'Downloading the voice, about 90 MB, once.' : st === 'failed' ? 'This device cannot run it; the system voice speaks instead.' : 'A human-sounding voice for the videos. Downloads about 90 MB once.';
+  return (
+    <label className="toggle-row">
+      <span><b>Natural voice in the videos</b><small>{hint}</small></span>
+      <input className="switch" type="checkbox" checked={naturalVoiceWanted()} onChange={e => setNaturalVoice(e.target.checked)} />
+    </label>
+  );
+}
+

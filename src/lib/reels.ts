@@ -192,14 +192,20 @@ function ruleTalk(w: PhaseWords, twoHands: boolean): Talk {
 
 /** The song's script if it fits these notes: the exact version, or the bass at the fingerprint bars. */
 function scriptFor(song: Song, bars: BarFacts[]): PhaseWords[] | null {
-  const s = SCRIPTS[song.entry.slot ?? song.entry.id];
+  const fits = (sc: (typeof SCRIPTS)[string]) => {
+    if (sc.version && sc.version !== readSong(song).version) return false;
+    if (sc.fingerprint) {
+      const marks = Object.entries(sc.fingerprint);
+      const same = marks.filter(([bar, bass]) => bars[Number(bar) - 1]?.chord === bass).length;
+      if (same < marks.length * 0.7) return false;
+    }
+    return !!sc.version || !!sc.fingerprint;
+  };
+  // The song's own script; or, for a MIDI he added as a new song (not into its slot), the script
+  // whose printed score his notes match.
+  const own = SCRIPTS[song.entry.slot ?? song.entry.id];
+  const s = own && fits(own) ? own : Object.values(SCRIPTS).find(sc => sc.fingerprint && fits(sc));
   if (!s) return null;
-  if (s.version && s.version !== readSong(song).version) return null;
-  if (s.fingerprint) {
-    const marks = Object.entries(s.fingerprint);
-    const same = marks.filter(([bar, bass]) => bars[Number(bar) - 1]?.chord === bass).length;
-    if (same < marks.length * 0.7) return null;
-  }
   const phases = s.phases.filter(p => p.from <= bars.length).map(p => ({ ...p, to: Math.min(p.to, bars.length) }));
   return phases.length ? phases : null;
 }

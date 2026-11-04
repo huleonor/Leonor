@@ -21,6 +21,7 @@
     "@tonejs/midi": "^2.0.28",
     "abcjs": "^6.7.1",
     "idb-keyval": "^6.3.0",
+    "kokoro-js": "^1.2.1",
     "motion": "^14.1.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

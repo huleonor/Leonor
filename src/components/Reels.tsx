@@ -5,7 +5,7 @@ import { linkState, onLinkState, onNote } from '../lib/input';
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
 import { letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
-import { hush, onVoice, pauseVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn, voiceSupported } from '../lib/voice';
+import { anyVoice, hush, onVoice, pauseVoice, prepareVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
 import { IconArrowDown, IconCheck, IconClose, IconKeys, IconPause, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
 import { SOFT, SPRING } from './Motion';
@@ -373,7 +373,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
   }, [tl]);
   const [loops, setLoops] = useState(0);
   const [epoch, setEpoch] = useState(0);
-  const clockRef = useRef<{ play: (from?: number) => void } | null>(null);
+  const clockRef = useRef<ReturnType<typeof useReelClock> | null>(null);
   // Practise on his own: the video stops by itself and counts his clean runs (two, then it goes on).
   const [holding, setHolding] = useState(false);
   const [reps, setReps] = useState(0);
@@ -408,6 +408,49 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
     for (const n of tl.notes) if (n.train) { const g = out[out.length - 1]; if (g && Math.abs(g.t - n.t) < 0.03) g.ms.add(n.midi); else out.push({ t: n.t, ms: new Set([n.midi]) }); }
     return out;
   }, [tl]);
+  // The voice's lines are made ahead (the natural voice), this video's first when it is on screen.
+  useEffect(() => { prepareVoice(tl.lines.map(l => l.text), active); }, [tl, active]);
+
+  // Train with me waits for him: with a piano connected, the video stops at a note he has not
+  // played by the time it should sound (a quarter of a second of grace) and goes on the moment he
+  // plays it, so it follows him at his pace and moves on its own when he is on time.
+  const [waitingFor, setWaitingFor] = useState<Set<number> | null>(null);
+  const waitRef = useRef<Map<number, number>>(new Map());
+  const waitingRef = useRef(false);
+  const follow = useRef({ i: 0, have: new Set<number>() });
+  useEffect(() => { follow.current = { i: 0, have: new Set() }; }, [tl]);
+  useEffect(() => {
+    if (!active || !inputOn || !tl.train || !groupsToPlay.length) return;
+    const c = () => clockRef.current!;
+    const off = onNote(e => {
+      if (e.type !== 'on') return;
+      const f = follow.current, g = groupsToPlay[f.i];
+      if (!g || c().now() < g.t - 0.45) return;
+      if (!g.ms.has(e.midi)) return;
+      f.have.add(e.midi);
+      if (![...g.ms].every(m => f.have.has(m))) return;
+      f.i++; f.have.clear();
+      if (waitingRef.current) { waitingRef.current = false; waitRef.current = new Map(); setWaitingFor(null); c().play(Math.max(g.t, c().now()) + 0.01); }
+    });
+    let raf = 0;
+    const tick = () => {
+      const f = follow.current, t = c().now();
+      // A new pass of Train with me (a loop, or Again) starts again from its first group.
+      if (f.i > 0 && t < groupsToPlay[0].t - 0.5) { f.i = 0; f.have.clear(); }
+      while (f.i < groupsToPlay.length && groupsToPlay[f.i].t < t - 1.5) { f.i++; f.have.clear(); }
+      const g = groupsToPlay[f.i];
+      if (g && !waitingRef.current && c().playing && t > g.t + 0.25 && t < g.t + 1.5) {
+        waitingRef.current = true;
+        waitRef.current = new Map([...g.ms].map((m, k) => [m, k + 1]));
+        setWaitingFor(g.ms);
+        c().pause();
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { off(); cancelAnimationFrame(raf); };
+  }, [active, inputOn, tl, groupsToPlay]);
+  useEffect(() => { if (!active) { waitingRef.current = false; waitRef.current = new Map(); setWaitingFor(null); } }, [active]);
   const run = useRef({ i: 0, have: new Set<number>(), slips: 0 });
   useEffect(() => {
     if (!active || !holding || !groupsToPlay.length) return;
@@ -482,7 +525,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
   const beatNo = place.count;
   const counting = beatNo > 0;
   const training = place.train;
-  const label = holding ? 'On your own' : training ? (loops > 0 ? `Train with me, round ${loops + 1}` : 'Train with me') : seg.label;
+  const label = waitingFor ? `Your turn: play ${[...waitingFor].map(m => letter(m, song.fifths < 0)).join(' ')}` : holding ? 'On your own' : training ? (loops > 0 ? `Train with me, round ${loops + 1}` : 'Train with me') : seg.label;
 
   return (
     <div className={`reel-slide ${active ? 'active' : ''}`}>
@@ -497,7 +540,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
           <p className="reel-meta">Phase {reel.n}, {reel.k} of {reel.of}. Bar {bar}</p>
         </header>
         <div className="reel-stage">
-          <Lanes tl={tl} range={range} now={clock.now} held={held} flats={song.fifths < 0} named={named} namedUntil={firstNote} />
+          <Lanes tl={tl} range={range} now={clock.now} held={held} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
         </div>
         <div className="reel-foot">
           {sayLine && !showTitle ? (
@@ -548,7 +591,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
           )}
         </AnimatePresence>
         <AnimatePresence>
-          {active && !clock.playing && !holding && clock.ready && (
+          {active && !clock.playing && !holding && !waitingFor && clock.ready && (
             <motion.span className="reel-paused" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={SPRING} aria-hidden="true"><IconPlay size={34} /></motion.span>
           )}
         </AnimatePresence>
@@ -567,7 +610,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext }: PlayerPro
         <button className="reel-act go" onClick={onPractice} aria-label={`Practise phase ${reel.n}`}><span><IconKeys size={26} /></span>Practise</button>
         <button className="reel-act" onClick={toggle} aria-label={clock.playing ? 'Pause' : 'Play'}><span>{clock.playing ? <IconPause size={24} /> : <IconPlay size={24} />}</span>{clock.playing ? 'Pause' : 'Play'}</button>
         <button className="reel-act" onClick={replay} aria-label="From the start, with the voice"><span><IconRestart size={24} /></span>Again</button>
-        {voiceSupported() && (
+        {anyVoice() && (
           <button className="reel-act" onClick={e => { e.stopPropagation(); unlockVoice(); setVoiceOn(!voice.on); }} aria-pressed={voice.on} aria-label={voice.on ? 'Turn the voice off' : 'Turn the voice on'}>
             <span>{voice.on ? <IconSpeaker size={24} /> : <IconSpeakerOff size={24} />}</span>Voice
           </button>
