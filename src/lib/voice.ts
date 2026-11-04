@@ -43,7 +43,7 @@ const spoken = (text: string) => text.replace(/\b([A-G])b\b/g, '$1 flat').replac
 export function estimate(text: string) {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   const pauses = (text.match(/[.,:;]/g) ?? []).length;
-  return words / 2.6 + pauses * 0.18 + 0.3;
+  return words / 2.4 + pauses * 0.18 + 0.3;
 }
 
 let current: SpeechSynthesisUtterance | null = null;
