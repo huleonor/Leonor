@@ -14,12 +14,14 @@ A song is cut into phases (where the music changes). Each phase is a run of vide
 | Video | Speed | What it does |
 | --- | --- | --- |
 | The idea | 100% | The phase heard once while the voice says what it is made of. Only heard, never played. |
-| Left hand, two bars | 50% | Only when the left hand has a shape he has not met yet. |
-| Right hand, two bars | 50% | Same rule. A figure over a new chord (top, middle, low, middle) counts as met. |
-| Both hands, two bars | 60% | Always. A known shape: "Same shapes as before, now starting on G." |
+| Left hand, one step | 50% | Only when the left hand plays a shape he has not met **and has something to learn**: six notes or more over three keys or more. |
+| Right hand, one step | 50% | Same rule. A figure over a new chord (top, middle, low, middle) counts as met, and so does a bar three quarters the same (an inner note more or less). |
+| Both hands, one step | 60% | Always, unless only the right hand plays there. A hand that only holds a note or an octave is said here ("The left hand only holds an octave: E, F."). Steps of known shapes in a row become one video up to eight bars: "Same shapes as before, now on new chords: G, D." |
 | The whole phase | 75% | At most sixteen bars a video. The payoff of the phase. |
 
-Rules: one idea per video; never the hard part first; nothing at full speed but the idea; the very same notes again get no video. Each video ends by naming the next one, so the series reads as one lesson.
+A **step** is a musical phrase, never a fixed count: two bars at least, more (up to four) until it holds a dozen notes and four seconds of music. So no video is one held note (the user, 2026-11: "videos that are literally pressing one note"). When a step opens with a bar he knows, the voice starts from the new one ("You know the first bar already. Here is the new one.").
+
+Rules: one idea per video; never the hard part first; nothing at full speed but the idea; the very same notes again get no video. Each video ends by naming the next one ("Nice. Next up, the right hand, a bit further on. Swipe up."), so the series reads as one lesson. The voice never says bar numbers: the screen shows them.
 
 ## 2. The formula of one video: Show, Train, Check, Next (about 30 to 45 s)
 
@@ -29,7 +31,7 @@ Rules: one idea per video; never the hard part first; nothing at full speed but 
 | **Show** | one pass | The music, slow. The notes fall filled in the hand's colour. | none |
 | **Train with me** | count-in + one pass | "Your turn, play it with me." A bar of count-in (a click on each beat, the number big). The notes fall open for him; the piano only guides at 40%. **With a piano connected the video waits at a note he has not played a quarter of a second after it should sound, and goes on the moment he plays it.** | 5 to 7 |
 | **Practise** | his time | The video stops by itself: "Now pause, and play it two more times." A card counts his clean runs (every note group in order, at most two slips) or he taps Done. After two it goes on by itself. | 6 to 10 |
-| **Next** | 2 to 4 s | "Nice. Next up, the right hand, bars 1 and 2. Swipe up." | 8 to 12 |
+| **Next** | 2 to 4 s | "Nice. Next up, the right hand. Swipe up." | 6 to 12 |
 
 Then it loops Train with me, without the voice and without stopping, until he scrolls on.
 
@@ -39,7 +41,7 @@ The voice is the clock (HyperFrames): each piece appears when it is named.
 
 - Short sentences, at most 15 words. Active voice, spoken English, second person. Read it aloud; rewrite what sounds stiff.
 - One idea per sentence, one sentence per visual beat. Never read the screen word for word.
-- Name notes as letters with commas ("E, C, A, C") so each key lights on its word; write sharps and flats as they read ("F sharp", "B flat"). A lone capital A is read as the letter.
+- Name notes as letters with commas ("E, C, A, C") so each key lights on its word and the recorded voice can read the list from its pieces; in hand-written lines write sharps and flats as they read ("F sharp", "B flat"). A lone capital A is read as the letter (the voice is given "eigh": "ay" comes out as "eye").
 - Say the shape before the notes ("Top, middle, low, middle, on every beat"), and what moves ("Only the top note moves").
 - Pacing: 120 to 150 words a minute for teaching (the timeline estimates 2.4 words a second, `estimate` in `src/lib/voice.ts`). A scene line stays under about 19 words.
 - Punctuation is pacing: a full stop is a medium pause, a comma a short one, an ellipsis a long one. No exclamation marks on every line; one at a real payoff.
@@ -49,10 +51,11 @@ Where the words live: hand-written per phase in `src/lib/reelScripts.ts` (`talk`
 
 ## 4. The voice itself
 
-- Natural: Kokoro-82M on the device (`src/lib/kokoroWorker.ts`, voice `af_heart`), fetched once (about 90 MB) and cached; every line is made ahead while the video before it plays (`prepareVoice`), kept in IndexedDB.
-- Fallback: the device's speech engine, its most natural English voice, until Kokoro is ready or where it cannot run.
+- **Recorded**, the voice he hears: Kokoro-82M (`af_heart`) run in a session by `scripts/voice-bank.mjs`, every piece a small MP3 in `public/voice`, listed in `src/lib/voiceBank.json` with its length (so the timeline knows exactly how long each line lasts). A line plays whole if it was recorded whole, else sentence by sentence, else from its pieces (`voicePieces.ts`): the words around a list of notes, and each note name recorded on its own, mid-list ("E,") and at the end ("E."). The songs of the app are recorded line by line; a song he brings (a slot, like Interstellar Experience) only as sentences without note names, its hand-written `talk` lines and the pieces, so nothing of his file is in the app.
+- **After changing any line** (a script, a rule template): with the songs in the library, run `copy(JSON.stringify(await window.__voiceKeys()))` in the dev console, save it to a file in the scratchpad, and run `node scripts/voice-bank.mjs that-file.json` (needs ffmpeg; a few minutes). Commit `public/voice` and `voiceBank.json`.
+- A line not recorded yet is made on the device by the same model in a worker (`kokoroWorker.ts`): slow on a phone (seconds a line), so it is made ahead. The device's speech engine speaks only with the natural voice switched off (the user found it robotic).
 - Under the voice the piano steps back (70%); in Train with me the piano guides at 40%.
-- Captions: three to five words at a time, the word being said in blue, said words ink, words to come muted. Always on: most viewers watch muted.
+- Captions: three to five words at a time, the word being said on the yellow marker, said words ink, words to come muted. Always on: most viewers watch muted.
 
 ## 5. Picture and motion
 

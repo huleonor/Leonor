@@ -40,4 +40,27 @@ if (import.meta.env.DEV) {
     const song = await loadSong(entry);
     return { version: readSong(song).version, score: readSong(song).text, reels: reelFacts(song) };
   };
+  // Every piece of voice the videos of the songs in his library need, for scripts/voice-bank.mjs:
+  // copy(JSON.stringify(await window.__voiceKeys())) and save it as a file. A song of the app's own
+  // (public domain) is recorded line by line; a song he brought (a slot) only as sentences without
+  // note names and as pieces, so nothing of his file is recorded.
+  (window as unknown as { __voiceKeys: unknown }).__voiceKeys = async () => {
+    const { listSongs, loadSong } = await import('./lib/library');
+    const { clipsOf, timelineOf } = await import('./lib/reels');
+    const { SCRIPTS } = await import('./lib/reelScripts');
+    const { allItems, naturalText, sentences, splitSentence } = await import('./lib/voicePieces');
+    const talk = new Set(Object.values(SCRIPTS).flatMap(sc => sc.phases.flatMap(p => (p.talk ? Object.values(p.talk) : []))));
+    const keys = new Set<string>(allItems());
+    for (const entry of await listSongs()) {
+      let song;
+      try { song = await loadSong(entry); } catch { continue; }
+      if (!song) continue;
+      for (const clip of clipsOf(song)) for (const { text } of timelineOf(song, clip).lines) {
+        const pieces = sentences(text).map(splitSentence);
+        if (!entry.slot || talk.has(text) || pieces.every(p => p.length === 1)) { keys.add(text); continue; }
+        sentences(text).forEach((s, i) => (pieces[i].length === 1 ? keys.add(s) : pieces[i].forEach(k => keys.add(k))));
+      }
+    }
+    return [...keys].map(k => [k, naturalText(k)]);
+  };
 }

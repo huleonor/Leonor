@@ -1,12 +1,22 @@
 /**
- * The voice of the phase videos. First choice: a natural voice, Kokoro-82M run on the device in a
- * worker (kokoroWorker.ts; the model is fetched once, about 90 MB, then kept by the browser), each
- * line made ahead of time while the video before it plays. Until it is ready, or where it cannot
- * run, the device's own speech engine (Web Speech API, its most natural English voice). No server,
- * no recording, no key. Either way the caption follows the word being said.
+ * The voice of the phase videos. First choice: the natural voice recorded ahead of time (Kokoro-82M,
+ * af_heart, by scripts/voice-bank.mjs; public/voice, listed in voiceBank.json): every line the videos
+ * say is played from it, whole or from its pieces (voicePieces.ts), so it sounds like a person from
+ * the first video on any phone, offline once heard. A line not recorded (a new script not yet run
+ * through the recorder) is made on the device by the same model in a worker (kokoroWorker.ts, slow
+ * on a phone, so it is made ahead while the video before it plays). Only with the natural voice
+ * switched off, or where neither can play, the device's own speech engine. No server, no key. The
+ * caption follows the word being said.
  */
 import { get, set } from 'idb-keyval';
 import { audioContext } from './audio';
+import BANK from './voiceBank.json';
+import { naturalText, planLine, type Piece } from './voicePieces';
+
+/** What was recorded: key, then its file in public/voice and its length in seconds. */
+const bank = BANK as unknown as Record<string, [string, number]>;
+const recordedKey = (k: string) => k in bank;
+const planOf = (text: string) => (naturalVoiceWanted() ? planLine(text, recordedKey) : null);
 
 const KEY = 'hugos-piano:reel-voice';
 const listeners = new Set<() => void>();
@@ -42,11 +52,15 @@ function pick(): SpeechSynthesisVoice | null {
 }
 if (voiceSupported()) speechSynthesis.addEventListener?.('voiceschanged', () => { chosen = null; });
 
-// Note letters are read as letters: a lone capital A would be read as the word "a".
-const spoken = (text: string) => text.replace(/\b([A-G])b\b/g, '$1 flat').replace(/\bA\b/g, 'ay').replace(/#/g, ' sharp');
+// Note letters are read as letters: a lone capital A would be read as the word "a" (only a capital
+// A opening a sentence before a word is the article).
+const spoken = (text: string) => text.replace(/\b([A-G])(#|b)?m\b/g, (_, l: string, a?: string) => `${l}${a ?? ''} minor`)
+  .replace(/\b([A-G])b\b/g, '$1 flat').replace(/(^|[.!?]\s+)A(?= (?!sharp|flat|minor)[a-z])/g, '$1a').replace(/\bA\b/g, 'ay').replace(/#/g, ' sharp');
 
-/** Seconds a line takes to say, at the pace the voice speaks. */
+/** Seconds a line takes to say: exactly, when it was recorded; else at the pace the voice speaks. */
 export function estimate(text: string) {
+  const plan = planOf(text);
+  if (plan) return plan.reduce((a, p) => a + bank[p.key][1] + p.gap, 0) + 0.15;
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   const pauses = (text.match(/[.,:;]/g) ?? []).length;
   return words / 2.4 + pauses * 0.18 + 0.3;
@@ -60,6 +74,51 @@ export type NaturalState = 'off' | 'loading' | 'ready' | 'failed';
 let natural: NaturalState = 'off';
 let worker: Worker | null = null;
 const made = new Map<string, AudioBuffer>();
+/** Where each piece of a recorded line starts, in seconds and in characters of the line. */
+type Mark = { t0: number; t1: number; c0: number; c1: number };
+const marks = new Map<string, Mark[]>();
+const files = new Map<string, Promise<AudioBuffer | null>>();
+const joining = new Map<string, Promise<AudioBuffer | null>>();
+
+function file(name: string) {
+  let p = files.get(name);
+  if (!p) {
+    p = fetch(`/voice/${name}`).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+      .then(b => audioContext().decodeAudioData(b)).catch(err => { console.warn('[voice] recorded piece missing:', name, err); files.delete(name); return null; });
+    files.set(name, p);
+  }
+  return p;
+}
+
+/** A recorded line as one buffer: its pieces one after the other with their pauses, and its marks. */
+function joined(text: string, plan: Piece[]) {
+  let p = joining.get(text);
+  if (p) return p;
+  p = Promise.all(plan.map(x => file(bank[x.key][0]))).then(bufs => {
+    if (bufs.some(b => !b)) { joining.delete(text); return null; }
+    const c = audioContext(), rate = c.sampleRate;
+    const len = bufs.reduce((a, b, i) => a + b!.length + Math.round(plan[i].gap * rate), 0);
+    const out = c.createBuffer(1, Math.max(1, len), rate);
+    const ch = out.getChannelData(0);
+    const ms: Mark[] = [];
+    let at = 0, cursor = 0;
+    bufs.forEach((b, i) => {
+      // Resampled by the browser to the context's rate; any channel will do (they are mono).
+      ch.set(b!.getChannelData(0).subarray(0, Math.min(b!.length, len - at)), at);
+      const key = plan[i].key, said = key.startsWith('~') ? key.slice(1, -1) : key;
+      const c0 = Math.max(cursor, text.indexOf(said, cursor));
+      const c1 = c0 + said.length;
+      ms.push({ t0: at / rate, t1: (at + b!.length) / rate, c0, c1 });
+      cursor = c1;
+      at += b!.length + Math.round(plan[i].gap * rate);
+    });
+    made.set(text, out);
+    marks.set(text, ms);
+    return out;
+  });
+  joining.set(text, p);
+  return p;
+}
 const waiting = new Map<string, ((b: AudioBuffer | null) => void)[]>();
 const queue: string[] = [];
 let busy = false;
@@ -67,7 +126,7 @@ let busy = false;
 export const naturalVoiceWanted = () => { try { return localStorage.getItem(NATURAL) !== 'off'; } catch { return true; } };
 export function setNaturalVoice(on: boolean) {
   try { localStorage.setItem(NATURAL, on ? 'on' : 'off'); } catch { /* storage blocked */ }
-  if (on) startNatural(); else natural = 'off';
+  if (!on) natural = 'off';
   listeners.forEach(f => f());
 }
 export const naturalState = () => natural;
@@ -113,7 +172,7 @@ function pump() {
   if (!id) return;
   if (made.has(id)) { pump(); return; }
   busy = true;
-  worker.postMessage({ type: 'say', id, text: spoken(id), voice: VOICE_ID });
+  worker.postMessage({ type: 'say', id, text: naturalText(id), voice: VOICE_ID });
 }
 
 /**
@@ -122,8 +181,10 @@ function pump() {
  */
 export async function prepareVoice(texts: string[], first = false) {
   if (!naturalVoiceWanted()) return;
+  const rest = texts.filter(t => { const plan = planOf(t); if (plan) joined(t, plan); return !plan; });
+  if (!rest.length) return;
   startNatural();
-  for (const t of texts) {
+  for (const t of rest) {
     if (made.has(t)) continue;
     const kept = await get(`voice:${VOICE_ID}:${t}`).catch(() => undefined) as { pcm: Int16Array; rate: number } | undefined;
     if (kept) { made.set(t, toBuffer(kept.pcm, kept.rate)); continue; }
@@ -142,10 +203,13 @@ function playBuffer(text: string, buf: AudioBuffer, offset: number, onWord?: (c:
   const p = { src, buf, text, started: c.currentTime - offset, offset, raf: 0, onWord, onEnd };
   src.onended = () => { if (playingNatural === p) { cancelAnimationFrame(p.raf); playingNatural = null; onEnd?.(); } };
   src.start(0, offset);
-  // The voice gives no word marks: the caption follows the audio's own clock, by characters.
+  // The caption follows the audio's own clock: piece by piece for a recorded line, else by characters.
+  const ms = marks.get(text);
   const tick = () => {
-    const f = Math.min(1, (c.currentTime - p.started) / buf.duration);
-    onWord?.(Math.floor(f * text.length));
+    const el = c.currentTime - p.started;
+    const m = ms?.find(x => el < x.t1) ?? ms?.[ms.length - 1];
+    if (m) onWord?.(Math.floor(m.c0 + (m.c1 - m.c0) * Math.max(0, Math.min(1, (el - m.t0) / Math.max(0.05, m.t1 - m.t0)))));
+    else onWord?.(Math.floor(Math.min(1, el / buf.duration) * text.length));
     if (playingNatural === p) p.raf = requestAnimationFrame(tick);
   };
   playingNatural = p;
@@ -155,11 +219,22 @@ function playBuffer(text: string, buf: AudioBuffer, offset: number, onWord?: (c:
 let current: SpeechSynthesisUtterance | null = null;
 
 /** Say a line (stopping the one before); onWord reports the character the voice has reached. */
+let asked = 0;
 export function say(text: string, onWord?: (charIndex: number) => void, onEnd?: () => void) {
   if (!voiceOn()) return false;
   hush();
+  const ask = ++asked;
   const buf = made.get(text);
   if (buf) { playBuffer(text, buf, 0, onWord, onEnd); return true; }
+  const plan = planOf(text);
+  if (plan) {
+    // Recorded: a moment to fetch its pieces (kept after the first time), then it plays.
+    joined(text, plan).then(b => {
+      if (ask !== asked) return;
+      if (b) { if (heldBack) pausedNatural = { text, buf: b, at: 0, onWord, onEnd }; else playBuffer(text, b, 0, onWord, onEnd); }
+    });
+    return true;
+  }
   if (naturalVoiceWanted() && natural !== 'failed') prepareVoice([text], true);
   if (!voiceSupported()) return false;
   const u = new SpeechSynthesisUtterance(spoken(text));
@@ -176,13 +251,17 @@ export function say(text: string, onWord?: (charIndex: number) => void, onEnd?: 
   speechSynthesis.speak(u);
   return true;
 }
+let heldBack = false;
 export function hush() {
+  asked++;
+  heldBack = false;
   if (playingNatural) { const p = playingNatural; playingNatural = null; cancelAnimationFrame(p.raf); try { p.src.stop(); } catch { /* done */ } }
   pausedNatural = null;
   if (!voiceSupported()) return; current = null; speechSynthesis.cancel();
 }
 let pausedNatural: { text: string; buf: AudioBuffer; at: number; onWord?: (c: number) => void; onEnd?: () => void } | null = null;
 export function pauseVoice() {
+  heldBack = true;
   if (playingNatural) {
     const p = playingNatural; playingNatural = null; cancelAnimationFrame(p.raf);
     pausedNatural = { text: p.text, buf: p.buf, at: audioContext().currentTime - p.started, onWord: p.onWord, onEnd: p.onEnd };
@@ -192,6 +271,7 @@ export function pauseVoice() {
   if (voiceSupported() && speechSynthesis.speaking) speechSynthesis.pause();
 }
 export function resumeVoice() {
+  heldBack = false;
   if (pausedNatural) { const q = pausedNatural; pausedNatural = null; if (q.at < q.buf.duration) playBuffer(q.text, q.buf, q.at, q.onWord, q.onEnd); return; }
   if (voiceSupported() && speechSynthesis.paused) speechSynthesis.resume();
 }

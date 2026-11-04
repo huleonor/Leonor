@@ -45,6 +45,12 @@ export default defineConfig({
         globIgnores: ['**/kokoroWorker-*.js'],
         runtimeCaching: [
           {
+            // The recorded voice of the videos and the sound effects: fetched as the videos need them, kept.
+            urlPattern: ({ url }) => url.pathname.startsWith('/voice/') || url.pathname.startsWith('/sfx/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'voice', expiration: { maxEntries: 4000 }, cacheableResponse: { statuses: [0, 200] } },
+          },
+          {
             // Piano samples: large and immutable, keep them offline once heard.
             urlPattern: ({ url }) => url.hostname === 'smpldsnds.github.io' || url.hostname === 'danigb.github.io',
             handler: 'CacheFirst',
