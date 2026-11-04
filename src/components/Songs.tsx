@@ -93,7 +93,7 @@ export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }:
         <button className="lib-now" onClick={() => onOpen(now)} aria-label={`Learning now: ${now.entry.title}, ${pctFor(now.song)}% learnt`}>
           <OpeningStaff song={now.song} />
           <span className="lib-now-foot">
-            <span><b>{now.entry.title}</b><small>Learning now. {now.entry.composer}</small></span>
+            <span><b>{now.entry.title}</b><small>{['Learning now', now.entry.composer].filter(Boolean).join('. ')}</small></span>
             <span className="num" aria-hidden="true">{pctFor(now.song)}<i>%</i></span>
           </span>
         </button>

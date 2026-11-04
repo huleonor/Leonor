@@ -14,6 +14,8 @@ export default defineConfig({
     __NATIVE_BUILD__: JSON.stringify(pkg.ios.build),
     __NATIVE_VERSION__: JSON.stringify(pkg.ios.version),
   },
+  // The natural voice runs in a module worker (transformers.js needs import.meta).
+  worker: { format: 'es' },
   plugins: [
     react(),
     VitePWA({
@@ -39,6 +41,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,mid,woff2}'],
+        // The natural voice's worker (transformers.js) is large: fetched when the voice is first used, not precached.
+        globIgnores: ['**/kokoroWorker-*.js'],
         runtimeCaching: [
           {
             // Piano samples: large and immutable, keep them offline once heard.

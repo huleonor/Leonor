@@ -123,7 +123,7 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
     <div className="page journey">
       <section className="journey-hero">
         <h1>{entry.title}</h1>
-        <p className="journey-by">{entry.composer}{reels.length ? `. ${reels.length} phases, ${bars} bars` : ''}</p>
+        <p className="journey-by">{[entry.composer, reels.length ? `${reels.length} phases, ${bars} bars` : ''].filter(Boolean).join('. ')}</p>
         <p className="num-line" aria-label={`${pct}% of the song learnt`}>
           <motion.span className="num" key={pct} initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING}>{pct}</motion.span>
           <span>percent learnt{next ? `, phase ${next.r.n} next` : ''}</span>
