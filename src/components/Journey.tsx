@@ -1,14 +1,14 @@
 import { motion } from 'motion/react';
 import { L } from '../lib/lang';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
 import { meterOf, pctOf } from '../lib/mastery';
 import { clipsOf, onSeen, reelsOf, seenReels, type Reel } from '../lib/reels';
 import { askStrategy } from '../lib/strategy';
-import type { SongEntry } from '../lib/types';
+import type { Song, SongEntry } from '../lib/types';
 import { IconCheck, IconImport, IconKeysFill, IconPlay } from './Icons';
 import { SOFT, SPRING } from './Motion';
-import { SectionRow } from './SectionRow';
+import { listenBars, listening, onListening, stopListening } from '../lib/listen';
 import { type Section } from './SongScreen';
 
 const CURRENT = 'hugos-piano:current-song';
@@ -57,13 +57,15 @@ interface Props {
   onSongs: () => void;
   /** The video he was on, to pick up again (ContinueCard), in place of the Watch button. */
   resume?: React.ReactNode;
+  /** Hear a section played through with the hands (a video); without it, the piano alone. */
+  onHear?: (r: Reel) => void;
 }
 
 /**
  * Song: the song being learnt, phase by phase. Every phase is one video that explains its patterns
  * and tricks, and its practice; the next thing to do is lit.
  */
-export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, onPractice, onWholeSong, onBringMidi, onSongs, resume }: Props) {
+export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, onPractice, onWholeSong, onBringMidi, onSongs, resume, onHear }: Props) {
   useBump(onSeen);
   const entry = entries.find(e => e.id === id || e.slot === id);
   const info = entry ? infos[entry.id] : undefined;
@@ -148,16 +150,15 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
         </div>
       </section>
 
-      <SectionRow song={song} sections={reels} current={next?.r.id} onEnter={r => onWatch(song.entry.id, reels.indexOf(r))} onWhole={() => onWholeSong(info)} />
-
-      <PhasePath
+      <SectionList
+        song={song} onHear={onHear}
         nodes={[
           ...rows.map(x => ({
             key: x.r.id, n: String(x.r.n), title: x.r.section, line: x.r.words.title === x.r.section ? status(x) : `${x.r.words.title}. ${status(x)}`,
             state: next === x ? 'next' as const : x.watched && (x.practised || !x.section) ? 'done' as const : 'ahead' as const,
-            onWatch: () => onWatch(song.entry.id, x.i), onPractice: x.section ? () => onPractice(song.entry.id, x.r) : undefined,
+            onWatch: () => onWatch(song.entry.id, x.i), onPractice: x.section ? () => onPractice(song.entry.id, x.r) : undefined, reel: x.r,
           })),
-          { key: 'whole', n: String(bars), title: L('The whole song', 'A música toda'), line: L(`All ${bars} bars, with the beat`, `Os ${bars} compassos, com o ritmo`), state: 'finale' as const, onPractice: () => onWholeSong(info) },
+          { key: 'whole', n: String(bars), title: L('Full song', 'Música toda'), line: L(`All ${bars} bars, with the beat`, `Os ${bars} compassos, com o ritmo`), state: 'finale' as const, onPractice: () => onWholeSong(info) },
         ]}
       />
     </div>
@@ -168,57 +169,39 @@ interface PathNode {
   key: string; n: string; title: string; line: string;
   state: 'done' | 'next' | 'ahead' | 'finale';
   onWatch?: () => void; onPractice?: () => void;
+  /** The section, to hear it. */
+  reel?: Reel;
 }
 
 /**
- * The song's phases as a path of levels: square cards swinging left and right down the page, joined
- * by a dashed curve, the next one pink and taped with its "Start" tag, those done ticked, the whole
- * song at the end in ink. Tapping a card opens its two ways in: watch its videos, or practise it.
+ * The song's sections as a list of index cards, in the order of the song (the 2026-11 audit, P2:
+ * a list, not a winding path): each with its number (a tick once learnt), its name in the song's
+ * form, what it is and where he is; tapping it opens its videos; Hear plays it on the app's piano,
+ * Practise opens its lessons. The next one is pink and taped; the full song at the end in ink.
  */
-function PhasePath({ nodes }: { nodes: PathNode[] }) {
-  const [open, setOpen] = useState<string | null>(null);
-  const box = useRef<HTMLOListElement>(null);
-  const [w, setW] = useState(360);
-  useEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setW(el.clientWidth));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  const STEP = 132, TOP = 60;
-  // Where each card sits across the page, as a share of the width: a wave, never a straight line.
-  const WAVE = [0.26, 0.5, 0.74, 0.62, 0.36, 0.2, 0.44, 0.7];
-  const xs = nodes.map((_, i) => WAVE[i % WAVE.length]);
-  const h = TOP + (nodes.length - 1) * STEP + 90;
-  // The dashed trail through the centres, curving from card to card (in a 100-wide box).
-  const d = nodes.map((_, i) => {
-    const x = xs[i] * 100, y = TOP + i * STEP;
-    if (!i) return `M ${x} ${y}`;
-    const px = xs[i - 1] * 100, py = TOP + (i - 1) * STEP;
-    return `C ${px} ${py + STEP * 0.55}, ${x} ${y - STEP * 0.55}, ${x} ${y}`;
-  }).join(' ');
+function SectionList({ song, nodes, onHear }: { song: Song; nodes: PathNode[]; onHear?: (r: Reel) => void }) {
+  const [, bump] = useState(0);
+  useEffect(() => onListening(() => bump(x => x + 1)), []);
+  useEffect(() => () => stopListening(), []);
+  const now = listening();
   return (
-    <ol className="phase-path" ref={box} style={{ height: h }}>
-      <svg className="path-trail" viewBox={`0 0 100 ${h}`} preserveAspectRatio="none" aria-hidden="true"><path d={d} /></svg>
+    <ol className="section-list" aria-label={L('Sections of the song', 'Secções da música')}>
       {nodes.map((x, i) => {
-        // The words go on the side with more room.
-        const left = xs[i] < 0.5;
-        const room = Math.max(90, Math.min(220, (left ? (1 - xs[i]) : xs[i]) * w - 56));
-        const isOpen = open === x.key;
+        const r = x.reel, on = !!r && now === `${song.entry.id}:${r.from}-${r.to}`;
+        const go = x.onWatch ?? x.onPractice;
         return (
-          <motion.li key={x.key} className={`path-node ${x.state} ${left ? 'left' : 'right'}`} style={{ top: TOP + i * STEP, left: `${xs[i] * 100}%` }}
-            initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ ...SPRING, delay: i * 0.04 }}>
-            {x.state === 'next' && <span className="path-start" aria-hidden="true">{L('Start', 'Começar')}</span>}
-            <button className="path-card" onClick={() => setOpen(isOpen ? null : x.key)} aria-expanded={isOpen} aria-label={`${x.title}. ${x.line}`}>
-              {x.state === 'done' ? <IconCheck size={30} /> : x.state === 'finale' ? <IconKeysFill size={28} /> : <span className="num">{x.n}</span>}
+          <motion.li key={x.key} className={`sec-card ${x.state}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: i * 0.03 }}>
+            <button className="sec-main" onClick={() => { stopListening(); go?.(); }}
+              aria-label={`${x.title}. ${x.line}. ${x.onWatch ? L('Watch the videos', 'Ver os vídeos') : L('Play the whole song', 'Tocar a música toda')}`}>
+              <span className="sec-num" aria-hidden="true">{x.state === 'done' ? <IconCheck size={22} /> : x.state === 'finale' ? <IconKeysFill size={22} /> : x.n}</span>
+              <span className="sec-words"><b>{x.title}</b><small>{x.line}</small></span>
+              {x.onWatch && <IconPlay size={20} />}
             </button>
-            <span className="path-label" aria-hidden="true" style={{ width: room }}><b>{x.title}</b><small>{x.line}</small></span>
-            {isOpen && (
-              <motion.div className="path-pop" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}>
-                {x.onWatch && <button className="btn go" onClick={x.onWatch}><IconPlay size={16} />{L('Watch the videos', 'Ver os vídeos')}</button>}
-                {x.onPractice && <button className="btn" onClick={x.onPractice}><IconKeysFill size={16} />{x.state === 'finale' ? L('Play the whole song', 'Tocar a música toda') : L('Practise', 'Praticar')}</button>}
-              </motion.div>
+            {(r || (x.onPractice && x.onWatch)) && (
+              <span className="sec-more">
+                {r && <button className="btn quiet" onClick={() => (onHear ? onHear(r) : on ? stopListening() : listenBars(song, r.from, r.to))} aria-pressed={onHear ? undefined : on}>{on ? L('Stop', 'Parar') : L('Hear', 'Ouvir')}</button>}
+                {x.onPractice && x.onWatch && <button className="btn quiet" onClick={() => { stopListening(); x.onPractice!(); }}>{L('Practise', 'Praticar')}</button>}
+              </span>
             )}
           </motion.li>
         );

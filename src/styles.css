@@ -827,35 +827,30 @@ p { margin: 0; }
   .input-choices .choice svg { grid-row: span 2; margin: 0; }
 }
 
-/* ---------- Song: the phases as a path of levels ---------- */
-.phase-path { position: relative; list-style: none; margin: 10px 0 0; padding: 0; }
-.path-trail { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.path-trail path { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 2 9; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-.path-node { position: absolute; width: 0; height: 0; }
-.path-card { position: absolute; left: -38px; top: -38px; width: 76px; height: 76px; display: grid; place-items: center; background: var(--white); border: 2px solid var(--ink); color: var(--ink); box-shadow: 4px 4px 0 var(--ink); transform: rotate(-3deg); transition: background-color var(--dur) var(--ease); }
-.path-node:nth-child(odd) .path-card { transform: rotate(4deg); }
-.path-card .num { font-size: 32px; }
-.path-card:hover { background: var(--marker); }
-.path-card:active { box-shadow: 1px 1px 0 var(--ink); translate: 3px 3px; }
-.path-node.done .path-card { background: var(--teal-soft); }
-.path-node.ahead .path-card { color: var(--ink-2); border-style: dashed; box-shadow: none; }
-.path-node.next .path-card { width: 92px; height: 92px; left: -46px; top: -46px; background: var(--pink); color: var(--white); box-shadow: 4px 4px 0 var(--ink); }
-.path-node.next .path-card .num { font-size: 40px; }
-.path-node.next .path-card::before { content: ''; position: absolute; top: -12px; left: 18px; width: 56px; height: 20px; background: var(--tape); transform: rotate(-8deg); }
-.path-node.finale .path-card { width: 92px; height: 92px; left: -46px; top: -46px; background: var(--ink); color: var(--white); box-shadow: 4px 4px 0 var(--pink); }
-.path-start { position: absolute; left: -38px; top: -84px; width: 76px; text-align: center; padding: 3px 0; background: var(--white); border: 2px solid var(--ink); font: 700 13px var(--font-mono); color: var(--pink-text); transform: rotate(-3deg); }
-.path-label { position: absolute; top: -26px; display: grid; gap: 3px; }
-.path-node.left .path-label { left: 58px; text-align: left; }
-.path-node.right .path-label { right: 58px; text-align: right; justify-items: end; }
-.path-node.next .path-label { top: -30px; }
-.path-node.next.left .path-label, .path-node.finale.left .path-label { left: 66px; }
-.path-node.next.right .path-label, .path-node.finale.right .path-label { right: 66px; }
-.path-label b { font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.05; }
-.path-label small { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
-.path-pop { position: absolute; top: 54px; left: -110px; width: 220px; z-index: 6; display: grid; gap: 10px; padding: 14px; background: var(--white); border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
-.path-node.left .path-pop { left: -40px; }
-.path-node.right .path-pop { left: -180px; }
-.path-pop .btn { justify-content: flex-start; }
+/* ---------- Song: its sections ---------- */
+/* The song's sections, a list of index cards (Journey.tsx SectionList): the number or a tick, the
+   name in the song's form, what it is; Hear and Practise under it. The next one pink and taped. */
+.section-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.sec-card { position: relative; background: var(--white); border: 2px solid var(--ink); transform: rotate(-0.6deg); }
+.sec-card:nth-child(even) { transform: rotate(0.5deg); }
+.sec-main { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 10px 14px; text-align: left; color: var(--ink); }
+.sec-main:hover { background: var(--marker); }
+.sec-num { display: grid; place-items: center; width: 44px; height: 44px; border: 2px solid var(--ink); font: 900 20px var(--font); background: var(--paper); }
+.sec-words { display: grid; gap: 2px; min-width: 0; }
+.sec-words b { font: 700 20px/1.15 var(--font-display); }
+.sec-words small { font: 700 13px/1.35 var(--font-mono); color: var(--muted); }
+.sec-more { display: flex; gap: 20px; padding: 0 14px 10px 72px; }
+.sec-more .btn.quiet { min-height: 44px; }
+.sec-card.ahead .sec-num { border-style: dashed; color: var(--ink-2); }
+.sec-card.done .sec-num { background: var(--teal-soft); }
+.sec-card.next { background: var(--pink-soft); }
+.sec-card.next .sec-num { background: var(--pink); color: var(--white); border-color: var(--ink); }
+.sec-card.next::before { content: ''; position: absolute; top: -10px; left: 30px; width: 64px; height: 20px; background: var(--tape); transform: rotate(-6deg); }
+.sec-card.finale { background: var(--ink); }
+.sec-card.finale .sec-main { color: var(--paper); }
+.sec-card.finale .sec-main:hover { background: var(--ink-2); }
+.sec-card.finale .sec-num { background: var(--ink); color: var(--paper); border-color: var(--paper); }
+.sec-card.finale .sec-words small { color: var(--paper); }
 
 /* ---------- Home: the video he was on, and the menu ---------- */
 .home { padding: calc(30px + var(--safe-t)) 0 40px; display: grid; gap: 24px; }

@@ -968,3 +968,18 @@ export function explainClips(song: Song, clip: Clip): Clip[] {
   out.forEach((c, i) => { c.next = out[i + 1] ? about(out[i + 1]) : tr('the whole part again', 'a parte toda outra vez'); });
   return out;
 }
+
+/**
+ * A section played through at its real speed with the hands on the keys (Hear on the Song tab, the
+ * 2026-11 audit): one video, no voice, the notes falling and the piano playing, to hear and watch
+ * the music before learning it. Not part of the series (it is never counted as watched).
+ */
+export function listenClip(song: Song, reel: Reel): Clip | undefined {
+  const first = clipsOf(song).find(c => c.phase.id === reel.id);
+  if (!first) return undefined;
+  return {
+    ...first, id: `${reel.id}-listen`, kind: 'intro', head: reel.section, say: '', from: reel.from, to: reel.to, where: '', k: 1, of: 1, next: undefined,
+    segments: [{ kind: 'both', from: reel.from, to: reel.to, speed: 1, label: tr('Listen', 'Ouve'), listen: true }],
+    chords: reel.chords,
+  };
+}

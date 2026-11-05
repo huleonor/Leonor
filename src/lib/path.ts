@@ -12,7 +12,6 @@ import { useEffect, useState } from 'react';
 import type { SongInfo } from './catalog';
 import { getCourseProgress, recordStep, type CourseProgress, type CourseStep } from './course';
 import { addExtra, allNodes, extraCount, MAX_EXTRAS, nodesOf, sectionOf, SECTIONS, unitSkills, UNITS, type NodeHands, type PathNode, type Unit } from './curriculum';
-import { chestOpened } from './energy';
 import { EXERCISE_TITLE, LEVEL_NAME, levelFor, makeExercise } from './exercises';
 import { dueSkills, loadProfile, SKILLS, weakest, type SkillId } from './skills';
 import { dayKey } from './stats';
@@ -220,7 +219,8 @@ export async function loadPath(): Promise<{ state: PathState; progs: Record<stri
     const isPlaced = placed.has(unit.id);
     const open = prevDone || isPlaced;
     let done: boolean;
-    if (node.kind === 'chest') done = chestOpened(node.id);
+    // No economy any more (no gems, no chests to open): a chest on the old path counts as passed.
+    if (node.kind === 'chest') done = true;
     else if (node.kind === 'trophy') done = (prog.test?.stars ?? 0) >= 2 || isPlaced;
     else done = got.length >= n || isPlaced;
     // A practice lesson he does not need: the unit's skills are already well past its goal.

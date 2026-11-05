@@ -6,7 +6,7 @@ import { scheduleReminders, startWebReminders } from './lib/reminders';
 import { currentSongId, Journey, practiceFor, setCurrentSong } from './components/Journey';
 import { ReelFeed } from './components/Reels';
 import { ContinueCard, lastReel, rememberReel } from './components/HomePage';
-import { clipsOf, seenReels, type Reel } from './lib/reels';
+import { clipsOf, listenClip, seenReels, type Clip, type Reel } from './lib/reels';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
 import { SettingsSheet } from './components/SettingsSheet';
@@ -57,6 +57,9 @@ export default function App() {
   const [links, setLinks] = useState<Record<Source, LinkState>>(linkState);
   // The piano, asked once before the first videos (PianoStep.tsx): what to do after it.
   const [pianoNext, setPianoNext] = useState<(() => void) | null>(null);
+  // A section played through with the hands (Hear on the Song tab): one video on its own.
+  const [hearing, setHearing] = useState<Clip | null>(null);
+  useEffect(() => { if (tab !== 'watch') setHearing(null); }, [tab]);
   /** Runs fn now, or after the piano step when it is due; true when it waits for the step. */
   const viaPiano = (fn: () => void) => {
     if (!pianoAsked() && !Object.values(linkState()).some(l => l.status === 'on')) { setPianoNext(() => fn); return true; }
@@ -199,6 +202,7 @@ export default function App() {
       onWholeSong={info => openSheet(info)}
       onBringMidi={slot => pickFile(slot)}
       onSongs={() => setTab('library')}
+      onHear={r => { const song = currentInfo?.song; const c = song && listenClip(song, r); if (c) { unlockAudio(); setHearing(c); setTab('watch'); } }}
       resume={currentInfo?.song && currentReels.length && currentEntry && (currentEntry.id === current || currentEntry.slot === current) ? (
         <ContinueCard song={currentInfo.song} clip={currentReels[feedStart()]} onContinue={() => { unlockAudio(); viaPiano(() => { setWatch(null); setTab('watch'); }); }} />
       ) : undefined}
@@ -274,13 +278,13 @@ export default function App() {
             {tab === 'watch' ? (
               currentInfo?.song && currentReels.length ? (
                 <ReelFeed
-                  key={`${currentInfo.entry.id}-${watch?.n ?? 0}`} embedded
-                  song={currentInfo.song} reels={currentReels} start={feedStart()}
+                  key={`${currentInfo.entry.id}-${hearing?.id ?? watch?.n ?? 0}`} embedded
+                  song={currentInfo.song} reels={hearing ? [hearing] : currentReels} start={hearing ? 0 : feedStart()}
                   onClose={() => setTab('song')}
                   onPractice={reel => practise(currentInfo.entry.id, reel.phase)}
                   onPiano={() => setSheet('settings')}
                   onSpeed={v => { setVideoPrefs({ pace: v }); update({ videoPace: v }); }}
-                  onActive={(_, c) => { if (c.kind !== 'fix') rememberReel(currentInfo.entry.id, c.id); }}
+                  onActive={(_, c) => { if (c.kind !== 'fix' && !hearing) rememberReel(currentInfo.entry.id, c.id); }}
                 />
               ) : journey
             ) : tab === 'song' ? journey : (

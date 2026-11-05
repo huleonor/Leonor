@@ -679,8 +679,11 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
   const clock = useReelClock(tl, active, () => {
     // The first time through, what his piano showed tells the next videos how to go.
     if (loopsRef.current === 0) report();
-    markSeen(song.entry.id, reel.id);
-    if (reel.k === reel.of) markSeen(song.entry.id, reel.phase.id);
+    // A section played through (Hear) is not part of the series: it never counts as watched.
+    if (!reel.id.endsWith('-listen')) {
+      markSeen(song.entry.id, reel.id);
+      if (reel.k === reel.of) markSeen(song.entry.id, reel.phase.id);
+    }
     setLoops(n => n + 1);
     // TikTok: it starts again by itself, from Train with me.
     window.setTimeout(() => clockRef.current?.play(tl.loopFrom), 0);
@@ -1180,7 +1183,7 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
         {items.map((r, i) => (
           <section key={r.id} data-i={i} className="reel-snap">
             {Math.abs(i - active) <= 1 && (
-              <ReelPlayer song={song} reel={r} index={i} count={items.length} active={i === active} onPiano={onPiano} pace={pace} onResult={x => result(i, x)} sections={sections} onSection={toSection} onSpeed={onSpeed}
+              <ReelPlayer song={song} reel={r} index={i} count={items.length} active={i === active} onPiano={onPiano} pace={pace} onResult={x => result(i, x)} sections={items.length > 1 ? sections : undefined} onSection={toSection} onSpeed={onSpeed}
                 onPractice={() => onPractice(r, i)} onNext={i < items.length - 1 ? () => goTo(i + 1) : undefined} onExplain={() => explain(i)} />
             )}
           </section>
