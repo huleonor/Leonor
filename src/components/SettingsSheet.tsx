@@ -108,7 +108,7 @@ export function SettingsSheet({ settings, update, links, connectInput, onCheck, 
               {copied ? 'Link copied' : 'Copy the SideStore link'}
             </button>
           )}
-          <p className="fine credits">Sheet music engraved with abcjs. Type: the system's Times, Helvetica and Courier.</p>
+          <p className="fine credits">Sheet music engraved with abcjs. Type: the system's Times, Helvetica and Courier. The hands in the videos are based on &quot;Rigged hand&quot; by Elena FF (Sketchfab), CC BY-SA 4.0.</p>
         </section>
       </div>
     </div>
