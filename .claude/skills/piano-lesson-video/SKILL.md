@@ -15,10 +15,14 @@ A song is cut into phases (where the music changes). Each phase is a run of vide
 | --- | --- | --- |
 | The idea | 100% | The phase heard once while the voice says what it is made of. Only heard, never played. |
 | The pattern | 30 to 50% | Before the first hand video of a step that brings a new figure (a beat of three notes or more that the bar repeats): that one beat alone, four times in a row, then Train with me four times. The voice names its keys, which finger on which key and where it sits from middle C: "First, just the pattern. E, C, A, C. Finger 3 on E. Finger 2 on C. Thumb on A. It sits just above middle C." |
+| The shape on each chord | the pattern's speed | Right after the pattern, at the start of the phase: the same figure on each chord it lands on in the phase, one after the other (up to four, once each), two rounds of Train with me. "Now the same shape on each chord. E, C, A, C. A, E, C, E. Keep the hand in its shape and move it as one." |
+| The move | slower than the pattern | After the chords: two of them back and forth three times (up to two moves a figure), two rounds. The voice says what moves: "The move. From E, C, A, C. To E, B, G, B. The top note stays. The other fingers move to B and G." (or the whole hand moves, or only some fingers). |
 | Left hand, one step | 50% at most | Only when the left hand plays a shape he has not met **and has something to learn**: six notes or more over three keys or more. |
 | Right hand, one step | 50% at most | Same rule. A figure over a new chord (top, middle, low, middle) counts as met, and so does a bar three quarters the same (an inner note more or less). |
 | Both hands, one step | 60% at most | Always, unless only the right hand plays there. A hand that only holds a note or an octave is said here ("The left hand only holds an octave: E, F."). Steps of known shapes in a row become one video up to eight bars: "Same shapes as before, now on new chords: G, D." |
 | The whole phase | 75% | At most sixteen bars a video. The payoff of the phase. |
+
+**Patterns and moves are the lesson** (the user, 2026-11: "more focused on the patterns, explaining and repeating movements and patterns, that is where you really learn"): every phase opens with its figures, each hand's figure alone, then on each of its chords, then the moves between them, explained and repeated, before any step of bars.
 
 **Patterns first, slow, and always which keys** (the user, 2026-11: "the goal is to learn the patterns from the start; it goes to a part that is too hard; explain which keys"): a new figure is learnt on its own before the bars that use it; the speed is set by how many notes go by, about 2.5 a second for a hand alone, 3 for both hands, 2 for a pattern (never above 50% for a hand, 60% for both, never under 30%); and every new shape is said with its keys, the finger on each and where the hand sits on the keyboard (from middle C), not only its letters.
 

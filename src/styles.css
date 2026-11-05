@@ -466,7 +466,7 @@ p { margin: 0; }
 .reel-progress i { flex: 1; height: 3px; background: var(--rule); overflow: hidden; }
 .reel-progress b { display: block; height: 100%; background: var(--ink); }
 .reel-head { display: grid; gap: 6px; align-content: start; padding: 16px 18px 6px; }
-.reel-kicker { justify-self: start; font: 700 clamp(13px, 2vh, 16px)/1.2 var(--font-mono); color: var(--ink); background: var(--marker); padding: 2px 6px; transform: rotate(-1.5deg); }
+.reel-kicker { justify-self: start; max-width: calc(100% - 120px); font: 700 clamp(13px, 2vh, 16px)/1.2 var(--font-mono); color: var(--ink); background: var(--marker); padding: 2px 6px; transform: rotate(-1.5deg); }
 .reel-meta { font-size: 12px; font-family: var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
 .reel-screen:not(.embedded) .reel-head { padding-left: 64px; }
 .reel-speed { padding: 3px 8px; background: var(--ink); color: var(--white); font: 700 12px var(--font-mono); white-space: nowrap; }
@@ -556,6 +556,7 @@ p { margin: 0; }
   .reel-hold { left: auto; right: 16px; width: min(440px, 46%); }
   .app.watching .reel-head { padding-left: 74px; }
   .app.watching .reel-kicker { margin-left: 0; }
+  .reel-kicker { max-width: none; white-space: nowrap; }
 }
 @media (min-aspect-ratio: 5 / 4) and (max-height: 500px) {
   .reel-hook { font-size: 28px; }
