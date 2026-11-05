@@ -4,8 +4,9 @@
  * video stays flat (`Lanes` in Reels.tsx).
  *
  * The model: "Rigged hand" by Elena FF (Sketchfab, CC BY-SA 4.0, `public/models/hand` with its
- * licence; credited in Settings): a skinned human hand with palm volume, knuckle creases and
- * fingernails in its skin texture, a deforming bone for every metacarpal and phalanx. The right
+ * licence; credited in Settings): a skinned human hand with palm volume, a deforming bone for every
+ * metacarpal and phalanx. It is drawn like a comic (the user's choice 2026-11, from a piano video
+ * with drawn hands): flat skin in three tones from one light and an ink line round it. The right
  * hand is mirrored for the left. Seen from above as he sees his own hands at the piano, on its own
  * see-through canvas over the flat keys; the keys' plane maps one to one onto their pixels
  * (`KeysGeom`), so a fingertip placed on a key lands on it.
@@ -29,11 +30,19 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OutlineEffect } from 'three/examples/jsm/effects/OutlineEffect.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import type { ReelTimeline } from '../lib/reels';
 import { isBlack } from '../lib/names';
 import type { Hand } from '../lib/types';
 import type { KeysGeom } from './Reels';
+
+/** The toon ramp read in colour (three's own chunk takes only the red channel). */
+const RAMP = `uniform sampler2D gradientMap;
+vec3 getGradientIrradiance( vec3 normal, vec3 lightDirection ) {
+  float dotNL = dot( normal, lightDirection );
+  return texture2D( gradientMap, vec2( dotNL * 0.5 + 0.5, 0.0 ) ).rgb;
+}`;
 
 let model: Promise<THREE.Object3D> | null = null;
 const loadModel = () => (model ??= new GLTFLoader().loadAsync('/models/hand/hand.glb').then(g => g.scene));
@@ -63,20 +72,34 @@ type Rig = {
 
 export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
   const box = useRef<HTMLDivElement>(null);
+  // Read live, so a change of the named key never rebuilds the renderer.
+  const untilRef = useRef(namedUntil);
+  untilRef.current = namedUntil;
   useEffect(() => {
     const host = box.current!;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
     host.appendChild(renderer.domElement);
+    // Drawn, not photographed (the user's choice 2026-11, from a piano video with comic hands): the
+    // skin is flat colour in three tones from the light, with an ink line round the hand.
+    const css = getComputedStyle(host);
+    const tok = (name: string, fb: string) => new THREE.Color(css.getPropertyValue(name).trim() || fb);
+    const skin = tok('--hand-skin', '#F6D2B4'), shade = tok('--hand-shade', '#DCA486'), deep = tok('--hand-deep', '#B97E66');
+    const line = tok('--hand-line', '#3A2620');
+    // The bands of the toon ramp hold the skin's three tones exactly: the material is white and the
+    // ramp itself is coloured, so the light only chooses the band.
+    const ramp = new Uint8Array(4 * 3);
+    const srgb = { r: 0, g: 0, b: 0 };
+    [deep, shade, skin].forEach((c, i) => { c.getRGB(srgb, THREE.SRGBColorSpace); ramp.set([srgb.r * 255, srgb.g * 255, srgb.b * 255, 255], i * 4); });
+    const gradient = new THREE.DataTexture(ramp, 3, 1, THREE.RGBAFormat);
+    gradient.colorSpace = THREE.SRGBColorSpace;
+    gradient.minFilter = gradient.magFilter = THREE.NearestFilter; gradient.needsUpdate = true;
+    const outline = new OutlineEffect(renderer, { defaultThickness: 0.006, defaultColor: [line.r, line.g, line.b], defaultAlpha: 1, defaultKeepAlive: true });
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(26, 1, 1, 20000);
-    // Soft light from above the music stand, warm like the paper, a cool fill, a rim for the edges.
-    scene.add(new THREE.HemisphereLight(0xfff3e2, 0x8f7f6a, 1.25));
-    const key = new THREE.DirectionalLight(0xfff1dc, 2.3); key.position.set(-0.45, 0.65, 1); scene.add(key);
-    const fill = new THREE.DirectionalLight(0xdfe8ff, 0.55); fill.position.set(0.8, -0.3, 0.6); scene.add(fill);
-    const rim = new THREE.DirectionalLight(0xffffff, 0.5); rim.position.set(0, 1, -0.4); scene.add(rim);
+    // One light from above the music stand, a little from the left, as in a drawing; at pi it gives
+    // back the ramp's colours exactly (Lambert divides by pi), with nothing else lighting the skin.
+    const key = new THREE.DirectionalLight(0xffffff, Math.PI); key.position.set(-0.5, 0.7, 1); scene.add(key);
 
     const rigs: Partial<Record<Hand, Rig>> = {};
     let alive = true;
@@ -98,8 +121,9 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           const s = o as THREE.SkinnedMesh;
           if (s.isSkinnedMesh) {
             skinned = s; s.frustumCulled = false;
-            const mat = (s.material as THREE.MeshPhysicalMaterial).clone();
-            mat.side = THREE.DoubleSide; mat.roughness = 0.6; mat.sheen = 0.3; mat.sheenRoughness = 0.6; mat.sheenColor = new THREE.Color(0xffe2cc);
+            const mat = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: gradient });
+            // three's toon ramp reads only its red channel; this one is read in colour.
+            mat.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <gradientmap_pars_fragment>', RAMP); };
             s.material = mat;
           }
         });
@@ -140,14 +164,14 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
       }).catch(err => console.warn('[hands] the hand model could not load:', err));
     }
 
-    const q = new THREE.Quaternion(), pq = new THREE.Quaternion();
+    const q = new THREE.Quaternion();
     /** Turn a bone so it points at a world position, from its rest rotation (keeps its roll). */
     const aim = (b: THREE.Bone, rest: THREE.Quaternion, axis: THREE.Vector3, target: THREE.Vector3) => {
       b.quaternion.copy(rest);
       b.updateWorldMatrix(true, false);
-      const pos = b.getWorldPosition(v());
-      b.parent!.getWorldQuaternion(pq);
-      const want = target.clone().sub(pos).normalize().applyQuaternion(pq.invert());
+      // In the parent's own space, so the mirrored left hand turns the right way too (a world
+      // quaternion cannot hold the mirror).
+      const want = b.parent!.worldToLocal(target.clone()).sub(b.position).normalize();
       q.setFromUnitVectors(axis.clone().applyQuaternion(rest).normalize(), want);
       b.quaternion.premultiply(q);
       b.updateWorldMatrix(false, true);
@@ -159,7 +183,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
     const solve = (fg: Finger, len: number[], u: number, d: number, lim: [number, number, number, number]) => {
       let [a, b] = fg.theta;
       const L = len[0] + len[1] + len[2], lam = (0.08 * L) ** 2;
-      for (let it = 0; it < 12; it++) {
+      for (let it = 0; it < 16; it++) {
         const [x, y] = planar(len, a, b);
         const ex = u - x, ey = d - y;
         if (ex * ex + ey * ey < (0.004 * L) ** 2) break;
@@ -169,8 +193,17 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
         const A11 = j11 * j11 + j21 * j21 + lam, A12 = j11 * j12 + j21 * j22, A22 = j12 * j12 + j22 * j22 + lam;
         const g1 = j11 * ex + j21 * ey, g2 = j12 * ex + j22 * ey, det = A11 * A22 - A12 * A12;
         if (Math.abs(det) < 1e-12) break;
-        a = clamp(a + (A22 * g1 - A12 * g2) / det, lim[0], lim[1]);
-        b = clamp(b + (-A12 * g1 + A11 * g2) / det, lim[2], lim[3]);
+        let da = (A22 * g1 - A12 * g2) / det, db = (-A12 * g1 + A11 * g2) / det;
+        // A joint at its limit and pushed further stays there while the other is solved alone;
+        // steps are kept short so the solver never jumps into a claw it cannot climb out of.
+        const pinA = (a <= lim[0] + 1e-6 && da < 0) || (a >= lim[1] - 1e-6 && da > 0);
+        const pinB = (b <= lim[2] + 1e-6 && db < 0) || (b >= lim[3] - 1e-6 && db > 0);
+        if (pinA && pinB) break;
+        if (pinA) { da = 0; db = g2 / A22; } else if (pinB) { db = 0; da = g1 / A11; }
+        const m = Math.max(Math.abs(da), Math.abs(db));
+        if (m > 0.25) { da *= 0.25 / m; db *= 0.25 / m; }
+        a = clamp(a + da, lim[0], lim[1]);
+        b = clamp(b + db, lim[2], lim[3]);
       }
       fg.theta = [a, b];
     };
@@ -188,8 +221,14 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
         const D = (Ht / 2) / Math.tan((camera.fov * Math.PI) / 360);
         camera.position.set(Wd / 2, -Ht / 2, D); camera.lookAt(Wd / 2, -Ht / 2, 0); camera.updateProjectionMatrix();
         const t = now();
-        const namedKey = t < namedUntil && named.current && named.current.size ? [...named.current.entries()].sort((a, b) => b[1] - a[1])[0][0] : undefined;
-        const kw = G.unitW;
+        const namedKey = t < untilRef.current && named.current && named.current.size ? [...named.current.entries()].sort((a, b) => b[1] - a[1])[0][0] : undefined;
+        // A white key's pitch on screen (unitW is the key's own width, narrower than its step).
+        let kw = G.unitW;
+        for (let m = 60; m < 84; m++) {
+          if (isBlack(m)) continue;
+          const n = isBlack(m + 1) ? m + 2 : m + 1, a = G.X(m), b = G.X(n);
+          if (a && b && b.x > a.x) { kw = b.x - a.x; break; }
+        }
         for (const h of ['L', 'R'] as Hand[]) {
           const rig = rigs[h];
           if (!rig) continue;
@@ -197,14 +236,19 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           const mine = tl.notes.filter(n => n.hand === h && n.finger);
           // Size: knuckles of index to little finger over about three white keys, as a real hand;
           // the forearm may leave the screen at the bottom, the hand itself never.
-          const s = Math.min((kw * 3.0) / rig.span, (Ht - G.kbTop) * 1.5 / rig.length);
+          const s = Math.min((kw * 3.3) / rig.span, (Ht - G.kbTop) * (Wd > Ht ? 2.2 : 1.5) / rig.length);
           rig.root.scale.setScalar(s);
           const fl = rig.fingers[2].len.reduce((a, b) => a + b, 0) * s;
+          // A free finger rests a key along from its neighbour, or closer when the keys are wide and
+          // the hand would have to splay: never wider than its own knuckles allow.
+          const step = Math.min(kw * 0.95, (rig.span * s) / 3 * 1.05);
           // Each finger's next note: where on the key, and its press envelope from the note times.
           const want: { x?: number; y: number; z: number; real: boolean; soon: number; press: number }[] = [];
           for (let f = 1; f <= 5; f++) {
             const ns = mine.filter(n => n.finger === f);
-            const nx = ns.find(n => n.t + n.dur > t - 0.12) ?? ns[ns.length - 1];
+            // A finger goes to its next note only when it is near (or the last one it played, just
+            // after); a note far ahead would drag it over its neighbours' keys.
+            const nx = ns.find(n => n.t + n.dur > t - 0.12 && n.t < t + (rig.seen ? 1.4 : 1e9)) ?? [...ns].reverse().find(n => n.t <= t && n.t + n.dur > t - 0.6);
             const k = nx && G.X(nx.midi);
             const hover = fl * (0.07 + 0.05 * rig.fingers[f - 1].hover);
             if (nx && k) {
@@ -221,10 +265,28 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           }
           for (let f = 1; f <= 5; f++) if (want[f].x === undefined) {
             let best: number | undefined, bd = 9;
-            for (let g = 1; g <= 5; g++) if (want[g].real && Math.abs(g - f) < bd) { bd = Math.abs(g - f); best = want[g].x! + (f - g) * dir * kw * 1.05; }
+            for (let g = 1; g <= 5; g++) if (want[g].real && Math.abs(g - f) < bd) { bd = Math.abs(g - f); best = want[g].x! + (f - g) * dir * step; }
             want[f].x = best;
           }
-          if (want.slice(1).some(w => w.x === undefined)) { rig.root.visible = false; continue; }
+          if (want.slice(1).some(w => w.x === undefined)) {
+            // Nothing near for this hand: it rests where it last was.
+            if (!rig.seen) { rig.root.visible = false; continue; }
+            for (let f = 1; f <= 5; f++) if (want[f].x === undefined) want[f].x = rig.fingers[f - 1].x;
+          }
+          // The fingers keep their order across the keys: one not about to play is moved out of its
+          // neighbour's way, outwards from the index.
+          const busy = (f: number) => want[f].real && (want[f].press > 0 || want[f].soon < 0.35);
+          for (let f = 3; f <= 5; f++) {
+            const gap = dir * (want[f].x! - want[f - 1].x!);
+            if (gap < step * 0.8) {
+              if (!busy(f)) want[f].x = want[f - 1].x! + dir * step;
+              else if (!busy(f - 1)) want[f - 1].x = want[f].x! - dir * step;
+            }
+          }
+          for (let f = 4; f >= 2; f--) {
+            const gap = dir * (want[f + 1].x! - want[f].x!);
+            if (gap < step * 0.8 && !busy(f)) want[f].x = want[f + 1].x! - dir * step;
+          }
           rig.root.visible = true;
           // Tendons: a pressing finger pulls its neighbours down a little.
           for (let f = 2; f <= 5; f++) for (const g of [f - 1, f + 1]) if (g >= 2 && g <= 5 && want[g].press > 0.5 && want[f].press < 0.2) want[f].z -= fl * 0.03 * want[g].press;
@@ -247,7 +309,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           const p = rig.point;
           // The wrist, led by the notes about to sound, on its own slower spring.
           let sx = 0, sw = 0;
-          for (let f = 1; f <= 5; f++) { const w = want[f].real ? 1 / (0.2 + want[f].soon) : 0.15; sx += (rig.fingers[f - 1].x - (f - 3) * dir * kw * 0.95) * w; sw += w; }
+          for (let f = 1; f <= 5; f++) { const w = want[f].real ? 1 / (0.2 + want[f].soon) : 0.15; sx += (rig.fingers[f - 1].x - (f - 3) * dir * (rig.span * s) / 3) * w; sw += w; }
           const handX = p > 0.5 ? rig.px + dir * kw * 0.9 : sx / sw;
           const om = 9, ze = 0.9;
           for (let k = 0; k < steps; k++) { rig.vwx += (om * om * (handX - rig.wx) - 2 * ze * om * rig.vwx) * h2; rig.wx += rig.vwx * h2; }
@@ -255,7 +317,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           rig.yaw += (clamp(-rig.vwx / (kw * 45), -0.12, 0.12) - rig.yaw) * (1 - Math.exp(-dt * 6));
           rig.roll += (clamp(pressSide * 0.035 * dir, -0.12, 0.12) - rig.roll) * (1 - Math.exp(-dt * 7));
           const breathe = Math.sin(t * 1.7 + (h === 'L' ? 1.3 : 0)) * 0.012 + Math.sin(t * 0.63 + (h === 'L' ? 2 : 0)) * 0.008;
-          rig.root.quaternion.setFromEuler(new THREE.Euler(-(0.12 + breathe), rig.roll, rig.yaw, 'ZXY')).multiply(rig.align);
+          rig.root.quaternion.setFromEuler(new THREE.Euler(0.1 + breathe, rig.roll, rig.yaw, 'ZXY')).multiply(rig.align);
           // Reset the pose, then place the hand: the middle knuckle in front of the keys (lower on
           // the screen) by most of a finger and about half a finger above them.
           rig.all.forEach((b, i) => b.quaternion.copy(rig.restAll[i]));
@@ -263,7 +325,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           rig.root.updateMatrixWorld(true);
           const k3 = rig.fingers[2].bones[0].getWorldPosition(v());
           const keyY = p > 0.5 ? rig.py : rig.fingers[2].y;
-          rig.root.position.set(rig.wx - k3.x, -(keyY + fl * 0.6) - k3.y, fl * 0.56 - k3.z);
+          rig.root.position.set(rig.wx - k3.x, -(keyY + fl * 0.66) - k3.y, fl * 0.58 - k3.z);
           rig.root.updateMatrixWorld(true);
 
           // The hand's frame in the world, for the fingers' planes.
@@ -287,10 +349,15 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
               const sp = SPREAD[f] * dir;
               const lat = rel.dot(Ac), fwdD = Math.max(1, rel.dot(Fw));
               fg.abd += (clamp(Math.atan2(lat, fwdD), sp - (thumb ? 0.7 : 0.3), sp + (thumb ? 0.7 : 0.3)) - fg.abd) * 0.5;
-              const plane = Fw.clone().applyAxisAngle(Dn, -fg.abd);
-              solve(fg, len, rel.dot(plane), rel.dot(down), thumb ? [-0.2, 0.9, 0.05, 1.0] : [-0.25, 1.35, 0.18, 1.75]);
+              const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
+              // A key out of this finger's reach (wide keys on a big screen): it stays relaxed in
+              // its own lane instead of twisting after it.
+              const Lf = len[0] + len[1] + len[2];
+              const off = Math.abs(rel.dot(v().crossVectors(Dn, plane).normalize()));
+              const far = off > Lf * (thumb ? 0.8 : 0.45);
+              solve(fg, len, far ? Lf * 0.62 : rel.dot(plane), far ? Lf * 0.5 : rel.dot(down), thumb ? [-0.2, 0.9, 0.05, 1.0] : [-0.25, 1.35, 0.18, 1.75]);
             }
-            const plane = Fw.clone().applyAxisAngle(Dn, -fg.abd);
+            const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
             const [a, b] = fg.theta, c = b * 0.72;
             const seg = (ang: number, l: number) => plane.clone().multiplyScalar(Math.cos(ang) * l).addScaledVector(down, Math.sin(ang) * l);
             const P2 = M.clone().add(seg(a, len[0])), P3 = P2.clone().add(seg(a + b, len[1])), P4 = P3.clone().add(seg(a + b + c, len[2]));
@@ -299,12 +366,12 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             aim(fg.bones[2], fg.rest[2], fg.axis[2], P4);
           }
         }
-        renderer.render(scene, camera);
+        outline.render(scene, camera);
       }
       raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
-    return () => { alive = false; cancelAnimationFrame(raf); renderer.dispose(); host.removeChild(renderer.domElement); };
-  }, [tl, now, geom, named, namedUntil]);
+    return () => { alive = false; cancelAnimationFrame(raf); gradient.dispose(); renderer.dispose(); renderer.forceContextLoss(); host.removeChild(renderer.domElement); };
+  }, [tl, now, geom, named]);
   return <div ref={box} className="reel-gloves" aria-hidden="true" />;
 }

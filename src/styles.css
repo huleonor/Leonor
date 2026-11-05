@@ -48,6 +48,11 @@
   --left: var(--teal);
   --right-key: var(--pink);
   --left-lit: var(--teal-soft);
+  /* The drawn hands of the videos: flat skin in two tones and an ink line, like a comic */
+  --hand-skin: #F6D2B4;
+  --hand-shade: #DCA486;
+  --hand-deep: #B97E66;
+  --hand-line: #3A2620;
   /* Keys */
   --key-white: var(--white);
   --key-edge: var(--ink);

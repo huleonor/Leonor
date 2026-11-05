@@ -5,7 +5,18 @@ import { audioContext, loadPiano, pianoReady, playNote, playSfx, stopAll, stopSf
 import { linkState, onLinkState, onNote } from '../lib/input';
 // The 3D gloves load on their own (three.js is large), only where WebGL runs.
 const Hands3D = lazy(() => import('./Hands3D').then(m => ({ default: m.Hands3D })));
-const webglOk = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } };
+// Asked once, and the test context is let go at once (each one held counts against the browser's few).
+let glKnown: boolean | undefined;
+const webglOk = () => {
+  if (glKnown !== undefined) return glKnown;
+  try {
+    const c = document.createElement('canvas');
+    const gl = (c.getContext('webgl2') || c.getContext('webgl')) as WebGLRenderingContext | null;
+    gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    glKnown = !!gl;
+  } catch { glKnown = false; }
+  return glKnown;
+};
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
 import { FALL, fixClip, letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
