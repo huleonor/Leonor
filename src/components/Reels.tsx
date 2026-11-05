@@ -329,69 +329,59 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
         ctx.fillRect(k.x - k.w * 0.3 * e, kbTop - 16 - 40 * e, k.w * (1 + 0.6 * e), 12 + 40 * e);
         ctx.globalAlpha = 1;
       }
-      // The hands on the keys: a drawn hand for each, every finger over the key it plays next (its
-      // number on the tip), the finger that plays now pressing in its hand's colour, and while the
-      // voice names the keys the finger for each one pointing at it on the marker. Placed from the
-      // fingering of the notes coming up, averaged over the last moments so the hand glides.
+      // The gloves: a small white cartoon glove for each hand (the user's choice), pointing down at
+      // the key that hand plays now or next, tapping it as the note starts, its finger number on the
+      // back; while the voice names the keys it points at the key being named. It sits just above
+      // the keys so the key, its letter and its colour stay in sight. Placed from the notes of the
+      // next moments, averaged so it glides (the same picture at the same time).
       if (hands) {
-        const kbBot = H;
+        const s = Math.max(38, Math.min(62, unitW * 1.8));
+        const naming = t < namedUntil && named.current && named.current.size ? [...named.current.entries()].sort((x, y) => y[1] - x[1])[0][0] : undefined;
         for (const h of ['L', 'R'] as Hand[]) {
-          const acc = [0, 0, 0, 0, 0, 0], cnt = [0, 0, 0, 0, 0, 0];
-          let seen = 0;
-          for (let i = 0; i < 5; i++) {
-            const ts = t - i * 0.12;
-            const at = new Map<number, { x: number; d: number }>();
+          const target = (ts: number) => {
+            if (naming !== undefined) return (handOf.get(naming) ?? (naming < 60 ? 'L' : 'R')) === h ? { midi: naming, finger: tl.notes.find(n => n.midi === naming)?.finger } : undefined;
+            let best: ReelNote | undefined;
             for (const n of tl.notes) {
-              if (n.hand !== h || !n.finger || n.t < ts - 0.3 || n.t > ts + 1.2) continue;
-              const k = X(n.midi);
-              if (!k) continue;
-              const d = Math.abs(n.t - ts) + (n.t < ts ? 0.4 : 0);
-              const cur = at.get(n.finger);
-              if (!cur || d < cur.d) at.set(n.finger, { x: k.x + k.w / 2, d });
+              if (n.hand !== h || n.t + n.dur < ts || n.t > ts + 1.2) continue;
+              if (!best || n.t < best.t || (n.t === best.t && (h === 'R' ? n.midi > best.midi : n.midi < best.midi))) best = n;
             }
-            if (!at.size) continue;
-            seen++;
-            // Fingers with no note: a white key apart from the nearest one that has one.
-            const dir = h === 'R' ? 1 : -1;
-            for (let f = 1; f <= 5; f++) {
-              let x = at.get(f)?.x;
-              if (x === undefined) {
-                let best: number | undefined, bd = 9;
-                for (const [g, v] of at) if (Math.abs(g - f) < bd) { bd = Math.abs(g - f); best = v.x + (f - g) * dir * unitW; }
-                x = best;
-              }
-              if (x !== undefined) { acc[f] += x; cnt[f]++; }
-            }
+            return best;
+          };
+          let sx = 0, k = 0;
+          let finger: number | undefined;
+          for (let i = 0; i < 5; i++) {
+            const g = target(t - i * 0.1);
+            const key = g && X(g.midi);
+            if (!key) continue;
+            sx += key.x + key.w / 2; k++;
+            if (i === 0) finger = g.finger;
           }
-          if (seen < 2) continue;
-          const xs = [0, 1, 2, 3, 4, 5].map(f => (cnt[f] ? acc[f] / cnt[f] : NaN));
-          const fw = Math.max(8, Math.min(unitW * 0.62, kbH * 0.2));
-          const tipY = kbTop + kbH * 0.34, palmTop = kbTop + kbH * 0.8;
-          const lo = Math.min(...xs.slice(1)) - fw, hi = Math.max(...xs.slice(1)) + fw;
-          const tone = h === 'L' ? pal.L : pal.R;
+          if (k < 2) continue;
+          const x = sx / k;
+          // The tap: down for a moment as one of its notes starts.
+          let tap = 0;
+          for (const n of tl.notes) if (n.hand === h && t >= n.t && t < n.t + 0.2) tap = Math.max(tap, 1 - (t - n.t) / 0.2);
+          const y = kbTop + 6 + tap * 8;
+          const dir = h === 'R' ? 1 : -1;
           ctx.save();
-          ctx.globalAlpha = Math.min(1, seen / 4) * 0.92;
-          ctx.lineWidth = 2; ctx.strokeStyle = pal.ink;
-          // The palm, past the front edge of the keys.
-          ctx.fillStyle = pal.white;
-          ctx.beginPath(); ctx.roundRect(lo, palmTop, hi - lo, kbBot - palmTop + 20, 12); ctx.fill(); ctx.stroke();
-          for (let f = 1; f <= 5; f++) {
-            const x = xs[f];
-            if (Number.isNaN(x)) continue;
-            const playing = tl.notes.some(n => n.hand === h && n.finger === f && n.t <= t && n.t + n.dur > t);
-            const pointed = t < namedUntil && tl.notes.some(n => n.hand === h && n.finger === f && (named.current?.has(n.midi) ?? false) && Math.abs(X(n.midi)!.x + X(n.midi)!.w / 2 - x) < unitW);
-            const top = tipY + (f === 1 ? kbH * 0.16 : f === 5 ? kbH * 0.08 : 0) + (playing ? kbH * 0.06 : 0);
-            ctx.fillStyle = playing ? tone : pointed ? pal.next : pal.white;
-            ctx.beginPath(); ctx.roundRect(x - fw / 2, top, fw, palmTop - top + 6, fw / 2); ctx.fill(); ctx.stroke();
-            ctx.fillStyle = playing ? pal.paper : pal.ink;
-            ctx.font = `700 ${Math.round(Math.max(10, Math.min(14, fw * 0.6)))}px 'Courier New', Courier, monospace`;
+          // Leaning in from the side, the tip on the key, so the note falling onto it stays in sight.
+          ctx.translate(x, y); ctx.rotate(dir * 0.55);
+          ctx.lineWidth = 2.5; ctx.strokeStyle = pal.ink; ctx.lineJoin = 'round';
+          const blob = (cx: number, cy: number, rx: number, ry: number, rot = 0) => { ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, rot, 0, Math.PI * 2); ctx.fillStyle = pal.white; ctx.fill(); ctx.stroke(); };
+          // Thumb, palm, the curled fingers, the pointing finger, then the cuff in the hand's colour.
+          blob(0 - dir * s * 0.3, 0 - s * 0.82, s * 0.13, s * 0.22, dir * 0.6);
+          blob(0 + dir * s * 0.06, 0 - s * 0.8, s * 0.3, s * 0.27);
+          blob(0 + dir * s * 0.26, 0 - s * 0.6, s * 0.12, s * 0.11);
+          blob(0 + dir * s * 0.34, 0 - s * 0.76, s * 0.11, s * 0.1);
+          ctx.beginPath(); ctx.roundRect(0 - s * 0.11, 0 - s * 0.66, s * 0.22, s * 0.66, s * 0.11); ctx.fillStyle = pal.white; ctx.fill(); ctx.stroke();
+          ctx.beginPath(); ctx.roundRect(0 + dir * s * 0.06 - s * 0.26, 0 - s * 1.16, s * 0.52, s * 0.17, s * 0.06); ctx.fillStyle = h === 'L' ? pal.L : pal.R; ctx.fill(); ctx.stroke();
+          if (finger) {
+            ctx.fillStyle = pal.ink; ctx.font = `700 ${Math.round(s * 0.3)}px 'Courier New', Courier, monospace`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(String(f), x, top + fw / 2 + 2);
+            ctx.fillText(String(finger), 0 + dir * s * 0.06, 0 - s * 0.84);
+            ctx.textBaseline = 'alphabetic';
           }
-          // Cover the palm's top edge where the fingers join it.
-          ctx.fillStyle = pal.white; ctx.fillRect(lo + 2, palmTop + 2, hi - lo - 4, 8);
           ctx.restore();
-          ctx.textBaseline = 'alphabetic';
         }
       }
       // Each key he presses sends up a small mark in green or red with its letter, so he sees what
