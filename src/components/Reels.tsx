@@ -75,12 +75,12 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void, onHo
     setPlaying(false);
   };
 
-  // The reel starts once the piano is loaded, or after three seconds without it (it plays silent
-  // until the sound arrives, rather than leaving him waiting on a still frame).
+  // The reel starts once the piano is loaded (it loads from the moment the app opens), or after
+  // twelve seconds without it, on a slow connection (it plays silent until the sound arrives).
   useEffect(() => {
     if (ready) return;
     loadPiano().then(() => setReady(true)).catch(() => setReady(true));
-    const t = window.setTimeout(() => setReady(true), 3000);
+    const t = window.setTimeout(() => setReady(true), 12000);
     return () => window.clearTimeout(t);
   }, [ready]);
   useEffect(() => {
