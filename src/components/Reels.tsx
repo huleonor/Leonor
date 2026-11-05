@@ -99,7 +99,7 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void, onHo
         const n = tl.notes[s.next++];
         // The piano steps back a little while the voice talks, like music under a voice-over;
         // in Train with me it only guides, quietly, while he plays.
-        playNote(n.midi, Math.round((20 + n.vel * 100) * (n.train ? 0.4 : speaking() ? 0.7 : 1)), Math.max(0.1, n.dur), s.start + n.t);
+        playNote(n.midi, Math.round((20 + n.vel * 100) * (n.train ? n.guide ?? 0.4 : speaking() ? 0.7 : 1)), Math.max(0.1, n.dur), s.start + n.t);
         // The microphone must not take the video's own piano for his playing (the green keys he
         // saw while not playing): each note is marked as the app's while it sounds.
         const at = (s.start + n.t - audioContext().currentTime) * 1000, midi = n.midi;
@@ -264,7 +264,8 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
       for (const n of tl.notes) {
         if (n.t > t + LOOK || n.t + n.dur < t - 0.05) continue;
         // His turn's notes start falling only once the count-in (1, 2, 3) is over.
-        if (n.train && tl.countIn && t < tl.countIn.t + tl.countIn.n * tl.countIn.beat) continue;
+        const nci = n.train ? tl.countIns?.[n.round ?? 0] ?? tl.countIn : undefined;
+        if (nci && t < nci.t + nci.n * nci.beat) continue;
         const k = X(n.midi);
         if (!k) continue;
         const on = n.t <= t && n.t + n.dur > t;
@@ -492,7 +493,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
 
 /** Where the clock is: the segment, the bar, the note just played, the card showing (changes a few times a second). */
 function usePlace(tl: ReelTimeline, now: () => number, playing: boolean) {
-  const [place, setPlace] = useState({ seg: -1, playing: false, bar: 0, note: -1, card: tl.cards[0]?.kind as string | undefined, line: -1, count: 0, train: false });
+  const [place, setPlace] = useState({ seg: -1, playing: false, bar: 0, note: -1, card: tl.cards[0]?.kind as string | undefined, line: -1, count: 0, train: false, round: 0 });
   useEffect(() => {
     let raf = 0;
     const tick = () => {
@@ -509,11 +510,12 @@ function usePlace(tl: ReelTimeline, now: () => number, playing: boolean) {
       let line = -1;
       tl.lines.forEach((l, i) => { if (t >= l.t && t < l.until + 0.8) line = i; });
       // Train with me: the beat of the count-in (1 to 4, 0 outside it), and whether it is his turn.
-      const ci = tl.countIn;
-      const count = ci && t >= ci.t && t < ci.t + ci.n * ci.beat ? Math.floor((t - ci.t) / ci.beat) + 1 : 0;
-      const train = !!ci && t >= ci.t && (!tl.train || t < tl.train.until + 0.5);
-      const next = { seg, playing: !!pass, bar, note, card, line, count, train };
-      setPlace(p => (p.seg === next.seg && p.playing === next.playing && p.bar === next.bar && p.note === next.note && p.card === next.card && p.line === next.line && p.count === next.count && p.train === next.train ? p : next));
+      const cis = tl.countIns ?? (tl.countIn ? [tl.countIn] : []);
+      let count = 0, round = 0;
+      cis.forEach((ci, i) => { if (t >= ci.t - 0.2) round = i + 1; if (t >= ci.t && t < ci.t + ci.n * ci.beat) count = Math.floor((t - ci.t) / ci.beat) + 1; });
+      const train = !!cis.length && t >= cis[0].t && (!tl.train || t < tl.train.until + 0.5);
+      const next = { seg, playing: !!pass, bar, note, card, line, count, train, round };
+      setPlace(p => (p.seg === next.seg && p.playing === next.playing && p.bar === next.bar && p.note === next.note && p.card === next.card && p.line === next.line && p.count === next.count && p.train === next.train && p.round === next.round ? p : next));
       if (playing) raf = requestAnimationFrame(tick);
     };
     tick();
@@ -661,6 +663,8 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
   const loopsRef = useRef(0);
   loopsRef.current = loops;
   const clock = useReelClock(tl, active, () => {
+    // The first time through, what his piano showed tells the next videos how to go.
+    if (loopsRef.current === 0) report();
     markSeen(song.entry.id, reel.id);
     if (reel.k === reel.of) markSeen(song.entry.id, reel.phase.id);
     setLoops(n => n + 1);
@@ -688,7 +692,8 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
     tr.told = true;
     const worst = [...tr.at.values()].sort((x, y) => y.n - x.n)[0];
     const misses = tr.waits + tr.wrong;
-    onResult?.({ perfect: tr.waits <= 1 && tr.wrong <= 1, poor: misses >= Math.max(4, groupsToPlay.length * 0.3), fix: worst && worst.n >= 2 ? { ticks: worst.ticks, ms: worst.ms } : undefined });
+    const rounds = tl.countIns?.length ?? 1;
+    onResult?.({ perfect: tr.waits <= rounds && tr.wrong <= rounds, poor: misses >= Math.max(4, groupsToPlay.length * 0.3), fix: worst && worst.n >= 2 ? { ticks: worst.ticks, ms: worst.ms } : undefined });
   };
   const release = () => { report(); setHolding(false); setReps(0); unlockAudio(); if (tl.hold) clock.play(tl.hold.t + 0.01); };
   const trainAgain = () => { setHolding(false); setReps(0); unlockAudio(); if (tl.countIn) clock.play(tl.countIn.t - 0.2); };
@@ -699,8 +704,8 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
   useEffect(() => onLinkState(st => setInputOn(anyOn(st))), []);
   // His runs, note group by note group: a clean run is every group in order with at most two slips.
   const groupsToPlay = useMemo(() => {
-    const out: { t: number; ms: Set<number>; ticks: number }[] = [];
-    for (const n of tl.notes) if (n.train) { const g = out[out.length - 1]; if (g && Math.abs(g.t - n.t) < 0.03) g.ms.add(n.midi); else out.push({ t: n.t, ms: new Set([n.midi]), ticks: n.ticks }); }
+    const out: { t: number; ms: Set<number>; ticks: number; round: number }[] = [];
+    for (const n of tl.notes) if (n.train) { const g = out[out.length - 1]; if (g && Math.abs(g.t - n.t) < 0.03) g.ms.add(n.midi); else out.push({ t: n.t, ms: new Set([n.midi]), ticks: n.ticks, round: n.round ?? 0 }); }
     return out;
   }, [tl]);
   // The voice's lines are made ahead (the natural voice), this video's first when it is on screen.
@@ -713,7 +718,24 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
   const waitRef = useRef<Map<number, number>>(new Map());
   const waitingRef = useRef(false);
   const follow = useRef({ i: 0, have: new Set<number>() });
-  useEffect(() => { follow.current = { i: 0, have: new Set() }; }, [tl]);
+  useEffect(() => { follow.current = { i: 0, have: new Set() }; roundHits.current = []; }, [tl]);
+  // After each round of Train with me, with his piano: how many note groups he played on time, so
+  // he sees it come into his hands round by round.
+  const roundHits = useRef<number[]>([]);
+  const waitSince = useRef(0);
+  const [verdict, setVerdict] = useState<{ round: number; ok: number; of: number } | null>(null);
+  const lastRound = useRef(0);
+  useEffect(() => {
+    const prev = lastRound.current, now = place.train ? place.round : 0;
+    lastRound.current = now;
+    // Round `prev` is over: the next one began, or Train with me ended.
+    if (!active || !inputOn || loops > 0 || prev < 1 || (now !== 0 && now !== prev + 1)) return;
+    const r = prev - 1, of = groupsToPlay.filter(g => g.round === r).length, ok = Math.min(of, roundHits.current[r] ?? 0);
+    if (!of) return;
+    setVerdict({ round: prev, ok, of });
+    if (ok >= of * 0.8) playSfx('pop', 0.4);
+  }, [place.round, place.train]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!verdict) return; const id = window.setTimeout(() => setVerdict(null), 2600); return () => window.clearTimeout(id); }, [verdict]);
   useEffect(() => {
     if (!active || !inputOn || !tl.train || !groupsToPlay.length) return;
     const c = () => clockRef.current!;
@@ -724,6 +746,8 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
       if (!g.ms.has(e.midi)) return;
       f.have.add(e.midi);
       if (![...g.ms].every(m => f.have.has(m))) return;
+      // On time: played as it sounded, or within half a second of the video stopping for it.
+      if (!waitingRef.current || performance.now() - waitSince.current < 500) roundHits.current[g.round] = (roundHits.current[g.round] ?? 0) + 1;
       f.i++; f.have.clear();
       if (waitingRef.current) { waitingRef.current = false; waitRef.current = new Map(); setWaitingFor(null); c().play(Math.max(g.t, c().now()) + 0.01); }
     });
@@ -736,6 +760,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
       const g = groupsToPlay[f.i];
       if (g && !waitingRef.current && c().playing && t > g.t + 0.25 && t < g.t + 1.5) {
         waitingRef.current = true;
+        waitSince.current = performance.now();
         waitRef.current = new Map([...g.ms].map((m, k) => [m, k + 1]));
         setWaitingFor(g.ms);
         if (import.meta.env.DEV) (window as unknown as { __waiting?: number[] }).__waiting = [...g.ms];
@@ -857,7 +882,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
   const beatNo = place.count;
   const counting = beatNo > 0;
   const training = place.train;
-  const label = waitingFor ? `Your turn: play ${[...waitingFor].map(m => letter(m, song.fifths < 0)).join(' ')}` : holding ? 'On your own' : training ? (loops > 0 ? `Train with me, round ${loops + 1}` : 'Train with me') : seg.label;
+  const label = waitingFor ? `Your turn: play ${[...waitingFor].map(m => letter(m, song.fifths < 0)).join(' ')}` : holding ? 'On your own' : training ? (loops > 0 ? 'Train with me, again' : (tl.countIns?.length ?? 1) > 1 ? `Train with me, ${place.round} of ${tl.countIns!.length}` : 'Train with me') : seg.label;
 
   // While a video plays nothing sits over it: the menu, the piano chip and the actions show only
   // when he pauses (the user's choice 2026-11).
@@ -915,6 +940,14 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
         <AnimatePresence>
           {counting && (
             <motion.span key={beatNo} className="reel-countin" aria-live="polite" initial={{ opacity: 0, scale: 1.2, filter: 'blur(8px)' }} animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }} exit={{ opacity: 0, transition: { duration: 0.1 } }} transition={{ duration: 0.18, ease: ARRIVE }}>{beatNo}</motion.span>
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {verdict && (
+            <motion.p key={`verdict-${verdict.round}`} className={`reel-verdict ${verdict.ok >= verdict.of * 0.8 ? 'good' : ''}`} role="status"
+              initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.15 } }} transition={SPRING}>
+              Round {verdict.round}: {verdict.ok} of {verdict.of} on time
+            </motion.p>
           )}
         </AnimatePresence>
         <AnimatePresence>

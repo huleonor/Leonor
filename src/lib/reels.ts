@@ -16,6 +16,7 @@ import { buildCourse } from './course';
 import { readSong } from './reading';
 import { SCRIPTS } from './reelScripts';
 import { cleanPhase, type PhaseWords, type Talk } from './reelShape';
+import { difficultyOf } from './difficulty';
 import { estimate } from './voice';
 import type { Hand, Song, SongNote } from './types';
 
@@ -301,6 +302,8 @@ export interface Clip extends Reel {
   /** A both-hands video of shapes he already knows, and its bass line. */
   knownStep?: boolean;
   bassLine?: string[];
+  /** How hard its music is to play, 0 to 1 (difficulty.ts): the gentler pace and the rounds follow it. */
+  difficulty?: number;
 }
 
 // Speeds: a hand alone at half speed, both hands a little faster, the whole phase at three quarters.
@@ -408,11 +411,16 @@ export function clipsOf(song: Song): Clip[] {
   const worth = (a: number, b: number, h?: Hand) => onsets(a, b, h) >= 6 && keys(a, b, h) >= 3;
   const seen = { L: [] as Shape[], R: [] as Shape[], both: new Set<string>() };
   const taught = new Set<string>();
-  // Slow enough to follow: about this many notes a second at most, never faster than half speed
-  // for a hand (60% for both hands), never slower than 30%.
+  // How hard a stretch is (difficulty.ts): its speed, reach, leaps, black keys, chords and how
+  // independent the hands are, 0 to 1.
+  const hardness = (a: number, b: number, h?: Hand) => difficultyOf(handNotes(a, b, h), seconds(song, grid, a, b)).score;
+  // Slow enough to follow, and gentler the harder it is (the user's choice 2026-11): about this many
+  // notes a second at most for an easy stretch, down to 60% of it for the hardest, never faster than
+  // half speed for a hand (60% for both hands, less again when it is hard), never slower than 25%.
   const slow = (a: number, b: number, h: Hand | undefined, perSecond: number, most = SLOW_HAND) => {
+    const d = hardness(a, b, h);
     const dens = onsets(a, b, h) / Math.max(0.5, seconds(song, grid, a, b));
-    return Math.round(Math.max(0.3, Math.min(most, perSecond / Math.max(0.1, dens))) * 20) / 20;
+    return Math.round(Math.max(0.25, Math.min(most * (1 - 0.25 * d), (perSecond * (1 - 0.4 * d)) / Math.max(0.1, dens))) * 20) / 20;
   };
   const flats = song.fifths < 0;
   // The figure a hand plays from this bar: the first beat holding three notes or more over three
@@ -444,6 +452,7 @@ export function clipsOf(song: Song): Clip[] {
     return undefined;
   };
   const out: Clip[] = [];
+  const hR0: Hand | undefined = twoHands ? 'R' : undefined;
   for (const r of reels) {
     const talk = r.words.talk;
     const mine: Omit<Clip, 'k' | 'of'>[] = [];
@@ -460,7 +469,11 @@ export function clipsOf(song: Song): Clip[] {
     const chunks: [number, number][] = [];
     for (let a = r.from; a <= r.to;) {
       let b = Math.min(r.to, a + 1);
-      while (b < r.to && b - a + 1 < 4 && (onsets(a, b) < 12 || seconds(song, grid, a, b) < 4)) b++;
+      // A hard stretch is taught in smaller steps: fewer notes a step, two bars at most when it is
+      // really hard (never under two bars, never one held note).
+      const d = hardness(a, b);
+      const most = d >= 0.5 ? 2 : d >= 0.35 ? 3 : 4, enough = Math.round(12 - 6 * d);
+      while (b < r.to && b - a + 1 < most && (onsets(a, b) < enough || seconds(song, grid, a, b) < 4)) b++;
       chunks.push([a, b]);
       a = b + 1;
     }
@@ -478,7 +491,11 @@ export function clipsOf(song: Song): Clip[] {
       if (seen.both.has(exact)) return;
       const newL = twoHands && plays(a, b, 'L') && !known(a, b, 'L', seen.L);
       const newR = plays(a, b, hR) && !known(a, b, hR, seen.R);
-      const soloL = newL && worth(a, b, 'L'), soloR = newR && worth(a, b, hR);
+      // A hard step gets each new hand on its own even with less in it, so the hands never meet a
+      // hard place for the first time together.
+      const hard = hardness(a, b) >= 0.45;
+      const soloL = newL && (worth(a, b, 'L') || (hard && onsets(a, b, 'L') >= 4));
+      const soloR = newR && (worth(a, b, hR) || (hard && onsets(a, b, hR) >= 4));
       const lw = leftWords(facts), rw = rightWords(facts, song.fifths < 0);
       // When the step opens with a bar he knows, the voice starts from the new one.
       const freshFrom = (h: Hand | undefined, set: Shape[]) => { for (let bar = a; bar <= b; bar++) if (!known(bar, bar, h, set)) return bar; return a; };
@@ -535,8 +552,9 @@ export function clipsOf(song: Song): Clip[] {
         for (const f of facts) if (bass[bass.length - 1] !== f.chord) bass.push(f.chord);
         const knownStep = !newL && !newR;
         const prev = mine[mine.length - 1];
-        // Shapes he knows, right after shapes he knows: one longer video instead of several.
-        if (knownStep && prev?.kind === 'both' && prev.knownStep && prev.to === a - 1 && b - prev.from < 8) {
+        // Shapes he knows, right after shapes he knows: one longer video instead of several (not
+        // where it is hard: there every step keeps its own video).
+        if (knownStep && prev?.kind === 'both' && prev.knownStep && prev.to === a - 1 && b - prev.from < 8 && hardness(prev.from, b) < 0.5) {
           const merged = make('both', prev.from, b, slow(prev.from, b, undefined, 3, SLOW_BOTH), 'Both hands, slow', prev.head, '', prev.step ?? ci);
           const chords = [...(prev.bassLine ?? []), ...bass].filter((x, i, xs) => xs[i - 1] !== x);
           mine[mine.length - 1] = { ...merged, id: prev.id, knownStep: true, bassLine: chords, say: withTip(`Same shapes as before, now on new chords: ${listOf(chords.slice(0, 6))}. Both hands, slowly.`, `B${prev.from}`) };
@@ -556,14 +574,17 @@ export function clipsOf(song: Song): Clip[] {
       seen.both.add(exact);
     });
     // The whole phase, still below full speed, at most sixteen bars a video (split evenly).
-    const len = r.to - r.from + 1, parts = Math.ceil(len / 16), size = Math.ceil(len / parts);
+    // A hard phase runs slower and in shorter stretches (eight bars instead of sixteen).
+    const pd = hardness(r.from, r.to);
+    const run = Math.round((RUN - 0.2 * pd) * 20) / 20;
+    const len = r.to - r.from + 1, parts = Math.ceil(len / (pd >= 0.45 ? 8 : 16)), size = Math.ceil(len / parts);
     for (let a = r.from, part = 0; a <= r.to; a += size, part++) {
       const b = Math.min(r.to, a + size - 1);
       const what = parts === 1 ? 'the whole phase' : part === 0 ? 'the first part of the phase' : b === r.to ? 'the end of the phase' : 'the middle of the phase';
-      mine.push(make('run', a, b, RUN, 'Three quarter speed', parts === 1 ? 'The whole phase' : `Bars ${a} to ${b}`,
+      mine.push(make('run', a, b, run, run >= 0.75 ? 'Three quarter speed' : 'A little faster, still slow', parts === 1 ? 'The whole phase' : `Bars ${a} to ${b}`,
         `Now ${what}, a little slower than the real thing. ${b === r.to ? (talk?.outro ?? r.words.tip) : 'Keep going.'}`, 100 + part));
     }
-    mine.forEach((c, i) => out.push({ ...c, k: i + 1, of: mine.length }));
+    mine.forEach((c, i) => out.push({ ...c, k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) }));
   }
   // Each video says what the next one teaches, so the series reads as one lesson.
   const about = (c: Clip, before: Clip) => {
@@ -581,7 +602,7 @@ export function clipsOf(song: Song): Clip[] {
 
 // ---------- Timeline: what plays when ----------
 
-export interface ReelNote { t: number; dur: number; midi: number; hand: Hand; finger?: number; vel: number; seg: number; bar: number; /** Beat of the bar, from 0. */ beat: number; /** Where it is in the song. */ ticks: number; /** In "Train with me": he plays it, the piano only guides. */ train?: boolean; }
+export interface ReelNote { t: number; dur: number; midi: number; hand: Hand; finger?: number; vel: number; seg: number; bar: number; /** Beat of the bar, from 0. */ beat: number; /** Where it is in the song. */ ticks: number; /** In "Train with me": he plays it, the piano only guides. */ train?: boolean; /** Its round of Train with me, from 0, and how loud the piano guides it (0 to 1). */ round?: number; guide?: number; }
 export interface ReelCard { t: number; until: number; kind: 'title' | 'end'; }
 /** A line the voice says, from this time; `until` is about when it ends. */
 export interface ReelLine { t: number; until: number; text: string; seg?: number }
@@ -592,6 +613,8 @@ export interface ReelTimeline {
   passes: { t: number; until: number; speed: number; seg: number }[];
   /** "Train with me": the count-in, then the same music for him to play along with. */
   countIn?: { t: number; beat: number; n: number };
+  /** Every round's count-in (Train with me comes in rounds, the help fading each time). */
+  countIns?: { t: number; beat: number; n: number }[];
   train?: { t: number; until: number };
   /** Where the video stops by itself for him to practise on his own ("two more times"). */
   hold?: { t: number; reps: number };
@@ -602,14 +625,15 @@ export interface ReelTimeline {
 }
 
 // A video teaches in four beats: the voice explains (keys lit as it names them) while the notes
-// fall in; the music, slow; "Train with me": a count-in and the same music again for him to play
-// along, the piano only guiding; then it stops by itself for him to practise on his own, two more
-// times, and says what comes next. The idea (first video of a phase) is only heard.
+// fall in; the music, slow; "Train with me", in rounds: a count-in and the same music again for him
+// to play along, the piano guiding a little less each round; then it says what comes next. The idea
+// (first video of a phase) is only heard.
 const TITLE = 3, BREATH = 1, REST = 1.2, LEAD = 0.35;
 /** Seconds a note takes to fall onto the keys in a video (Reels.tsx draws this much ahead). */
 export const FALL = 2;
 const TURN = ['Your turn. Play it with me.', 'Now you. Play along with me.', 'Your turn, together with me.'];
-const PRACTISE = ['Now pause, and play it two more times on your own.', 'Pause here, and practise it two more times.', 'Your turn alone now. Two more times.'];
+const AGAIN = 'Once more. The piano plays softer.';
+const LAST = 'One last time. You lead.';
 
 /**
  * The timeline of a video. `pace` follows him (1 at first): faster when he plays the videos clean,
@@ -657,31 +681,45 @@ export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
     for (const n of notes) { lo0[n.hand] = Math.min(lo0[n.hand], n.midi); hi0[n.hand] = Math.max(hi0[n.hand], n.midi); }
     return { notes, cards, lines, sfx, passes, duration: t, lo: lo0, hi: hi0, loopFrom: passStart };
   }
-  // 3. Train with me: "your turn", a bar of count-in on the beat, the same music again for him.
-  t = Math.max(until, 0.3 + said) + 0.5;
-  const turn = line(t, TURN[clip.k % TURN.length], 0);
+  // 3. Train with me, in rounds (the user's choice 2026-11: practising alone was no use, he cannot
+  // remember the notes yet): every round has its count-in and the notes falling for him to play, and
+  // the help fades each round (the piano guiding at 40%, then 20%, then 10%), so the notes stay on
+  // screen while the music moves into his hands. A step takes two rounds, three when it is hard; a
+  // pattern, a jump or a fix (already four times over) and the whole phase take one.
+  const rounds = clip.kind === 'run' || clip.kind === 'pattern' || clip.kind === 'jump' || clip.kind === 'fix' ? 1 : (clip.difficulty ?? 0) >= 0.6 ? 3 : 2;
+  const GUIDE = [0.4, 0.2, 0.1];
   const beat = Math.max(0.45, Math.min(1, song.ticksToSeconds(song.ppq) / sg.speed));
   // Count 1, 2, 3 (the user's choice), then the notes start falling in silence (no more clicks
   // after the 3), landing on the beat the count set.
   const n = 3;
-  const ci = t + turn + 0.2;
   const fallBeats = Math.ceil(FALL / beat);
-  for (let k = 0; k < n; k++) sfx.push({ t: ci + k * beat, name: 'click-soft', gain: k === 0 ? 0.6 : 0.4 });
-  const trainStart = ci + (n + fallBeats) * beat - LEAD;
-  lay(trainStart, true);
-  until = trainStart + LEAD + length;
-  passes.push({ t: ci, until, speed: sg.speed, seg: 0 });
-  // 4. It stops by itself for him to practise alone; then it says what comes next.
-  const holdAt = until + 0.8;
-  line(holdAt - 0.6, PRACTISE[clip.k % PRACTISE.length], 0);
-  const after = holdAt + 0.3;
+  const countIns: ReelTimeline['countIns'] = [];
+  let trainFrom = 0;
+  t = Math.max(until, 0.3 + said) + 0.5;
+  for (let r = 0; r < rounds; r++) {
+    const words = r === 0 ? TURN[clip.k % TURN.length] : r === rounds - 1 ? LAST : AGAIN;
+    const spoken = line(t, words, 0);
+    const ci = t + spoken + 0.2;
+    for (let k = 0; k < n; k++) sfx.push({ t: ci + k * beat, name: 'click-soft', gain: k === 0 ? 0.6 : 0.4 });
+    const trainStart = ci + (n + fallBeats) * beat - LEAD;
+    const first = notes.length;
+    lay(trainStart, true);
+    for (let i = first; i < notes.length; i++) { notes[i].round = r; notes[i].guide = GUIDE[r]; }
+    until = trainStart + LEAD + length;
+    passes.push({ t: ci, until, speed: sg.speed, seg: 0 });
+    countIns.push({ t: ci, beat, n });
+    if (r === 0) trainFrom = trainStart + LEAD;
+    t = until + 0.7;
+  }
+  // 4. It says what comes next, so the videos read as one lesson.
+  const after = until + 0.6;
   const nextLine = clip.next ? `Nice. Next up, ${clip.next}. Swipe up.` : 'Nice. That is this phase. Now practise it in the lessons.';
   const nextSaid = line(after, nextLine, 0);
   const duration = after + nextSaid + REST;
   const lo = { R: 127, L: 127 } as Record<Hand, number>, hi = { R: 0, L: 0 } as Record<Hand, number>;
   for (const x of notes) { lo[x.hand] = Math.min(lo[x.hand], x.midi); hi[x.hand] = Math.max(hi[x.hand], x.midi); }
-  // The loop is Train with me again: the count-in and his turn, without the voice.
-  return { notes, cards, lines, sfx, passes, countIn: { t: ci, beat, n }, train: { t: trainStart + LEAD, until }, hold: { t: holdAt, reps: 2 }, duration, lo, hi, loopFrom: ci - 0.2, beats: grid.sigs[Math.max(0, sg.from - 1)]?.[0] ?? 4 };
+  // The loop is Train with me again: the rounds, without the voice.
+  return { notes, cards, lines, sfx, passes, countIn: countIns[0], countIns, train: { t: trainFrom, until }, duration, lo, hi, loopFrom: countIns[0].t - 0.2, beats: grid.sigs[Math.max(0, sg.from - 1)]?.[0] ?? 4 };
 }
 
 /** What every bar holds, to write a script from (window.__reelFacts in the dev console). */

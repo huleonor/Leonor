@@ -38,11 +38,14 @@ Rules: one idea per video; never the hard part first; nothing at full speed but 
 | --- | --- | --- | --- |
 | **Name** | 3 to 6 s | The voice names the shape; each key lights, outlined and numbered, as it is named. | 10 to 19 |
 | **Show** | one pass | The music, slow. The notes fall filled in the hand's colour. | none |
-| **Train with me** | count-in + one pass | "Your turn, play it with me." A count of 1, 2, 3 (a click on each beat, the number big), and only then the notes start falling, in silence (no click after the 3). The notes fall open for him; the piano only guides at 40%. **With a piano connected the video waits at a note he has not played a quarter of a second after it should sound, and goes on the moment he plays it.** | 5 to 7 |
-| **Practise** | his time | The video stops by itself: "Now pause, and play it two more times." A card counts his clean runs (every note group in order, at most two slips) or he taps Done. After two it goes on by itself. | 6 to 10 |
+| **Train with me** | rounds: count-in + one pass each | "Your turn, play it with me." A count of 1, 2, 3 (a click on each beat, the number big), and only then the notes start falling, in silence (no click after the 3). The notes fall open for him. Two rounds for a step, three when it is hard (difficulty 0.6 or more), one for a pattern, a jump, a fix or the whole phase. Each round fades the help: the piano guides at 40%, then 20%, then 10%, while the notes stay on screen ("Once more. The piano plays softer.", "One last time. You lead."). The kicker counts the rounds ("Train with me, 2 of 3"). **With a piano connected the video waits at a note he has not played a quarter of a second after it should sound, and goes on the moment he plays it**, and after each round a card pops with his note groups on time ("Round 1: 16 of 20 on time"). | 5 to 7 a round |
 | **Next** | 2 to 4 s | "Nice. Next up, the right hand. Swipe up." | 6 to 12 |
 
 Then it loops Train with me, without the voice and without stopping, until he scrolls on.
+
+**Never ask him to play alone from memory** (the user, 2026-11: "I can't repeat on my own, I don't remember the notes, those parts are useless"). Repetition always happens with the notes falling in front of him and the help fading round by round; memory comes from the rounds, not from a blank screen.
+
+**Gentler where it is hard.** `difficulty.ts` scores every stretch from its notes (speed, reach, leaps, black keys, chords, hand independence; 0 to 1). The harder a step, the fewer notes a second (down to 60% of the target), the lower the speed cap, the smaller the step (two or three bars), each new hand on its own even with less in it, no merging of known steps, and three rounds. A hard phase runs at down to 55% in eight-bar stretches. Check a song with `await window.__reelDifficulty('song-id')`: every video's difficulty, speed, rounds and length. Keep videos under about two minutes.
 
 ## 3. Writing the voice
 
