@@ -59,7 +59,7 @@ export const SCRIPTS_PT: Record<string, PhasePt[]> = {
       38: 'Um acorde grande: C E A C',
       39: 'Depois D F# A D, segurado',
     }, 'Prepara a forma da mão para os acordes grandes antes de os tocar.', {
-      intro: 'Um D grave segura tudo aqui, e a fase termina em dois acordes grandes.',
+      intro: 'Um D grave segura tudo aqui, e a ponte termina em dois acordes grandes.',
       L: 'Mão esquerda: o D grave nunca se mexe. Só muda o acorde no tempo dois. C, E, A, depois C, F#, A.',
       R: 'Mão direita: um D agudo segurado, um D grave no tempo dois, e depois sobe, E, F, G.',
       both: 'Juntas. Prepara a mão para os acordes grandes do fim antes de os tocares.',
@@ -79,7 +79,7 @@ export const SCRIPTS_PT: Record<string, PhasePt[]> = {
       both: 'Juntas. Deixa-a flutuar, e segura o último F# quatro compassos.',
       outro: 'Já conheces esta. Deixa-a flutuar.',
     }),
-    ph('Notas longas, depois o D', 'As fases 2 e 3 outra vez, com um final novo', [
+    ph('Notas longas, depois o D', 'O verso 1b e a ponte outra vez, final novo', [
       'Esquerda: o mesmo baixo a andar, depois o D grave',
       'Direita: o E longo, a subida, depois D grave e agudo',
     ], 'B grave, E, D, A, depois o D grave em cada compasso', 'F#, um E grave longo, depois sobe A B C', {
@@ -89,7 +89,7 @@ export const SCRIPTS_PT: Record<string, PhasePt[]> = {
       65: 'D grave, depois D agudo',
       71: 'Sobe ao G e segura',
     }, 'Igual a antes, por isso confia nas mãos.', {
-      intro: 'As fases dois e três voltam, com um final novo.',
+      intro: 'O verso um b e a ponte voltam, com um final novo.',
       L: 'Mão esquerda: o mesmo baixo a andar, B, E, D, A, e depois o D grave em cada compasso.',
       R: 'Mão direita: F#, um E grave longo, depois A, B, C, a subir.',
       both: 'Juntas. É igual a antes, por isso confia nas mãos, e segura o G no fim.',
@@ -97,7 +97,7 @@ export const SCRIPTS_PT: Record<string, PhasePt[]> = {
     }),
     ph('O final', 'Passos a descer, depois os dois últimos acordes', [
       'Esquerda: um E grave três vezes, depois A e D',
-      'Direita: como o fim da fase 3, com F em vez de F#',
+      'Direita: como o fim da ponte, F em vez de F#',
     ], 'E grave, depois A C F. E, depois C E A', 'B C F, depois E D C, depois E D C outra vez', {
       73: 'A direita dá passos, a esquerda embala',
       76: 'Segura o F enquanto D e G tocam',
@@ -106,7 +106,7 @@ export const SCRIPTS_PT: Record<string, PhasePt[]> = {
     }, 'Abranda no fim e deixa o último acorde soar.', {
       intro: 'O final. Pequenos passos a descer na mão direita, e depois os dois últimos acordes.',
       L: 'Mão esquerda: um E grave, três vezes, depois A, depois D.',
-      R: 'Mão direita: B, C, F, depois E, D, C, duas vezes. É o fim da fase três, com F em vez de F#.',
+      R: 'Mão direita: B, C, F, depois E, D, C, duas vezes. É o fim da ponte, com F em vez de F#.',
       both: 'Juntas. Abranda no fim, e deixa o último acorde soar.',
       outro: 'Abranda, e deixa o último acorde soar.',
     }),
@@ -204,7 +204,7 @@ export const SCRIPTS_PT: Record<string, PhasePt[]> = {
       intro: 'A melodia volta, uma oitava acima. Já conheces estas notas. Só o sítio no teclado é novo.',
       L: 'A mão esquerda espera, toca um acorde, e a partir do compasso 41 volta aos acordes partidos que aprendeste.',
       R: 'Mão direita: as mesmas pequenas escalas, A, B, C, D, E e a descer outra vez, só que mais acima.',
-      both: 'Juntas. É a melodia da fase dois, mais acima no teclado.',
+      both: 'Juntas. É a melodia do verso um, mais acima no teclado.',
       outro: 'As mesmas notas, mais alto. Encontra a primeira e o resto vem atrás.',
     }),
     ph('A subida', 'Colcheias na esquerda, o padrão forte por cima', [
@@ -286,9 +286,9 @@ export const STEP_TIPS_PT: Record<string, Record<string, string>> = {
     B33: 'Já conheces esta. Toca-a um pouco mais à vontade.',
     R35: 'Um acorde novo. Sente a forma antes de carregar.',
     B35: 'Mantém a mão esquerda a rolar por baixo do acorde novo.',
-    R37: 'A última forma nova desta fase. Devagar.',
-    B37: 'Acaba a fase calmo e suave.',
-    B41: 'As mesmas mãos da fase dois, só que mais acima.',
+    R37: 'A última forma nova do interlúdio. Devagar.',
+    B37: 'Acaba o interlúdio calmo e suave.',
+    B41: 'As mesmas mãos do verso um, só que mais acima.',
     R45: 'Atenção ao sustenido outra vez, a mesma tecla preta de antes.',
     B45: 'Deixa esta parte respirar antes da subida.',
     J47: 'Mão esquerda solta para o salto.',
@@ -311,7 +311,7 @@ export const STEP_TIPS_PT: Record<string, Record<string, string>> = {
     B69: 'Igual a antes. Aproveita.',
     L73: 'Um baixo novo. Encontra-o antes de o compasso começar.',
     R73: 'O padrão do início está de volta. A tua mão já o sabe.',
-    B73: 'Baixa o som no fim da fase.',
+    B73: 'Baixa o som no fim do clímax.',
     B77: 'Mais suave agora. Deixa cada acorde soar.',
     B79: 'Abranda um pouco. O fim está perto.',
     J81: 'Deixa a mão cair na tecla grave, sem pressa.',

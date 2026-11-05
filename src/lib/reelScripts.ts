@@ -64,7 +64,7 @@ export const SCRIPTS: Record<string, SongScript> = {
         44: 'The tune joins on beat 2',
         48: 'Down to F#, held for four bars',
       }, 'You know this one. Let it float.'),
-      ph(57, 72, 'Long notes, then the low D', 'Phases 2 and 3 again, with a new ending', [
+      ph(57, 72, 'Long notes, then the low D', 'Verse 1b and the bridge again, a new ending', [
         'Left: the same walking bass, then the low D',
         'Right: the long E, the climb, then D low and high',
       ], 'Low B, E, D, A, then the low D under every bar', 'F#, a long low E, then A B C up', {
@@ -76,7 +76,7 @@ export const SCRIPTS: Record<string, SongScript> = {
       }, 'The same as before, so trust your hands.'),
       ph(73, 78, 'The ending', 'Little steps down, then the last two chords', [
         'Left: a low E three times, then A and D',
-        'Right: like the end of phase 3, with F instead of F#',
+        'Right: like the end of the bridge, F instead of F#',
       ], 'Low E, then A C F. E, then C E A', 'B C F, then E D C, then E D C again', {
         73: 'The right steps, the left rocks',
         76: 'Hold F while D and G play',
@@ -221,7 +221,7 @@ const TALK: Record<string, Talk[]> = {
       intro: 'The melody comes back, an octave higher. You already know these notes. Only the place on the keyboard is new.',
       L: 'The left hand waits, plays one chord, and from bar 41 goes back to the broken chords you learnt.',
       R: 'Right hand: the same little scales, A, B, C, D, E and down again, just higher up.',
-      both: 'Together. It is the melody from phase two, moved up the keyboard.',
+      both: 'Together. It is the melody from verse one, moved up the keyboard.',
       outro: 'Same notes, higher. Find the first one and the rest follows.',
     },
     {
@@ -262,7 +262,7 @@ const TALK: Record<string, Talk[]> = {
       outro: 'Count the long notes. They are the music here.',
     },
     {
-      intro: 'One low D holds everything together here, and the phase ends on two big chords.',
+      intro: 'One low D holds everything together here, and the bridge ends on two big chords.',
       L: 'Left hand: the low D never moves. Only the chord on beat two changes. C, E, A, then C, F sharp, A.',
       R: 'Right hand: a high D held, a low D on beat two, then it climbs, E, F, G.',
       both: 'Together. Shape your hand for the big chords at the end before you play them.',
@@ -276,7 +276,7 @@ const TALK: Record<string, Talk[]> = {
       outro: 'You know this one. Let it float.',
     },
     {
-      intro: 'Phases two and three come back, with a new ending.',
+      intro: 'Verse one b and the bridge come back, with a new ending.',
       L: 'Left hand: the same walking bass, B, E, D, A, and then the low D under every bar.',
       R: 'Right hand: F sharp, one long low E, then A, B, C, climbing up.',
       both: 'Together. It is the same as before, so trust your hands, and hold the G at the end.',
@@ -285,7 +285,7 @@ const TALK: Record<string, Talk[]> = {
     {
       intro: 'The ending. Little steps down in the right hand, and then the last two chords.',
       L: 'Left hand: a low E, three times, then A, then D.',
-      R: 'Right hand: B, C, F, then E, D, C, twice. It is the ending of phase three, with F instead of F sharp.',
+      R: 'Right hand: B, C, F, then E, D, C, twice. It is the ending of the bridge, with F instead of F sharp.',
       both: 'Together. Slow down at the end, and let the last chord ring.',
       outro: 'Slow down, and let the last chord ring.',
     },
@@ -343,9 +343,9 @@ const STEP_TIPS: Record<string, Record<string, string>> = {
     B33: 'You know this one. Play it a little more freely.',
     R35: 'A new chord. Feel the shape before you press.',
     B35: 'Keep the left hand rolling under the new chord.',
-    R37: 'The last new shape of this phase. Take it slowly.',
-    B37: 'End the phase calm and soft.',
-    B41: 'The same hands as phase two, just higher up.',
+    R37: 'The last new shape of the interlude. Take it slowly.',
+    B37: 'End the interlude calm and soft.',
+    B41: 'The same hands as verse one, just higher up.',
     R45: 'Watch the sharp again, the same black key as before.',
     B45: 'Let this part breathe before the build.',
     J47: 'Keep the left hand loose for the jump.',
@@ -368,7 +368,7 @@ const STEP_TIPS: Record<string, Record<string, string>> = {
     B69: 'Same as before. Enjoy it.',
     L73: 'A new bass. Find it before the bar starts.',
     R73: 'The pattern from the start is back. Your hand knows it.',
-    B73: 'Bring the sound down at the end of the phase.',
+    B73: 'Bring the sound down at the end of the climax.',
     B77: 'Softer now. Let each chord ring.',
     B79: 'Slow down a little. The ending is near.',
     J81: 'Let the hand fall to the low key, no rush.',
@@ -379,3 +379,34 @@ const STEP_TIPS: Record<string, Record<string, string>> = {
 for (const [id, tips] of Object.entries(STEP_TIPS)) SCRIPTS[id]?.phases.forEach(p => {
   p.steps = Object.fromEntries(Object.entries(tips).filter(([k]) => { const bar = Number(k.slice(1)); return bar >= p.from && bar <= p.to; }));
 });
+
+/**
+ * Each phase's place in the song's form, as a musician names it (the user's choice 2026-11:
+ * "divide the songs into intro, verse and so on", like the section buttons of a sheet music app):
+ * [English, Portuguese, how the English voice says it, how the Portuguese voice says it], phase by
+ * phase in the order above. Read from the score with the phases: what opens, what carries the tune,
+ * what links, what builds, what ends. A phase without a name is "Part n".
+ */
+export const SECTIONS: Record<string, [string, string, string, string][]> = {
+  'interstellar-experience': [
+    ['Intro', 'Intro', 'the intro', 'a intro'],
+    ['Verse 1', 'Verso 1', 'verse 1', 'o verso 1'],
+    ['Interlude', 'Interlúdio', 'the interlude', 'o interlúdio'],
+    ['Verse 2', 'Verso 2', 'verse 2', 'o verso 2'],
+    ['Build', 'Subida', 'the build', 'a subida'],
+    ['Climax', 'Clímax', 'the climax', 'o clímax'],
+    ['Outro', 'Final', 'the outro', 'o final'],
+  ],
+  'gymnopedie-1': [
+    ['Verse 1', 'Verso 1', 'verse 1', 'o verso 1'],
+    ['Verse 1b', 'Verso 1b', 'verse 1 b', 'o verso 1 b'],
+    ['Bridge', 'Ponte', 'the bridge', 'a ponte'],
+    ['Verse 2', 'Verso 2', 'verse 2', 'o verso 2'],
+    ['Verse 2b', 'Verso 2b', 'verse 2 b', 'o verso 2 b'],
+    ['Outro', 'Final', 'the outro', 'o final'],
+  ],
+  'fur-elise': [
+    ['Verse 1', 'Verso 1', 'verse 1', 'o verso 1'],
+    ['Verse 2', 'Verso 2', 'verse 2', 'o verso 2'],
+  ],
+};

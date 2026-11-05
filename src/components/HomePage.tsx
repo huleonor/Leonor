@@ -19,6 +19,8 @@ export function rememberReel(songId: string, clipId: string) {
 interface Props {
   title?: string;
   song?: Song;
+  /** The song is still being read: a loading card, never the "add the file" one. */
+  loading?: boolean;
   clips: Clip[];
   /** Where the feed would open: the video he was on, or the next one he has not watched. */
   at: number;
@@ -32,7 +34,7 @@ interface Props {
  * Home, the first screen: the video he was on, as a still to pick up again, and the menu (the
  * videos, the song's path, his songs, settings) as index cards.
  */
-export function HomePage({ title, song, clips, at, onContinue, onTab, onSettings, onAddMidi }: Props) {
+export function HomePage({ title, song, loading, clips, at, onContinue, onTab, onSettings, onAddMidi }: Props) {
   const clip = clips[at];
   const items = [
     { id: 'watch' as const, icon: <IconTabWatch size={26} />, name: L('Watch', 'Ver'), line: L('The videos, one pattern at a time.', 'Os vídeos, um padrão de cada vez.') },
@@ -43,17 +45,22 @@ export function HomePage({ title, song, clips, at, onContinue, onTab, onSettings
     <div className="page home">
       <header className="home-head">
         <p className="journey-by">{title ? L(`Learning now: ${title}`, `A aprender: ${title}`) : 'Leonor'}</p>
-        <h1>{clip ? L('Pick up where you left off', 'Continua onde ficaste') : L('Your first song', 'A tua primeira música')}</h1>
+        <h1>{clip || loading ? L('Pick up where you left off', 'Continua onde ficaste') : L('Your first song', 'A tua primeira música')}</h1>
       </header>
       {song && clip ? (
         <motion.button className="home-continue taped" onClick={onContinue} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}
-          aria-label={L(`Continue: phase ${clip.n}, video ${clip.k} of ${clip.of}`, `Continuar: fase ${clip.n}, vídeo ${clip.k} de ${clip.of}`)}>
+          aria-label={L(`Continue: ${clip.phase.section}, video ${clip.k} of ${clip.of}`, `Continuar: ${clip.phase.section}, vídeo ${clip.k} de ${clip.of}`)}>
           <ReelPreview song={song} reel={clip} />
           <span className="home-continue-foot">
-            <span><b>{L('Phase', 'Fase')} {clip.n}: {clip.words.title}</b><small>{L(`Video ${clip.k} of ${clip.of}`, `Vídeo ${clip.k} de ${clip.of}`)}</small></span>
+            <span><b>{clip.phase.section === clip.words.title ? clip.phase.section : `${clip.phase.section}: ${clip.words.title}`}</b><small>{L(`Video ${clip.k} of ${clip.of}`, `Vídeo ${clip.k} de ${clip.of}`)}</small></span>
             <span className="btn go"><IconPlay size={16} />{L('Continue', 'Continuar')}</span>
           </span>
         </motion.button>
+      ) : loading ? (
+        <section className="home-continue empty" aria-busy="true">
+          <span className="home-loading skeleton" aria-hidden="true" />
+          <p className="sub">{L('Getting your song ready.', 'A preparar a tua música.')}</p>
+        </section>
       ) : (
         <section className="home-continue empty">
           <p className="sub">{L("The videos are made from the song's own notes. Add a MIDI file and they are ready in a second.", 'Os vídeos são feitos das notas da própria música. Junta um ficheiro MIDI e ficam prontos num segundo.')}</p>
@@ -69,3 +76,21 @@ export function HomePage({ title, song, clips, at, onContinue, onTab, onSettings
     </div>
   );
 }
+
+/**
+ * The video he was on, as a still to pick up again (the top of the Song tab, the 2026-11 audit:
+ * three destinations, the song first): its kicker, its notes on the keys, the section and Continue.
+ */
+export function ContinueCard({ song, clip, onContinue }: { song: Song; clip: Clip; onContinue: () => void }) {
+  return (
+    <motion.button className="home-continue taped" onClick={onContinue} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}
+      aria-label={L(`Continue: ${clip.phase.section}, video ${clip.k} of ${clip.of}`, `Continuar: ${clip.phase.section}, vídeo ${clip.k} de ${clip.of}`)}>
+      <ReelPreview song={song} reel={clip} />
+      <span className="home-continue-foot">
+        <span><b>{clip.phase.section === clip.words.title ? clip.phase.section : `${clip.phase.section}: ${clip.words.title}`}</b><small>{L(`Video ${clip.k} of ${clip.of}`, `Vídeo ${clip.k} de ${clip.of}`)}</small></span>
+        <span className="btn go"><IconPlay size={16} />{L('Continue', 'Continuar')}</span>
+      </span>
+    </motion.button>
+  );
+}
+

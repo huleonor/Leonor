@@ -23,7 +23,7 @@
   --pink-text: #C2004F;
   --pink-soft: #FFD6E6;
   --teal: #00A99D;
-  --teal-text: #00756D;
+  --teal-text: #006A62;
   --teal-soft: #CDEDE7;
   --marker: #FFE45C;
   --tape: rgba(255, 233, 150, .78);
@@ -364,6 +364,9 @@ p { margin: 0; }
   background: var(--paper); border-left: 2px solid var(--ink); animation: slide-in var(--dur) var(--ease);
 }
 .side-sheet.wide { width: min(640px, 100%); }
+.piano-step { display: grid; align-content: start; gap: 20px; }
+.piano-step .sheet-head { margin: 0; }
+.piano-step-go { display: flex; justify-content: flex-start; }
 .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .sheet-head h2 { font-size: 38px; text-shadow: var(--riso); }
 .set-group { display: grid; gap: 12px; padding: 16px 14px; background: var(--white); border: 2px solid var(--ink); }
@@ -466,7 +469,7 @@ p { margin: 0; }
 .reel-progress i { flex: 1; height: 3px; background: var(--rule); overflow: hidden; }
 .reel-progress b { display: block; height: 100%; background: var(--ink); }
 .reel-head { display: grid; gap: 6px; align-content: start; padding: 16px 18px 6px; }
-.reel-kicker { justify-self: start; font: 700 clamp(13px, 2vh, 16px)/1.2 var(--font-mono); color: var(--ink); background: var(--marker); padding: 2px 6px; transform: rotate(-1.5deg); }
+.reel-kicker { justify-self: start; max-width: calc(100% - 120px); font: 700 clamp(13px, 2vh, 16px)/1.2 var(--font-mono); color: var(--ink); background: var(--marker); padding: 2px 6px; transform: rotate(-1.5deg); }
 .reel-meta { font-size: 12px; font-family: var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
 .reel-screen:not(.embedded) .reel-head { padding-left: 64px; }
 .reel-speed { padding: 3px 8px; background: var(--ink); color: var(--white); font: 700 12px var(--font-mono); white-space: nowrap; }
@@ -525,6 +528,20 @@ p { margin: 0; }
 
 /* The actions: paper squares, a little crooked, floating on the right edge; they show only while
    the video is paused (Reels.tsx slides them in), so the video stays clear while it plays. */
+/* The song's sections by its form (Intro, Verse 1, ...): a row of cards, a speaker to hear each and
+   its name to go in; the one he is on is the pink card. The Song tab and the paused video. */
+.part-row ol { display: flex; gap: 10px; margin: 0; padding: 6px 2px 10px; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.part-row ol::-webkit-scrollbar { display: none; }
+.part-chip { flex: none; display: flex; align-items: stretch; min-height: 48px; background: var(--white); border: 2px solid var(--ink); transform: rotate(-0.6deg); }
+.part-chip:nth-child(even) { transform: rotate(0.5deg); }
+.part-chip.current { background: var(--pink-soft); }
+.part-listen { display: grid; place-items: center; width: 44px; padding: 0; background: none; border: 0; border-right: 2px solid var(--ink); color: var(--ink); cursor: pointer; }
+.part-listen[aria-pressed="true"] { background: var(--marker); }
+.part-go { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; background: none; border: 0; color: var(--ink); font: 700 16px/1 var(--font); white-space: nowrap; cursor: pointer; }
+.part-row { min-width: 0; max-width: 100%; }
+.journey .part-row { margin: -6px 0 0; }
+.reel-sections { position: absolute; left: 12px; right: 96px; bottom: 28px; z-index: 9; }
+.reel-sections .part-row ol { padding-left: 4px; }
 .reel-side { position: absolute; right: 12px; top: 50%; translate: 0 -50%; z-index: 8; display: grid; gap: 12px; }
 .reel-act { display: grid; justify-items: center; gap: 4px; font: 700 11px var(--font-mono); color: var(--ink); background: var(--paper); padding: 2px 0; }
 .reel-act span { width: 50px; height: 50px; display: grid; place-items: center; border: 2px solid var(--ink); background: var(--white); color: var(--ink); transition: background-color var(--dur) var(--ease); }
@@ -556,6 +573,9 @@ p { margin: 0; }
   .reel-hold { left: auto; right: 16px; width: min(440px, 46%); }
   .app.watching .reel-head { padding-left: 74px; }
   .app.watching .reel-kicker { margin-left: 0; }
+  .reel-kicker { max-width: none; white-space: nowrap; font-size: 16px; }
+  /* Read from the music stand, an arm away: nothing on the video under 14px. */
+  .reel-meta { font-size: 14px; }
 }
 @media (min-aspect-ratio: 5 / 4) and (max-height: 500px) {
   .reel-hook { font-size: 28px; }
@@ -564,8 +584,11 @@ p { margin: 0; }
   .reel-say { font-size: 20px; }
   .reel-cue { font-size: 16px; }
   .reel-card h3 { font-size: 26px; }
-  .reel-act span { width: 42px; height: 42px; }
-  .reel-side { gap: 6px; }
+  /* Five actions in a short window: the label beside its icon, the column under the piano chip. */
+  .reel-act span { width: 44px; height: 44px; order: 2; }
+  .reel-act { grid-auto-flow: column; align-items: center; gap: 8px; padding: 0; }
+  .reel-side { top: 74px; translate: none; gap: 4px; justify-items: end; }
+  .reel-sections { right: 150px; }
 }
 
 /* The menu on Watch: three lines at the top left; the tabs slide in from the left as a sheet. */
@@ -573,7 +596,8 @@ p { margin: 0; }
 .nav-toggle:hover { background: var(--marker); }
 /* While a video plays the menu steps out of the way; it is back the moment he pauses. */
 .nav-toggle { transition: opacity 240ms steps(3); }
-.reel-playing .nav-toggle { opacity: 0; pointer-events: none; }
+/* The way back to the song stays while the video plays (the 2026-11 audit); only fainter. */
+.reel-playing .nav-toggle.back { opacity: 0.6; }
 .app.watching { grid-template-rows: minmax(0, 1fr); }
 .app.watching .reel-kicker { margin-left: 52px; }
 .nav-scrim { position: fixed; inset: 0; z-index: 25; background: var(--scrim); }
@@ -803,35 +827,30 @@ p { margin: 0; }
   .input-choices .choice svg { grid-row: span 2; margin: 0; }
 }
 
-/* ---------- Song: the phases as a path of levels ---------- */
-.phase-path { position: relative; list-style: none; margin: 10px 0 0; padding: 0; }
-.path-trail { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.path-trail path { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 2 9; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-.path-node { position: absolute; width: 0; height: 0; }
-.path-card { position: absolute; left: -38px; top: -38px; width: 76px; height: 76px; display: grid; place-items: center; background: var(--white); border: 2px solid var(--ink); color: var(--ink); box-shadow: 4px 4px 0 var(--ink); transform: rotate(-3deg); transition: background-color var(--dur) var(--ease); }
-.path-node:nth-child(odd) .path-card { transform: rotate(4deg); }
-.path-card .num { font-size: 32px; }
-.path-card:hover { background: var(--marker); }
-.path-card:active { box-shadow: 1px 1px 0 var(--ink); translate: 3px 3px; }
-.path-node.done .path-card { background: var(--teal-soft); }
-.path-node.ahead .path-card { color: var(--ink-2); border-style: dashed; box-shadow: none; }
-.path-node.next .path-card { width: 92px; height: 92px; left: -46px; top: -46px; background: var(--pink); color: var(--white); box-shadow: 4px 4px 0 var(--ink); }
-.path-node.next .path-card .num { font-size: 40px; }
-.path-node.next .path-card::before { content: ''; position: absolute; top: -12px; left: 18px; width: 56px; height: 20px; background: var(--tape); transform: rotate(-8deg); }
-.path-node.finale .path-card { width: 92px; height: 92px; left: -46px; top: -46px; background: var(--ink); color: var(--white); box-shadow: 4px 4px 0 var(--pink); }
-.path-start { position: absolute; left: -38px; top: -84px; width: 76px; text-align: center; padding: 3px 0; background: var(--white); border: 2px solid var(--ink); font: 700 13px var(--font-mono); color: var(--pink-text); transform: rotate(-3deg); }
-.path-label { position: absolute; top: -26px; display: grid; gap: 3px; }
-.path-node.left .path-label { left: 58px; text-align: left; }
-.path-node.right .path-label { right: 58px; text-align: right; justify-items: end; }
-.path-node.next .path-label { top: -30px; }
-.path-node.next.left .path-label, .path-node.finale.left .path-label { left: 66px; }
-.path-node.next.right .path-label, .path-node.finale.right .path-label { right: 66px; }
-.path-label b { font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.05; }
-.path-label small { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
-.path-pop { position: absolute; top: 54px; left: -110px; width: 220px; z-index: 6; display: grid; gap: 10px; padding: 14px; background: var(--white); border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
-.path-node.left .path-pop { left: -40px; }
-.path-node.right .path-pop { left: -180px; }
-.path-pop .btn { justify-content: flex-start; }
+/* ---------- Song: its sections ---------- */
+/* The song's sections, a list of index cards (Journey.tsx SectionList): the number or a tick, the
+   name in the song's form, what it is; Hear and Practise under it. The next one pink and taped. */
+.section-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.sec-card { position: relative; background: var(--white); border: 2px solid var(--ink); transform: rotate(-0.6deg); }
+.sec-card:nth-child(even) { transform: rotate(0.5deg); }
+.sec-main { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 10px 14px; text-align: left; color: var(--ink); }
+.sec-main:hover { background: var(--marker); }
+.sec-num { display: grid; place-items: center; width: 44px; height: 44px; border: 2px solid var(--ink); font: 900 20px var(--font); background: var(--paper); }
+.sec-words { display: grid; gap: 2px; min-width: 0; }
+.sec-words b { font: 700 20px/1.15 var(--font-display); }
+.sec-words small { font: 700 13px/1.35 var(--font-mono); color: var(--muted); }
+.sec-more { display: flex; gap: 20px; padding: 0 14px 10px 72px; }
+.sec-more .btn.quiet { min-height: 44px; }
+.sec-card.ahead .sec-num { border-style: dashed; color: var(--ink-2); }
+.sec-card.done .sec-num { background: var(--teal-soft); }
+.sec-card.next { background: var(--pink-soft); }
+.sec-card.next .sec-num { background: var(--pink); color: var(--white); border-color: var(--ink); }
+.sec-card.next::before { content: ''; position: absolute; top: -10px; left: 30px; width: 64px; height: 20px; background: var(--tape); transform: rotate(-6deg); }
+.sec-card.finale { background: var(--ink); }
+.sec-card.finale .sec-main { color: var(--paper); }
+.sec-card.finale .sec-main:hover { background: var(--ink-2); }
+.sec-card.finale .sec-num { background: var(--ink); color: var(--paper); border-color: var(--paper); }
+.sec-card.finale .sec-words small { color: var(--paper); }
 
 /* ---------- Home: the video he was on, and the menu ---------- */
 .home { padding: calc(30px + var(--safe-t)) 0 40px; display: grid; gap: 24px; }
@@ -839,6 +858,7 @@ p { margin: 0; }
 .home-head h1 { font-size: clamp(36px, 9vw, 52px); line-height: .95; }
 .home-continue { display: grid; width: 100%; padding: 0; text-align: left; background: var(--white); border: 2px solid var(--ink); transform: rotate(-.8deg); box-shadow: 4px 4px 0 var(--ink); }
 .home-continue.empty { padding: 20px; gap: 14px; justify-items: start; }
+.home-loading { display: block; width: 100%; height: 120px; background: var(--paper-2); }
 .home-continue-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-top: 2px dashed var(--ink); }
 .home-continue-foot b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 19px; }
 .home-continue-foot small { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
@@ -863,7 +883,7 @@ p { margin: 0; }
 .reel-explain:hover { background: var(--marker); border-color: var(--ink); color: var(--ink); }
 .reel-verdict { position: absolute; z-index: 6; top: 24%; left: 0; right: 0; width: max-content; max-width: calc(100% - 40px); margin: 0 auto; padding: 8px 14px; background: var(--white); border: 2px solid var(--ink); font: 700 16px var(--font-mono); color: var(--ink); pointer-events: none; }
 .reel-verdict.good { border-color: var(--ok); border-left-width: 8px; }
-.reel-piano { position: absolute; top: 18px; right: 14px; z-index: 7; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; background: var(--white); border: 2px solid var(--ink); color: var(--ink); font: 700 12px var(--font-mono); transform: rotate(1.5deg); }
+.reel-piano { position: absolute; top: 18px; right: 14px; z-index: 7; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; min-width: 44px; justify-content: center; padding: 0 10px; background: var(--white); border: 2px solid var(--ink); color: var(--ink); font: 700 12px var(--font-mono); transform: rotate(1.5deg); }
 .reel-piano > i { width: 8px; height: 8px; border-radius: 50%; background: var(--mark); margin-left: -4px; align-self: flex-start; margin-top: 6px; }
 .reel-piano.on > i { background: var(--ok); }
 .reel-piano:hover { background: var(--marker); }

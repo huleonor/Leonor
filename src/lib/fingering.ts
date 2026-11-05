@@ -52,18 +52,28 @@ function spreadChord(ev: Ev, hand: Hand, f0: number): number[] {
   return out;
 }
 
-/** Cost of moving from finger a on note x to finger b on note y. */
-function moveCost(a: number, x: number, b: number, y: number, hand: Hand): number {
+/**
+ * Cost of moving from finger a on note x to finger b on note y, `dt` seconds later. A stretch past
+ * the pair's comfort is paid by the time there is: with a quarter of a second or more the hand can
+ * move over instead (a relocation, the same for any pair), quicker than that the fingers must reach
+ * it, and two keys past comfort is beyond a hand (the quality check found 2 and 5 asked to span an
+ * octave in an eighth of a second, where 1 and 5 reach it).
+ */
+function moveCost(a: number, x: number, b: number, y: number, hand: Hand, dt = 1): number {
   // Distance in white keys, positive towards the little finger.
   const d = hand === 'R' ? pos(y) - pos(x) : pos(x) - pos(y);
   let c = 0;
   if (x === y) return a === b ? 0 : 1; // a repeated key: any finger, the same one is easiest
-  if (a === b) return 5 + Math.abs(d); // the same finger on another key: a jolt
+  // The same finger on another key: a jolt, unless there is time to move the hand for a leap.
+  if (a === b) return dt >= 0.3 && Math.abs(d) >= 3 ? 2.5 + Math.abs(d) * 0.25 : 5 + Math.abs(d);
   const k = b - a;
   if (Math.sign(k) === Math.sign(d)) {
     const [lo, hi] = COMFORT[`${Math.min(a, b)}-${Math.max(a, b)}`];
     const s = Math.abs(d);
-    if (s > hi) c += (s - hi) * 1.6; // stretch
+    if (s > hi) {
+      const ex = s - hi, reach = ex * 1.6 + Math.max(0, ex - 1) * (dt < 0.25 ? 4 : 1.5);
+      c += dt >= 0.25 ? Math.min(reach, 2 + s * 0.25) : reach; // stretch, or move the hand
+    }
     if (s < lo) c += (lo - s) * 1.2; // cramp
   } else {
     // Crossing: only the thumb passes under, or a finger (2, 3, 4) over the thumb.
@@ -133,7 +143,8 @@ function solve(evs: Ev[], hand: Hand) {
         const prev = evs[i - 1];
         // From the previous strike's nearer edge to this anchor.
         const from = prev.notes.length > 1 ? outer(prev, g) : { f: g, m: prev.anchor };
-        const c = cost[i - 1][g] + Math.min(moveCost(g, prev.anchor, f, e.anchor, hand), moveCost(from.f, from.m, f, e.anchor, hand));
+        const dt = e.time - prev.time;
+        const c = cost[i - 1][g] + Math.min(moveCost(g, prev.anchor, f, e.anchor, hand, dt), moveCost(from.f, from.m, f, e.anchor, hand, dt));
         if (c < best) { best = c; arg = g; }
       }
       cost[i][f] = best + base;
@@ -165,4 +176,40 @@ function solve(evs: Ev[], hand: Hand) {
 /** Fills `finger` and `fingerCue` on every note. */
 export function assignFingering(notes: SongNote[]) {
   for (const hand of ['R', 'L'] as Hand[]) fingerHand(notes.filter(n => n.hand === hand), hand);
+}
+
+/**
+ * How playable the fingering is (dev check, `await window.__fingerCheck('song-id')`): every change
+ * from one strike to the next, per hand, measured against the comfortable span of the two fingers.
+ * Impossible: more than two white keys past it within 0.25 s, with no time for the hand to move.
+ * A relocation: past it with time for the hand to move. A chord wider than a ninth is impossible too.
+ */
+export function fingerReport(notes: SongNote[]) {
+  const out: Record<string, { strikes: number; impossible: number; relocations: number; wideChords: number; worst: string[] }> = {};
+  for (const hand of ['R', 'L'] as Hand[]) {
+    const ns = notes.filter(n => n.hand === hand && n.finger).sort((a, b) => a.time - b.time);
+    const evs: SongNote[][] = [];
+    for (const n of ns) { const l = evs[evs.length - 1]; if (l && Math.abs(n.time - l[0].time) < 0.03) l.push(n); else evs.push([n]); }
+    const r = { strikes: evs.length, impossible: 0, relocations: 0, wideChords: 0, worst: [] as string[] };
+    for (let i = 0; i < evs.length; i++) {
+      const e = evs[i];
+      if (e.length > 1 && Math.max(...e.map(n => pos(n.midi))) - Math.min(...e.map(n => pos(n.midi))) > 8) r.wideChords++;
+      if (!i) continue;
+      const p = evs[i - 1], dt = e[0].time - p[0].time;
+      let worst = 0, what = '';
+      for (const a of p) for (const b of e) {
+        if (a.finger === b.finger || a.midi === b.midi) continue;
+        const d = hand === 'R' ? pos(b.midi) - pos(a.midi) : pos(a.midi) - pos(b.midi);
+        const k = b.finger! - a.finger!;
+        if (Math.sign(k) !== Math.sign(d)) continue;
+        const ex = Math.abs(d) - COMFORT[`${Math.min(a.finger!, b.finger!)}-${Math.max(a.finger!, b.finger!)}`][1];
+        const held = a.time + a.duration > b.time + 0.05;
+        if (ex > 2 && dt < 0.25 && ex > worst) { worst = ex; what = `${a.midi}/${a.finger} > ${b.midi}/${b.finger} at ${b.time.toFixed(1)} s${held ? ' held' : ''}`; }
+        else if (ex > 2 && !held) r.relocations++;
+      }
+      if (worst) { r.impossible++; if (r.worst.length < 6) r.worst.push(what); }
+    }
+    out[hand] = r;
+  }
+  return out;
 }
