@@ -40,6 +40,19 @@ if (import.meta.env.DEV) {
     const song = await loadSong(entry);
     return { version: readSong(song).version, score: readSong(song).text, reels: reelFacts(song) };
   };
+  // How hard each video's music is and how slow it goes: await window.__reelDifficulty('song-id').
+  (window as unknown as { __reelDifficulty: unknown }).__reelDifficulty = async (id: string) => {
+    const { listSongs, loadSong } = await import('./lib/library');
+    const { clipsOf, timelineOf } = await import('./lib/reels');
+    const entry = (await listSongs()).find(e => e.id === id || e.slot === id);
+    if (!entry) return `No song ${id}`;
+    const song = await loadSong(entry);
+    return clipsOf(song).map(c => {
+      const sg = c.segments[0];
+      const tl = timelineOf(song, c);
+      return { phase: c.n, k: c.k, kind: c.kind, bars: `${c.from}-${c.to}`, d: Math.round((c.difficulty ?? 0) * 100) / 100, speed: sg.speed, rounds: tl.countIns?.length ?? 0, secs: Math.round(tl.duration), head: c.head };
+    });
+  };
   // Every piece of voice the videos of the songs in his library need, for scripts/voice-bank.mjs:
   // copy(JSON.stringify(await window.__voiceKeys())) and save it as a file. A song of the app's own
   // (public domain) is recorded line by line; a song he brought (a slot) only as sentences without
