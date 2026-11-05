@@ -315,7 +315,7 @@ export interface Clip extends Reel {
   /** Its place in the phase, from 1, and how many the phase has. */
   k: number;
   of: number;
-  kind: 'intro' | 'pattern' | 'jump' | 'L' | 'R' | 'both' | 'run' | 'fix';
+  kind: 'intro' | 'pattern' | 'jump' | 'L' | 'R' | 'both' | 'run' | 'fix' | 'explain';
   /** The big line of the video: the idea, or the notes of the step. */
   head: string;
   /** What the voice says. */
@@ -807,4 +807,59 @@ export function fixClip(song: Song, clip: Clip, ticks: number, missed: number[])
     from: barIndex(grid, a) + 1, to: barIndex(grid, Math.max(a, z - 1)) + 1, where: '',
     segments: [{ ...sg, speed: Math.max(0.3, sg.speed * 0.75), label: tr('Fix this spot, slow', 'Corrigir este sítio, devagar'), ticks: [a, z], times: 4 }],
   };
+}
+
+/** The fixed lines of an explanation (for the voice recorder, main.tsx __voiceKeys). */
+export const explainLines = () => [
+  tr("Let's take it apart, slower.", 'Vamos por partes, mais devagar.'),
+  tr('Nice. Next up, the whole part again. Swipe up.', 'Boa. A seguir, a parte toda outra vez. Desliza para cima.'),
+];
+
+/**
+ * "Explain it slower" (the button on a video, the user's choice 2026-11): the video's music taken
+ * apart into small pieces, a bar or half a bar (two bars of a long stretch), each hand alone and
+ * then both, slower than the video was, every piece its own short video with its notes named; then
+ * the whole part again. The pieces are cut from the song's own notes, as everything else.
+ */
+export function explainClips(song: Song, clip: Clip): Clip[] {
+  const { grid } = splitBars(song);
+  const flats = song.fifths < 0;
+  const sg = clip.segments[0];
+  const hands: Hand[] = sg.kind === 'both' ? song.hands : [sg.kind];
+  const notesIn = (t0: number, t1: number, h: Hand) => song.notes.filter(n => n.hand === h && n.ticks >= t0 && n.ticks < t1).sort((a, b) => a.ticks - b.ticks || b.midi - a.midi);
+  const pieces: [number, number][] = [];
+  if (sg.ticks) pieces.push(sg.ticks);
+  else {
+    const per = Math.max(1, Math.ceil((sg.to - sg.from + 1) / 6));
+    for (let b = sg.from; b <= sg.to; b += per) {
+      const t0 = barStart(grid, b - 1), t1 = barStart(grid, Math.min(sg.to, b + per - 1));
+      const busy = new Set(hands.flatMap(h => notesIn(t0, t1, h)).map(n => n.ticks)).size > 10;
+      if (per === 1 && busy) { const mid = Math.round(t0 + (t1 - t0) / 2); pieces.push([t0, mid], [mid, t1]); } else pieces.push([t0, t1]);
+    }
+  }
+  const speed = Math.max(0.25, Math.round(sg.speed * 0.7 * 20) / 20);
+  const out: Clip[] = [];
+  const names = (ns: SongNote[]) => { const seq: string[] = []; for (const n of ns) { const l = letter(n.midi, flats); if (seq[seq.length - 1] !== l) seq.push(l); } return seq; };
+  pieces.slice(0, 8).forEach(([t0, t1], pi) => {
+    const playing = hands.filter(h => notesIn(t0, t1, h).length);
+    const videos: (Hand | 'both')[] = playing.length > 1 ? [...playing, 'both'] : playing;
+    for (const v of videos) {
+      const ns = v === 'both' ? [] : notesIn(t0, t1, v);
+      const seq = v === 'both' ? names(notesIn(t0, t1, playing.includes('R') ? 'R' : playing[0])) : names(ns);
+      const first = out.length === 0;
+      const handLine = v === 'L' ? tr('Left hand.', 'Mão esquerda.') : v === 'R' ? tr('Right hand.', 'Mão direita.') : tr('Now both hands, slowly.', 'Agora as duas mãos, devagar.');
+      const list = v === 'both' ? '' : ` ${seq.slice(0, 8).join(', ')}.`;
+      const label = v === 'L' ? tr('Left hand, piece by piece', 'Mão esquerda, por partes') : v === 'R' ? tr('Right hand, piece by piece', 'Mão direita, por partes') : tr('Both hands, piece by piece', 'Duas mãos, por partes');
+      out.push({
+        ...clip, id: `${clip.id}-explain-${pi}-${v}`, kind: 'explain', knownStep: false,
+        head: NT(seq.slice(0, 5).join(' ')),
+        say: NT(`${first ? `${tr("Let's take it apart, slower.", 'Vamos por partes, mais devagar.')} ` : ''}${handLine}${list}`),
+        from: barIndex(grid, t0) + 1, to: barIndex(grid, Math.max(t0, t1 - 1)) + 1, where: '',
+        segments: [{ ...sg, kind: v, speed, label, ticks: [t0, t1], times: 1, listen: false }],
+      });
+    }
+  });
+  const about = (c: Clip) => (c.segments[0].kind === 'L' ? tr('the left hand', 'a mão esquerda') : c.segments[0].kind === 'R' ? tr('the right hand', 'a mão direita') : tr('both hands together', 'as duas mãos juntas'));
+  out.forEach((c, i) => { c.next = out[i + 1] ? about(out[i + 1]) : tr('the whole part again', 'a parte toda outra vez'); });
+  return out;
 }

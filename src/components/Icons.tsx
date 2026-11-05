@@ -4,7 +4,7 @@
  */
 import {
   ArrowCounterClockwise, ArrowDown, ArrowLeft, ArrowRight, ArrowsDownUp, Barbell, Bell, Bluetooth, Books, CaretDown, CaretLeft, CaretUp, ChartBar,
-  Check, Checks, DotsThree, DownloadSimple, Equalizer, Fire, Gauge, Gear, GraduationCap, HandPalm, Headphones, House, Lightning, List,
+  Check, Checks, DotsThree, DownloadSimple, Equalizer, Fire, Gauge, Gear, GraduationCap, HandPalm, Headphones, House, Lightbulb, Lightning, List,
   FilmStrip, Lock, MagicWand, Microphone, Moon, MusicNote, MusicNotes, MusicNotesSimple, Path, Notepad, Pause, PencilSimple, PianoKeys, Play, PlayCircle, Plus, Repeat, Rewind,
   SignOut, Snowflake, SpeakerHigh, SpeakerSlash, Star, Stop, Target, Trash, X, type Icon as PhIcon, type IconProps,
 } from '@phosphor-icons/react';
@@ -15,6 +15,7 @@ const make = (Glyph: PhIcon, weight: IconProps['weight'] = 'bold') =>
   ({ size = 18, ...rest }: P) => <Glyph size={size} weight={weight} aria-hidden="true" {...rest} />;
 
 export const IconBack = make(CaretLeft);
+export const IconExplain = make(Lightbulb);
 export const IconPlay = make(Play, 'fill');
 export const IconPause = make(Pause, 'fill');
 export const IconRestart = make(ArrowCounterClockwise);
