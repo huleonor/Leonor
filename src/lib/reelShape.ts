@@ -28,6 +28,12 @@ export interface PhaseWords {
   tip: string;
   /** What the voice says (the captions show it word by word). */
   talk?: Talk;
+  /**
+   * A teacher's tip for a video after the phase's first step, said after its own line: keyed by
+   * the video's kind (L, R, B for both hands, J for a jump) and the bar its step starts on ("R5").
+   * Technique and what changes, never the notes read out (the screen and the rules show those).
+   */
+  steps?: Record<string, string>;
 }
 
 export const LIMITS = { title: 32, hook: 52, line: 56, tip: 80, talk: 240 };
@@ -53,5 +59,7 @@ export function cleanPhase(w: PhaseWords): PhaseWords | null {
     const intro = t(w.talk.intro), both = t(w.talk.both), outro = t(w.talk.outro);
     if (intro && both && outro) talk = { intro, L: t(w.talk.L), R: t(w.talk.R), both, outro };
   }
-  return { from: w.from, to: w.to, title, hook, tricks, L, R, cues, tip, talk };
+  const steps: Record<string, string> = {};
+  for (const [k, v] of Object.entries(w.steps ?? {})) { const c = clean(v, LIMITS.tip); if (c && /^[LRBJ]\d+$/.test(k)) steps[k] = c; }
+  return { from: w.from, to: w.to, title, hook, tricks, L, R, cues, tip, talk, steps };
 }
