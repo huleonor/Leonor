@@ -76,3 +76,21 @@ export function HomePage({ title, song, loading, clips, at, onContinue, onTab, o
     </div>
   );
 }
+
+/**
+ * The video he was on, as a still to pick up again (the top of the Song tab, the 2026-11 audit:
+ * three destinations, the song first): its kicker, its notes on the keys, the section and Continue.
+ */
+export function ContinueCard({ song, clip, onContinue }: { song: Song; clip: Clip; onContinue: () => void }) {
+  return (
+    <motion.button className="home-continue taped" onClick={onContinue} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}
+      aria-label={L(`Continue: ${clip.phase.section}, video ${clip.k} of ${clip.of}`, `Continuar: ${clip.phase.section}, vídeo ${clip.k} de ${clip.of}`)}>
+      <ReelPreview song={song} reel={clip} />
+      <span className="home-continue-foot">
+        <span><b>{clip.phase.section === clip.words.title ? clip.phase.section : `${clip.phase.section}: ${clip.words.title}`}</b><small>{L(`Video ${clip.k} of ${clip.of}`, `Vídeo ${clip.k} de ${clip.of}`)}</small></span>
+        <span className="btn go"><IconPlay size={16} />{L('Continue', 'Continuar')}</span>
+      </span>
+    </motion.button>
+  );
+}
+

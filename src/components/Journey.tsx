@@ -55,13 +55,15 @@ interface Props {
   onWholeSong: (info: SongInfo) => void;
   onBringMidi: (slot: SongEntry) => void;
   onSongs: () => void;
+  /** The video he was on, to pick up again (ContinueCard), in place of the Watch button. */
+  resume?: React.ReactNode;
 }
 
 /**
  * Song: the song being learnt, phase by phase. Every phase is one video that explains its patterns
  * and tricks, and its practice; the next thing to do is lit.
  */
-export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, onPractice, onWholeSong, onBringMidi, onSongs }: Props) {
+export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, onPractice, onWholeSong, onBringMidi, onSongs, resume }: Props) {
   useBump(onSeen);
   const entry = entries.find(e => e.id === id || e.slot === id);
   const info = entry ? infos[entry.id] : undefined;
@@ -72,7 +74,8 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
   const seen = song ? seenReels(song.entry.id) : [];
   const others = entries.filter(e => !e.missing && e.id !== entry?.id && infos[e.id]?.song).slice(0, 6);
 
-  if (!ready) return <div className="page journey" aria-busy="true"><span className="journey-hero skeleton" /></div>;
+  // Shown as soon as its own song is read (the catalog reads it first), not after the whole library.
+  if (!ready && !info) return <div className="page journey" aria-busy="true"><span className="journey-hero skeleton" /></div>;
 
   if (!entry || entry.missing || !song || !info) {
     const slot = entry ?? entries.find(e => e.id === FIRST_SONG);
@@ -130,8 +133,11 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
           <motion.span className="num" key={pct} initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING}>{pct}</motion.span>
           <span>{L('percent learnt', 'por cento aprendido')}{next ? L(`, ${next.r.section} next`, `, a seguir: ${next.r.section}`) : ''}</span>
         </p>
+        {resume}
         <div className="journey-actions">
-          {next ? (
+          {resume ? (next?.watched && next.section && (
+            <button className="btn" onClick={() => onPractice(song.entry.id, next.r)}><IconKeysFill size={18} />{L(`Practise ${next.r.section}`, `Praticar ${next.r.section}`)}</button>
+          )) : next ? (
             <button className="btn go big" onClick={() => (!next.watched ? onWatch(song.entry.id, next.i) : onPractice(song.entry.id, next.r))}>
               {!next.watched ? <IconPlay size={18} /> : <IconKeysFill size={18} />}{!next.watched ? L(`Watch ${next.r.section}`, `Ver ${next.r.section}`) : L(`Practise ${next.r.section}`, `Praticar ${next.r.section}`)}
             </button>

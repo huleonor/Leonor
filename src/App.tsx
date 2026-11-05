@@ -5,7 +5,7 @@ import { onStats } from './lib/stats';
 import { scheduleReminders, startWebReminders } from './lib/reminders';
 import { currentSongId, Journey, practiceFor, setCurrentSong } from './components/Journey';
 import { ReelFeed } from './components/Reels';
-import { HomePage, lastReel, rememberReel } from './components/HomePage';
+import { ContinueCard, lastReel, rememberReel } from './components/HomePage';
 import { clipsOf, seenReels, type Reel } from './lib/reels';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
@@ -14,8 +14,7 @@ import { PianoStep, pianoAsked } from './components/PianoStep';
 import { EditSong } from './components/EditSong';
 import { SongScreen, sectionsOf, type Section } from './components/SongScreen';
 import { Songs } from './components/Songs';
-import { AnimatePresence, motion } from 'motion/react';
-import { IconClose, IconHome, IconHomeFill, IconMenu, IconReel, IconTabLibrary, IconTabLibraryFill, IconTabSettings, IconTabSong, IconTabSongFill, IconTabWatch } from './components/Icons';
+import { IconHome, IconHomeFill, IconArrowLeft, IconReel, IconTabLibrary, IconTabLibraryFill, IconTabSettings, IconTabSong, IconTabSongFill, IconTabWatch } from './components/Icons';
 import { holdNote, loadPiano, releaseNote, unlockAudio } from './lib/audio';
 import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/catalog';
 import { I18nContext, makeT } from './lib/i18n';
@@ -27,9 +26,9 @@ import type { Settings, SongEntry } from './lib/types';
 /** Watch is the reel feed of the song being learnt; Song is its map; Library his songs. */
 type Tab = 'home' | 'watch' | 'song' | 'library';
 // The tab bar along the bottom, like an app's: a Phosphor mark over a short word, filled for the tab he is on.
+// Three destinations (the 2026-11 audit, the user's yes): the song, his songs, and Settings (the gear
+// at the end). The videos open from the song: its Continue card, its sections, its path.
 const TABS: [Tab, () => string][] = [
-  ['home', () => L('Home', 'Início')],
-  ['watch', () => L('Watch', 'Ver')],
   ['song', () => L('Song', 'Música')],
   ['library', () => L('Library', 'Biblioteca')],
 ];
@@ -41,7 +40,7 @@ const tabIcon = (id: Tab, on: boolean) =>
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [tab, setTab] = useState<Tab>('home');
+  const [tab, setTab] = useState<Tab>('song');
   // The song being learnt: one at a time, Interstellar Experience first.
   const [current, setCurrent] = useState(currentSongId);
   const choose = (id: string) => { setCurrent(id); setCurrentSong(id); };
@@ -54,7 +53,6 @@ export default function App() {
   const [editing, setEditing] = useState<SongEntry | null>(null);
   const [sheet, setSheet] = useState<'settings' | 'check' | null>(null);
   // On Watch the videos take the whole screen: the tabs hide behind a menu button and slide in.
-  const [drawer, setDrawer] = useState(false);
   const [adding, setAdding] = useState<{ file: File; slot?: SongEntry } | null>(null);
   const [links, setLinks] = useState<Record<Source, LinkState>>(linkState);
   // The piano, asked once before the first videos (PianoStep.tsx): what to do after it.
@@ -201,6 +199,9 @@ export default function App() {
       onWholeSong={info => openSheet(info)}
       onBringMidi={slot => pickFile(slot)}
       onSongs={() => setTab('library')}
+      resume={currentInfo?.song && currentReels.length && currentEntry && (currentEntry.id === current || currentEntry.slot === current) ? (
+        <ContinueCard song={currentInfo.song} clip={currentReels[feedStart()]} onContinue={() => { unlockAudio(); viaPiano(() => { setWatch(null); setTab('watch'); }); }} />
+      ) : undefined}
     />
   );
 
@@ -213,7 +214,7 @@ export default function App() {
   const masterySection = useMemo(() => mastery?.session.section, [mastery?.session]);
 
   const watching = tab === 'watch' && !!currentInfo?.song && currentReels.length > 0;
-  const go = (id: Tab) => { if (id === 'watch' && tab === 'watch') setWatch(null); setTab(id); setOpenId(null); setDrawer(false); };
+  const go = (id: Tab) => { if (id === 'watch' && tab === 'watch') setWatch(null); setTab(id); setOpenId(null); };
   const nav = (
     <nav className="rail" aria-label={L('Main', 'Principal')}>
       {TABS.map(([id, label]) => (
@@ -221,7 +222,7 @@ export default function App() {
           {tabIcon(id, tab === id)}<span>{label()}</span>
         </button>
       ))}
-      <button className="rail-btn settings" onClick={() => { setDrawer(false); setSheet('settings'); }}><IconTabSettings /><span>{L('Settings', 'Definições')}</span></button>
+      <button className="rail-btn settings" onClick={() => setSheet('settings')}><IconTabSettings /><span>{L('Settings', 'Definições')}</span></button>
     </nav>
   );
 
@@ -264,27 +265,13 @@ export default function App() {
         />
       ) : (
         <div className={`app ${watching ? 'watching' : ''}`}>
-          {!watching && tab !== 'home' && nav}
+          {!watching && nav}
           {watching && (
-            <button className="nav-toggle" onClick={() => setDrawer(true)} aria-label="Menu" aria-expanded={drawer}><IconMenu size={24} /></button>
+            // Back to the song, always there (the 2026-11 audit): the videos open from it.
+            <button className="nav-toggle back" onClick={() => setTab('song')} aria-label={L('Back to the song', 'Voltar à música')}><IconArrowLeft size={24} /></button>
           )}
-          <AnimatePresence>
-            {watching && drawer && (
-              <motion.div key="drawer" className="nav-scrim" onClick={() => setDrawer(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-                <motion.div className="nav-drawer" onClick={e => e.stopPropagation()} initial={{ x: '-105%' }} animate={{ x: 0 }} exit={{ x: '-105%', transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }} transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}>
-                  <button className="icon-btn ghost nav-close" onClick={() => setDrawer(false)} aria-label={L('Close the menu', 'Fechar o menu')}><IconClose size={22} /></button>
-                  {nav}
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
           <main className={`content ${watching ? 'tab-watch' : ''}`}>
-            {tab === 'home' ? (
-              <HomePage title={currentEntry?.title} song={currentInfo?.song} loading={!ready && !currentInfo} clips={currentReels} at={currentReels.length ? feedStart() : 0}
-                onContinue={() => { unlockAudio(); viaPiano(() => { setWatch(null); setTab('watch'); }); }}
-                onTab={(t: Tab) => go(t)} onSettings={() => setSheet('settings')}
-                onAddMidi={() => { const slot = currentEntry ?? entries.find(e => e.slot); if (slot) pickFile(slot); }} />
-            ) : tab === 'watch' ? (
+            {tab === 'watch' ? (
               currentInfo?.song && currentReels.length ? (
                 <ReelFeed
                   key={`${currentInfo.entry.id}-${watch?.n ?? 0}`} embedded

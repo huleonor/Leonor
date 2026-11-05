@@ -596,7 +596,8 @@ p { margin: 0; }
 .nav-toggle:hover { background: var(--marker); }
 /* While a video plays the menu steps out of the way; it is back the moment he pauses. */
 .nav-toggle { transition: opacity 240ms steps(3); }
-.reel-playing .nav-toggle { opacity: 0; pointer-events: none; }
+/* The way back to the song stays while the video plays (the 2026-11 audit); only fainter. */
+.reel-playing .nav-toggle.back { opacity: 0.6; }
 .app.watching { grid-template-rows: minmax(0, 1fr); }
 .app.watching .reel-kicker { margin-left: 52px; }
 .nav-scrim { position: fixed; inset: 0; z-index: 25; background: var(--scrim); }

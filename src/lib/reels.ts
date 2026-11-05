@@ -389,6 +389,8 @@ function leftWords(facts: BarFacts[]) {
   return { said: `${what}${held ? tr(', held for the whole bar', ', segurada o compasso todo') : ''}. ${octaves ? tr('Little finger low, thumb on top.', 'Mindinho em baixo, polegar em cima.') : ''}`.trim(), simple, head: octaves ? `${bass.join(' ')} ${tr('octaves', 'oitavas')}` : bass.join(' ') };
 }
 
+/** At most this many videos a section: a short series, not a course (the 2026-11 audit). */
+const SERIES = 12;
 const BOTH = () => (lang() === 'pt' ? ['Agora as duas mãos juntas. Com calma e devagar.', 'Junta-as, devagar, as duas mãos a cair no tempo um.', 'Agora as duas mãos. Sem pressa.'] : ['Both hands together now. Nice and slow.', 'Put them together, slowly, both hands landing on beat one.', 'Now both hands. Take your time.']);
 
 /**
@@ -646,7 +648,7 @@ export function clipsOf(song: Song): Clip[] {
         const prev = mine[mine.length - 1];
         // Shapes he knows, right after shapes he knows: one longer video instead of several (not
         // where it is hard: there every step keeps its own video).
-        if (knownStep && prev?.kind === 'both' && prev.knownStep && prev.to === a - 1 && b - prev.from < 8 && hardness(prev.from, b) < 0.5) {
+        if (knownStep && prev?.kind === 'both' && prev.knownStep && prev.to === a - 1 && b - prev.from < 6 && hardness(prev.from, b) < 0.5) {
           const merged = make('both', prev.from, b, slow(prev.from, b, undefined, 3, SLOW_BOTH), tr('Both hands, slow', 'Duas mãos, devagar'), prev.head, '', prev.step ?? ci);
           const chords = [...(prev.bassLine ?? []), ...bass].filter((x, i, xs) => xs[i - 1] !== x);
           mine[mine.length - 1] = { ...merged, id: prev.id, knownStep: true, bassLine: chords, say: withTip(tr(`Same shapes as before, now on new chords: ${listOf(chords.slice(0, 6))}. Both hands, slowly.`, `As mesmas formas de antes, agora em acordes novos: ${listOf(chords.slice(0, 6))}. Duas mãos, devagar.`), `B${prev.from}`) };
@@ -677,6 +679,36 @@ export function clipsOf(song: Song): Clip[] {
         : (parts === 1 ? 'the whole section' : part === 0 ? 'the first part of the section' : b === r.to ? 'the end of the section' : 'the middle of the section');
       mine.push(make('run', a, b, run, run >= 0.75 ? tr('Three quarter speed', 'Três quartos da velocidade') : tr('A little faster, still slow', 'Um pouco mais rápido, ainda devagar'), parts === 1 ? tr('The whole section', 'A secção toda') : tr(`Bars ${a} to ${b}`, `Compassos ${a} a ${b}`),
         `${tr(`Now ${what}, a little slower than the real thing.`, `Agora ${what}, um pouco mais devagar do que a música.`)} ${b === r.to ? (talk?.outro ?? r.words.tip) : tr('Keep going.', 'Continua.')}`, 100 + part));
+    }
+    // A section is a short series (the 2026-11 audit, the user's yes: 19 to 26 videos read as a
+    // course): at most SERIES videos. What goes first: a second move, the hand-alone videos of later
+    // steps (the both-hands video of the same bars follows), a second jump, a second tour, a third
+    // pattern. Then neighbouring both-hands steps merge into one longer video (up to six bars,
+    // then eight). The idea, the first patterns, the first step's hands and the run stay.
+    const dropFirst: ((c: (typeof mine)[number], i: number) => boolean)[] = [
+      (c, i) => c.kind === 'move' && mine.findIndex(x => x.kind === 'move') !== i,
+      c => (c.kind === 'L' || c.kind === 'R') && (c.step ?? 0) > 0 && mine.some(x => x.kind === 'both' && x.from <= c.from && x.to >= c.to),
+      (c, i) => c.kind === 'jump' && mine.findIndex(x => x.kind === 'jump') !== i,
+      (c, i) => c.kind === 'tour' && mine.findIndex(x => x.kind === 'tour') !== i,
+      (c, i) => c.kind === 'pattern' && mine.filter((x, j) => x.kind === 'pattern' && j < i).length >= 2,
+    ];
+    for (const rule of dropFirst) {
+      for (let i = mine.length - 1; i >= 0 && mine.length > SERIES; i--) if (rule(mine[i], i)) mine.splice(i, 1);
+    }
+    for (const most of [6, 8]) {
+      while (mine.length > SERIES) {
+        // The shortest pair of neighbouring both-hands videos that fits.
+        let best = -1, size = Infinity;
+        for (let i = 0; i + 1 < mine.length; i++) {
+          const x = mine[i], y = mine[i + 1];
+          if (x.kind === 'both' && y.kind === 'both' && y.from === x.to + 1 && y.to - x.from + 1 <= most && y.to - x.from < size) { best = i; size = y.to - x.from; }
+        }
+        if (best < 0) break;
+        const x = mine[best], y = mine[best + 1];
+        const merged = make('both', x.from, y.to, slow(x.from, y.to, undefined, 3, SLOW_BOTH), tr('Both hands, slow', 'Duas mãos, devagar'), x.head, x.say, x.step ?? 0);
+        mine.splice(best, 2, { ...merged, id: x.id, knownStep: x.knownStep && y.knownStep });
+      }
+      if (mine.length <= SERIES) break;
     }
     mine.forEach((c, i) => out.push({ ...c, say: NT(c.say), head: NT(c.head), k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) }));
   }
