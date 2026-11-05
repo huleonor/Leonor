@@ -9,21 +9,21 @@ import type { Progress, Settings, Song, SongEntry } from './types';
  */
 export const BUILT_IN: SongEntry[] = [
   // Classical, shipped
-  { id: 'gymnopedie-1', collection: 'classical', title: 'Gymnopédie No. 1', film: 'Trois Gymnopédies', year: 1888, composer: 'E. Satie', builtIn: true, file: '/songs/gymnopedie-1.mid', timeSig: [3, 4], about: 'A slow, floating waltz: a quiet melody over a rocking left hand.' },
-  { id: 'fur-elise', collection: 'classical', title: 'Für Elise', film: 'Bagatelle WoO 59, the opening', year: 1810, composer: 'L. van Beethoven', builtIn: true, file: '/songs/fur-elise.mid', about: 'The famous turn in the right hand over broken chords in the left.' },
-  { id: 'sarabande', collection: 'classical', title: 'Sarabande', film: 'Suite in D minor, HWV 437', year: 1733, composer: 'G. F. Handel', builtIn: true, file: '/songs/sarabande.mid', about: 'Solemn chords in a slow three, both hands moving together.' },
-  { id: 'passacaglia', collection: 'classical', title: 'Passacaglia', film: 'Suite in G minor, HWV 432', year: 1720, composer: 'G. F. Handel', builtIn: true, file: '/songs/passacaglia.mid', about: 'One chord pattern played again and again, a little busier each time.' },
-  { id: 'clair-de-lune', collection: 'classical', title: 'Clair de Lune', film: 'Suite bergamasque', year: 1905, composer: 'C. Debussy', builtIn: true, file: '/songs/clair-de-lune.mid', about: 'Soft and flowing, free in time, with wide hands and many flats.' },
+  { id: 'gymnopedie-1', collection: 'classical', title: 'Gymnopédie No. 1', film: 'Trois Gymnopédies', year: 1888, composer: 'E. Satie', builtIn: true, file: '/songs/gymnopedie-1.mid', timeSig: [3, 4], about: 'A slow, floating waltz: a quiet melody over a rocking left hand.', aboutPt: 'Uma valsa lenta e a flutuar: uma melodia calma sobre uma mão esquerda que embala.' },
+  { id: 'fur-elise', collection: 'classical', title: 'Für Elise', film: 'Bagatelle WoO 59, the opening', year: 1810, composer: 'L. van Beethoven', builtIn: true, file: '/songs/fur-elise.mid', about: 'The famous turn in the right hand over broken chords in the left.', aboutPt: 'A famosa volta da mão direita sobre acordes partidos na esquerda.' },
+  { id: 'sarabande', collection: 'classical', title: 'Sarabande', film: 'Suite in D minor, HWV 437', year: 1733, composer: 'G. F. Handel', builtIn: true, file: '/songs/sarabande.mid', about: 'Solemn chords in a slow three, both hands moving together.', aboutPt: 'Acordes solenes num três lento, as duas mãos a moverem-se juntas.' },
+  { id: 'passacaglia', collection: 'classical', title: 'Passacaglia', film: 'Suite in G minor, HWV 432', year: 1720, composer: 'G. F. Handel', builtIn: true, file: '/songs/passacaglia.mid', about: 'One chord pattern played again and again, a little busier each time.', aboutPt: 'Um padrão de acordes tocado uma e outra vez, um pouco mais cheio de cada vez.' },
+  { id: 'clair-de-lune', collection: 'classical', title: 'Clair de Lune', film: 'Suite bergamasque', year: 1905, composer: 'C. Debussy', builtIn: true, file: '/songs/clair-de-lune.mid', about: 'Soft and flowing, free in time, with wide hands and many flats.', aboutPt: 'Suave e a correr, livre no tempo, com mãos abertas e muitos bemóis.' },
   // Film scores and modern piano: bring your own MIDI. Interstellar Experience is the first song the reels teach.
-  { id: 'interstellar-experience', collection: 'modern', title: 'Interstellar Experience', film: 'after the Interstellar theme by H. Zimmer', composer: 'T. Ann', builtIn: true, missing: true, about: 'Tony Ann on Hans Zimmer\'s Interstellar theme: a pattern that turns and turns and grows to a big finish.' },
-  { id: 'comptine', collection: 'film', title: "Comptine d'un autre été", film: 'Amélie', year: 2001, composer: 'Y. Tiersen', builtIn: true, missing: true, about: 'Running broken chords in the left hand under a simple tune.' },
-  { id: 'cornfield-chase', collection: 'film', title: 'Cornfield Chase', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, missing: true, about: 'A ticking pattern that builds and builds.' },
-  { id: 'hes-a-pirate', collection: 'film', title: "He's a Pirate", film: 'Pirates of the Caribbean', year: 2003, composer: 'K. Badelt, H. Zimmer', builtIn: true, missing: true, about: 'Fast and driving, in six-eight.' },
-  { id: 'now-we-are-free', collection: 'film', title: 'Now We Are Free', film: 'Gladiator', year: 2000, composer: 'H. Zimmer, L. Gerrard', builtIn: true, missing: true, about: 'A wide, slow melody over a steady left hand.' },
-  { id: 'time', collection: 'film', title: 'Time', film: 'Inception', year: 2010, composer: 'H. Zimmer', builtIn: true, missing: true, about: 'Four chords that grow from a whisper.' },
-  { id: 'nuvole-bianche', collection: 'modern', title: 'Nuvole Bianche', film: 'Una Mattina', year: 2004, composer: 'L. Einaudi', builtIn: true, missing: true, about: 'Gentle arpeggios and a melody that keeps coming back.' },
-  { id: 'una-mattina', collection: 'modern', title: 'Una Mattina', film: 'Una Mattina', year: 2004, composer: 'L. Einaudi', builtIn: true, missing: true, about: 'Calm and repetitive, good for steady hands.' },
-  { id: 'experience', collection: 'modern', title: 'Experience', film: 'In a Time Lapse', year: 2013, composer: 'L. Einaudi', builtIn: true, missing: true, about: 'A pulsing pattern that gathers strength.' },
+  { id: 'interstellar-experience', collection: 'modern', title: 'Interstellar Experience', film: 'after the Interstellar theme by H. Zimmer', composer: 'T. Ann', builtIn: true, missing: true, about: 'Tony Ann on Hans Zimmer\'s Interstellar theme: a pattern that turns and turns and grows to a big finish.', aboutPt: 'Tony Ann sobre o tema de Interstellar de Hans Zimmer: um padrão que roda e roda e cresce até um grande final.' },
+  { id: 'comptine', collection: 'film', title: "Comptine d'un autre été", film: 'Amélie', year: 2001, composer: 'Y. Tiersen', builtIn: true, missing: true, about: 'Running broken chords in the left hand under a simple tune.', aboutPt: 'Acordes partidos a correr na mão esquerda sob uma melodia simples.' },
+  { id: 'cornfield-chase', collection: 'film', title: 'Cornfield Chase', film: 'Interstellar', year: 2014, composer: 'H. Zimmer', builtIn: true, missing: true, about: 'A ticking pattern that builds and builds.', aboutPt: 'Um padrão como um relógio que cresce e cresce.' },
+  { id: 'hes-a-pirate', collection: 'film', title: "He's a Pirate", film: 'Pirates of the Caribbean', year: 2003, composer: 'K. Badelt, H. Zimmer', builtIn: true, missing: true, about: 'Fast and driving, in six-eight.', aboutPt: 'Rápido e com força, em seis por oito.' },
+  { id: 'now-we-are-free', collection: 'film', title: 'Now We Are Free', film: 'Gladiator', year: 2000, composer: 'H. Zimmer, L. Gerrard', builtIn: true, missing: true, about: 'A wide, slow melody over a steady left hand.', aboutPt: 'Uma melodia larga e lenta sobre uma mão esquerda firme.' },
+  { id: 'time', collection: 'film', title: 'Time', film: 'Inception', year: 2010, composer: 'H. Zimmer', builtIn: true, missing: true, about: 'Four chords that grow from a whisper.', aboutPt: 'Quatro acordes que crescem a partir de um sussurro.' },
+  { id: 'nuvole-bianche', collection: 'modern', title: 'Nuvole Bianche', film: 'Una Mattina', year: 2004, composer: 'L. Einaudi', builtIn: true, missing: true, about: 'Gentle arpeggios and a melody that keeps coming back.', aboutPt: 'Arpejos suaves e uma melodia que volta sempre.' },
+  { id: 'una-mattina', collection: 'modern', title: 'Una Mattina', film: 'Una Mattina', year: 2004, composer: 'L. Einaudi', builtIn: true, missing: true, about: 'Calm and repetitive, good for steady hands.', aboutPt: 'Calmo e repetitivo, bom para mãos firmes.' },
+  { id: 'experience', collection: 'modern', title: 'Experience', film: 'In a Time Lapse', year: 2013, composer: 'L. Einaudi', builtIn: true, missing: true, about: 'A pulsing pattern that gathers strength.', aboutPt: 'Um padrão a pulsar que ganha força.' },
 ];
 
 const songStore = createStore('hugos-piano', 'songs');
@@ -151,7 +151,7 @@ export async function recordRun(id: string, accuracy: number, speed: number): Pr
 
 const SETTINGS_KEY = 'hugos-piano:settings';
 export const DEFAULT_SETTINGS: Settings = {
-  input: 'mic', lang: 'en', naming: 'letters', view: 'sheet', speed: 0.8, wait: true, hands: 'both', accompaniment: true, localSound: true, fingers: 'some', dailyGoal: 10, setupDone: false, v: 4,
+  input: 'mic', lang: 'en', naming: 'letters', view: 'sheet', speed: 0.8, wait: true, hands: 'both', accompaniment: true, localSound: true, fingers: 'some', dailyGoal: 10, setupDone: false, v: 5, videoPace: 1, videoWait: true,
 };
 
 export function loadSettings(): Settings {
@@ -160,8 +160,9 @@ export function loadSettings(): Settings {
     if (raw) {
       const stored = JSON.parse(raw) as Partial<Settings>;
       const saved = { ...DEFAULT_SETTINGS, ...stored } as Settings;
-      // The app is English-only now; older Portuguese settings also switch the note names.
-      if (saved.lang !== 'en') Object.assign(saved, { lang: 'en', naming: 'letters' });
+      // v5: Portuguese is back (screens, videos and voice); older saved Portuguese meant the old app.
+      // The practice reminder is gone from Settings, so a reminder set before is switched off.
+      if ((stored.v ?? 1) < 5) Object.assign(saved, { lang: 'en', naming: 'letters', reminder: null, v: 5 });
       // v3: keys played on a MIDI keyboard sound in the app by default (read the stored version,
       // not the default's).
       if ((stored.v ?? 1) < 3) Object.assign(saved, { localSound: true, v: 3 });

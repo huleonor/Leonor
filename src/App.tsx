@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { L, notePrefs, setLang, setVideoPrefs } from './lib/lang';
 import { AddSong } from './components/AddSong';
 import { onStats } from './lib/stats';
 import { scheduleReminders, startWebReminders } from './lib/reminders';
@@ -25,11 +26,11 @@ import type { Settings, SongEntry } from './lib/types';
 /** Watch is the reel feed of the song being learnt; Song is its map; Library his songs. */
 type Tab = 'home' | 'watch' | 'song' | 'library';
 // The tab bar along the bottom, like an app's: a Phosphor mark over a short word, filled for the tab he is on.
-const TABS: [Tab, string][] = [
-  ['home', 'Home'],
-  ['watch', 'Watch'],
-  ['song', 'Song'],
-  ['library', 'Library'],
+const TABS: [Tab, () => string][] = [
+  ['home', () => L('Home', 'Início')],
+  ['watch', () => L('Watch', 'Ver')],
+  ['song', () => L('Song', 'Música')],
+  ['library', () => L('Library', 'Biblioteca')],
 ];
 const tabIcon = (id: Tab, on: boolean) =>
   id === 'home' ? (on ? <IconHomeFill /> : <IconHome />)
@@ -89,6 +90,13 @@ export default function App() {
   }, [links.midi.status, links.ble.status]);
 
   const update = (patch: Partial<Settings>) => setSettings(s => ({ ...s, ...patch }));
+  // The language and the videos' settings are read by everything below; set them before it renders.
+  setLang(settings.lang);
+  notePrefs.solfege = settings.naming === 'solfege';
+  setVideoPrefs({ pace: settings.videoPace ?? 1, wait: settings.videoWait ?? true });
+  // The courses' step names are written in the language: written again when it changes.
+  const langSeen = useRef(settings.lang);
+  useEffect(() => { if (langSeen.current !== settings.lang) { langSeen.current = settings.lang; refreshCatalog(); } }, [settings.lang]);
   const i18n = useMemo(() => ({ lang: settings.lang, t: makeT(settings.lang) }), [settings.lang]);
 
   // A keyboard on a cable just appeared: use it, unless a Bluetooth keyboard is already playing.
@@ -108,6 +116,12 @@ export default function App() {
     return () => clearTimeout(id);
   }, [notice]);
 
+  // Tapping the piano that is on turns it off.
+  const disconnectInput = (kind: Source) => {
+    if (kind === 'mic') disconnectMic();
+    if (kind === 'ble') disconnectBle();
+    update({ input: 'none' });
+  };
   const connectInput = (kind: Source) => {
     unlockAudio();
     if (kind !== 'mic') disconnectMic();
@@ -189,18 +203,20 @@ export default function App() {
   const watching = tab === 'watch' && !!currentInfo?.song && currentReels.length > 0;
   const go = (id: Tab) => { if (id === 'watch' && tab === 'watch') setWatch(null); setTab(id); setOpenId(null); setDrawer(false); };
   const nav = (
-    <nav className="rail" aria-label="Main">
+    <nav className="rail" aria-label={L('Main', 'Principal')}>
       {TABS.map(([id, label]) => (
         <button key={id} className={`rail-btn tab-${id} ${tab === id ? 'on' : ''}`} aria-current={tab === id ? 'page' : undefined} onClick={() => go(id)}>
-          {tabIcon(id, tab === id)}<span>{label}</span>
+          {tabIcon(id, tab === id)}<span>{label()}</span>
         </button>
       ))}
-      <button className="rail-btn settings" onClick={() => { setDrawer(false); setSheet('settings'); }}><IconTabSettings /><span>Settings</span></button>
+      <button className="rail-btn settings" onClick={() => { setDrawer(false); setSheet('settings'); }}><IconTabSettings /><span>{L('Settings', 'Definições')}</span></button>
     </nav>
   );
 
   return (
     <I18nContext.Provider value={i18n}>
+      {/* A new language writes every screen again. */}
+      <Fragment key={settings.lang}>
       {mastery && masteryInfo?.song && masterySection?.steps.length ? (
         <Lesson
           key={`mastery-${mastery.id}-${mastery.n}`}
@@ -218,8 +234,8 @@ export default function App() {
           info={lessonInfo} section={lessonSection} startAt={lesson.step}
           settings={settings} update={update} links={links}
           onExit={() => { if (lesson.back !== undefined) { setWatch({ start: lesson.back, n: Date.now() }); setTab('watch'); } setLesson(null); }}
-          exitLabel={lesson.back !== undefined ? 'Back to the videos' : undefined}
-          nextLabel={lesson.back !== undefined ? 'Next phase' : undefined}
+          exitLabel={lesson.back !== undefined ? L('Back to the videos', 'Voltar aos vídeos') : undefined}
+          nextLabel={lesson.back !== undefined ? L('Next phase', 'Fase seguinte') : undefined}
           onNextSection={lesson.back !== undefined ? () => { setWatch({ start: lesson.back! + 1, n: Date.now() }); setTab('watch'); setLesson(null); }
             : nextSection ? () => setLesson(l => l && { ...l, section: nextSection.id, step: undefined, n: l.n + 1 }) : undefined}
           onRecorded={() => refreshSong(lesson.id)}
@@ -244,7 +260,7 @@ export default function App() {
             {watching && drawer && (
               <motion.div key="drawer" className="nav-scrim" onClick={() => setDrawer(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                 <motion.div className="nav-drawer" onClick={e => e.stopPropagation()} initial={{ x: '-105%' }} animate={{ x: 0 }} exit={{ x: '-105%', transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }} transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}>
-                  <button className="icon-btn ghost nav-close" onClick={() => setDrawer(false)} aria-label="Close the menu"><IconClose size={22} /></button>
+                  <button className="icon-btn ghost nav-close" onClick={() => setDrawer(false)} aria-label={L('Close the menu', 'Fechar o menu')}><IconClose size={22} /></button>
                   {nav}
                 </motion.div>
               </motion.div>
@@ -292,14 +308,15 @@ export default function App() {
         <AddSong
           file={adding.file} slot={adding.slot}
           onClose={() => setAdding(null)}
-          onDone={async entry => { setAdding(null); await refreshCatalog(); choose(entry.slot ?? entry.id); setWatch(null); setTab('watch'); setNotice({ text: `“${entry.title}” is ready: its videos start now.` }); }}
+          onDone={async entry => { setAdding(null); await refreshCatalog(); choose(entry.slot ?? entry.id); setWatch(null); setTab('watch'); setNotice({ text: L(`“${entry.title}” is ready: its videos start now.`, `“${entry.title}” está pronta: os vídeos começam agora.`) }); }}
         />
       )}
       {sheet === 'settings' && (
-        <SettingsSheet settings={settings} update={update} links={links} connectInput={connectInput} onCheck={() => setSheet('check')} onClose={() => setSheet(null)} />
+        <SettingsSheet settings={settings} update={update} links={links} connectInput={connectInput} disconnectInput={disconnectInput} onCheck={() => setSheet('check')} onClose={() => setSheet(null)} />
       )}
       {sheet === 'check' && <InputCheck links={links} naming={settings.naming} onClose={() => setSheet('settings')} />}
       {notice && <div className={`toast ${notice.error ? 'error' : ''}`} role="status">{notice.text}</div>}
+      </Fragment>
     </I18nContext.Provider>
   );
 }

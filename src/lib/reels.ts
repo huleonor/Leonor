@@ -15,8 +15,10 @@ import { barIndex, barLength, barStart, type BarGrid } from './bars';
 import { buildCourse } from './course';
 import { readSong } from './reading';
 import { SCRIPTS } from './reelScripts';
+import { SCRIPTS_PT, STEP_TIPS_PT } from './reelScriptsPt';
 import { cleanPhase, type PhaseWords, type Talk } from './reelShape';
 import { difficultyOf } from './difficulty';
+import { L as tr, lang, NT, videoSolfege } from './lang';
 import { estimate } from './voice';
 import type { Hand, Song, SongNote } from './types';
 
@@ -162,21 +164,21 @@ function ruleWords(facts: BarFacts[], n: number, from: number, to: number, twoHa
   const [shape, shapeN] = count(facts.flatMap(f => f.pitches).filter(ps => ps.length >= 3).map(contour)) ?? ['', 0];
   const repeats = !!fig && figN >= all.length * 0.6;
   const sameShape = !repeats && !!shape && shapeN >= all.length * 0.6;
-  const RANK = ['top', 'middle', 'low', 'lowest'];
+  const RANK = lang() === 'pt' ? ['cima', 'meio', 'baixo', 'mais baixo'] : ['top', 'middle', 'low', 'lowest'];
   const shapeWords = shape.split('').map(r => RANK[Math.min(3, Number(r))]).join(', ');
-  const right = repeats ? `One pattern, again and again: ${fig}` : sameShape ? `One shape on every beat: ${shapeWords}` : 'The right hand, beat by beat';
-  const left = octaves ? `Octaves carry it: ${seq}` : `The bass line: ${seq}`;
+  const right = repeats ? tr(`One pattern, again and again: ${fig}`, `Um padrão, uma e outra vez: ${fig}`) : sameShape ? tr(`One shape on every beat: ${shapeWords}`, `Uma forma em cada tempo: ${shapeWords}`) : tr('The right hand, beat by beat', 'A mão direita, tempo a tempo');
+  const left = octaves ? tr(`Octaves carry it: ${seq}`, `São as oitavas que a levam: ${seq}`) : tr(`The bass line: ${seq}`, `A linha do baixo: ${seq}`);
   const cues: Record<number, string> = {};
-  for (const f of facts) if (f.moveTo) cues[f.bar] = `Move the right hand: thumb on ${f.moveTo}`;
+  for (const f of facts) if (f.moveTo) cues[f.bar] = tr(`Move the right hand: thumb on ${f.moveTo}`, `Muda a mão direita: polegar no ${f.moveTo}`);
   return {
     from, to,
-    title: `Phase ${n}`,
+    title: tr(`Phase ${n}`, `Fase ${n}`),
     hook: twoHands ? (repeats || sameShape ? right : left) : right,
-    tricks: twoHands ? [`Left: ${left.charAt(0).toLowerCase()}${left.slice(1)}`, `Right: ${right.charAt(0).toLowerCase()}${right.slice(1)}`] : [right],
-    L: octaves ? `Octaves: ${seq}. Little finger low, thumb high` : `The bass: ${seq}${held ? ', each held for the bar' : ''}`,
-    R: sameShape ? `${facts.find(f => f.groups.length)?.groups[0] ?? ''}: ${shapeWords}` : repeats ? `${fig}, again and again` : 'Look for the shapes that come back',
+    tricks: twoHands ? [`${tr('Left', 'Esquerda')}: ${left.charAt(0).toLowerCase()}${left.slice(1)}`, `${tr('Right', 'Direita')}: ${right.charAt(0).toLowerCase()}${right.slice(1)}`] : [right],
+    L: octaves ? tr(`Octaves: ${seq}. Little finger low, thumb high`, `Oitavas: ${seq}. Mindinho em baixo, polegar em cima`) : `${tr('The bass', 'O baixo')}: ${seq}${held ? tr(', each held for the bar', ', cada um segurado o compasso todo') : ''}`,
+    R: sameShape ? `${facts.find(f => f.groups.length)?.groups[0] ?? ''}: ${shapeWords}` : repeats ? tr(`${fig}, again and again`, `${fig}, uma e outra vez`) : tr('Look for the shapes that come back', 'Procura as formas que voltam'),
     cues,
-    tip: sameShape ? 'Same shape on every chord. Find the top note and the hand knows the rest.' : held ? 'Play on beat 1 and hold until the next one.' : 'Slow first. Land both hands on beat 1 together.',
+    tip: sameShape ? tr('Same shape on every chord. Find the top note and the hand knows the rest.', 'A mesma forma em cada acorde. Encontra a nota de cima e a mão sabe o resto.') : held ? tr('Play on beat 1 and hold until the next one.', 'Toca no tempo 1 e segura até ao seguinte.') : tr('Slow first. Land both hands on beat 1 together.', 'Primeiro devagar. Põe as duas mãos no tempo 1 ao mesmo tempo.'),
   };
 }
 
@@ -187,25 +189,25 @@ function ruleWords(facts: BarFacts[], n: number, from: number, to: number, twoHa
 function ruleTalk(w: PhaseWords, twoHands: boolean): Talk {
   const end = (x: string) => (/[.!?]$/.test(x.trim()) ? x.trim() : `${x.trim()}.`);
   const commas = (x: string) => x.replace(/\b([A-G](?:#|b)?m?) (?=[A-G](?:#|b)?m?\b)/g, '$1, ');
-  const [left, right] = w.tricks.map(t => t.replace(/^(Left|Right): /, ''));
-  const useful = (x?: string) => !!x && !/beat by beat/.test(x);
+  const [left, right] = w.tricks.map(t => t.replace(/^(Left|Right|Esquerda|Direita): /, ''));
+  const useful = (x?: string) => !!x && !/beat by beat|tempo a tempo/.test(x);
   const cap1 = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
   const intro = twoHands
     ? [left, useful(right) ? right : ''].filter(Boolean).map(x => end(commas(cap1(x)))).join(' ')
-    : useful(w.hook) ? end(commas(w.hook)) : 'Listen first. Then we take it slowly, a few bars at a time.';
+    : useful(w.hook) ? end(commas(w.hook)) : tr('Listen first. Then we take it slowly, a few bars at a time.', 'Primeiro ouve. Depois vamos devagar, poucos compassos de cada vez.');
   return {
     intro,
-    L: `Left hand. ${end(commas(w.L))}`,
-    R: /shapes that come back/.test(w.R) ? 'Right hand. Look for the shapes that come back.' : `Right hand. ${end(commas(w.R))}`,
-    both: twoHands ? 'Now both hands together, at full speed.' : 'Now at full speed.',
+    L: `${tr('Left hand.', 'Mão esquerda.')} ${end(commas(w.L))}`,
+    R: /shapes that come back|formas que voltam/.test(w.R) ? tr('Right hand. Look for the shapes that come back.', 'Mão direita. Procura as formas que voltam.') : `${tr('Right hand.', 'Mão direita.')} ${end(commas(w.R))}`,
+    both: twoHands ? tr('Now both hands together, at full speed.', 'Agora as duas mãos juntas, à velocidade real.') : tr('Now at full speed.', 'Agora à velocidade real.'),
     outro: end(w.tip),
   };
 }
 
 // ---------- The written scripts ----------
 
-/** The song's script if it fits these notes: the exact version, or the bass at the fingerprint bars. */
-function scriptFor(song: Song, bars: BarFacts[]): PhaseWords[] | null {
+/** Which script fits these notes (its key in SCRIPTS): the song's own, or one whose score his notes match. */
+function scriptIdFor(song: Song, bars: BarFacts[]): string | undefined {
   const fits = (sc: (typeof SCRIPTS)[string]) => {
     if (sc.version && sc.version !== readSong(song).version) return false;
     if (sc.fingerprint) {
@@ -215,10 +217,28 @@ function scriptFor(song: Song, bars: BarFacts[]): PhaseWords[] | null {
     }
     return !!sc.version || !!sc.fingerprint;
   };
+  const ownId = song.entry.slot ?? song.entry.id;
+  if (SCRIPTS[ownId] && fits(SCRIPTS[ownId])) return ownId;
+  return Object.entries(SCRIPTS).find(([, sc]) => sc.fingerprint && fits(sc))?.[0];
+}
+
+/** A phase's words with their notes named as he reads them (Portuguese videos, lang.ts NT). */
+function ntWords(w: PhaseWords): PhaseWords {
+  const t = (x?: string) => (x === undefined ? x : NT(x));
+  return {
+    ...w, title: NT(w.title), hook: NT(w.hook), tricks: w.tricks.map(NT), L: NT(w.L), R: NT(w.R), tip: NT(w.tip),
+    cues: Object.fromEntries(Object.entries(w.cues).map(([k, v]) => [k, NT(v)])),
+    talk: w.talk && { intro: NT(w.talk.intro), L: t(w.talk.L), R: t(w.talk.R), both: NT(w.talk.both), outro: NT(w.talk.outro) },
+    steps: w.steps && Object.fromEntries(Object.entries(w.steps).map(([k, v]) => [k, NT(v)])),
+  };
+}
+
+/** The song's script if it fits these notes: the exact version, or the bass at the fingerprint bars. */
+function scriptFor(song: Song, bars: BarFacts[]): PhaseWords[] | null {
   // The song's own script; or, for a MIDI he added as a new song (not into its slot), the script
   // whose printed score his notes match.
-  const own = SCRIPTS[song.entry.slot ?? song.entry.id];
-  const s = own && fits(own) ? own : Object.values(SCRIPTS).find(sc => sc.fingerprint && fits(sc));
+  const id = scriptIdFor(song, bars);
+  const s = id ? SCRIPTS[id] : undefined;
   if (!s) return null;
   const phases = s.phases.filter(p => p.from <= bars.length).map(p => ({ ...p, to: Math.min(p.to, bars.length) }));
   return phases.length ? phases : null;
@@ -231,7 +251,8 @@ function seconds(song: Song, grid: BarGrid, a: number, b: number) {
   return song.ticksToSeconds(barStart(grid, b)) - song.ticksToSeconds(barStart(grid, a - 1));
 }
 
-const cache = new WeakMap<Song, Reel[]>();
+const reelCaches = new Map<string, WeakMap<Song, Reel[]>>();
+const cache = { get: (s: Song) => reelCaches.get(langKey())?.get(s), set: (s: Song, v: Reel[]) => { if (!reelCaches.has(langKey())) reelCaches.set(langKey(), new WeakMap()); reelCaches.get(langKey())!.set(s, v); } };
 
 /** One reel per phase, in order. */
 export function reelsOf(song: Song): Reel[] {
@@ -241,6 +262,7 @@ export function reelsOf(song: Song): Reel[] {
   const songBars = splitBars(song).bars;
   const twoHands = song.hands.length === 2;
   const scripted = scriptFor(song, bars);
+  const scriptId = scripted ? scriptIdFor(song, bars) : undefined;
   const phases = scripted ?? rulePhases(song).map((p, i) => ruleWords(bars.slice(p.from - 1, p.to), i + 1, p.from, p.to, twoHands));
   const plays = (bar: number, h: Hand) => songBars[bar - 1]?.notes.some(n => n.hand === h);
   // A stretch that fits its time: from the first bar the hand plays, as many bars as the budget allows.
@@ -252,18 +274,23 @@ export function reelsOf(song: Song): Reel[] {
     return { from: a, to: b };
   };
   const reels = phases.map((p, i): Reel => {
-    const written = (scripted && cleanPhase(p)) || (scripted ? ruleWords(bars.slice(p.from - 1, p.to), i + 1, p.from, p.to, twoHands) : p);
-    const words = written.talk ? written : { ...written, talk: ruleTalk(written, twoHands) };
+    // In Portuguese, the script's own Portuguese words (reelScriptsPt.ts), checked the same way.
+    const pt = lang() === 'pt' && scripted ? SCRIPTS_PT[scriptId ?? '']?.[i] : undefined;
+    const ptSteps = pt ? Object.fromEntries(Object.entries(STEP_TIPS_PT[scriptId ?? ''] ?? {}).filter(([k]) => { const bar = Number(k.slice(1)); return bar >= p.from && bar <= p.to; })) : undefined;
+    const source = pt ? { ...p, ...pt, steps: ptSteps } : p;
+    const written = (scripted && cleanPhase(source)) || (scripted ? ruleWords(bars.slice(p.from - 1, p.to), i + 1, p.from, p.to, twoHands) : p);
+    const spoken = written.talk ? written : { ...written, talk: ruleTalk(written, twoHands) };
+    const words = lang() === 'pt' ? ntWords(spoken) : spoken;
     const segments: Segment[] = [];
     if (twoHands) {
       for (const h of ['L', 'R'] as Hand[]) {
         if (!bars.slice(p.from - 1, p.to).length || !songBars.slice(p.from - 1, p.to).some(b => b.notes.some(n => n.hand === h))) continue;
-        segments.push({ kind: h, ...fit(p.from, p.to, 0.7, 10, 2, h), speed: 0.7, label: h === 'L' ? 'Left hand, slow' : 'Right hand, slow' });
+        segments.push({ kind: h, ...fit(p.from, p.to, 0.7, 10, 2, h), speed: 0.7, label: h === 'L' ? tr('Left hand, slow', 'Mão esquerda, devagar') : tr('Right hand, slow', 'Mão direita, devagar') });
       }
     } else {
-      segments.push({ kind: 'both', ...fit(p.from, p.to, 0.7, 10, 2), speed: 0.7, label: 'Slow' });
+      segments.push({ kind: 'both', ...fit(p.from, p.to, 0.7, 10, 2), speed: 0.7, label: tr('Slow', 'Devagar') });
     }
-    segments.push({ kind: 'both', ...fit(p.from, p.to, 1, 20, 12), speed: 1, label: twoHands ? 'Both hands' : 'Full speed' });
+    segments.push({ kind: 'both', ...fit(p.from, p.to, 1, 20, 12), speed: 1, label: twoHands ? tr('Both hands', 'Duas mãos') : tr('Full speed', 'Velocidade real') });
     return {
       id: `phase-${i + 1}`, n: i + 1, from: p.from, to: p.to, words, segments,
       chords: bars.slice(p.from - 1, p.to).map(f => ({ bar: f.bar, name: f.chord })),
@@ -309,10 +336,13 @@ export interface Clip extends Reel {
 // Speeds: a hand alone at half speed, both hands a little faster, the whole phase at three quarters.
 const SLOW_HAND = 0.5, SLOW_BOTH = 0.6, RUN = 0.75;
 
-const clipCache = new WeakMap<Song, Clip[]>();
+// Kept per language and note names: the words are written in them.
+const clipCaches = new Map<string, WeakMap<Song, Clip[]>>();
+const langKey = () => `${lang()}:${videoSolfege() ? 's' : 'l'}`;
+const clipCache = { get: (s: Song) => clipCaches.get(langKey())?.get(s), set: (s: Song, v: Clip[]) => { if (!clipCaches.has(langKey())) clipCaches.set(langKey(), new WeakMap()); clipCaches.get(langKey())!.set(s, v); } };
 
 const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
-const barsText = (a: number, b: number) => (a === b ? `bar ${a}` : b === a + 1 ? `bars ${a} and ${b}` : `bars ${a} to ${b}`);
+const barsText = (a: number, b: number) => (a === b ? tr(`bar ${a}`, `compasso ${a}`) : b === a + 1 ? tr(`bars ${a} and ${b}`, `compassos ${a} e ${b}`) : tr(`bars ${a} to ${b}`, `compassos ${a} a ${b}`));
 const listOf = (xs: string[]) => xs.join(', ');
 
 /**
@@ -321,7 +351,7 @@ const listOf = (xs: string[]) => xs.join(', ');
  */
 function rightWords(facts: BarFacts[], flats: boolean) {
   const groups = facts.flatMap(f => f.pitches);
-  const RANK = ['top', 'middle', 'low', 'lowest'];
+  const RANK = lang() === 'pt' ? ['cima', 'meio', 'baixo', 'mais baixo'] : ['top', 'middle', 'low', 'lowest'];
   const contour = (ps: number[]) => { const u = [...new Set(ps)].sort((x, y) => y - x); return ps.map(p => u.indexOf(p)).join(''); };
   const figure = groups.length >= 2 && groups.every(g => g.length >= 3 && contour(g) === contour(groups[0]));
   if (figure) {
@@ -331,12 +361,12 @@ function rightWords(facts: BarFacts[], flats: boolean) {
     const tops: string[] = [];
     for (const g of groups) { const l = letter(g[0], flats); if (tops[tops.length - 1] !== l) tops.push(l); }
     const moving = moves.filter(Boolean).length;
-    const tail = moving === 0 ? 'The same notes on every beat.' : moves[0] && moving === 1 ? `Only the top note moves: ${listOf(tops.slice(0, 6))}.` : 'The shape stays, the notes move with the chord.';
-    return { said: `${cap(shape)}, on every beat. Start with ${listOf(first)}. ${tail}`, head: first.slice(0, 5).join(' ') };
+    const tail = moving === 0 ? tr('The same notes on every beat.', 'As mesmas notas em cada tempo.') : moves[0] && moving === 1 ? tr(`Only the top note moves: ${listOf(tops.slice(0, 6))}.`, `Só a nota de cima muda: ${listOf(tops.slice(0, 6))}.`) : tr('The shape stays, the notes move with the chord.', 'A forma fica, as notas mudam com o acorde.');
+    return { said: tr(`${cap(shape)}, on every beat. Start with ${listOf(first)}. ${tail}`, `${cap(shape)}, em cada tempo. Começa com ${listOf(first)}. ${tail}`), head: first.slice(0, 5).join(' ') };
   }
   const notes: string[] = [];
   for (const g of groups) for (const m of g) { const l = letter(m, flats); if (notes[notes.length - 1] !== l) notes.push(l); }
-  return { said: `${listOf(notes.slice(0, 8))}${notes.length > 8 ? ', and on' : ''}.`, head: notes.slice(0, 5).join(' ') };
+  return { said: `${listOf(notes.slice(0, 8))}${notes.length > 8 ? tr(', and on', ', e assim por diante') : ''}.`, head: notes.slice(0, 5).join(' ') };
 }
 
 /** The left hand of a stretch in words: its bass notes, as octaves or held when they are. */
@@ -344,13 +374,13 @@ function leftWords(facts: BarFacts[]) {
   const bass: string[] = [];
   for (const f of facts) if (bass[bass.length - 1] !== f.chord) bass.push(f.chord);
   const octaves = facts.every(f => f.octave), held = facts.every(f => f.held);
-  const what = octaves ? `An octave on ${bass.join(', then ')}` : `The bass: ${listOf(bass)}`;
-  const simple = octaves ? `The left hand only holds an octave: ${listOf(bass)}. Little finger low, thumb on top.` : `The left hand only holds the bass: ${listOf(bass)}.`;
-  return { said: `${what}${held ? ', held for the whole bar' : ''}. ${octaves ? 'Little finger low, thumb on top.' : ''}`.trim(), simple, head: octaves ? `${bass.join(' ')} octaves` : bass.join(' ') };
+  const what = octaves ? tr(`An octave on ${bass.join(', then ')}`, `Uma oitava em ${bass.join(', depois ')}`) : tr(`The bass: ${listOf(bass)}`, `O baixo: ${listOf(bass)}`);
+  const simple = octaves ? tr(`The left hand only holds an octave: ${listOf(bass)}. Little finger low, thumb on top.`, `A mão esquerda só segura uma oitava: ${listOf(bass)}. Mindinho em baixo, polegar em cima.`) : tr(`The left hand only holds the bass: ${listOf(bass)}.`, `A mão esquerda só segura o baixo: ${listOf(bass)}.`);
+  return { said: `${what}${held ? tr(', held for the whole bar', ', segurada o compasso todo') : ''}. ${octaves ? tr('Little finger low, thumb on top.', 'Mindinho em baixo, polegar em cima.') : ''}`.trim(), simple, head: octaves ? `${bass.join(' ')} ${tr('octaves', 'oitavas')}` : bass.join(' ') };
 }
 
-const NUMBER = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-const BOTH = ['Both hands together now. Nice and slow.', 'Put them together, slowly, both hands landing on beat one.', 'Now both hands. Take your time.'];
+const NUMBER = () => (lang() === 'pt' ? ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez', 'onze', 'doze'] : ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']);
+const BOTH = () => (lang() === 'pt' ? ['Agora as duas mãos juntas. Com calma e devagar.', 'Junta-as, devagar, as duas mãos a cair no tempo um.', 'Agora as duas mãos. Sem pressa.'] : ['Both hands together now. Nice and slow.', 'Put them together, slowly, both hands landing on beat one.', 'Now both hands. Take your time.']);
 
 /**
  * Every video of a song, phase by phase, in the order he watches them.
@@ -443,10 +473,12 @@ export function clipsOf(song: Song): Clip[] {
       const names = g.map(n => letter(n.midi, flats));
       const fingers: string[] = [];
       const done = new Set<number>();
-      for (const n of g) if (!done.has(n.midi)) { done.add(n.midi); if (n.finger) fingers.push(n.finger === 1 ? `Thumb on ${letter(n.midi, flats)}.` : `Finger ${n.finger} on ${letter(n.midi, flats)}.`); }
+      for (const n of g) if (!done.has(n.midi)) { done.add(n.midi); if (n.finger) fingers.push(n.finger === 1 ? tr(`Thumb on ${letter(n.midi, flats)}.`, `Polegar no ${letter(n.midi, flats)}.`) : tr(`Finger ${n.finger} on ${letter(n.midi, flats)}.`, `Dedo ${n.finger} no ${letter(n.midi, flats)}.`)); }
       const low = Math.min(...g.map(n => n.midi));
-      const where = low >= 84 ? 'high up, two octaves above middle C' : low >= 72 ? 'an octave above middle C' : low >= 60 ? 'just above middle C' : low >= 48 ? 'just below middle C' : low >= 36 ? 'an octave below middle C' : 'low down, two octaves below middle C';
-      const say = [`First, just the pattern. ${listOf(names)}.`, fingers.length === done.size ? fingers.join(' ') : '', `It sits ${where}.`].filter(Boolean).join(' ');
+      const where = lang() === 'pt'
+        ? (low >= 84 ? 'lá em cima, duas oitavas acima do Dó central' : low >= 72 ? 'uma oitava acima do Dó central' : low >= 60 ? 'logo acima do Dó central' : low >= 48 ? 'logo abaixo do Dó central' : low >= 36 ? 'uma oitava abaixo do Dó central' : 'lá em baixo, duas oitavas abaixo do Dó central')
+        : (low >= 84 ? 'high up, two octaves above middle C' : low >= 72 ? 'an octave above middle C' : low >= 60 ? 'just above middle C' : low >= 48 ? 'just below middle C' : low >= 36 ? 'an octave below middle C' : 'low down, two octaves below middle C');
+      const say = [tr(`First, just the pattern. ${listOf(names)}.`, `Primeiro, só o padrão. ${listOf(names)}.`), fingers.length === done.size ? fingers.join(' ') : '', tr(`It sits ${where}.`, `Fica ${where}.`)].filter(Boolean).join(' ');
       return { bar, ticks: [t0 + k * beat, t0 + (k + 1) * beat] as [number, number], shape, head: names.join(' '), say };
     }
     return undefined;
@@ -464,7 +496,7 @@ export function clipsOf(song: Song): Clip[] {
     // The idea: the opening of the phase heard once, at its real speed, while the voice explains.
     let a0 = r.from, b0 = r.from;
     while (b0 < r.to && seconds(song, grid, a0, b0 + 1) <= Math.max(6, (talk ? estimate(talk.intro) : 6) - 2)) b0++;
-    mine.push(make('intro', a0, b0, 1, 'Listen', r.words.hook, talk?.intro ?? r.words.hook, 0, true));
+    mine.push(make('intro', a0, b0, 1, tr('Listen', 'Ouve'), r.words.hook, talk?.intro ?? r.words.hook, 0, true));
     // The steps: by phrase, two to four bars, until a step has enough in it.
     const chunks: [number, number][] = [];
     for (let a = r.from; a <= r.to;) {
@@ -500,17 +532,17 @@ export function clipsOf(song: Song): Clip[] {
       // When the step opens with a bar he knows, the voice starts from the new one.
       const freshFrom = (h: Hand | undefined, set: Shape[]) => { for (let bar = a; bar <= b; bar++) if (!known(bar, bar, h, set)) return bar; return a; };
       const fromL = twoHands ? freshFrom('L', seen.L) : a, fromR = freshFrom(hR, seen.R);
-      const knownBars = (from: number) => (from - a === 1 ? 'You know the first bar already. Here is the new one.' : 'You know the first bars already. Here is the new part.');
-      const lLine = first && talk?.L ? talk.L : fromL > a ? `Left hand. ${knownBars(fromL)} ${leftWords(bars.slice(fromL - 1, b)).said}` : `Left hand. ${lw.said}`;
+      const knownBars = (from: number) => (from - a === 1 ? tr('You know the first bar already. Here is the new one.', 'O primeiro compasso já sabes. Aqui está o novo.') : tr('You know the first bars already. Here is the new part.', 'Os primeiros compassos já sabes. Aqui está a parte nova.'));
+      const lLine = first && talk?.L ? talk.L : fromL > a ? `${tr('Left hand.', 'Mão esquerda.')} ${knownBars(fromL)} ${leftWords(bars.slice(fromL - 1, b)).said}` : `${tr('Left hand.', 'Mão esquerda.')} ${lw.said}`;
       const rNew = fromR > a ? rightWords(bars.slice(fromR - 1, b), song.fifths < 0).said : '';
-      const rLine = first && talk?.R ? talk.R : `${twoHands ? 'Right hand' : 'Slowly now'}. ${rNew ? `${knownBars(fromR)} ${rNew}` : rw.said}`;
+      const rLine = first && talk?.R ? talk.R : `${twoHands ? tr('Right hand', 'Mão direita') : tr('Slowly now', 'Agora devagar')}. ${rNew ? `${knownBars(fromR)} ${rNew}` : rw.said}`;
       // A new figure is taught on its own first: one beat of it, slowly, four times, its keys named.
       const patternOf = (h: Hand | undefined, from: number) => {
         const pat = figureAt(from, b, h);
         if (!pat || taught.has(`${h}:${pat.shape}`)) return;
         taught.add(`${h}:${pat.shape}`);
         const extra = { ticks: pat.ticks, times: 4, kind: (h ?? 'both') as Segment['kind'] };
-        const m = make('pattern', pat.bar, pat.bar, slow(pat.bar, pat.bar, h, 2), h === 'L' ? 'Left hand pattern, slow' : twoHands ? 'Right hand pattern, slow' : 'The pattern, slow', pat.head, pat.say, ci, false, extra);
+        const m = make('pattern', pat.bar, pat.bar, slow(pat.bar, pat.bar, h, 2), h === 'L' ? tr('Left hand pattern, slow', 'Padrão da mão esquerda, devagar') : twoHands ? tr('Right hand pattern, slow', 'Padrão da mão direita, devagar') : tr('The pattern, slow', 'O padrão, devagar'), pat.head, pat.say, ci, false, extra);
         mine.push(m);
       };
       // The hard spot of the step, learnt on its own first: the biggest jump of a hand (a ninth or
@@ -534,20 +566,20 @@ export function clipsOf(song: Song): Clip[] {
         taught.add(key);
         const tail = seq[best.i + 1]?.[0] ?? t1 + song.ppq / 2;
         const up = m1 > m0, from = letter(m0, flats), to = letter(m1, flats);
-        const say = `Watch the jump. From ${from}, ${up ? 'up to the high' : 'down to the low'} ${to}. Look at the new key before you move.`;
-        mine.push(make('jump', barIndex(grid, t0) + 1, barIndex(grid, t1) + 1, slow(a, b, h, 1.6, 0.45), h === 'L' ? 'Left hand jump, slow' : 'The jump, slow', `${from} ${to}`, (r.words.steps?.[`J${a}`] ? say.replace(' Look at the new key before you move.', ` ${r.words.steps[`J${a}`]}`) : say), ci, false, { ticks: [t0, tail], times: 4, kind: (h ?? 'both') as Segment['kind'] }));
+        const say = tr(`Watch the jump. From ${from}, ${up ? 'up to the high' : 'down to the low'} ${to}. Look at the new key before you move.`, `Atenção ao salto. Do ${from}, ${up ? 'para cima até ao' : 'para baixo até ao'} ${to}. Olha para a tecla nova antes de mexeres a mão.`);
+        mine.push(make('jump', barIndex(grid, t0) + 1, barIndex(grid, t1) + 1, slow(a, b, h, 1.6, 0.45), h === 'L' ? tr('Left hand jump, slow', 'Salto da mão esquerda, devagar') : tr('The jump, slow', 'O salto, devagar'), `${from} ${to}`, (r.words.steps?.[`J${a}`] ? say.replace(tr(' Look at the new key before you move.', ' Olha para a tecla nova antes de mexeres a mão.'), ` ${r.words.steps[`J${a}`]}`) : say), ci, false, { ticks: [t0, tail], times: 4, kind: (h ?? 'both') as Segment['kind'] }));
         return true;
       };
       // A step with a jump goes slower: fewer notes a second.
       const pace = (h: Hand | undefined) => (jumpOf(h) ? 2 : 2.5);
-      if (soloL) { patternOf('L', fromL); const ps = pace('L'); mine.push(make('L', a, b, slow(a, b, 'L', ps), 'Left hand, slow', lw.head, withTip(lLine, `L${a}`), ci)); }
-      if (soloR) { patternOf(hR, fromR); const ps = pace(hR); mine.push(make('R', a, b, slow(a, b, hR, ps), twoHands ? 'Right hand, slow' : 'Slow', rw.head, withTip(rLine, `R${a}`), ci)); }
+      if (soloL) { patternOf('L', fromL); const ps = pace('L'); mine.push(make('L', a, b, slow(a, b, 'L', ps), tr('Left hand, slow', 'Mão esquerda, devagar'), lw.head, withTip(lLine, `L${a}`), ci)); }
+      if (soloR) { patternOf(hR, fromR); const ps = pace(hR); mine.push(make('R', a, b, slow(a, b, hR, ps), twoHands ? tr('Right hand, slow', 'Mão direita, devagar') : tr('Slow', 'Devagar'), rw.head, withTip(rLine, `R${a}`), ci)); }
       // Only the right hand plays here and it had its own video: nothing to put together.
       const together = twoHands && plays(a, b, 'L') && plays(a, b, hR);
       if (twoHands && (together || !(soloL || soloR))) {
         // What a simple hand does is said here, in the both-hands video.
         const folded = [newL && !soloL ? (first && talk?.L ? talk.L : lw.simple) : '',
-          newR && !soloR ? (first && talk?.R ? talk.R : `The right hand is simple here. ${rw.said}`) : ''].filter(Boolean);
+          newR && !soloR ? (first && talk?.R ? talk.R : `${tr('The right hand is simple here.', 'Aqui a mão direita é simples.')} ${rw.said}`) : ''].filter(Boolean);
         const bass: string[] = [];
         for (const f of facts) if (bass[bass.length - 1] !== f.chord) bass.push(f.chord);
         const knownStep = !newL && !newR;
@@ -555,17 +587,17 @@ export function clipsOf(song: Song): Clip[] {
         // Shapes he knows, right after shapes he knows: one longer video instead of several (not
         // where it is hard: there every step keeps its own video).
         if (knownStep && prev?.kind === 'both' && prev.knownStep && prev.to === a - 1 && b - prev.from < 8 && hardness(prev.from, b) < 0.5) {
-          const merged = make('both', prev.from, b, slow(prev.from, b, undefined, 3, SLOW_BOTH), 'Both hands, slow', prev.head, '', prev.step ?? ci);
+          const merged = make('both', prev.from, b, slow(prev.from, b, undefined, 3, SLOW_BOTH), tr('Both hands, slow', 'Duas mãos, devagar'), prev.head, '', prev.step ?? ci);
           const chords = [...(prev.bassLine ?? []), ...bass].filter((x, i, xs) => xs[i - 1] !== x);
-          mine[mine.length - 1] = { ...merged, id: prev.id, knownStep: true, bassLine: chords, say: withTip(`Same shapes as before, now on new chords: ${listOf(chords.slice(0, 6))}. Both hands, slowly.`, `B${prev.from}`) };
+          mine[mine.length - 1] = { ...merged, id: prev.id, knownStep: true, bassLine: chords, say: withTip(tr(`Same shapes as before, now on new chords: ${listOf(chords.slice(0, 6))}. Both hands, slowly.`, `As mesmas formas de antes, agora em acordes novos: ${listOf(chords.slice(0, 6))}. Duas mãos, devagar.`), `B${prev.from}`) };
         } else {
           const say = knownStep
-            ? `Same shapes as before, now on new chords: ${listOf(bass.slice(0, 6))}. Both hands, slowly.`
+            ? tr(`Same shapes as before, now on new chords: ${listOf(bass.slice(0, 6))}. Both hands, slowly.`, `As mesmas formas de antes, agora em acordes novos: ${listOf(bass.slice(0, 6))}. Duas mãos, devagar.`)
             : folded.length
-              ? `${folded.join(' ')} ${folded.length < 2 ? (soloL || soloR ? 'Now both hands, slowly.' : 'Both hands, slowly.') : ''}`.trim()
-              : firstBoth ? 'Now put the hands together, slowly. Land them on beat one together.' : BOTH[said++ % BOTH.length];
+              ? `${folded.join(' ')} ${folded.length < 2 ? (soloL || soloR ? tr('Now both hands, slowly.', 'Agora as duas mãos, devagar.') : tr('Both hands, slowly.', 'Duas mãos, devagar.')) : ''}`.trim()
+              : firstBoth ? tr('Now put the hands together, slowly. Land them on beat one together.', 'Agora junta as mãos, devagar. Põe-nas no tempo um ao mesmo tempo.') : BOTH()[said++ % BOTH().length];
           // The head shows the keys: the right hand's first notes (or the bass when only it plays).
-          mine.push({ ...make('both', a, b, slow(a, b, undefined, 3, SLOW_BOTH), 'Both hands, slow', plays(a, b, hR) ? rw.head : lw.head, withTip(say, `B${a}`), ci), knownStep, bassLine: bass });
+          mine.push({ ...make('both', a, b, slow(a, b, undefined, 3, SLOW_BOTH), tr('Both hands, slow', 'Duas mãos, devagar'), plays(a, b, hR) ? rw.head : lw.head, withTip(say, `B${a}`), ci), knownStep, bassLine: bass });
         }
         firstBoth = false;
       }
@@ -580,20 +612,23 @@ export function clipsOf(song: Song): Clip[] {
     const len = r.to - r.from + 1, parts = Math.ceil(len / (pd >= 0.45 ? 8 : 16)), size = Math.ceil(len / parts);
     for (let a = r.from, part = 0; a <= r.to; a += size, part++) {
       const b = Math.min(r.to, a + size - 1);
-      const what = parts === 1 ? 'the whole phase' : part === 0 ? 'the first part of the phase' : b === r.to ? 'the end of the phase' : 'the middle of the phase';
-      mine.push(make('run', a, b, run, run >= 0.75 ? 'Three quarter speed' : 'A little faster, still slow', parts === 1 ? 'The whole phase' : `Bars ${a} to ${b}`,
-        `Now ${what}, a little slower than the real thing. ${b === r.to ? (talk?.outro ?? r.words.tip) : 'Keep going.'}`, 100 + part));
+      const what = lang() === 'pt'
+        ? (parts === 1 ? 'a fase toda' : part === 0 ? 'a primeira parte da fase' : b === r.to ? 'o fim da fase' : 'o meio da fase')
+        : (parts === 1 ? 'the whole phase' : part === 0 ? 'the first part of the phase' : b === r.to ? 'the end of the phase' : 'the middle of the phase');
+      mine.push(make('run', a, b, run, run >= 0.75 ? tr('Three quarter speed', 'Três quartos da velocidade') : tr('A little faster, still slow', 'Um pouco mais rápido, ainda devagar'), parts === 1 ? tr('The whole phase', 'A fase toda') : tr(`Bars ${a} to ${b}`, `Compassos ${a} a ${b}`),
+        `${tr(`Now ${what}, a little slower than the real thing.`, `Agora ${what}, um pouco mais devagar do que a música.`)} ${b === r.to ? (talk?.outro ?? r.words.tip) : tr('Keep going.', 'Continua.')}`, 100 + part));
     }
-    mine.forEach((c, i) => out.push({ ...c, k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) }));
+    mine.forEach((c, i) => out.push({ ...c, say: NT(c.say), head: NT(c.head), k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) }));
   }
   // Each video says what the next one teaches, so the series reads as one lesson.
   const about = (c: Clip, before: Clip) => {
-    if (c.kind === 'intro') return `phase ${NUMBER[c.n] ?? c.n}${SCRIPTS[song.entry.slot ?? song.entry.id] && !/^phase \d/i.test(c.words.title) ? `, ${c.words.title.toLowerCase()}` : ''}`;
-    if (c.kind === 'run') return c.from === c.phase.from ? 'the whole phase, a little faster' : 'the next part of the phase';
-    if (c.kind === 'jump') return 'the jump';
-    if (c.kind === 'pattern') return c.segments[0].kind === 'L' ? 'the left hand pattern' : twoHands ? 'the right hand pattern' : 'the pattern';
-    const further = c.step !== before.step ? ', a bit further on' : '';
-    return `${c.kind === 'L' ? 'the left hand' : c.kind === 'R' ? (twoHands ? 'the right hand' : 'the next bars') : 'both hands together'}${further}`;
+    const pt = lang() === 'pt';
+    if (c.kind === 'intro') return `${pt ? 'a fase' : 'phase'} ${NUMBER()[c.n] ?? c.n}${SCRIPTS[song.entry.slot ?? song.entry.id] && !/^(phase|fase) \d/i.test(c.words.title) ? `, ${c.words.title.toLowerCase()}` : ''}`;
+    if (c.kind === 'run') return c.from === c.phase.from ? tr('the whole phase, a little faster', 'a fase toda, um pouco mais rápido') : tr('the next part of the phase', 'a parte seguinte da fase');
+    if (c.kind === 'jump') return tr('the jump', 'o salto');
+    if (c.kind === 'pattern') return c.segments[0].kind === 'L' ? tr('the left hand pattern', 'o padrão da mão esquerda') : twoHands ? tr('the right hand pattern', 'o padrão da mão direita') : tr('the pattern', 'o padrão');
+    const further = c.step !== before.step ? tr(', a bit further on', ', um pouco mais à frente') : '';
+    return `${c.kind === 'L' ? tr('the left hand', 'a mão esquerda') : c.kind === 'R' ? (twoHands ? tr('the right hand', 'a mão direita') : tr('the next bars', 'os compassos seguintes')) : tr('both hands together', 'as duas mãos juntas')}${further}`;
   };
   out.forEach((c, i) => { if (out[i + 1]) c.next = about(out[i + 1], c); });
   clipCache.set(song, out);
@@ -631,9 +666,9 @@ export interface ReelTimeline {
 const TITLE = 3, BREATH = 1, REST = 1.2, LEAD = 0.35;
 /** Seconds a note takes to fall onto the keys in a video (Reels.tsx draws this much ahead). */
 export const FALL = 2;
-const TURN = ['Your turn. Play it with me.', 'Now you. Play along with me.', 'Your turn, together with me.'];
-const AGAIN = 'Once more. The piano plays softer.';
-const LAST = 'One last time. You lead.';
+const TURN = () => (lang() === 'pt' ? ['A tua vez. Toca comigo.', 'Agora tu. Toca comigo.', 'A tua vez, junto comigo.'] : ['Your turn. Play it with me.', 'Now you. Play along with me.', 'Your turn, together with me.']);
+const AGAIN = () => tr('Once more. The piano plays softer.', 'Mais uma vez. O piano toca mais baixo.');
+const LAST = () => tr('One last time. You lead.', 'Uma última vez. Tu é que guias.');
 
 /**
  * The timeline of a video. `pace` follows him (1 at first): faster when he plays the videos clean,
@@ -697,7 +732,7 @@ export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
   let trainFrom = 0;
   t = Math.max(until, 0.3 + said) + 0.5;
   for (let r = 0; r < rounds; r++) {
-    const words = r === 0 ? TURN[clip.k % TURN.length] : r === rounds - 1 ? LAST : AGAIN;
+    const words = r === 0 ? TURN()[clip.k % 3] : r === rounds - 1 ? LAST() : AGAIN();
     const spoken = line(t, words, 0);
     const ci = t + spoken + 0.2;
     for (let k = 0; k < n; k++) sfx.push({ t: ci + k * beat, name: 'click-soft', gain: k === 0 ? 0.6 : 0.4 });
@@ -713,7 +748,7 @@ export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
   }
   // 4. It says what comes next, so the videos read as one lesson.
   const after = until + 0.6;
-  const nextLine = clip.next ? `Nice. Next up, ${clip.next}. Swipe up.` : 'Nice. That is this phase. Now practise it in the lessons.';
+  const nextLine = clip.next ? tr(`Nice. Next up, ${clip.next}. Swipe up.`, `Boa. A seguir, ${clip.next}. Desliza para cima.`) : tr('Nice. That is this phase. Now practise it in the lessons.', 'Boa. Esta fase está feita. Agora pratica-a nas lições.');
   const nextSaid = line(after, nextLine, 0);
   const duration = after + nextSaid + REST;
   const lo = { R: 127, L: 127 } as Record<Hand, number>, hi = { R: 0, L: 0 } as Record<Hand, number>;
@@ -767,9 +802,9 @@ export function fixClip(song: Song, clip: Clip, ticks: number, missed: number[])
   const seq: string[] = [];
   for (const n of span) { const l = letter(n.midi, flats); if (seq[seq.length - 1] !== l) seq.push(l); }
   return {
-    ...clip, id: `${clip.id}-fix-${ticks}`, kind: 'fix', head: seq.slice(0, 5).join(' '),
-    say: `Let's fix this spot. You missed ${listOf(names)}. Here it is again, slowly. ${listOf(seq.slice(0, 6))}.`,
+    ...clip, id: `${clip.id}-fix-${ticks}`, kind: 'fix', head: NT(seq.slice(0, 5).join(' ')),
+    say: NT(tr(`Let's fix this spot. You missed ${listOf(names)}. Here it is again, slowly. ${listOf(seq.slice(0, 6))}.`, `Vamos corrigir este sítio. Falhaste ${listOf(names)}. Aqui está outra vez, devagar. ${listOf(seq.slice(0, 6))}.`)),
     from: barIndex(grid, a) + 1, to: barIndex(grid, Math.max(a, z - 1)) + 1, where: '',
-    segments: [{ ...sg, speed: Math.max(0.3, sg.speed * 0.75), label: 'Fix this spot, slow', ticks: [a, z], times: 4 }],
+    segments: [{ ...sg, speed: Math.max(0.3, sg.speed * 0.75), label: tr('Fix this spot, slow', 'Corrigir este sítio, devagar'), ticks: [a, z], times: 4 }],
   };
 }

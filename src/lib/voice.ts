@@ -11,6 +11,7 @@
 import { get, set } from 'idb-keyval';
 import { audioContext } from './audio';
 import BANK from './voiceBank.json';
+import { lang } from './lang';
 import { naturalText, planLine, type Piece } from './voicePieces';
 
 /** What was recorded: key, then its file in public/voice and its length in seconds. */
@@ -38,14 +39,16 @@ export function onVoice(fn: () => void) { listeners.add(fn); return () => { list
 
 // Natural voices first: the "premium", "enhanced", neural and "natural" voices sound like a person.
 const GOOD = [/premium/i, /enhanced/i, /natural/i, /neural/i, /\b(ava|zoe|evan|nathan|serena|samantha|daniel|karen|moira|tessa)\b/i, /google (us|uk) english/i];
-let chosen: SpeechSynthesisVoice | null = null;
+let chosen: SpeechSynthesisVoice | null = null, chosenFor = '';
 function pick(): SpeechSynthesisVoice | null {
-  if (chosen) return chosen;
-  const all = speechSynthesis.getVoices().filter(v => /^en(-|_|$)/i.test(v.lang));
+  const want = lang();
+  if (chosen && chosenFor === want) return chosen;
+  chosenFor = want;
+  const all = speechSynthesis.getVoices().filter(v => (want === 'pt' ? /^pt(-|_|$)/i : /^en(-|_|$)/i).test(v.lang));
   if (!all.length) return null;
   const rank = (v: SpeechSynthesisVoice) => {
     const i = GOOD.findIndex(r => r.test(v.name));
-    return (i < 0 ? 50 : i) + (v.localService ? 0 : 5) + (/en-(US|GB)/i.test(v.lang) ? 0 : 3);
+    return (i < 0 ? 50 : i) + (v.localService ? 0 : 5) + ((want === 'pt' ? /pt-PT/i : /en-(US|GB)/i).test(v.lang) ? 0 : 3);
   };
   chosen = [...all].sort((a, b) => rank(a) - rank(b))[0];
   return chosen;
@@ -54,7 +57,7 @@ if (voiceSupported()) speechSynthesis.addEventListener?.('voiceschanged', () => 
 
 // Note letters are read as letters: a lone capital A would be read as the word "a" (only a capital
 // A opening a sentence before a word is the article).
-const spoken = (text: string) => text.replace(/\b([A-G])(#|b)?m\b/g, (_, l: string, a?: string) => `${l}${a ?? ''} minor`)
+const spoken = (text: string) => lang() === 'pt' ? naturalText(text, 'pt') : text.replace(/\b([A-G])(#|b)?m\b/g, (_, l: string, a?: string) => `${l}${a ?? ''} minor`)
   .replace(/\b([A-G])b\b/g, '$1 flat').replace(/(^|[.!?]\s+)A(?= (?!sharp|flat|minor)[a-z])/g, '$1a').replace(/\bA\b/g, 'ay').replace(/#/g, ' sharp');
 
 /** Seconds a line takes to say: exactly, when it was recorded; else at the pace the voice speaks. */
@@ -182,7 +185,9 @@ function pump() {
 export async function prepareVoice(texts: string[], first = false) {
   if (!naturalVoiceWanted()) return;
   const rest = texts.filter(t => { const plan = planOf(t); if (plan) joined(t, plan); return !plan; });
-  if (!rest.length) return;
+  // The model on the device reads only English: a Portuguese line not recorded is spoken by the
+  // device's own voice.
+  if (!rest.length || lang() === 'pt') return;
   startNatural();
   for (const t of rest) {
     if (made.has(t)) continue;
@@ -235,11 +240,11 @@ export function say(text: string, onWord?: (charIndex: number) => void, onEnd?: 
     });
     return true;
   }
-  if (naturalVoiceWanted() && natural !== 'failed') prepareVoice([text], true);
+  if (naturalVoiceWanted() && natural !== 'failed' && lang() !== 'pt') prepareVoice([text], true);
   if (!voiceSupported()) return false;
   const u = new SpeechSynthesisUtterance(spoken(text));
   const v = pick();
-  if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-US';
+  if (v) { u.voice = v; u.lang = v.lang; } else u.lang = lang() === 'pt' ? 'pt-PT' : 'en-US';
   u.rate = 1;
   u.pitch = 1;
   // The spoken text is a little longer than the shown one ("ay", " sharp"): map back by proportion.

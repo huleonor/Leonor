@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { L } from '../lib/lang';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
 import { meterOf, pctOf } from '../lib/mastery';
@@ -33,7 +34,7 @@ export function practiceFor(info: SongInfo, reel: Reel): Section | undefined {
   const steps = course.steps.filter(s => s.part !== undefined && ids.includes(s.part));
   if (!steps.length) return undefined;
   const done = steps.filter(s => (info.prog[s.id]?.stars ?? 0) > 0).length;
-  return { id: reel.id, title: `Phase ${reel.n}: ${reel.words.title}`, bars: `Bars ${reel.from}-${reel.to}`, from: reel.from, steps, done, learnt: done === steps.length };
+  return { id: reel.id, title: L(`Phase ${reel.n}: ${reel.words.title}`, `Fase ${reel.n}: ${reel.words.title}`), bars: L(`Bars ${reel.from}-${reel.to}`, `Compassos ${reel.from}-${reel.to}`), from: reel.from, steps, done, learnt: done === steps.length };
 }
 
 function useBump(sub: (fn: () => void) => () => void) {
@@ -78,17 +79,17 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
       <div className="page journey">
         {slot && (
           <section className="journey-hero waiting on-field">
-            <p className="sub">Your first song</p>
+            <p className="sub">{L('Your first song', 'A tua primeira música')}</p>
             <h1>{slot.title}</h1>
             <p className="journey-by">{slot.composer}</p>
-            <p className="sub">The videos and the lessons are made from the song's own notes. Add a MIDI file of it and they are ready in a second.</p>
-            <div className="journey-actions"><button className="btn go big" onClick={() => onBringMidi(slot)}><IconImport size={18} />Add the MIDI file</button></div>
-            {info?.error && <p className="error-line">That file could not be read. Try another MIDI file.</p>}
+            <p className="sub">{L("The videos and the lessons are made from the song's own notes. Add a MIDI file of it and they are ready in a second.", 'Os vídeos e as lições são feitos das notas da própria música. Junta um ficheiro MIDI dela e ficam prontos num segundo.')}</p>
+            <div className="journey-actions"><button className="btn go big" onClick={() => onBringMidi(slot)}><IconImport size={18} />{L('Add the MIDI file', 'Juntar o ficheiro MIDI')}</button></div>
+            {info?.error && <p className="error-line">{L('That file could not be read. Try another MIDI file.', 'Não foi possível ler esse ficheiro. Experimenta outro ficheiro MIDI.')}</p>}
           </section>
         )}
         {others.length > 0 && (
           <section className="journey-others" aria-labelledby="others-title">
-            <h2 id="others-title">Or start with one of these</h2>
+            <h2 id="others-title">{L('Or start with one of these', 'Ou começa com uma destas')}</h2>
             <ul>
               {others.map(e => (
                 <li key={e.id}><button className="other-song" onClick={() => onChoose(e.id)}><b>{e.title}</b><small>{e.composer}</small></button></li>
@@ -111,32 +112,32 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
   const pct = pctOf(meterOf(song).value);
   const bars = reels.length ? reels[reels.length - 1].to : 0;
   const status = (x: (typeof rows)[number]) => {
-    const where = `bars ${x.r.from}-${x.r.to}`;
-    if (next === x) return !x.watched ? `Next: video ${Math.min(x.of, x.seenN + 1)} of ${x.of}, ${where}` : `Next: practise it, ${where}`;
-    if (x.watched && (x.practised || !x.section)) return `Learnt, ${where}`;
-    if (x.watched) return `Watched, ${where}`;
-    if (x.seenN) return `${x.seenN} of ${x.of} videos watched, ${where}`;
-    return `${x.of} videos, ${where}`;
+    const where = L(`bars ${x.r.from}-${x.r.to}`, `compassos ${x.r.from}-${x.r.to}`);
+    if (next === x) return !x.watched ? L(`Next: video ${Math.min(x.of, x.seenN + 1)} of ${x.of}, ${where}`, `A seguir: vídeo ${Math.min(x.of, x.seenN + 1)} de ${x.of}, ${where}`) : L(`Next: practise it, ${where}`, `A seguir: praticar, ${where}`);
+    if (x.watched && (x.practised || !x.section)) return L(`Learnt, ${where}`, `Aprendida, ${where}`);
+    if (x.watched) return L(`Watched, ${where}`, `Vista, ${where}`);
+    if (x.seenN) return L(`${x.seenN} of ${x.of} videos watched, ${where}`, `${x.seenN} de ${x.of} vídeos vistos, ${where}`);
+    return L(`${x.of} videos, ${where}`, `${x.of} vídeos, ${where}`);
   };
 
   return (
     <div className="page journey">
       <section className="journey-hero">
         <h1>{entry.title}</h1>
-        <p className="journey-by">{[entry.composer, reels.length ? `${reels.length} phases, ${bars} bars` : ''].filter(Boolean).join('. ')}</p>
-        <p className="num-line" aria-label={`${pct}% of the song learnt`}>
+        <p className="journey-by">{[entry.composer, reels.length ? L(`${reels.length} phases, ${bars} bars`, `${reels.length} fases, ${bars} compassos`) : ''].filter(Boolean).join('. ')}</p>
+        <p className="num-line" aria-label={L(`${pct}% of the song learnt`, `${pct}% da música aprendida`)}>
           <motion.span className="num" key={pct} initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING}>{pct}</motion.span>
-          <span>percent learnt{next ? `, phase ${next.r.n} next` : ''}</span>
+          <span>{L('percent learnt', 'por cento aprendido')}{next ? L(`, phase ${next.r.n} next`, `, a seguir a fase ${next.r.n}`) : ''}</span>
         </p>
         <div className="journey-actions">
           {next ? (
             <button className="btn go big" onClick={() => (!next.watched ? onWatch(song.entry.id, next.i) : onPractice(song.entry.id, next.r))}>
-              {!next.watched ? <IconPlay size={18} /> : <IconKeysFill size={18} />}{!next.watched ? `Watch phase ${next.r.n}` : `Practise phase ${next.r.n}`}
+              {!next.watched ? <IconPlay size={18} /> : <IconKeysFill size={18} />}{!next.watched ? L(`Watch phase ${next.r.n}`, `Ver a fase ${next.r.n}`) : L(`Practise phase ${next.r.n}`, `Praticar a fase ${next.r.n}`)}
             </button>
           ) : (
-            <button className="btn go big" onClick={() => onWholeSong(info)}><IconKeysFill size={18} />Play the whole song</button>
+            <button className="btn go big" onClick={() => onWholeSong(info)}><IconKeysFill size={18} />{L('Play the whole song', 'Tocar a música toda')}</button>
           )}
-          <button className="btn quiet" onClick={onSongs}>Change song</button>
+          <button className="btn quiet" onClick={onSongs}>{L('Change song', 'Mudar de música')}</button>
         </div>
       </section>
 
@@ -147,7 +148,7 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
             state: next === x ? 'next' as const : x.watched && (x.practised || !x.section) ? 'done' as const : 'ahead' as const,
             onWatch: () => onWatch(song.entry.id, x.i), onPractice: x.section ? () => onPractice(song.entry.id, x.r) : undefined,
           })),
-          { key: 'whole', n: String(bars), title: 'The whole song', line: `All ${bars} bars, with the beat`, state: 'finale' as const, onPractice: () => onWholeSong(info) },
+          { key: 'whole', n: String(bars), title: L('The whole song', 'A música toda'), line: L(`All ${bars} bars, with the beat`, `Os ${bars} compassos, com o ritmo`), state: 'finale' as const, onPractice: () => onWholeSong(info) },
         ]}
       />
     </div>
@@ -199,15 +200,15 @@ function PhasePath({ nodes }: { nodes: PathNode[] }) {
         return (
           <motion.li key={x.key} className={`path-node ${x.state} ${left ? 'left' : 'right'}`} style={{ top: TOP + i * STEP, left: `${xs[i] * 100}%` }}
             initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ ...SPRING, delay: i * 0.04 }}>
-            {x.state === 'next' && <span className="path-start" aria-hidden="true">Start</span>}
-            <button className="path-card" onClick={() => setOpen(isOpen ? null : x.key)} aria-expanded={isOpen} aria-label={`${x.n === String(i + 1) ? `Phase ${x.n}: ` : ''}${x.title}. ${x.line}`}>
+            {x.state === 'next' && <span className="path-start" aria-hidden="true">{L('Start', 'Começar')}</span>}
+            <button className="path-card" onClick={() => setOpen(isOpen ? null : x.key)} aria-expanded={isOpen} aria-label={`${x.n === String(i + 1) ? L(`Phase ${x.n}: `, `Fase ${x.n}: `) : ''}${x.title}. ${x.line}`}>
               {x.state === 'done' ? <IconCheck size={30} /> : x.state === 'finale' ? <IconKeysFill size={28} /> : <span className="num">{x.n}</span>}
             </button>
             <span className="path-label" aria-hidden="true" style={{ width: room }}><b>{x.title}</b><small>{x.line}</small></span>
             {isOpen && (
               <motion.div className="path-pop" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}>
-                {x.onWatch && <button className="btn go" onClick={x.onWatch}><IconPlay size={16} />Watch the videos</button>}
-                {x.onPractice && <button className="btn" onClick={x.onPractice}><IconKeysFill size={16} />{x.state === 'finale' ? 'Play the whole song' : 'Practise'}</button>}
+                {x.onWatch && <button className="btn go" onClick={x.onWatch}><IconPlay size={16} />{L('Watch the videos', 'Ver os vídeos')}</button>}
+                {x.onPractice && <button className="btn" onClick={x.onPractice}><IconKeysFill size={16} />{x.state === 'finale' ? L('Play the whole song', 'Tocar a música toda') : L('Practise', 'Praticar')}</button>}
               </motion.div>
             )}
           </motion.li>

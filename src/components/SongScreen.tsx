@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { L } from '../lib/lang';
 import { loadPiano, unlockAudio } from '../lib/audio';
 import type { SongInfo } from '../lib/catalog';
 import { barsToTime } from '../lib/analysis';
@@ -37,13 +38,13 @@ export function sectionsOf(info: SongInfo): Section[] {
     if (p.sameAs) continue;
     const steps = course.steps.filter(s => s.part === p.n);
     out.push({
-      id: `p${p.n}`, title: `Part ${p.n}`, bars: `Bars ${p.from}-${p.to}`, from: p.from, steps,
+      id: `p${p.n}`, title: L(`Part ${p.n}`, `Parte ${p.n}`), bars: L(`Bars ${p.from}-${p.to}`, `Compassos ${p.from}-${p.to}`), from: p.from, steps,
       learnt: partLearnt(course, info.prog, p.n), done: steps.filter(s => (info.prog[s.id]?.stars ?? 0) > 0).length,
     });
   }
   const whole = course.steps.filter(s => s.kind === 'song');
   out.push({
-    id: 'song', title: 'Whole song', bars: 'Start to finish', from: 0, steps: whole,
+    id: 'song', title: L('Whole song', 'A música toda'), bars: L('Start to finish', 'Do início ao fim'), from: 0, steps: whole,
     learnt: (info.prog.song?.stars ?? 0) > 0, done: whole.filter(s => (info.prog[s.id]?.stars ?? 0) > 0).length,
   });
   return out;
@@ -94,7 +95,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
   const sections = useMemo(() => sectionsOf(info), [info]);
   useMetronome(engine, scroll === 'auto' && mode === 'play' && metro);
   // The parts, labelled on the score where each one begins (a repeat is labelled with the part it repeats).
-  const labels = useMemo(() => info.course!.parts.map(p => ({ bar: p.from, label: p.sameAs ? `Part ${p.sameAs}` : `Part ${p.n}` })), [info.course]);
+  const labels = useMemo(() => info.course!.parts.map(p => ({ bar: p.from, label: p.sameAs ? L(`Part ${p.sameAs}`, `Parte ${p.sameAs}`) : L(`Part ${p.n}`, `Parte ${p.n}`) })), [info.course]);
   // The section he should open next: the first one not learnt yet.
   const nextSection = sections.find(s => !s.learnt);
 
@@ -172,10 +173,10 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
   return (
     <div className="song-screen">
       <header className="song-top">
-        <button className="icon-btn ghost" onClick={onExit} aria-label="Back to my songs"><IconClose size={24} /></button>
+        <button className="icon-btn ghost" onClick={onExit} aria-label={L('Back to my songs', 'Voltar às minhas músicas')}><IconClose size={24} /></button>
         <ProgressBar value={stats.total ? stats.hit / stats.total : 0} label={`${stats.hit} of ${stats.total} notes`} />
-        {!inputOn && <button className="piano-chip" onClick={onSettings} aria-label="Connect your piano"><IconKeys size={20} /><i /></button>}
-        <button className="icon-btn ghost" onClick={() => setOptions(true)} aria-label="Options"><IconGear size={22} /></button>
+        {!inputOn && <button className="piano-chip" onClick={onSettings} aria-label={L('Connect your piano', 'Ligar o teu piano')}><IconKeys size={20} /><i /></button>}
+        <button className="icon-btn ghost" onClick={() => setOptions(true)} aria-label={L('Options', 'Opções')}><IconGear size={22} /></button>
       </header>
       <main className="sheet">
         <div className="sheet-card">
@@ -191,11 +192,11 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
           <AnimatePresence>
             {result && (
               <motion.div className="sheet-result card" role="dialog" aria-labelledby="sheet-result-title" initial={{ scale: 0.85, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }} transition={SPRING}>
-                <h2 id="sheet-result-title">{result.accuracy >= 0.95 ? 'Beautifully played' : result.accuracy >= 0.7 ? 'You played it through' : 'Keep at it'}</h2>
+                <h2 id="sheet-result-title">{result.accuracy >= 0.95 ? L('Beautifully played', 'Muito bem tocado') : result.accuracy >= 0.7 ? L('You played it through', 'Tocaste até ao fim') : L('Keep at it', 'Continua a praticar')}</h2>
                 <p className="result-line">{result.hit} of {result.total} notes, {Math.round(result.accuracy * 100)}% right</p>
                 <div className="actions">
-                  <button className="btn go" onClick={restart}><IconRestart size={16} />Play again</button>
-                  <button className="btn" onClick={() => { setResult(null); openStepPicker(); }}><IconCap size={16} />Learn step by step</button>
+                  <button className="btn go" onClick={restart}><IconRestart size={16} />{L('Play again', 'Tocar outra vez')}</button>
+                  <button className="btn" onClick={() => { setResult(null); openStepPicker(); }}><IconCap size={16} />{L('Learn step by step', 'Aprender passo a passo')}</button>
                 </div>
               </motion.div>
             )}
@@ -207,15 +208,15 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
 
       <footer className="song-foot">
         <motion.button className={`btn ${mode === 'listen' ? 'on' : ''}`} whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMode(m => (m === 'listen' ? 'play' : 'listen')); }} aria-pressed={mode === 'listen'}>
-          {mode === 'listen' ? <><IconStop size={18} />Stop</> : <><IconSpeaker size={18} />Listen</>}
+          {mode === 'listen' ? <><IconStop size={18} />{L('Stop', 'Parar')}</> : <><IconSpeaker size={18} />{L('Listen', 'Ouvir')}</>}
         </motion.button>
         {tempoMode && !result && (
-          <motion.button className="btn go" whileTap={{ scale: 0.96 }} onClick={startTempo}>{engine.playing ? <><IconStop size={16} />Stop</> : <><IconPlay size={16} />{engine.started ? 'Go on' : 'Start'}</>}</motion.button>
+          <motion.button className="btn go" whileTap={{ scale: 0.96 }} onClick={startTempo}>{engine.playing ? <><IconStop size={16} />{L('Stop', 'Parar')}</> : <><IconPlay size={16} />{engine.started ? L('Go on', 'Continuar') : L('Start', 'Começar')}</>}</motion.button>
         )}
-      <motion.button className="btn go big" whileTap={{ scale: 0.96 }} onClick={openStepPicker}><IconCap size={18} />Learn step by step</motion.button>
-        <motion.button className="btn big mastery-btn" whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMasterySheet(true); }} aria-label={`Mastery, ${pct}%`}>
+      <motion.button className="btn go big" whileTap={{ scale: 0.96 }} onClick={openStepPicker}><IconCap size={18} />{L('Learn step by step', 'Aprender passo a passo')}</motion.button>
+        <motion.button className="btn big mastery-btn" whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMasterySheet(true); }} aria-label={`${L('Mastery', 'Domínio')}, ${pct}%`}>
           <motion.span className="mastery-fill" initial={false} animate={{ width: `${pct}%` }} transition={SOFT} />
-          <IconTarget size={18} />Mastery<b>{pct}%</b>
+          <IconTarget size={18} />{L('Mastery', 'Domínio')}<b>{pct}%</b>
         </motion.button>
       </footer>
 
@@ -223,19 +224,19 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
         {options && (
           <motion.div className="veil sheet-veil" onClick={() => setOptions(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.section className="card options-sheet" role="dialog" aria-modal="true" aria-labelledby="options-title" onClick={e => e.stopPropagation()} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={SOFT}>
-              <h2 id="options-title">Options</h2>
+              <h2 id="options-title">{L('Options', 'Opções')}</h2>
               {twoHands && <Segmented<HandsChoice> label="Hands" value={hands} onChange={setHands} options={[['L', 'Left'], ['both', 'Both'], ['R', 'Right']]} />}
-              <Segmented<Scroll> label="The music" value={scroll} onChange={setScroll} options={[['magic', 'Waits for you'], ['auto', 'In tempo']]} />
+              <Segmented<Scroll> label={L('The music', 'A música')} value={scroll} onChange={setScroll} options={[['magic', L('Waits for you', 'Espera por ti')], ['auto', L('In tempo', 'A tempo')]]} />
               {tempoMode && <Segmented label="Speed" value={speed} onChange={setSpeed} options={SPEEDS.map(v => [v, formatSpeed(v)] as [number, string])} />}
               <div className="option-rows">
-                <button className={`option-row ${feedback ? 'on' : ''}`} onClick={() => setFeedback(f => !f)} aria-pressed={feedback}><IconCheck size={18} /><span>Colour right and wrong notes</span><i className="switch-dot" /></button>
-                <button className={`option-row ${alwaysKeys ? 'on' : ''}`} onClick={toggleKeys} aria-pressed={alwaysKeys}><IconKeys size={18} /><span>Keep the keyboard on screen</span><i className="switch-dot" /></button>
-                {tempoMode && <button className={`option-row ${metro ? 'on' : ''}`} onClick={() => { setMetro(!metro); setMetronome(!metro); }} aria-pressed={metro}><IconSpeaker size={18} /><span>Metronome</span><i className="switch-dot" /></button>}
-                <button className={`option-row ${loop ? 'on' : ''}`} onClick={toggleLoop} aria-pressed={!!loop}><IconLoop size={18} /><span>{loop ? `Looping part ${loop.n}` : 'Loop the part I’m on'}</span><i className="switch-dot" /></button>
+                <button className={`option-row ${feedback ? 'on' : ''}`} onClick={() => setFeedback(f => !f)} aria-pressed={feedback}><IconCheck size={18} /><span>{L('Colour right and wrong notes', 'Colorir as notas certas e erradas')}</span><i className="switch-dot" /></button>
+                <button className={`option-row ${alwaysKeys ? 'on' : ''}`} onClick={toggleKeys} aria-pressed={alwaysKeys}><IconKeys size={18} /><span>{L('Keep the keyboard on screen', 'Manter o teclado no ecrã')}</span><i className="switch-dot" /></button>
+                {tempoMode && <button className={`option-row ${metro ? 'on' : ''}`} onClick={() => { setMetro(!metro); setMetronome(!metro); }} aria-pressed={metro}><IconSpeaker size={18} /><span>{L('Metronome', 'Metrónomo')}</span><i className="switch-dot" /></button>}
+                <button className={`option-row ${loop ? 'on' : ''}`} onClick={toggleLoop} aria-pressed={!!loop}><IconLoop size={18} /><span>{loop ? L(`Looping part ${loop.n}`, `A repetir a parte ${loop.n}`) : L('Loop the part I’m on', 'Repetir a parte onde estou')}</span><i className="switch-dot" /></button>
               </div>
               <div className="actions">
-                {!atStart && <button className="btn" onClick={() => { restart(); setOptions(false); }}><IconRestart size={16} />From the start</button>}
-                <button className="btn go" onClick={() => setOptions(false)}>Done</button>
+                {!atStart && <button className="btn" onClick={() => { restart(); setOptions(false); }}><IconRestart size={16} />{L('From the start', 'Do início')}</button>}
+                <button className="btn go" onClick={() => setOptions(false)}>{L('Done', 'Feito')}</button>
               </div>
             </motion.section>
           </motion.div>
@@ -244,26 +245,26 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
           <motion.div className="veil sheet-veil" onClick={() => setMasterySheet(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.section className="card mastery-sheet" role="dialog" aria-modal="true" aria-labelledby="mastery-title" onClick={e => e.stopPropagation()} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={SOFT}>
               <div className="mastery-head">
-                <h2 id="mastery-title">Mastery</h2>
+                <h2 id="mastery-title">{L('Mastery', 'Domínio')}</h2>
                 <b className="mastery-pct"><Bump value={pct} />%</b>
               </div>
-              <span className="mastery-track big" role="progressbar" aria-label="Mastery" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+              <span className="mastery-track big" role="progressbar" aria-label={L('Mastery', 'Domínio')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
                 <motion.i initial={{ width: 0 }} animate={{ width: `${Math.max(2, pct)}%` }} transition={SOFT} />
               </span>
-              <ol className="mastery-parts" aria-label="The parts of the song">
+              <ol className="mastery-parts" aria-label={L('The parts of the song', 'As partes da música')}>
                 {mastery.meter.parts.map(p => (
-                  <li key={p.n} className={p.value >= 0.999 ? 'done' : ''} style={{ flexGrow: p.weight }} aria-label={`Part ${p.n}, bars ${p.from}-${p.to}: ${pctOf(p.value)}%`}>
+                  <li key={p.n} className={p.value >= 0.999 ? 'done' : ''} style={{ flexGrow: p.weight }} aria-label={L(`Part ${p.n}, bars ${p.from}-${p.to}: ${pctOf(p.value)}%`, `Parte ${p.n}, compassos ${p.from}-${p.to}: ${pctOf(p.value)}%`)}>
                     <motion.i initial={{ width: 0 }} animate={{ width: `${p.value * 100}%` }} transition={SOFT} />
                   </li>
                 ))}
               </ol>
               <div className="mastery-next">
-                <small>Next</small>
+                <small>{L('Next', 'A seguir')}</small>
                 <b>{mastery.next.title}</b>
                 {mastery.next.why && <p>{mastery.next.why}</p>}
-                <small className="mastery-count">{mastery.next.lessons.length === 1 ? 'One step' : `${mastery.next.lessons.length} steps`}, one after the other</small>
+                <small className="mastery-count">{mastery.next.lessons.length === 1 ? L('One step', 'Um passo') : L(`${mastery.next.lessons.length} steps`, `${mastery.next.lessons.length} passos`)}{L(', one after the other', ', um a seguir ao outro')}</small>
               </div>
-              <button className="btn go big" onClick={() => { setMasterySheet(false); onMastery(); }}><IconPlay size={18} />Start</button>
+              <button className="btn go big" onClick={() => { setMasterySheet(false); onMastery(); }}><IconPlay size={18} />{L('Start', 'Começar')}</button>
               <p className="fine">100% is the whole song with the beat at full speed, 95% right, on two different days.</p>
             </motion.section>
           </motion.div>
@@ -272,8 +273,8 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
           <motion.div className="veil sections-veil" onClick={closeStepPicker} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.section className="card sections-sheet" role="dialog" aria-modal="true" aria-labelledby="sections-title" onClick={e => e.stopPropagation()} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={SOFT}>
               <header className="sections-head">
-                <button className="icon-btn ghost" onClick={closeStepPicker} aria-label="Back to the song"><IconClose size={22} /></button>
-                <h2 id="sections-title">Learn step by step</h2>
+                <button className="icon-btn ghost" onClick={closeStepPicker} aria-label={L('Back to the song', 'Voltar à música')}><IconClose size={22} /></button>
+                <h2 id="sections-title">{L('Learn step by step', 'Aprender passo a passo')}</h2>
                 <span aria-hidden="true" />
               </header>
               <ol className="section-list">
@@ -282,7 +283,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
                     <button className={`section-row ${sc.learnt ? 'learnt' : ''} ${sc === nextSection ? 'next' : ''}`} onClick={() => onTeach(sc)}>
                       <span className="section-icon">{sc.learnt ? <IconCheck size={18} /> : sc.id === 'song' ? <IconMagic size={18} /> : sc.id.slice(1)}</span>
                       <span className="section-text"><b>{sc.title}</b><small>{sc.bars}, {sc.done} of {sc.steps.length} steps</small></span>
-                      {sc === nextSection && <span className="section-go">Start</span>}
+                      {sc === nextSection && <span className="section-go">{L('Start', 'Começar')}</span>}
                     </button>
                   </motion.li>
                 ))}

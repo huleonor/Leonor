@@ -9,8 +9,9 @@
  */
 
 /** A note name or a shape word as a list item, with what follows it. */
-const ITEM = /(?<![\w#'])(?<![Mm]iddle )([A-G](?:#|b)?m?|[Tt]op|[Mm]iddle|[Ll]owest|[Ll]ow)([,.:;!?]?)(?=\s|$)/g;
-const NOTE = /^[A-G](?:#|b)?m?$/;
+// English letters and Portuguese solfège; the shape words of both (top, middle, low; cima, meio, baixo).
+const ITEM = /(?<![\wÀ-ÿ#'])(?<![Mm]iddle )((?:[A-G]|Dó|Ré|Mi|Fá|Sol|Lá|Si)(?:#|b)?m?|[Tt]op|[Mm]iddle|[Ll]owest|[Ll]ow|[Cc]ima|[Mm]eio|[Bb]aixo)(?! central)([,.:;!?]?)(?=\s|$)/g;
+const NOTE = /^(?:[A-G]|Dó|Ré|Mi|Fá|Sol|Lá|Si)(?:#|b)?m?$/;
 
 export type Piece = { key: string; gap: number };
 
@@ -70,9 +71,12 @@ export function planLine(text: string, has: (key: string) => boolean): Piece[] |
 }
 
 /** Every list item there is, to record once: the twelve notes each way, minor chords, shape words. */
-export function allItems(): string[] {
-  const notes = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'];
-  const all = [...notes, ...notes.map(n => `${n}m`), 'top', 'middle', 'low', 'lowest'];
+export function allItems(lang: 'en' | 'pt' = 'en'): string[] {
+  const letters = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'];
+  const SOLF: Record<string, string> = { C: 'Dó', D: 'Ré', E: 'Mi', F: 'Fá', G: 'Sol', A: 'Lá', B: 'Si' };
+  // In Portuguese the videos name notes in solfège or as letters (Settings): both are recorded.
+  const notes = lang === 'pt' ? [...letters.map(n => n.replace(/^[A-G]/, l => SOLF[l])), ...letters] : letters;
+  const all = [...notes, ...notes.map(n => `${n}m`), ...(lang === 'pt' ? ['cima', 'meio', 'baixo'] : ['top', 'middle', 'low', 'lowest'])];
   return all.flatMap(i => [itemKey(i, false), itemKey(i, true)]);
 }
 
@@ -81,8 +85,18 @@ export function allItems(): string[] {
  * letters: a lone A is "eigh" (espeak reads "ay" as "eye" and "A" inside a sentence as "a"),
  * a sharp and a flat in words, "m" as minor.
  */
-export function naturalText(key: string) {
+export function naturalText(key: string, lang: 'en' | 'pt' = 'en') {
   const t = key.startsWith('~') ? key.slice(1) : key;
+  // Portuguese: sharps, flats and minor in words ("Fá sustenido", "Si bemol", "Lá menor").
+  if (lang === 'pt') return t
+    .replace(/(?<![\wÀ-ÿ])((?:[A-G]|Dó|Ré|Mi|Fá|Sol|Lá|Si)(?:#|b)?)m(?![\wÀ-ÿ])/g, '$1 menor')
+    .replace(/(?<![\wÀ-ÿ])((?:[A-G]|Dó|Ré|Mi|Fá|Sol|Lá|Si))b(?![\wÀ-ÿ])/g, '$1 bemol')
+    .replace(/#/g, ' sustenido')
+    // Notes as letters (Settings, Note names) are said as Portuguese letter names; "A" and "E"
+    // before a lowercase word are the words, unless an article comes before them.
+    .replace(/(?<![\wÀ-ÿ#])([A-G])(?![\wÀ-ÿ])/g, (all, l: string, at: number, whole: string) =>
+      (l === 'A' || l === 'E') && /^ (?!bemol|sustenido|menor)[a-zà-ÿ]/.test(whole.slice(at + 1)) && !/(?:^|\s)(?:o|no|do|ao|um|num|pelo|segura o)\s$/i.test(whole.slice(0, at)) ? all
+        : ({ A: 'á', B: 'bê', C: 'cê', D: 'dê', E: 'é', F: 'éfe', G: 'gê' } as Record<string, string>)[l]);
   return t
     .replace(/\b([A-G])(#|b)?m\b/g, (_, l: string, a?: string) => `${l}${a ?? ''} minor`)
     .replace(/\b([A-G])b\b/g, '$1 flat')

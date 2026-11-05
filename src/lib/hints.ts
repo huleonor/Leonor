@@ -8,6 +8,7 @@
  * over and over (MasterySession keeps track).
  */
 import type { Hand } from './types';
+import { lang } from './lang';
 
 export type HintKind = 'neighbour' | 'octave' | 'leap' | 'misread' | 'stall' | 'early' | 'late' | 'together';
 
@@ -31,7 +32,7 @@ export interface Diagnosis { kind: HintKind; hand?: Hand; /** Bar of the song it
  * The bank. Short, plain, one idea each, in the voice of a teacher next to him. Placeholders:
  * {hand} (left hand / right hand), {bar}, {landmark} (a note to read from, in that hand's clef).
  */
-export const HINTS: Record<HintKind, string[]> = {
+const HINTS_EN: Record<HintKind, string[]> = {
   neighbour: [
     'One key off. Put the {hand} in place before you press.',
     'Close, just next door. Check the finger number in bar {bar}.',
@@ -69,8 +70,51 @@ export const HINTS: Record<HintKind, string[]> = {
   ],
 };
 
-const LANDMARK: Record<Hand, string> = { R: 'the G line of the treble clef', L: 'the F line of the bass clef' };
-const HAND: Record<Hand, string> = { R: 'right hand', L: 'left hand' };
+const LANDMARK_EN: Record<Hand, string> = { R: 'the G line of the treble clef', L: 'the F line of the bass clef' };
+const HAND_EN: Record<Hand, string> = { R: 'right hand', L: 'left hand' };
+const HINTS_PT: Record<HintKind, string[]> = {
+  neighbour: [
+    'Uma tecla ao lado. Põe a {hand} no sítio antes de carregar.',
+    'Perto, mesmo ao lado. Vê o número do dedo no compasso {bar}.',
+    'A tua {hand} está uma tecla ao lado. Encontra a primeira tecla, as outras seguem.',
+  ],
+  octave: [
+    'Nota certa, oitava errada. Vê a que altura está na pauta.',
+    'A mesma nota, noutro sítio. Vê se está acima ou abaixo.',
+  ],
+  leap: [
+    'Antes do salto, olha para onde vais cair. Depois move a mão toda.',
+    'Primeiro os olhos, depois a mão: encontra cedo a tecla onde vais cair.',
+    'Salta com o braço, não com os dedos, e cai no número do dedo.',
+  ],
+  misread: [
+    'Lê-a a partir de uma nota que conheces: {landmark}.',
+    'Conta linhas e espaços a partir de {landmark}.',
+  ],
+  stall: [
+    'Enquanto uma nota soa, lê a seguinte.',
+    'Olha uma nota à frente dos teus dedos.',
+    'Diz a nota seguinte na cabeça antes de precisares dela.',
+  ],
+  early: [
+    'Estás à frente do clique. Deixa o ritmo guiar.',
+    'Um pouco apressado. Espera pelo clique e depois toca.',
+  ],
+  late: [
+    'Um pouco atrás do clique. Move a mão durante a nota anterior.',
+    'Lê à frente para estares pronto no tempo.',
+  ],
+  together: [
+    'As duas mãos caem juntas. Carrega ao mesmo tempo.',
+    'Faz das duas mãos uma: baixa-as ao mesmo tempo.',
+  ],
+};
+const LANDMARK_PT: Record<Hand, string> = { R: 'a linha do Sol da clave de sol', L: 'a linha do Fá da clave de fá' };
+const HAND_PT: Record<Hand, string> = { R: 'mão direita', L: 'mão esquerda' };
+/** The bank in the app's language. */
+export const HINTS: Record<HintKind, string[]> = new Proxy({} as Record<HintKind, string[]>, { get: (_, k: string) => (lang() === 'pt' ? HINTS_PT : HINTS_EN)[k as HintKind] });
+const LANDMARK = new Proxy({} as Record<Hand, string>, { get: (_, k: string) => (lang() === 'pt' ? LANDMARK_PT : LANDMARK_EN)[k as Hand] });
+const HAND = new Proxy({} as Record<Hand, string>, { get: (_, k: string) => (lang() === 'pt' ? HAND_PT : HAND_EN)[k as Hand] });
 
 /** Fewer than this many signs of one kind is not a pattern. */
 const ENOUGH = 2;

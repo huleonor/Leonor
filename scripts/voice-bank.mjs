@@ -7,7 +7,9 @@
  *   node scripts/voice-bank.mjs keys.json
  *
  * keys.json comes from the dev console: copy(JSON.stringify(await window.__voiceKeys())), with the
- * songs to record in the library. It lists every key with the text the voice is given. The bank is
+ * songs to record in the library. It lists every key with the text the voice is given and its
+ * language. Portuguese is read by pf_dora (the same model's Portuguese voice) from European
+ * Portuguese phonemes made by espeak-ng (needs `espeak-ng` installed: apt-get install espeak-ng). The bank is
  * rebuilt to exactly these keys: pieces already recorded are kept, missing ones recorded, others
  * removed. Needs ffmpeg.
  */
@@ -22,16 +24,35 @@ const want = JSON.parse(readFileSync(input, 'utf8'));
 const DIR = 'public/voice', LIST = 'src/lib/voiceBank.json', VOICE = 'af_heart';
 mkdirSync(DIR, { recursive: true });
 const old = existsSync(LIST) ? JSON.parse(readFileSync(LIST, 'utf8')) : {};
-const name = (text) => `${createHash('sha1').update(`${VOICE}|${text}`).digest('hex').slice(0, 12)}.mp3`;
+const VOICE_PT = 'pf_dora';
+const name = (text, lang = 'en') => `${createHash('sha1').update(`${lang === 'pt' ? VOICE_PT : VOICE}|${text}`).digest('hex').slice(0, 12)}.mp3`;
+
+/** Portuguese text as phonemes, clause by clause, its punctuation kept for the pauses. */
+function phonemesPt(text) {
+  const parts = text.split(/([,.;:!?]+)/);
+  let out = '';
+  for (let i = 0; i < parts.length; i += 2) {
+    const words = parts[i].trim(), punct = parts[i + 1] ?? '';
+    if (words) {
+      const r = spawnSync('espeak-ng', ['-v', 'pt', '-q', '--ipa', words]);
+      if (r.status !== 0) { console.error('espeak-ng failed:', String(r.stderr)); process.exit(1); }
+      out += String(r.stdout).replace(/[\u200d_]/g, '').replace(/\s+/g, ' ').trim();
+    }
+    out += punct + ' ';
+  }
+  return out.trim();
+}
 
 let tts = null;
 const out = {};
 let made = 0;
-for (const [key, text] of want) {
-  const file = name(text);
+for (const [key, text, lang = 'en'] of want) {
+  const file = name(text, lang);
   if (old[key]?.[0] === file && existsSync(`${DIR}/${file}`)) { out[key] = old[key]; continue; }
   tts ??= await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: 'fp32', device: 'cpu' });
-  const audio = await tts.generate(text, { voice: VOICE });
+  const audio = lang === 'pt'
+    ? await tts.generate_from_ids(tts.tokenizer(phonemesPt(text), { truncation: true }).input_ids, { voice: VOICE_PT })
+    : await tts.generate(text, { voice: VOICE });
   const f = audio.audio, rate = audio.sampling_rate;
   // Trim the silence either side, keeping 30 ms so a word is never clipped.
   let peak = 0;

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { markAppPlayed } from '../lib/input';
+import { handsShown, L, N, NOTE_RE, showHands, videoPrefs } from '../lib/lang';
 import { audioContext, loadPiano, pianoReady, playNote, playSfx, stopAll, stopSfx, unlockAudio } from '../lib/audio';
 import { linkState, onLinkState, onNote } from '../lib/input';
 // The 3D gloves load on their own (three.js is large), only where WebGL runs.
@@ -292,7 +293,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
           ctx.fillStyle = n.train ? (n.hand === 'L' ? pal.tL : pal.tR) : pal.ink;
           ctx.font = `900 ${Math.round(Math.max(11, Math.min(17, bw * 0.55)))}px ${FACE}`;
           ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-          ctx.fillText(letter(n.midi, flats), k.x + k.w / 2, yB - 7);
+          ctx.fillText(N(letter(n.midi, flats)), k.x + k.w / 2, yB - 7);
         }
       }
       // A jump: an arc over the keys from the key he leaves to the key he lands on, with its head.
@@ -343,7 +344,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
             ctx.fillStyle = mine.has(m) ? pal.paper : s ? pal.ink : hand === 'L' ? pal.tL : pal.tR;
             ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
             ctx.font = `900 ${Math.round(Math.max(11, Math.min(22, k.w * 0.5)))}px ${FACE}`;
-            ctx.fillText(letter(m, flats), k.x + k.w / 2, kbTop + h - 10);
+            ctx.fillText(N(letter(m, flats)), k.x + k.w / 2, kbTop + h - 10);
             const top = s?.finger ?? order;
             if (top) { ctx.font = `700 ${Math.round(Math.min(15, k.w * 0.36))}px ${FACE}`; ctx.fillText(String(top), k.x + k.w / 2, kbTop + 20); }
           } else if (!black && m % 12 === 0) {
@@ -351,7 +352,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
             ctx.fillStyle = mine.has(m) ? pal.paper : pal.muted;
             ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
             ctx.font = `700 ${Math.round(Math.max(9, Math.min(13, k.w * 0.42)))}px 'Courier New', Courier, monospace`;
-            ctx.fillText(`C${m / 12 - 1}`, k.x + k.w / 2, kbTop + h - 8);
+            ctx.fillText(`${N("C")}${m / 12 - 1}`, k.x + k.w / 2, kbTop + h - 8);
           }
         }
       }
@@ -479,7 +480,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
         ctx.fillRect(k.x + k.w / 2 - bw / 2, kbTop - 30 - 70 * e, bw, bh);
         ctx.fillStyle = pal.paper;
         ctx.font = `900 13px ${FACE}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(letter(p.midi, flats), k.x + k.w / 2, kbTop - 30 - 70 * e + bh / 2 + 1);
+        ctx.fillText(N(letter(p.midi, flats)), k.x + k.w / 2, kbTop - 30 - 70 * e + bh / 2 + 1);
         ctx.textBaseline = 'alphabetic';
         ctx.globalAlpha = 1;
       }
@@ -591,8 +592,9 @@ const LEAVE = [0.4, 0, 1, 1] as const;
  */
 // Kinetic captions: the words that carry the lesson (a note, a finger, a shape, an action) set big,
 // the little words small, so a line reads at a glance like a TikTok caption.
-const SMALL = new Set(['the', 'a', 'an', 'and', 'on', 'of', 'to', 'it', 'is', 'in', 'for', 'with', 'at', 'then', 'now', 'just', 'here', 'you', 'your', 'its', 'one', 'by', 'up']);
-const BIG = /^([A-G](?:#|b)?m?|thumb|finger|[1-5]|top|middle|low|lowest|octave|both|left|right|pattern|pause|slowly|together|turn|again|scale|chord|leap)$/i;
+const SMALL = new Set(['the', 'a', 'an', 'and', 'on', 'of', 'to', 'it', 'is', 'in', 'for', 'with', 'at', 'then', 'now', 'just', 'here', 'you', 'your', 'its', 'one', 'by', 'up',
+  'o', 'os', 'as', 'e', 'de', 'do', 'da', 'dos', 'das', 'no', 'na', 'nos', 'nas', 'em', 'um', 'uma', 'com', 'para', 'por', 'ao', 'à', 'que', 'se', 'te', 'tu', 'só', 'já', 'aqui', 'agora', 'depois', 'é', 'mais']);
+const BIG = new RegExp(`^(${NOTE_RE}|thumb|finger|[1-5]|top|middle|low|lowest|octave|both|left|right|pattern|pause|slowly|together|turn|again|scale|chord|leap|polegar|dedo|cima|meio|baixo|oitava|duas|esquerda|direita|padrão|pausa|devagar|juntas|vez|outra|escala|acorde|salto)$`, 'i');
 function weight(w: string) {
   const bare = w.replace(/[.,:;!?]/g, '');
   return BIG.test(bare) ? 'big' : SMALL.has(bare.toLowerCase()) ? 'small' : '';
@@ -647,7 +649,7 @@ export type ReelResult = { perfect: boolean; poor: boolean; fix?: { ticks: numbe
  */
 export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, onResult }: PlayerProps) {
   // The pace is taken when the video comes on screen, so it never changes under him.
-  const paceAt = useMemo(() => pace, [reel, active]); // eslint-disable-line react-hooks/exhaustive-deps
+  const paceAt = useMemo(() => pace * videoPrefs.pace, [reel, active]); // eslint-disable-line react-hooks/exhaustive-deps
   const tl = useMemo(() => timelineOf(song, reel, paceAt), [song, reel, paceAt]);
   // One keyboard for both hands, framed on this video's notes.
   const range = useMemo<[number, number]>(() => {
@@ -738,6 +740,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
   useEffect(() => { if (!verdict) return; const id = window.setTimeout(() => setVerdict(null), 2600); return () => window.clearTimeout(id); }, [verdict]);
   useEffect(() => {
     if (!active || !inputOn || !tl.train || !groupsToPlay.length) return;
+    const waits = videoPrefs.wait;
     const c = () => clockRef.current!;
     const off = onNote(e => {
       if (e.type !== 'on') return;
@@ -758,7 +761,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
       if (f.i > 0 && t < groupsToPlay[0].t - 0.5) { f.i = 0; f.have.clear(); }
       while (f.i < groupsToPlay.length && groupsToPlay[f.i].t < t - 1.5) { f.i++; f.have.clear(); }
       const g = groupsToPlay[f.i];
-      if (g && !waitingRef.current && c().playing && t > g.t + 0.25 && t < g.t + 1.5) {
+      if (waits && g && !waitingRef.current && c().playing && t > g.t + 0.25 && t < g.t + 1.5) {
         waitingRef.current = true;
         waitSince.current = performance.now();
         waitRef.current = new Map([...g.ms].map((m, k) => [m, k + 1]));
@@ -840,10 +843,10 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
       const flats = song.fifths < 0;
       let ptr = 0, n = 0;
       for (const { w } of spoken.words.slice(0, spoken.at + 1)) {
-        const m = /^([A-G](?:#|b)?)[,.:;]?$/.exec(w);
+        const m = new RegExp(`^(${NOTE_RE.replace('m?', '')})[,.:;]?$`).exec(w);
         if (!m) continue;
-        let i = tl.notes.findIndex((x, k) => k >= ptr && letter(x.midi, flats) === m[1]);
-        if (i < 0) i = tl.notes.findIndex(x => letter(x.midi, flats) === m[1]);
+        let i = tl.notes.findIndex((x, k) => k >= ptr && N(letter(x.midi, flats)) === m[1]);
+        if (i < 0) i = tl.notes.findIndex(x => N(letter(x.midi, flats)) === m[1]);
         if (i < 0) continue;
         ptr = i + 1;
         if (!map.has(tl.notes[i].midi)) map.set(tl.notes[i].midi, ++n);
@@ -853,8 +856,9 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
   }, [sayLine, spoken.at, spoken.words, tl, song.fifths]);
   // The drawn hands on the keys, on unless he turns them off (kept on this device).
   // The gloves on the keys, on unless he turns them off (kept on this device).
-  const [handsOn, setHandsOn] = useState(() => { try { return localStorage.getItem('leonor:hands') !== 'off'; } catch { return true; } });
-  const toggleHands = () => setHandsOn(v => { try { localStorage.setItem('leonor:hands', v ? 'off' : 'on'); } catch { /* this visit only */ } return !v; });
+  const [handsOn, setHandsOn] = useState(handsShown);
+  useEffect(() => { const on = () => setHandsOn(handsShown()); window.addEventListener('leonor:hands', on); return () => window.removeEventListener('leonor:hands', on); }, []);
+  const toggleHands = () => showHands(!handsOn);
   const firstNote = tl.notes[0]?.t ?? 0;
   // The gloves in 3D over the flat video where WebGL runs (the flat ones elsewhere).
   const use3d = useMemo(() => webglOk(), []);
@@ -882,7 +886,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
   const beatNo = place.count;
   const counting = beatNo > 0;
   const training = place.train;
-  const label = waitingFor ? `Your turn: play ${[...waitingFor].map(m => letter(m, song.fifths < 0)).join(' ')}` : holding ? 'On your own' : training ? (loops > 0 ? 'Train with me, again' : (tl.countIns?.length ?? 1) > 1 ? `Train with me, ${place.round} of ${tl.countIns!.length}` : 'Train with me') : seg.label;
+  const label = waitingFor ? L(`Your turn: play ${[...waitingFor].map(m => letter(m, song.fifths < 0)).join(' ')}`, `A tua vez: toca ${[...waitingFor].map(m => N(letter(m, song.fifths < 0))).join(' ')}`) : holding ? L('On your own', 'Sozinho') : training ? (loops > 0 ? L('Train with me, again', 'Treina comigo, outra vez') : (tl.countIns?.length ?? 1) > 1 ? L(`Train with me, ${place.round} of ${tl.countIns!.length}`, `Treina comigo, ${place.round} de ${tl.countIns!.length}`) : L('Train with me', 'Treina comigo')) : seg.label;
 
   // While a video plays nothing sits over it: the menu, the piano chip and the actions show only
   // when he pauses (the user's choice 2026-11).
@@ -896,16 +900,16 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
 
   return (
     <div className={`reel-slide ${active ? 'active' : ''}`}>
-      <div className="reel-frame" onClick={toggle} role="group" aria-label={`Phase ${reel.n}, video ${reel.k} of ${reel.of}: ${reel.head}`}>
+      <div className="reel-frame" onClick={toggle} role="group" aria-label={L(`Phase ${reel.n}, video ${reel.k} of ${reel.of}: ${reel.head}`, `Fase ${reel.n}, vídeo ${reel.k} de ${reel.of}: ${reel.head}`)}>
         <div className="reel-progress" aria-hidden="true">
           {Array.from({ length: reel.of }, (_, i) => <i key={i}><b style={{ width: `${i < reel.k - 1 ? 100 : i === reel.k - 1 ? pct * 100 : 0}%` }} /></i>)}
         </div>
         {/* Set like the Für Elise TikToks: the step's kicker small, its notes huge, nothing else. */}
         <header className="reel-head">
           <motion.p key={label} className="reel-kicker" initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.18, ease: ARRIVE }}>{label}</motion.p>
-          <h2 className={`reel-hook hand-${seg.kind} ${reel.head.split(' ').some(x => !/^[A-G](?:#|b)?m?$/.test(x) && x !== 'octaves') ? 'words' : ''}`}>{reel.head.split(' ').map((x, i) => <motion.span key={`${reel.id}-${i}`} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x} </motion.span>)}</h2>
+          <h2 className={`reel-hook hand-${seg.kind} ${reel.head.split(' ').some(x => !new RegExp(`^${NOTE_RE}$`).test(x) && x !== 'octaves' && x !== 'oitavas') ? 'words' : ''}`}>{reel.head.split(' ').map((x, i) => <motion.span key={`${reel.id}-${i}`} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x} </motion.span>)}</h2>
           {(paused || (inputOn && score.ok + score.bad > 0)) && (
-            <p className="reel-meta">{paused && `Phase ${reel.n}, ${reel.k} of ${reel.of}`}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">{paused ? '. ' : ''}Your keys: <b className="ok">{score.ok} right</b>, <b className="bad">{score.bad} wrong</b></span>}</p>
+            <p className="reel-meta">{paused && L(`Phase ${reel.n}, ${reel.k} of ${reel.of}`, `Fase ${reel.n}, ${reel.k} de ${reel.of}`)}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">{paused ? '. ' : ''}{L('Your keys: ', 'As tuas teclas: ')}<b className="ok">{score.ok} {L('right', 'certas')}</b>, <b className="bad">{score.bad} {L('wrong', 'erradas')}</b></span>}</p>
           )}
         </header>
         <div className="reel-stage">
@@ -929,7 +933,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
           {showTitle && (
             <motion.div key="title" className="reel-card" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: 'blur(8px)', transition: { duration: 0.18, ease: LEAVE } }}>
               <div>
-                <motion.small initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>Phase {reel.n}: {w.title}</motion.small>
+                <motion.small initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>{L('Phase', 'Fase')} {reel.n}: {w.title}</motion.small>
                 {/* The idea lands word by word, then holds dead still. */}
                 <h3>{w.hook.split(' ').map((x, i) => <motion.span key={i} style={{ display: 'inline-block' }} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x}&nbsp;</motion.span>)}</h3>
                 {sayLine && <Caption words={spoken.words} at={spoken.at} index={place.line} />}
@@ -946,7 +950,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
           {verdict && (
             <motion.p key={`verdict-${verdict.round}`} className={`reel-verdict ${verdict.ok >= verdict.of * 0.8 ? 'good' : ''}`} role="status"
               initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.15 } }} transition={SPRING}>
-              Round {verdict.round}: {verdict.ok} of {verdict.of} on time
+              {L(`Round ${verdict.round}: ${verdict.ok} of ${verdict.of} on time`, `Ronda ${verdict.round}: ${verdict.ok} de ${verdict.of} a tempo`)}
             </motion.p>
           )}
         </AnimatePresence>
@@ -974,20 +978,20 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
             <motion.span className="reel-paused" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={SPRING} aria-hidden="true"><IconPlay size={34} /></motion.span>
           )}
         </AnimatePresence>
-        {!clock.ready && active && <span className="reel-loading" role="status">Loading the piano</span>}
+        {!clock.ready && active && <span className="reel-loading" role="status">{L('Loading the piano', 'A carregar o piano')}</span>}
         {/* His piano: a key icon with a dot (green when connected) to connect it, and, once he plays
             along, how many keys were right and how many wrong in this video. */}
         <AnimatePresence>
           {paused && (
-            <motion.button key="piano" className={`reel-piano ${inputOn ? 'on' : ''}`} onClick={e => { e.stopPropagation(); onPiano?.(); }} aria-label={inputOn ? 'Piano connected. Open settings' : 'Connect your piano'}
+            <motion.button key="piano" className={`reel-piano ${inputOn ? 'on' : ''}`} onClick={e => { e.stopPropagation(); onPiano?.(); }} aria-label={inputOn ? L('Piano connected. Open settings', 'Piano ligado. Abrir as definições') : L('Connect your piano', 'Ligar o teu piano')}
               initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.25, ease: ARRIVE }}>
               <IconKeys size={20} /><i aria-hidden="true" />
-              {!inputOn && <span className="reel-connect">Connect</span>}
+              {!inputOn && <span className="reel-connect">{L('Connect', 'Ligar')}</span>}
             </motion.button>
           )}
         </AnimatePresence>
         {/* Scrub: drag along the bottom to go back to any moment, like TikTok. */}
-        <div className="reel-scrub" role="slider" aria-label="Where in the video" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct * 100)} tabIndex={0}
+        <div className="reel-scrub" role="slider" aria-label={L('Where in the video', 'Onde no vídeo')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct * 100)} tabIndex={0}
           onClick={e => e.stopPropagation()}
           onKeyDown={e => { if (e.key === 'ArrowLeft') clock.seek(clock.now() - 2); if (e.key === 'ArrowRight') clock.seek(clock.now() + 2); }}
           onPointerDown={e => { e.stopPropagation(); (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); hush(); const r = e.currentTarget.getBoundingClientRect(); clock.seek(pass.t + (pass.until - pass.t) * ((e.clientX - r.left) / r.width)); }}
@@ -1000,14 +1004,14 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
       <AnimatePresence>
         {paused && (
           <motion.aside key="side" className="reel-side" initial={{ x: 70, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 70, opacity: 0, transition: { duration: 0.14, ease: LEAVE } }} transition={{ duration: 0.3, ease: ARRIVE }}>
-            <button className="reel-act go" onClick={onPractice} aria-label={`Practise phase ${reel.n}`}><span><IconKeys size={26} /></span>Practise</button>
-            <button className="reel-act" onClick={replay} aria-label="From the start, with the voice"><span><IconRestart size={24} /></span>Again</button>
+            <button className="reel-act go" onClick={onPractice} aria-label={L(`Practise phase ${reel.n}`, `Praticar a fase ${reel.n}`)}><span><IconKeys size={26} /></span>{L('Practise', 'Praticar')}</button>
+            <button className="reel-act" onClick={replay} aria-label={L('From the start, with the voice', 'Do início, com a voz')}><span><IconRestart size={24} /></span>{L('Again', 'Outra vez')}</button>
             {anyVoice() && (
-              <button className="reel-act" onClick={e => { e.stopPropagation(); unlockVoice(); setVoiceOn(!voice.on); }} aria-pressed={voice.on} aria-label={voice.on ? 'Turn the voice off' : 'Turn the voice on'}>
-                <span>{voice.on ? <IconSpeaker size={24} /> : <IconSpeakerOff size={24} />}</span>Voice
+              <button className="reel-act" onClick={e => { e.stopPropagation(); unlockVoice(); setVoiceOn(!voice.on); }} aria-pressed={voice.on} aria-label={voice.on ? L('Turn the voice off', 'Desligar a voz') : L('Turn the voice on', 'Ligar a voz')}>
+                <span>{voice.on ? <IconSpeaker size={24} /> : <IconSpeakerOff size={24} />}</span>{L('Voice', 'Voz')}
               </button>
             )}
-            <button className="reel-act" onClick={e => { e.stopPropagation(); toggleHands(); }} aria-pressed={handsOn} aria-label={handsOn ? 'Hide the gloves on the keys' : 'Show the gloves on the keys'}><span><IconHand size={24} /></span>Hands</button>
+            <button className="reel-act" onClick={e => { e.stopPropagation(); toggleHands(); }} aria-pressed={handsOn} aria-label={handsOn ? L('Hide the hands on the keys', 'Esconder as mãos nas teclas') : L('Show the hands on the keys', 'Mostrar as mãos nas teclas')}><span><IconHand size={24} /></span>{L('Hands', 'Mãos')}</button>
           </motion.aside>
         )}
       </AnimatePresence>
@@ -1029,7 +1033,7 @@ export function ReelPreview({ song, reel }: { song: Song; reel: Clip }) {
   const now = useCallback(() => at, [at]);
   const held = useRef(new Map<number, boolean>()), named = useRef(new Map<number, number>());
   const seg = reel.segments[0];
-  const words = reel.head.split(' ').some(x => !/^[A-G](?:#|b)?m?$/.test(x) && x !== 'octaves');
+  const words = reel.head.split(' ').some(x => !new RegExp(`^${NOTE_RE}$`).test(x) && x !== 'octaves' && x !== 'oitavas');
   return (
     <div className="reel-preview reel-slide" aria-hidden="true">
       <div className="reel-preview-head">
@@ -1113,7 +1117,7 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
 
   return (
     <div className={`reel-screen ${embedded ? 'embedded' : ''}`}>
-      {!embedded && <button className="icon-btn reel-close" onClick={onClose} aria-label="Close the videos"><IconClose size={24} /></button>}
+      {!embedded && <button className="icon-btn reel-close" onClick={onClose} aria-label={L('Close the videos', 'Fechar os vídeos')}><IconClose size={24} /></button>}
       <span className="reel-count" aria-live="polite">{active + 1}/{items.length}</span>
       <div className="reel-feed" ref={ref}>
         {items.map((r, i) => (
