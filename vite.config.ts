@@ -46,7 +46,7 @@ export default defineConfig({
         runtimeCaching: [
           {
             // The recorded voice of the videos and the sound effects: fetched as the videos need them, kept.
-            urlPattern: ({ url }) => url.pathname.startsWith('/voice/') || url.pathname.startsWith('/sfx/'),
+            urlPattern: ({ url }) => url.pathname.startsWith('/voice/') || url.pathname.startsWith('/sfx/') || url.pathname.startsWith('/models/'),
             handler: 'CacheFirst',
             options: { cacheName: 'voice', expiration: { maxEntries: 4000 }, cacheableResponse: { statuses: [0, 200] } },
           },
