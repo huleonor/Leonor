@@ -10,6 +10,7 @@ import { clipsOf, seenReels, type Reel } from './lib/reels';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
 import { SettingsSheet } from './components/SettingsSheet';
+import { PianoStep, pianoAsked } from './components/PianoStep';
 import { EditSong } from './components/EditSong';
 import { SongScreen, sectionsOf, type Section } from './components/SongScreen';
 import { Songs } from './components/Songs';
@@ -56,6 +57,14 @@ export default function App() {
   const [drawer, setDrawer] = useState(false);
   const [adding, setAdding] = useState<{ file: File; slot?: SongEntry } | null>(null);
   const [links, setLinks] = useState<Record<Source, LinkState>>(linkState);
+  // The piano, asked once before the first videos (PianoStep.tsx): what to do after it.
+  const [pianoNext, setPianoNext] = useState<(() => void) | null>(null);
+  /** Runs fn now, or after the piano step when it is due; true when it waits for the step. */
+  const viaPiano = (fn: () => void) => {
+    if (!pianoAsked() && !Object.values(linkState()).some(l => l.status === 'on')) { setPianoNext(() => fn); return true; }
+    fn();
+    return false;
+  };
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
   const prevMidi = useRef(links.midi.status);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -159,7 +168,7 @@ export default function App() {
     const last = clips.map(c => c.phase.id).lastIndexOf(reel.id);
     setLesson({ id, section: only.id, n: Date.now(), only, back: Math.max(0, last) });
   };
-  const watchFrom = (i: number) => { unlockAudio(); setWatch({ start: i, n: Date.now() }); setTab('watch'); };
+  const watchFrom = (i: number) => { unlockAudio(); viaPiano(() => { setWatch({ start: i, n: Date.now() }); setTab('watch'); }); };
   // The song he is learning, and where its feed starts: the first reel he has not watched.
   const currentEntry = entries.find(e => e.id === current || e.slot === current);
   const currentInfo = currentEntry ? infos[currentEntry.id] : undefined;
@@ -271,8 +280,8 @@ export default function App() {
           </AnimatePresence>
           <main className={`content ${watching ? 'tab-watch' : ''}`}>
             {tab === 'home' ? (
-              <HomePage title={currentEntry?.title} song={currentInfo?.song} clips={currentReels} at={currentReels.length ? feedStart() : 0}
-                onContinue={() => { unlockAudio(); setWatch(null); setTab('watch'); }}
+              <HomePage title={currentEntry?.title} song={currentInfo?.song} loading={!ready && !currentInfo} clips={currentReels} at={currentReels.length ? feedStart() : 0}
+                onContinue={() => { unlockAudio(); viaPiano(() => { setWatch(null); setTab('watch'); }); }}
                 onTab={(t: Tab) => go(t)} onSettings={() => setSheet('settings')}
                 onAddMidi={() => { const slot = currentEntry ?? entries.find(e => e.slot); if (slot) pickFile(slot); }} />
             ) : tab === 'watch' ? (
@@ -311,13 +320,17 @@ export default function App() {
         <AddSong
           file={adding.file} slot={adding.slot}
           onClose={() => setAdding(null)}
-          onDone={async entry => { setAdding(null); await refreshCatalog(); choose(entry.slot ?? entry.id); setWatch(null); setTab('watch'); setNotice({ text: L(`“${entry.title}” is ready: its videos start now.`, `“${entry.title}” está pronta: os vídeos começam agora.`) }); }}
+          onDone={async entry => { setAdding(null); await refreshCatalog(); choose(entry.slot ?? entry.id); const waits = viaPiano(() => { setWatch(null); setTab('watch'); }); setNotice({ text: waits ? L(`“${entry.title}” is ready.`, `“${entry.title}” está pronta.`) : L(`“${entry.title}” is ready: its videos start now.`, `“${entry.title}” está pronta: os vídeos começam agora.`) }); }}
         />
+      )}
+      {pianoNext && (
+        <PianoStep settings={settings} update={update} links={links} connectInput={connectInput} disconnectInput={disconnectInput}
+          onCheck={() => setSheet('check')} onDone={() => { const fn = pianoNext; setPianoNext(null); fn(); }} />
       )}
       {sheet === 'settings' && (
         <SettingsSheet settings={settings} update={update} links={links} connectInput={connectInput} disconnectInput={disconnectInput} onCheck={() => setSheet('check')} onClose={() => setSheet(null)} />
       )}
-      {sheet === 'check' && <InputCheck links={links} naming={settings.naming} onClose={() => setSheet('settings')} />}
+      {sheet === 'check' && <InputCheck links={links} naming={settings.naming} onClose={() => setSheet(pianoNext ? null : 'settings')} />}
       {notice && <div className={`toast ${notice.error ? 'error' : ''}`} role="status">{notice.text}</div>}
       </Fragment>
     </I18nContext.Provider>

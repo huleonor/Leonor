@@ -19,6 +19,8 @@ export function rememberReel(songId: string, clipId: string) {
 interface Props {
   title?: string;
   song?: Song;
+  /** The song is still being read: a loading card, never the "add the file" one. */
+  loading?: boolean;
   clips: Clip[];
   /** Where the feed would open: the video he was on, or the next one he has not watched. */
   at: number;
@@ -32,7 +34,7 @@ interface Props {
  * Home, the first screen: the video he was on, as a still to pick up again, and the menu (the
  * videos, the song's path, his songs, settings) as index cards.
  */
-export function HomePage({ title, song, clips, at, onContinue, onTab, onSettings, onAddMidi }: Props) {
+export function HomePage({ title, song, loading, clips, at, onContinue, onTab, onSettings, onAddMidi }: Props) {
   const clip = clips[at];
   const items = [
     { id: 'watch' as const, icon: <IconTabWatch size={26} />, name: L('Watch', 'Ver'), line: L('The videos, one pattern at a time.', 'Os vídeos, um padrão de cada vez.') },
@@ -43,7 +45,7 @@ export function HomePage({ title, song, clips, at, onContinue, onTab, onSettings
     <div className="page home">
       <header className="home-head">
         <p className="journey-by">{title ? L(`Learning now: ${title}`, `A aprender: ${title}`) : 'Leonor'}</p>
-        <h1>{clip ? L('Pick up where you left off', 'Continua onde ficaste') : L('Your first song', 'A tua primeira música')}</h1>
+        <h1>{clip || loading ? L('Pick up where you left off', 'Continua onde ficaste') : L('Your first song', 'A tua primeira música')}</h1>
       </header>
       {song && clip ? (
         <motion.button className="home-continue taped" onClick={onContinue} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}
@@ -54,6 +56,11 @@ export function HomePage({ title, song, clips, at, onContinue, onTab, onSettings
             <span className="btn go"><IconPlay size={16} />{L('Continue', 'Continuar')}</span>
           </span>
         </motion.button>
+      ) : loading ? (
+        <section className="home-continue empty" aria-busy="true">
+          <span className="home-loading skeleton" aria-hidden="true" />
+          <p className="sub">{L('Getting your song ready.', 'A preparar a tua música.')}</p>
+        </section>
       ) : (
         <section className="home-continue empty">
           <p className="sub">{L("The videos are made from the song's own notes. Add a MIDI file and they are ready in a second.", 'Os vídeos são feitos das notas da própria música. Junta um ficheiro MIDI e ficam prontos num segundo.')}</p>

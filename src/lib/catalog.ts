@@ -41,10 +41,22 @@ async function summarise(entry: SongEntry): Promise<SongInfo> {
   }
 }
 
-/** Reloads the song list and every summary. */
+/** The song being learnt (Journey.tsx keeps it under this key): read first, so Home has it at once. */
+const currentId = () => { try { return localStorage.getItem('hugos-piano:current-song') ?? 'interstellar-experience'; } catch { return 'interstellar-experience'; } };
+
+/**
+ * Reloads the song list and every summary. The song being learnt comes first and is shown as soon
+ * as it is read (reading the whole library took seconds, and Home asked meanwhile for a file it
+ * already had); the rest follow.
+ */
 export async function refreshCatalog() {
   entries = await listSongs();
-  const rows = await Promise.all(entries.map(summarise));
+  const cur = entries.find(e => e.id === currentId() || e.slot === currentId());
+  if (cur && !ready) {
+    infos = { ...infos, [cur.id]: await summarise(cur) };
+    emit();
+  }
+  const rows = await Promise.all(entries.map(e => (e === cur && infos[e.id] && !ready ? infos[e.id] : summarise(e))));
   infos = Object.fromEntries(rows.map(r => [r.entry.id, r]));
   ready = true;
   emit();

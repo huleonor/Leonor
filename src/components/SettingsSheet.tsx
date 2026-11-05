@@ -30,15 +30,47 @@ interface Props {
   onClose: () => void;
 }
 
-export function SettingsSheet({ settings, update, links, connectInput, disconnectInput, onCheck, onClose }: Props) {
+type PianoProps = Pick<Props, 'settings' | 'update' | 'links' | 'connectInput' | 'disconnectInput' | 'onCheck'>;
+
+/** The ways in for his piano (cable, Bluetooth, microphone) and the test: Settings and the first-time step. */
+export function PianoChoices({ settings, update, links, connectInput, disconnectInput, onCheck }: PianoProps) {
   const { t } = useI18n();
+  const selected = settings.input !== 'none' ? (settings.input as Source) : null;
+  const supported: Record<Source, boolean> = { mic: support.mic, ble: support.bluetooth, midi: support.webMidi };
+  return (
+    <>
+      <div className="input-choices">
+        {INPUTS.map(([kind, label, Icon]) => {
+          const link = links[kind];
+          const on = selected === kind && link.status === 'on';
+          return (
+            <button
+              key={kind}
+              className={`choice ${selected === kind ? 'selected' : ''} ${link.status}`}
+              // The one that is on turns off with a tap; another turns on.
+              onClick={() => { if (on) { disconnectInput(kind); return; } update({ input: kind, setupDone: true }); connectInput(kind); }}
+              disabled={!supported[kind]}
+              aria-pressed={on}
+            >
+              <Icon size={20} />
+              <b>{label()}</b>
+              <small>{supported[kind] ? (on ? `${statusText(kind, link, t)}. ${L('Tap to turn off', 'Toca para desligar')}` : selected === kind || link.status !== 'off' ? statusText(kind, link, t) : L('Tap to use', 'Toca para usar')) : L('Not in this browser', 'Não neste browser')}</small>
+            </button>
+          );
+        })}
+      </div>
+      <button className="btn" onClick={onCheck}>{L('Test your piano', 'Testar o piano')}</button>
+      {!isNative && support.isIOS && <p className="fine">{L('iPhone browsers only have the microphone. Cable and Bluetooth work in the Leonor iPhone app.', 'No iPhone o browser só tem o microfone. O cabo e o Bluetooth funcionam na app Leonor para iPhone.')}</p>}
+    </>
+  );
+}
+
+export function SettingsSheet({ settings, update, links, connectInput, disconnectInput, onCheck, onClose }: Props) {
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
   }, [onClose]);
-  const selected = settings.input !== 'none' ? (settings.input as Source) : null;
-  const supported: Record<Source, boolean> = { mic: support.mic, ble: support.bluetooth, midi: support.webMidi };
   const [hands, setHands] = useState(handsShown);
   // Only the iPhone app's update notice is left of the old About card (when it is out of date).
   const [nativeBuild, setNativeBuild] = useState<number | null>(null);
@@ -56,28 +88,7 @@ export function SettingsSheet({ settings, update, links, connectInput, disconnec
         {appOutdated && <p className="warn">{L('A newer iPhone app is out. Update it in SideStore.', 'Há uma app nova para iPhone. Atualiza-a no SideStore.')}</p>}
         <section className="set-group" aria-labelledby="piano-title">
           <h3 id="piano-title">{L('Your piano', 'O teu piano')}</h3>
-          <div className="input-choices">
-            {INPUTS.map(([kind, label, Icon]) => {
-              const link = links[kind];
-              const on = selected === kind && link.status === 'on';
-              return (
-                <button
-                  key={kind}
-                  className={`choice ${selected === kind ? 'selected' : ''} ${link.status}`}
-                  // The one that is on turns off with a tap; another turns on.
-                  onClick={() => { if (on) { disconnectInput(kind); return; } update({ input: kind, setupDone: true }); connectInput(kind); }}
-                  disabled={!supported[kind]}
-                  aria-pressed={on}
-                >
-                  <Icon size={20} />
-                  <b>{label()}</b>
-                  <small>{supported[kind] ? (on ? `${statusText(kind, link, t)}. ${L('Tap to turn off', 'Toca para desligar')}` : selected === kind || link.status !== 'off' ? statusText(kind, link, t) : L('Tap to use', 'Toca para usar')) : L('Not in this browser', 'Não neste browser')}</small>
-                </button>
-              );
-            })}
-          </div>
-          <button className="btn" onClick={onCheck}>{L('Test your piano', 'Testar o piano')}</button>
-          {!isNative && support.isIOS && <p className="fine">{L('iPhone browsers only have the microphone. Cable and Bluetooth work in the Leonor iPhone app.', 'No iPhone o browser só tem o microfone. O cabo e o Bluetooth funcionam na app Leonor para iPhone.')}</p>}
+          <PianoChoices settings={settings} update={update} links={links} connectInput={connectInput} disconnectInput={disconnectInput} onCheck={onCheck} />
         </section>
 
         <section className="set-group">
