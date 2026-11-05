@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { L } from '../lib/lang';
 import { barsToTime } from '../lib/analysis';
 import { loadPiano, unlockAudio } from '../lib/audio';
 import { coachRun, settingsFor } from '../lib/adapt';
@@ -27,7 +28,7 @@ import { LessonStaff } from './LessonStaff';
 import type { Section } from './SongScreen';
 import { Segmented } from './ui';
 
-const HEADLINE = ['Almost there', 'Passed', 'Great job!', 'Perfect!'];
+const HEADLINE = () => [L('Almost there', 'Quase'), L('Passed', 'Passou'), L('Great job!', 'Muito bem!'), L('Perfect!', 'Perfeito!')];
 const SPEEDS = [0.6, 0.8, 1, 1.2];
 
 function stepLabel(s: CourseStep) {
@@ -35,9 +36,9 @@ function stepLabel(s: CourseStep) {
 }
 
 function intro(s: CourseStep): string {
-  if (!s.wait) return 'With the beat: a slip takes you back a bar';
-  if (s.id.endsWith('x')) return 'The tricky bit once more, slowly';
-  return s.hands === 'R' ? 'Right hand: the music waits for you' : s.hands === 'L' ? 'Left hand: the music waits for you' : 'Both hands: the music waits for you';
+  if (!s.wait) return L('With the beat: a slip takes you back a bar', 'Com o ritmo: um erro leva-te um compasso atrás');
+  if (s.id.endsWith('x')) return L('The tricky bit once more, slowly', 'A parte difícil mais uma vez, devagar');
+  return s.hands === 'R' ? L('Right hand: the music waits for you', 'Mão direita: a música espera por ti') : s.hands === 'L' ? L('Left hand: the music waits for you', 'Mão esquerda: a música espera por ti') : L('Both hands: the music waits for you', 'Duas mãos: a música espera por ti');
 }
 
 interface Props {
@@ -132,7 +133,7 @@ interface RunProps extends Props {
   onGo: (i: number) => void;
 }
 
-function LessonRun({ info, section, step, index, settings, update, onExit, onNextSection, nextLabel = 'Next section', exitLabel = 'Back to the song', minStars = 1, onStop, stopLabel = 'Finish', onRecorded, onPrev, onNext, onAgain, session, onPace, onPerfect, onStruggle, onGo }: RunProps) {
+function LessonRun({ info, section, step, index, settings, update, onExit, onNextSection, nextLabel = L('Next section', 'Secção seguinte'), exitLabel = L('Back to the song', 'Voltar à música'), minStars = 1, onStop, stopLabel = L('Finish', 'Terminar'), onRecorded, onPrev, onNext, onAgain, session, onPace, onPerfect, onStruggle, onGo }: RunProps) {
   const song = step.song ?? info.song!;
   // The coach sets this step's speed, how soon help comes and how many finger numbers show.
   // A Mastery step comes with its own speed: the planner climbs the tempo ladder itself.
@@ -243,12 +244,12 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
         const perfect = step.wait && s.wrong === 0 && s.accuracy >= 0.999;
         onPace?.(perfect);
         if (quick && onStruggle && s.accuracy < 0.85) {
-          setFlash({ text: 'One hand at a time first', good: false });
+          setFlash({ text: L('One hand at a time first', 'Primeiro uma mão de cada vez'), good: false });
           window.setTimeout(onStruggle, 1300);
           return;
         }
         if (quick && stars === 0) {
-          setFlash({ text: 'Let’s try that again', good: false });
+          setFlash({ text: L('Let’s try that again', 'Vamos tentar outra vez'), good: false });
           window.setTimeout(onAgain, 1300);
           return;
         }
@@ -257,12 +258,12 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           if (stars > 0) addPractice(0, 1, 0);
           onRecorded();
           if (quick && perfect && onPerfect) {
-            setFlash({ text: 'Perfect! On to the beat', good: true });
+            setFlash({ text: L('Perfect! On to the beat', 'Perfeito! Agora com o ritmo'), good: true });
             window.setTimeout(() => onPerfect(s.accuracy), 1100);
             return;
           }
           if (quick) {
-            setFlash({ text: stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : 'Good!', good: true });
+            setFlash({ text: stars === 3 ? L('Perfect!', 'Perfeito!') : stars === 2 ? L('Great!', 'Muito bem!') : L('Good!', 'Bem!'), good: true });
             window.setTimeout(onNext!, 1100);
             return;
           }
@@ -280,15 +281,15 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
     const frame = () => {
       let next: { text: string; wrong?: string } = { text: intro(step) };
       const target = engine.groups[engine.gi];
-      if (engine.opts.listen) next = { text: 'Listen to this part, then play it' };
+      if (engine.opts.listen) next = { text: L('Listen to this part, then play it', 'Ouve esta parte e depois toca-a') };
       else if (target && step.wait && (engine.waiting || engine.stats().hit === 0 || engine.countdown > 0)) {
         const want = engine.waitingFor();
         if (!want.length) { raf = requestAnimationFrame(frame); return; }
         const f = want.length === 1 && want[0].finger ? ` with finger ${want[0].finger}` : '';
         const wrong = engine.wrongInWait > 0 && performance.now() - engine.lastWrong.at < 2500 && !want.some(w => w.midi === engine.lastWrong.midi)
-          ? `You played ${noteName(engine.lastWrong.midi, settings.naming, true)}` : undefined;
-        next = { text: `Play ${want.map(w => noteName(w.midi, settings.naming, true)).join(' + ')}${f}`, wrong };
-      } else if (engine.started && engine.playing) next = { text: step.wait ? 'Keep going' : 'Keep playing in tempo' };
+          ? L(`You played ${noteName(engine.lastWrong.midi, settings.naming, true)}`, `Tocaste ${noteName(engine.lastWrong.midi, settings.naming, true)}`) : undefined;
+        next = { text: `${L('Play', 'Toca')} ${want.map(w => noteName(w.midi, settings.naming, true)).join(' + ')}${f}`, wrong };
+      } else if (engine.started && engine.playing) next = { text: step.wait ? L('Keep going', 'Continua') : L('Keep playing in tempo', 'Continua a tempo') };
       const key = next.text + '|' + (next.wrong ?? '');
       if (key !== last) { last = key; setSay(next); }
       raf = requestAnimationFrame(frame);
@@ -316,7 +317,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
   const pause = () => { engine.pause(); setPaused(true); bump(); };
   const resume = () => { unlockAudio(); setPaused(false); engine.play(1); bump(); };
   const listenFirst = () => { unlockAudio(); setPaused(false); setListen(true); engine.setOptions({ listen: true }); engine.restart(); engine.play(1); };
-  const next = result && result.stars >= minStars ? (onNext ? { label: `Next: ${stepLabel(section.steps[index + 1])}`, go: onNext } : onNextSection ? { label: nextLabel, go: onNextSection } : null)
+  const next = result && result.stars >= minStars ? (onNext ? { label: `${L('Next', 'A seguir')}: ${stepLabel(section.steps[index + 1])}`, go: onNext } : onNextSection ? { label: nextLabel, go: onNextSection } : null)
     : result && onStop && !onNext ? { label: stopLabel, go: onStop } : null;
 
   const progress = (index + (flash?.good ? 1 : stats.total ? stats.hit / stats.total : 0)) / section.steps.length;
@@ -324,21 +325,21 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
   return (
     <div className={`lesson simply view-${settings.view}`}>
       <header className="lesson-bar">
-        <motion.button className="lesson-pause" whileTap={{ scale: 0.9 }} onClick={engine.playing ? pause : () => setPaused(true)} aria-label="Pause"><IconPause size={24} /></motion.button>
+        <motion.button className="lesson-pause" whileTap={{ scale: 0.9 }} onClick={engine.playing ? pause : () => setPaused(true)} aria-label={L('Pause', 'Pausa')}><IconPause size={24} /></motion.button>
         {/* Like Simply Piano the bar holds only pause and the step count: the music says what to
             play, and the instruction is for screen readers. The piano connection lives in Settings. */}
         <div className="lesson-say" role="status" aria-live="polite">
           <p className="sr-only">{stepLabel(step)}. {say.wrong ? `${say.wrong}. ${say.text}` : say.text}</p>
         </div>
         <div className="lesson-nav">
-          <button className="lesson-arrow" onClick={onPrev} disabled={!onPrev} aria-label="Previous step"><IconArrowLeft size={20} /></button>
-          <div className="lesson-count" aria-label={`${section.title}, step ${index + 1} of ${section.steps.length}: ${stepLabel(step)}`}>
+          <button className="lesson-arrow" onClick={onPrev} disabled={!onPrev} aria-label={L('Previous step', 'Passo anterior')}><IconArrowLeft size={20} /></button>
+          <div className="lesson-count" aria-label={`${section.title}, ${L('step', 'passo')} ${index + 1} ${L('of', 'de')} ${section.steps.length}: ${stepLabel(step)}`}>
             <motion.i animate={{ width: `${Math.max(0.04, progress) * 100}%` }} transition={SOFT} />
             <span><Bump value={index + (flash?.good ? 1 : 0)} />/{section.steps.length}</span>
           </div>
-          <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label="Next step"><IconArrowRight size={20} /></button>
+          <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label={L('Next step', 'Passo seguinte')}><IconArrowRight size={20} /></button>
           {session && (step.reps ?? 1) > 1 && (
-            <span className="rep-dots" aria-label={`${Math.min(session.good[index], step.reps ?? 1)} of ${step.reps} good runs`}>
+            <span className="rep-dots" aria-label={L(`${Math.min(session.good[index], step.reps ?? 1)} of ${step.reps} good runs`, `${Math.min(session.good[index], step.reps ?? 1)} de ${step.reps} boas tentativas`)}>
               {Array.from({ length: step.reps ?? 1 }, (_, k) => {
                 const on = k < session.good[index];
                 return <motion.i key={`${k}-${on}`} className={on ? 'on' : ''} initial={on ? { scale: 0.4 } : false} animate={{ scale: 1 }} transition={SPRING}>{on ? <IconCheck size={11} /> : k + 1}</motion.i>;
@@ -358,7 +359,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           {rep && (
             rep.line
               ? <motion.p className="lesson-listening zoom" role="status" key={`rep-${rep.n}`} initial={{ y: -10, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={SPRING}>{rep.line}</motion.p>
-              : <motion.span className={`rep-mark ${rep.pass ? 'good' : 'again'}`} role="status" aria-label={rep.pass ? 'Good' : 'Again'} key={`rep-${rep.n}`} initial={{ scale: 0.3, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }} transition={SPRING}>
+              : <motion.span className={`rep-mark ${rep.pass ? 'good' : 'again'}`} role="status" aria-label={rep.pass ? L('Good', 'Bem') : L('Again', 'Outra vez')} key={`rep-${rep.n}`} initial={{ scale: 0.3, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }} transition={SPRING}>
                   {rep.pass ? <IconCheck size={30} /> : <IconRestart size={26} />}
                 </motion.span>
           )}
@@ -388,8 +389,8 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
       <footer className="lesson-actions">
         {!session && !engine.started && !paused && !result && !listen && !step.wait && (
           <div className="lesson-start">
-            <motion.button className="btn go big" whileTap={{ scale: 0.95 }} onClick={start}><IconPlay size={18} />Start with the beat</motion.button>
-            <motion.button className="btn" whileTap={{ scale: 0.95 }} onClick={listenFirst}><IconHeadphones size={18} />Listen first</motion.button>
+            <motion.button className="btn go big" whileTap={{ scale: 0.95 }} onClick={start}><IconPlay size={18} />{L('Start with the beat', 'Começar com o ritmo')}</motion.button>
+            <motion.button className="btn" whileTap={{ scale: 0.95 }} onClick={listenFirst}><IconHeadphones size={18} />{L('Listen first', 'Ouvir primeiro')}</motion.button>
           </div>
         )}
       </footer>
@@ -398,22 +399,22 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
         {paused && !result && (
           <motion.div className="veil sheet-veil" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.section className="card pause" aria-labelledby="lesson-pause-title" initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={SOFT}>
-              <h2 id="lesson-pause-title">Paused</h2>
+              <h2 id="lesson-pause-title">{L('Paused', 'Em pausa')}</h2>
               <div className="actions">
-                <button className="btn go big" onClick={engine.started ? resume : start}><IconPlay size={18} />{engine.started ? 'Resume' : 'Start'}</button>
-                <button className="btn" onClick={() => { setPaused(false); onAgain(); }}><IconRestart size={18} />Restart</button>
-                <button className="btn" onClick={listenFirst}><IconHeadphones size={18} />Listen</button>
+                <button className="btn go big" onClick={engine.started ? resume : start}><IconPlay size={18} />{engine.started ? L('Resume', 'Continuar') : L('Start', 'Começar')}</button>
+                <button className="btn" onClick={() => { setPaused(false); onAgain(); }}><IconRestart size={18} />{L('Restart', 'Recomeçar')}</button>
+                <button className="btn" onClick={listenFirst}><IconHeadphones size={18} />{L('Listen', 'Ouvir')}</button>
               </div>
               <div className="pause-rows">
                 {!step.wait && <Segmented label="Speed" value={speed} onChange={setSpeed} options={SPEEDS.map(v => [v, formatSpeed(v)] as [number, string])} />}
                 <Segmented<FingerMode> label="Fingers" value={settings.fingers} onChange={v => update({ fingers: v })} options={[['off', 'Off'], ['some', 'Some'], ['all', 'All']]} />
-                <Segmented label="View" value={settings.view} onChange={v => update({ view: v })} options={[['sheet', 'Score'], ['notes', 'Falling notes']]} />
+                <Segmented label={L('View', 'Vista')} value={settings.view} onChange={v => update({ view: v })} options={[['sheet', L('Score', 'Partitura')], ['notes', L('Falling notes', 'Notas a cair')]]} />
                 <Segmented<'on' | 'off'> label="Metronome" value={metro ? 'on' : 'off'} onChange={v => { setMetro(v === 'on'); setMetronome(v === 'on'); }} options={[['on', 'On'], ['off', 'Off']]} />
-                <Segmented<'help' | 'always'> label="Keyboard" value={alwaysKeys ? 'always' : 'help'} onChange={v => { if ((v === 'always') !== alwaysKeys) toggleKeys(); }} options={[['help', 'When I need it'], ['always', 'Always']]} />
+                <Segmented<'help' | 'always'> label={L('Keyboard', 'Teclado')} value={alwaysKeys ? 'always' : 'help'} onChange={v => { if ((v === 'always') !== alwaysKeys) toggleKeys(); }} options={[['help', L('When I need it', 'Quando preciso')], ['always', L('Always', 'Sempre')]]} />
               </div>
               <div className="pause-steps">
-                {onPrev && <button className="btn small" onClick={onPrev}><IconArrowLeft size={16} />Previous step</button>}
-                {onNext && <button className="btn small" onClick={onNext}>Skip this step<IconArrowRight size={16} /></button>}
+                {onPrev && <button className="btn small" onClick={onPrev}><IconArrowLeft size={16} />{L('Previous step', 'Passo anterior')}</button>}
+                {onNext && <button className="btn small" onClick={onNext}>{L('Skip this step', 'Saltar este passo')}<IconArrowRight size={16} /></button>}
               </div>
               <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
             </motion.section>
@@ -423,18 +424,18 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
 
       {result && (
         <div className="lesson-done" role="dialog" aria-labelledby="lesson-result-title">
-          <div className="result-stars" aria-label={`${result.stars} of 3 stars`}>
+          <div className="result-stars" aria-label={L(`${result.stars} of 3 stars`, `${result.stars} de 3 estrelas`)}>
             {[0, 1, 2].map(i => (
               <motion.span key={i} className={`big-star ${i < result.stars ? 'won' : ''}`} initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ ...SPRING, delay: 0.12 + i * 0.16 }}><IconStar size={56} /></motion.span>
             ))}
           </div>
           {/* "Perfect" only when not a single note went wrong. */}
-          <h1 id="lesson-result-title">{HEADLINE[result.stars === 3 && result.wrong > 0 ? 2 : result.stars]}</h1>
+          <h1 id="lesson-result-title">{HEADLINE()[result.stars === 3 && result.wrong > 0 ? 2 : result.stars]}</h1>
           <p className="sub">{result.hit} of {result.total} notes right first time, {result.wrong} wrong{result.strays > 0 ? `, ${result.strays} accidental ${result.strays === 1 ? 'touch' : 'touches'} not counted` : ''}</p>
           {result.verdict && (
             <motion.div className="mastery-gain" initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...SPRING, delay: 0.4 }}>
-              <span className="mastery-gain-head"><IconTarget size={18} />Mastery<b><CountUp from={pctOf(result.verdict.before)} to={pctOf(result.verdict.after)} ms={1100} />%</b></span>
-              <span className="mastery-track" role="progressbar" aria-label="Mastery" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pctOf(result.verdict.after)}>
+              <span className="mastery-gain-head"><IconTarget size={18} />{L('Mastery', 'Domínio')}<b><CountUp from={pctOf(result.verdict.before)} to={pctOf(result.verdict.after)} ms={1100} />%</b></span>
+              <span className="mastery-track" role="progressbar" aria-label={L('Mastery', 'Domínio')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pctOf(result.verdict.after)}>
                 <motion.i initial={{ width: `${Math.max(2, result.verdict.before * 100)}%` }} animate={{ width: `${Math.max(2, result.verdict.after * 100)}%` }} transition={{ ...SOFT, delay: 0.7 }} />
               </span>
               <p>{result.verdict.line}</p>
@@ -443,17 +444,17 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           {result.verdict?.rest && <p className="rest-note"><IconMoon size={18} />{result.verdict.rest}</p>}
           <div className="theory-rewards">
             <motion.span className="reward acc" initial={{ y: 24, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ ...SPRING, delay: 0.5 }}>
-              <small>Accuracy</small><b><CountUp to={Math.round(result.accuracy * 100)} />%</b>
+              <small>{L('Accuracy', 'Precisão')}</small><b><CountUp to={Math.round(result.accuracy * 100)} />%</b>
             </motion.span>
           </div>
-          {result.stars === 0 && !result.verdict && <p className="fine">You need 70% for a star. {step.wait ? 'Take it one note at a time.' : 'Try it slower: pause and pick a speed.'}</p>}
+          {result.stars === 0 && !result.verdict && <p className="fine">{L('You need 70% for a star.', 'Precisas de 70% para uma estrela.')} {step.wait ? L('Take it one note at a time.', 'Vai uma nota de cada vez.') : L('Try it slower: pause and pick a speed.', 'Experimenta mais devagar: pausa e escolhe uma velocidade.')}</p>}
           {result.verdict ? (
             // Mastery: the next section starts by itself after three seconds; when he has levelled
             // off, stopping comes first and nothing starts on its own.
             result.verdict.rest ? (
               <div className="lesson-done-actions">
-                <button className="btn go big" onClick={onExit}>Done for today</button>
-                {onNextSection && <button className="btn" onClick={onNextSection}>Keep going</button>}
+                <button className="btn go big" onClick={onExit}>{L('Done for today', 'Chega por hoje')}</button>
+                {onNextSection && <button className="btn" onClick={onNextSection}>{L('Keep going', 'Continuar')}</button>}
               </div>
             ) : (
               <div className="lesson-done-actions">
@@ -464,7 +465,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           ) : (
             <div className="lesson-done-actions">
               {next && <button className="btn go big" onClick={next.go}>{next.label}</button>}
-              <button className={`btn ${next ? '' : 'go big'}`} onClick={onAgain}><IconRestart size={18} />Try again</button>
+              <button className={`btn ${next ? '' : 'go big'}`} onClick={onAgain}><IconRestart size={18} />{L('Try again', 'Tentar outra vez')}</button>
               <button className="btn quiet" onClick={onExit}>{exitLabel}</button>
             </div>
           )}
@@ -480,7 +481,7 @@ function AutoNext({ go }: { go: () => void }) {
   return (
     <button className="btn go big auto-next" onClick={go}>
       <motion.i initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: 3, ease: 'linear' }} />
-      <span>Next section</span>
+      <span>{L('Next section', 'Secção seguinte')}</span>
     </button>
   );
 }

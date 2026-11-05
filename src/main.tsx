@@ -60,20 +60,33 @@ if (import.meta.env.DEV) {
   (window as unknown as { __voiceKeys: unknown }).__voiceKeys = async () => {
     const { listSongs, loadSong } = await import('./lib/library');
     const { clipsOf, timelineOf } = await import('./lib/reels');
+    const { lang, notePrefs, NT, setLang } = await import('./lib/lang');
     const { SCRIPTS } = await import('./lib/reelScripts');
+    const { SCRIPTS_PT } = await import('./lib/reelScriptsPt');
     const { allItems, naturalText, sentences, splitSentence } = await import('./lib/voicePieces');
-    const talk = new Set(Object.values(SCRIPTS).flatMap(sc => sc.phases.flatMap(p => (p.talk ? Object.values(p.talk) : []))));
-    const keys = new Set<string>(allItems());
-    for (const entry of await listSongs()) {
-      let song;
-      try { song = await loadSong(entry); } catch { continue; }
-      if (!song) continue;
-      for (const clip of clipsOf(song)) for (const { text } of timelineOf(song, clip).lines) {
-        const pieces = sentences(text).map(splitSentence);
-        if (!entry.slot || talk.has(text) || pieces.every(p => p.length === 1)) { keys.add(text); continue; }
-        sentences(text).forEach((s, i) => (pieces[i].length === 1 ? keys.add(s) : pieces[i].forEach(k => keys.add(k))));
+    // Every language, and in Portuguese both ways of naming the notes: [key, text for the voice, language].
+    const was = { lang: lang(), solfege: notePrefs.solfege };
+    const out = new Map<string, [string, string, 'en' | 'pt']>();
+    const songs = [];
+    for (const entry of await listSongs()) { try { const song = await loadSong(entry); if (song) songs.push({ entry, song }); } catch { /* not loaded */ } }
+    for (const [l, solfege] of [['en', false], ['pt', true], ['pt', false]] as const) {
+      setLang(l); notePrefs.solfege = solfege;
+      const add = (k: string) => { if (!out.has(k)) out.set(k, [k, naturalText(k, l), l]); };
+      allItems(l).forEach(add);
+      for (const { entry, song } of songs) {
+        // Hand-written lines are recorded whole; for a song he brought, others only as note-free sentences and pieces.
+        // Only lines written by hand (never the rules' lines with his notes in them).
+        const handWritten = (l === 'pt' ? Object.values(SCRIPTS_PT).flat().map(p => p.talk) : Object.values(SCRIPTS).flatMap(sc => sc.phases.map(p => p.talk)))
+          .flatMap(t => (t ? Object.values(t).filter((x): x is string => !!x) : [])).map(NT);
+        const talk = new Set(handWritten);
+        for (const clip of clipsOf(song)) for (const { text } of timelineOf(song, clip).lines) {
+          const pieces = sentences(text).map(splitSentence);
+          if (!entry.slot || talk.has(text) || pieces.every(p => p.length === 1)) { add(text); continue; }
+          sentences(text).forEach((x, i) => (pieces[i].length === 1 ? add(x) : pieces[i].forEach(add)));
+        }
       }
     }
-    return [...keys].map(k => [k, naturalText(k)]);
+    setLang(was.lang); notePrefs.solfege = was.solfege;
+    return [...out.values()];
   };
 }

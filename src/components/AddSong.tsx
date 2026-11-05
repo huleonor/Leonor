@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { L } from '../lib/lang';
 import { songGrade } from '../lib/analysis';
 import { buildCourse } from '../lib/course';
 import { useI18n } from '../lib/i18n';
@@ -47,13 +48,13 @@ export function AddSong({ file, slot, onDone, onClose }: Props) {
   return (
     <div className="upload-page" role="dialog" aria-modal="true" aria-labelledby="add-title">
       <header className="upload-head">
-        <h2 id="add-title">{slot ? `Add the MIDI for ${slot.title}` : 'Upload a song'}</h2>
-        <button className="icon-btn ghost" onClick={onClose} aria-label="Close"><IconClose /></button>
+        <h2 id="add-title">{slot ? L(`Add the MIDI for ${slot.title}`, `Juntar o MIDI de ${slot.title}`) : L('Upload a song', 'Carregar uma música')}</h2>
+        <button className="icon-btn ghost" onClick={onClose} aria-label={L('Close', 'Fechar')}><IconClose /></button>
       </header>
       <div className="upload-body">
         <div className="upload-preview">
           <div className="song-page">
-            {read ? <SheetThumb song={read.song} title={title || read.song.entry.title} composer={composer || undefined} bars={12} /> : <p className="fine pad-in">{error ? '' : 'Reading the file…'}</p>}
+            {read ? <SheetThumb song={read.song} title={title || read.song.entry.title} composer={composer || undefined} bars={12} /> : <p className="fine pad-in">{error ? '' : L('Reading the file…', 'A ler o ficheiro…')}</p>}
           </div>
           <p className="fine file-name">{file.name}</p>
         </div>
@@ -61,18 +62,18 @@ export function AddSong({ file, slot, onDone, onClose }: Props) {
           {error && (
             <div className="set-group">
               <p className="warn">{error}</p>
-              <p className="fine">Try another .mid file. Files with two tracks, one per hand, work best.</p>
-              <button className="btn" onClick={onClose}>Close</button>
+              <p className="fine">{L('Try another .mid file. Files with two tracks, one per hand, work best.', 'Experimenta outro ficheiro .mid. Os ficheiros com duas pistas, uma por mão, funcionam melhor.')}</p>
+              <button className="btn" onClick={onClose}>{L('Close', 'Fechar')}</button>
             </div>
           )}
           {read && facts && (
             <form onSubmit={e => { e.preventDefault(); save(); }}>
-              <label className="field">Title<input value={title} onChange={e => setTitle(e.target.value)} required /></label>
-              <label className="field">Composer<input value={composer} onChange={e => setComposer(e.target.value)} placeholder="Optional" /></label>
+              <label className="field">{L('Title', 'Título')}<input value={title} onChange={e => setTitle(e.target.value)} required /></label>
+              <label className="field">{L('Composer', 'Compositor')}<input value={composer} onChange={e => setComposer(e.target.value)} placeholder={L('Optional', 'Opcional')} /></label>
               <p className="fine">{formatTime(read.song.duration)} long, for {facts.hands === 2 ? 'two hands' : 'one hand'}. Its videos and lessons are made from these notes.</p>
               <div className="upload-actions">
-                <button className="btn go big" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add to my songs'}</button>
-                <button className="btn outline big" type="button" onClick={onClose}>Cancel</button>
+                <button className="btn go big" type="submit" disabled={saving}>{saving ? L('Saving…', 'A guardar…') : L('Add to my songs', 'Juntar às minhas músicas')}</button>
+                <button className="btn outline big" type="button" onClick={onClose}>{L('Cancel', 'Cancelar')}</button>
               </div>
             </form>
           )}

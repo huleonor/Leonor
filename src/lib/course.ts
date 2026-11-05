@@ -4,6 +4,7 @@
  * Parts that repeat an earlier one are marked as such and count as learnt with it.
  */
 import { barGrid, barStart } from './bars';
+import { L } from './lang';
 import { createStore, del, get, set } from 'idb-keyval';
 import { scoreBar, splitBars } from './analysis';
 import type { FingerMode, HandsChoice, Song } from './types';
@@ -139,36 +140,36 @@ export function buildCourse(song: Song): Course {
     const hardest = [...phrases].sort((a, b) => pScore(b) - pScore(a))[0];
     if (hardest && pScore(hardest) > median * 1.15) hardest.hard = true;
     const has = (h: 'R' | 'L', ph: { from: number; to: number }) => bars.slice(ph.from - 1, ph.to).some(b => b.notes.some(x => x.hand === h));
-    const span = (ph: { from: number; to: number }) => (ph.from === ph.to ? `bar ${ph.from}` : `bars ${ph.from}-${ph.to}`);
+    const span = (ph: { from: number; to: number }) => (ph.from === ph.to ? L(`bar ${ph.from}`, `compasso ${ph.from}`) : L(`bars ${ph.from}-${ph.to}`, `compassos ${ph.from}-${ph.to}`));
     const many = phrases.length > 1;
 
     const drill = (key: string, label: string, hands: HandsChoice, speed: number, h?: 'R' | 'L') => {
       for (const ph of phrases) {
         if (h && !has(h, ph)) continue;
         const where = { part: p.n, from: ph.from, to: ph.to };
-        if (many) steps.push({ id: `p${p.n}-${key}${ph.i}`, kind: 'phrase', title: `${label} · ${span(ph)}`, short: `${key}${ph.i}`, ...where, hands, speed, wait: true });
-        if (ph.hard) steps.push({ id: `p${p.n}-${key}${ph.i}x`, kind: 'phrase', title: `Tricky bit, ${label.replace('Free play: ', '')} · ${span(ph)}`, short: `${key}!`, ...where, hands, speed: Math.max(0.5, speed - 0.2), wait: true });
+        if (many) steps.push({ id: `p${p.n}-${key}${ph.i}`, kind: 'phrase', title: `${label}, ${span(ph)}`, short: `${key}${ph.i}`, ...where, hands, speed, wait: true });
+        if (ph.hard) steps.push({ id: `p${p.n}-${key}${ph.i}x`, kind: 'phrase', title: `${L('Tricky bit', 'Parte difícil')}, ${label.replace(L('Free play: ', 'Sem ritmo: '), '')}, ${span(ph)}`, short: `${key}!`, ...where, hands, speed: Math.max(0.5, speed - 0.2), wait: true });
       }
     };
     if (twoHands) {
-      for (const [h, label] of [['R', 'Free play: right hand'], ['L', 'Free play: left hand']] as const) {
+      for (const [h, label] of [['R', L('Free play: right hand', 'Sem ritmo: mão direita')], ['L', L('Free play: left hand', 'Sem ritmo: mão esquerda')]] as const) {
         if (!has(h, p)) continue;
         drill(h, label, h, 0.6, h);
-        steps.push({ id: `p${p.n}-${h}`, kind: 'hand', title: many ? `${label} · whole part` : label, short: h, ...at, hands: h, speed: 0.7, wait: true });
+        steps.push({ id: `p${p.n}-${h}`, kind: 'hand', title: many ? `${label}, ${L('whole part', 'parte toda')}` : label, short: h, ...at, hands: h, speed: 0.7, wait: true });
       }
-      drill('B', 'Hands together', 'both', 0.6);
-      steps.push({ id: `p${p.n}-both`, kind: 'together', title: 'Free play: hands together', short: 'R+L', ...at, hands: 'both', speed: 0.8, wait: true });
+      drill('B', L('Hands together', 'Mãos juntas'), 'both', 0.6);
+      steps.push({ id: `p${p.n}-both`, kind: 'together', title: L('Free play: hands together', 'Sem ritmo: mãos juntas'), short: 'R+L', ...at, hands: 'both', speed: 0.8, wait: true });
     } else {
-      drill('S', 'Slowly', both, 0.6);
-      steps.push({ id: `p${p.n}-slow`, kind: 'hand', title: 'Free play, slowly', short: '.6', ...at, hands: both, speed: 0.6, wait: true });
-      steps.push({ id: `p${p.n}-both`, kind: 'together', title: 'Free play, a little faster', short: '.8', ...at, hands: both, speed: 0.8, wait: true });
+      drill('S', L('Slowly', 'Devagar'), both, 0.6);
+      steps.push({ id: `p${p.n}-slow`, kind: 'hand', title: L('Free play, slowly', 'Sem ritmo, devagar'), short: '.6', ...at, hands: both, speed: 0.6, wait: true });
+      steps.push({ id: `p${p.n}-both`, kind: 'together', title: L('Free play, a little faster', 'Sem ritmo, um pouco mais rápido'), short: '.8', ...at, hands: both, speed: 0.8, wait: true });
     }
-    steps.push({ id: `p${p.n}-tempo`, kind: 'tempo', title: 'With the beat', short: '1×', ...at, hands: both, speed: 1, wait: false });
+    steps.push({ id: `p${p.n}-tempo`, kind: 'tempo', title: L('With the beat', 'Com o ritmo'), short: '1×', ...at, hands: both, speed: 1, wait: false });
   }
   // Then the whole song: once with Wait, then the final performance in tempo.
   const from = parts[0].from, to = parts[parts.length - 1].to;
-  steps.push({ id: 'song-wait', kind: 'song', title: 'Free play: whole song', short: 'All', from, to, hands: both, speed: 0.8, wait: true });
-  steps.push({ id: 'song', kind: 'song', title: 'With the beat: whole song', short: '1×', from, to, hands: both, speed: 1, wait: false });
+  steps.push({ id: 'song-wait', kind: 'song', title: L('Free play: whole song', 'Sem ritmo: a música toda'), short: 'All', from, to, hands: both, speed: 0.8, wait: true });
+  steps.push({ id: 'song', kind: 'song', title: L('With the beat: whole song', 'Com o ritmo: a música toda'), short: '1×', from, to, hands: both, speed: 1, wait: false });
   return { parts, steps, twoHands };
 }
 

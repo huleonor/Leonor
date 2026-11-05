@@ -29,6 +29,7 @@
  * checks over; nothing is ever lost for good.
  */
 import { barGrid, barIndex, barStart } from './bars';
+import { L } from './lang';
 import { useEffect, useReducer } from 'react';
 import { buildCourse, type CourseStep } from './course';
 import type { Engine } from './engine';
@@ -97,17 +98,17 @@ export function movesOf(song: Song): Map<number, string> {
   return out;
 }
 
-const MOVES: Record<string, string> = {
-  'leap-up': 'the leap up',
-  'leap-down': 'the leap down',
-  'leap-up-chord': 'the jump up to the chord',
-  'leap-down-chord': 'the jump down to the chord',
-  chord: 'the chord changes',
-  shift: 'the moves to a new position',
-};
+const MOVES = (): Record<string, string> => ({
+  'leap-up': L('the leap up', 'o salto para cima'),
+  'leap-down': L('the leap down', 'o salto para baixo'),
+  'leap-up-chord': L('the jump up to the chord', 'o salto para cima até ao acorde'),
+  'leap-down-chord': L('the jump down to the chord', 'o salto para baixo até ao acorde'),
+  chord: L('the chord changes', 'as mudanças de acorde'),
+  shift: L('the moves to a new position', 'as mudanças de posição'),
+});
 export const moveLabel = (key: string) => {
   const [h, k] = key.split(':');
-  return `${h === 'R' ? 'Right' : 'Left'} hand: ${MOVES[k] ?? 'this move'}`;
+  return `${h === 'R' ? L('Right hand', 'Mão direita') : L('Left hand', 'Mão esquerda')}: ${MOVES()[k] ?? L('this move', 'este movimento')}`;
 };
 
 // ---------- The song as the planner sees it ----------
@@ -239,8 +240,8 @@ const chunkKey = (from: number, to: number, hands: HandsChoice, wait: boolean, r
 const ladderKey = (from: number, to: number, hands: HandsChoice) => `${range(from, to)}:${hands}`;
 const streakOf = (st: MasteryState, key: string) => st.chunks[key]?.streak ?? 0;
 const topOf = (st: MasteryState, key: string) => st.top[key] ?? -1;
-const Bars = (from: number, to: number) => (from === to ? `Bar ${from}` : `Bars ${from}-${to}`);
-const handName = (h: HandsChoice) => (h === 'R' ? 'right hand' : h === 'L' ? 'left hand' : 'both hands');
+const Bars = (from: number, to: number) => (from === to ? L(`Bar ${from}`, `Compasso ${from}`) : L(`Bars ${from}-${to}`, `Compassos ${from}-${to}`));
+const handName = (h: HandsChoice) => (h === 'R' ? L('right hand', 'mão direita') : h === 'L' ? L('left hand', 'mão esquerda') : L('both hands', 'duas mãos'));
 
 /** What practice on a whole part has left after `days` away (the meter): nothing lost for two days, then a little each day. */
 const retention = (days: number) => (days <= 2 ? 1 : Math.max(0.7, 1 - 0.03 * (days - 2)));
@@ -472,7 +473,7 @@ function moveLesson(cut: Cut, wait: boolean, rung = 0): MLesson {
   const r = wait ? 0 : rung;
   const chunk = `move:${cut.move}:${wait ? 'free' : `beat${r}`}`;
   return {
-    chunk, kind: 'move', title: moveLabel(cut.move), why: 'The same move from around the song.',
+    chunk, kind: 'move', title: moveLabel(cut.move), why: L('The same move from around the song.', 'O mesmo movimento de vários sítios da música.'),
     from: 1, to: bars, hands: cut.move.split(':')[0] as Hand, wait, rung: r, speed: wait ? FREE_SPEED : RUNGS[r],
     fingers: wait ? 'all' : 'some', reps: REPS.move, cut,
   };
@@ -525,7 +526,7 @@ export function nextDrill(song: Song, st = loadMastery(song.entry.id), now = Dat
     const k = `t${b}`;
     if (!seen(k) || strength(st.items[k], now) >= 0.8) continue;
     const s = stretch(b, x => strength(st.items[`t${x}`], now));
-    wants.push({ kind: 'spot', ...s, hands: 'both', need: need(k, b), title: `${Bars(s.from, s.to)}, both hands` });
+    wants.push({ kind: 'spot', ...s, hands: 'both', need: need(k, b), title: `${Bars(s.from, s.to)}${L(', both hands', ', duas mãos')}` });
   }
   // A weak movement is drilled where it is weakest: the bar it happens in that he plays worst.
   const moveBars = new Map<string, Set<number>>();
@@ -556,7 +557,7 @@ export function nextDrill(song: Song, st = loadMastery(song.entry.id), now = Dat
     const variants = [lesson(st, { kind: w.kind, from: w.from, to: w.to, hands: w.hands, wait: true, title: w.title })];
     // With the beat only once the notes are known, free or in their part.
     const notesKnown = known(st, w.from, w.to, w.hands, true) || m.parts.some(p => p.from <= w.from && p.to >= w.to && partLearnt(m, st, p));
-    if (notesKnown) for (let r = 0; r <= TOP; r++) variants.push(lesson(st, { kind: w.kind, from: w.from, to: w.to, hands: w.hands, wait: false, rung: r, fingers: 'some', title: `${w.title}, with the beat` }));
+    if (notesKnown) for (let r = 0; r <= TOP; r++) variants.push(lesson(st, { kind: w.kind, from: w.from, to: w.to, hands: w.hands, wait: false, rung: r, fingers: 'some', title: `${w.title}${L(', with the beat', ', com o ritmo')}` }));
     for (const l of variants) {
       const value = w.need * fit(chanceOf(song, l, st, now)) * (recent.has(l.chunk) ? 0.3 : 1);
       if (!best || value > best.value) best = { l, value };
@@ -570,7 +571,7 @@ export function nextDrill(song: Song, st = loadMastery(song.entry.id), now = Dat
       if (!best || value > best.value) best = { l, value };
     }
   }
-  return best && best.value >= 0.15 ? { ...best.l, why: best.l.cut ? best.l.why : 'Your weakest spot right now.' } : null;
+  return best && best.value >= 0.15 ? { ...best.l, why: best.l.cut ? best.l.why : L('Your weakest spot right now.', 'O teu ponto mais fraco agora.') } : null;
 }
 
 // ---------- The planner: a section at a time ----------
@@ -647,14 +648,14 @@ function partSection(song: Song, m: Model, st: MasteryState, p: Part, pp: PartPl
     if (!known(st, f.from, f.to, h, true)) out.push(lesson(st, { kind: 'hand', from: f.from, to: f.to, hands: h, wait: true, title: title ?? `${Bars(f.from, f.to)}, ${handName(h)}` }));
   };
   const together = (f: { from: number; to: number }) => {
-    if (!known(st, f.from, f.to, m.all, true)) out.push(lesson(st, { kind: m.two ? 'together' : 'hand', from: f.from, to: f.to, hands: m.all, wait: true, title: m.two ? `${Bars(f.from, f.to)}, both hands` : `${Bars(f.from, f.to)}, free play` }));
+    if (!known(st, f.from, f.to, m.all, true)) out.push(lesson(st, { kind: m.two ? 'together' : 'hand', from: f.from, to: f.to, hands: m.all, wait: true, title: m.two ? `${Bars(f.from, f.to)}${L(', both hands', ', duas mãos')}` : `${Bars(f.from, f.to)}${L(', free play', ', sem ritmo')}` }));
   };
 
   // The hard spots in this part, drilled before he meets them in the music.
   for (const s of focus) {
     if (s.from < p.from || s.to > p.to) continue;
     const h: HandsChoice = s.hand === 'both' ? m.all : s.hand;
-    if (!known(st, s.from, s.to, h, true)) out.push({ ...lesson(st, { kind: 'spot', from: s.from, to: s.to, hands: h, wait: true, reps: 1, title: `${Bars(s.from, s.to)}${h !== m.all ? `, ${handName(h)}` : ''}` }), why: 'A hard spot, on its own first.' });
+    if (!known(st, s.from, s.to, h, true)) out.push({ ...lesson(st, { kind: 'spot', from: s.from, to: s.to, hands: h, wait: true, reps: 1, title: `${Bars(s.from, s.to)}${h !== m.all ? `, ${handName(h)}` : ''}` }), why: L('A hard spot, on its own first.', 'Um sítio difícil, primeiro sozinho.') });
   }
 
   if (mode === 'lead-hand-first') {
@@ -673,13 +674,13 @@ function partSection(song: Song, m: Model, st: MasteryState, p: Part, pp: PartPl
       together(f);
     }
   }
-  if (ph.length > 1 && !known(st, p.from, p.to, m.all, true)) out.push(lesson(st, { kind: 'together', from: p.from, to: p.to, hands: m.all, wait: true, reps: 1, fingers: 'some', title: `${Bars(p.from, p.to)}, free play` }));
+  if (ph.length > 1 && !known(st, p.from, p.to, m.all, true)) out.push(lesson(st, { kind: 'together', from: p.from, to: p.to, hands: m.all, wait: true, reps: 1, fingers: 'some', title: `${Bars(p.from, p.to)}${L(', free play', ', sem ritmo')}` }));
   // With the beat once the notes are known: on the plan's first rung (70% unless the music is
   // dense or very easy), or a rung lower while the model says that is still too hard for him.
   const start = pp?.rung ?? 1;
-  const beat = lesson(st, { kind: 'beat', from: p.from, to: p.to, hands: m.all, wait: false, rung: start, title: `${Bars(p.from, p.to)}, with the beat` });
+  const beat = lesson(st, { kind: 'beat', from: p.from, to: p.to, hands: m.all, wait: false, rung: start, title: `${Bars(p.from, p.to)}${L(', with the beat', ', com o ritmo')}` });
   out.push(start === 0 || known(st, p.from, p.to, m.all, false, start - 1) ? beat : pickRung(song, st, beat, start));
-  return { title: `Part ${p.n}`, why: ph.length > 1 || m.two ? 'Phrase by phrase without the beat, then the part with the metronome.' : 'Notes first, then with the metronome.', lessons: out, done: `Part ${p.n} learnt, with the beat.` };
+  return { title: L(`Part ${p.n}`, `Parte ${p.n}`), why: ph.length > 1 || m.two ? L('Phrase by phrase without the beat, then the part with the metronome.', 'Frase a frase sem ritmo, depois a parte com o metrónomo.') : L('Notes first, then with the metronome.', 'Primeiro as notas, depois com o metrónomo.'), lessons: out, done: L(`Part ${p.n} learnt, with the beat.`, `Parte ${p.n} aprendida, com o ritmo.`) };
 }
 
 /**
@@ -696,8 +697,8 @@ function patternSection(m: Model, st: MasteryState, s: Stretch): MSection | null
   const lessons: MLesson[] = [];
   const title = `${Bars(s.from, s.to)}${h !== m.all ? `, ${handName(h)}` : ''}`;
   if (!free) lessons.push(lesson(st, { kind: 'hand', from: s.from, to: s.to, hands: h, wait: true, title }));
-  lessons.push(lesson(st, { kind: 'beat', from: s.from, to: s.to, hands: h, wait: false, rung: 1, title: `${title}, with the beat` }));
-  return { title: 'The pattern', why: 'It comes back all through the song: learn it once and it is there everywhere.', lessons, done: 'The pattern runs by itself.' };
+  lessons.push(lesson(st, { kind: 'beat', from: s.from, to: s.to, hands: h, wait: false, rung: 1, title: `${title}${L(', with the beat', ', com o ritmo')}` }));
+  return { title: L('The pattern', 'O padrão'), why: L('It comes back all through the song: learn it once and it is there everywhere.', 'Volta ao longo de toda a música: aprende-o uma vez e está lá em todo o lado.'), lessons, done: L('The pattern runs by itself.', 'O padrão já sai sozinho.') };
 }
 
 /** The part to review: the weakest one he has learnt, by the strength of its bars today. */
@@ -739,7 +740,7 @@ export function bridgeFor(song: Song, st: MasteryState, l: MLesson, now = Date.n
   const m = model(song);
   const opts: MLesson[] = [];
   const like = (o: { from: number; to: number; hands: HandsChoice }, kind: LessonKind) =>
-    lesson(st, { kind, from: o.from, to: o.to, hands: o.hands, wait: l.wait, rung: l.rung, fingers: l.fingers, reps: 1, title: `${Bars(o.from, o.to)}${o.hands !== m.all ? `, ${handName(o.hands)}` : ''}${l.wait ? '' : ', with the beat'}` });
+    lesson(st, { kind, from: o.from, to: o.to, hands: o.hands, wait: l.wait, rung: l.rung, fingers: l.fingers, reps: 1, title: `${Bars(o.from, o.to)}${o.hands !== m.all ? `, ${handName(o.hands)}` : ''}${l.wait ? '' : L(', with the beat', ', com o ritmo')}` });
   // Slower: the same stretch on a lower rung.
   if (!l.wait) for (let r = l.rung - 1; r >= 0; r--) opts.push({ ...withRung(l, r), kind: 'spot', reps: 1 });
   // Smaller: each half, never under two bars.
@@ -755,7 +756,7 @@ export function bridgeFor(song: Song, st: MasteryState, l: MLesson, now = Date.n
     if (p < TARGET - 0.07) continue;
     // Among lead-ins he will manage, the hardest teaches the most: closest to the target.
     const score = fit(p);
-    if (!best || score > best.score) best = { l: { ...o, why: 'A smaller step first.' }, score };
+    if (!best || score > best.score) best = { l: { ...o, why: L('A smaller step first.', 'Primeiro um passo mais pequeno.') }, score };
   }
   return best?.l ?? null;
 }
@@ -777,7 +778,7 @@ function plan(song: Song, st: MasteryState, now: number): MSection {
   const m = model(song);
   const today = dayKey(new Date(now));
   const whole = (wait: boolean, rung: number, title: string) => lesson(st, { kind: 'song', from: m.first, to: m.last, hands: m.all, wait, rung, title });
-  if (!m.parts.length) return { title: 'The whole song', why: '', lessons: [lesson(st, { kind: 'song', from: 1, to: 1, hands: m.all, wait: true, title: 'The whole song' })], done: '' };
+  if (!m.parts.length) return { title: L('The whole song', 'A música toda'), why: '', lessons: [lesson(st, { kind: 'song', from: 1, to: 1, hands: m.all, wait: true, title: L('The whole song', 'A música toda') })], done: '' };
 
   // The first section of a day checks what stuck overnight.
   const firstToday = st.session.day !== today || !st.session.runs.length;
@@ -785,12 +786,12 @@ function plan(song: Song, st: MasteryState, now: number): MSection {
   if (st.crown && !st.crown.forever && now >= st.crown.due) {
     const left = CHECK_GAPS.length - st.crown.checks;
     return {
-      title: 'Mastery check', lessons: [whole(false, TOP, 'The whole song, full speed')], done: 'Still yours.',
-      why: now > st.crown.due + CHECK_GRACE * DAY ? 'Play it clean once more and it is gold again.' : left === 1 ? 'The last check: keep it and the song is yours for good.' : 'Play it through once, 95% right, to keep it mastered.',
+      title: L('Mastery check', 'Prova de domínio'), lessons: [whole(false, TOP, L('The whole song, full speed', 'A música toda, à velocidade real'))], done: L('Still yours.', 'Continua a ser tua.'),
+      why: now > st.crown.due + CHECK_GRACE * DAY ? L('Play it clean once more and it is gold again.', 'Toca-a limpa mais uma vez e volta a ser ouro.') : left === 1 ? L('The last check: keep it and the song is yours for good.', 'A última prova: mantém-na e a música é tua para sempre.') : 'Play it through once, 95% right, to keep it mastered.',
     };
   }
   if (firstToday && st.days.length === 1 && !st.days.includes(today)) {
-    return { title: 'The whole song', why: 'One more clean run on another day locks it in.', lessons: [whole(false, TOP, 'The whole song, full speed')], done: 'Played clean on another day: it is yours.' };
+    return { title: L('The whole song', 'A música toda'), why: L('One more clean run on another day locks it in.', 'Mais uma vez limpa noutro dia e fica fixa.'), lessons: [whole(false, TOP, L('The whole song, full speed', 'A música toda, à velocidade real'))], done: L('Played clean on another day: it is yours.', 'Tocada limpa noutro dia: é tua.') };
   }
   if (firstToday && Object.keys(st.chunks).length) {
     const due = m.parts.filter(p => partLearnt(m, st, p)).map(p => {
@@ -800,7 +801,7 @@ function plan(song: Song, st: MasteryState, now: number): MSection {
     }).filter(x => x.over > 0).sort((a, b) => b.over - a.over)[0];
     if (due) {
       const top = Math.max(0, topOf(st, ladderKey(due.p.from, due.p.to, m.all)));
-      return { title: 'Warm-up', why: 'A quick check of what stuck since last time.', lessons: [lesson(st, { kind: 'review', from: due.p.from, to: due.p.to, hands: m.all, wait: false, rung: top, title: `${Bars(due.p.from, due.p.to)}, with the beat` })], done: 'It stuck. On with the song.' };
+      return { title: L('Warm-up', 'Aquecimento'), why: L('A quick check of what stuck since last time.', 'Uma verificação rápida do que ficou desde a última vez.'), lessons: [lesson(st, { kind: 'review', from: due.p.from, to: due.p.to, hands: m.all, wait: false, rung: top, title: `${Bars(due.p.from, due.p.to)}${L(', with the beat', ', com o ritmo')}` })], done: L('It stuck. On with the song.', 'Ficou. Continua com a música.') };
     }
   }
 
@@ -819,10 +820,10 @@ function plan(song: Song, st: MasteryState, now: number): MSection {
     if (prev && prevPart && partLearnt(m, st, prevPart) && !known(st, prev.from, p.to, m.all, true)) {
       const rung = Math.max(0, Math.min(topOf(st, ladderKey(prevPart.from, prevPart.to, m.all)), topOf(st, ladderKey(p.from, p.to, m.all))));
       return {
-        title: `Bars ${prev.from}-${p.to}`, why: 'Where two parts meet: the seam is where songs fall apart.', done: 'The parts join up.',
+        title: L(`Bars ${prev.from}-${p.to}`, `Compassos ${prev.from}-${p.to}`), why: L('Where two parts meet: the seam is where songs fall apart.', 'Onde duas partes se juntam: é na junção que as músicas se desfazem.'), done: L('The parts join up.', 'As partes juntam-se.'),
         lessons: [
-          lesson(st, { kind: 'join', from: prev.from, to: p.to, hands: m.all, wait: true, title: `${Bars(prev.from, p.to)}, free play` }),
-          lesson(st, { kind: 'join', from: prev.from, to: p.to, hands: m.all, wait: false, rung, reps: 2, title: `${Bars(prev.from, p.to)}, with the beat` }),
+          lesson(st, { kind: 'join', from: prev.from, to: p.to, hands: m.all, wait: true, title: `${Bars(prev.from, p.to)}${L(', free play', ', sem ritmo')}` }),
+          lesson(st, { kind: 'join', from: prev.from, to: p.to, hands: m.all, wait: false, rung, reps: 2, title: `${Bars(prev.from, p.to)}${L(', with the beat', ', com o ritmo')}` }),
         ],
       };
     }
@@ -830,27 +831,27 @@ function plan(song: Song, st: MasteryState, now: number): MSection {
 
   // Every part learnt: the whole song, then each part faster, slowest first.
   if (streakOf(st, chunkKey(m.first, m.last, m.all, true)) < 1) {
-    return { title: 'The whole song', why: 'All the parts together, start to finish.', lessons: [whole(true, 0, 'The whole song, free play')], done: 'The whole song, start to finish.' };
+    return { title: L('The whole song', 'A música toda'), why: L('All the parts together, start to finish.', 'Todas as partes juntas, do início ao fim.'), lessons: [whole(true, 0, L('The whole song, free play', 'A música toda, sem ritmo'))], done: L('The whole song, start to finish.', 'A música toda, do início ao fim.') };
   }
   const slow = [...m.parts].map(p => ({ p, t: topOf(st, ladderKey(p.from, p.to, m.all)) })).filter(x => x.t < TOP).sort((a, b) => a.t - b.t)[0];
   if (slow) {
     const lk = ladderKey(slow.p.from, slow.p.to, m.all);
     const r = Math.min(TOP, Math.max(slow.t + 1, st.rung[lk] ?? 0));
-    const steps = [lesson(st, { kind: 'beat', from: slow.p.from, to: slow.p.to, hands: m.all, wait: false, rung: r, fingers: 'off', title: `${Bars(slow.p.from, slow.p.to)}, with the beat` })];
-    if (r < TOP) steps.push(lesson(st, { kind: 'beat', from: slow.p.from, to: slow.p.to, hands: m.all, wait: false, rung: r + 1, fingers: 'off', title: `${Bars(slow.p.from, slow.p.to)}, with the beat` }));
-    return { title: `Part ${slow.p.n}`, why: 'With the metronome, a little faster each time.', lessons: steps, done: `Part ${slow.p.n}, faster.` };
+    const steps = [lesson(st, { kind: 'beat', from: slow.p.from, to: slow.p.to, hands: m.all, wait: false, rung: r, fingers: 'off', title: `${Bars(slow.p.from, slow.p.to)}${L(', with the beat', ', com o ritmo')}` })];
+    if (r < TOP) steps.push(lesson(st, { kind: 'beat', from: slow.p.from, to: slow.p.to, hands: m.all, wait: false, rung: r + 1, fingers: 'off', title: `${Bars(slow.p.from, slow.p.to)}${L(', with the beat', ', com o ritmo')}` }));
+    return { title: L(`Part ${slow.p.n}`, `Parte ${slow.p.n}`), why: L('With the metronome, a little faster each time.', 'Com o metrónomo, um pouco mais rápido de cada vez.'), lessons: steps, done: L(`Part ${slow.p.n}, faster.`, `Parte ${slow.p.n}, mais rápida.`) };
   }
   const wholeLk = ladderKey(m.first, m.last, m.all);
   if (topOf(st, wholeLk) < TOP && !st.days.includes(today)) {
     const r = Math.min(TOP, Math.max(2, topOf(st, wholeLk) + 1, st.rung[wholeLk] ?? 0));
-    return { title: 'The whole song', why: 'With the metronome, start to finish.', lessons: [whole(false, r, 'The whole song, with the beat')], done: 'The whole song, with the beat.' };
+    return { title: L('The whole song', 'A música toda'), why: L('With the metronome, start to finish.', 'Com o metrónomo, do início ao fim.'), lessons: [whole(false, r, L('The whole song, with the beat', 'A música toda, com o ritmo'))], done: L('The whole song, with the beat.', 'A música toda, com o ritmo.') };
   }
-  if (!st.days.length) return { title: 'The whole song', why: 'Full speed, 95% right: the run that counts.', lessons: [whole(false, TOP, 'The whole song, full speed')], done: 'The whole song at full speed.' };
+  if (!st.days.length) return { title: L('The whole song', 'A música toda'), why: L('Full speed, 95% right: the run that counts.', 'À velocidade real, 95% certo: a vez que conta.'), lessons: [whole(false, TOP, L('The whole song, full speed', 'A música toda, à velocidade real'))], done: L('The whole song at full speed.', 'A música toda à velocidade real.') };
   const weak = weakestPart(m, st, now) ?? m.parts[0];
   return {
-    title: `Part ${weak.n}`, done: 'Sharper still.',
-    why: st.days.length >= 2 ? 'Mastered. Keeping your weakest part sharp.' : 'The last step is the whole song again on another day. Until then, your weakest part.',
-    lessons: [lesson(st, { kind: 'review', from: weak.from, to: weak.to, hands: m.all, wait: false, rung: TOP, title: `${Bars(weak.from, weak.to)}, full speed` })],
+    title: L(`Part ${weak.n}`, `Parte ${weak.n}`), done: L('Sharper still.', 'Ainda mais afinada.'),
+    why: st.days.length >= 2 ? L('Mastered. Keeping your weakest part sharp.', 'Dominada. A manter afinada a tua parte mais fraca.') : L('The last step is the whole song again on another day. Until then, your weakest part.', 'O último passo é a música toda outra vez noutro dia. Até lá, a tua parte mais fraca.'),
+    lessons: [lesson(st, { kind: 'review', from: weak.from, to: weak.to, hands: m.all, wait: false, rung: TOP, title: `${Bars(weak.from, weak.to)}${L(', full speed', ', à velocidade real')}` })],
   };
 }
 
@@ -896,7 +897,7 @@ function zoomIn(m: Model, st: MasteryState, l: MLesson, song: Song, groups: Grou
   if (weakBars.length >= 3 && l.hands === 'both' && handsKnown && l.to - l.from >= 3) {
     const mid = Math.floor((l.from + l.to) / 2);
     const first = weakBars.filter(([b]) => b <= mid).length >= weakBars.filter(([b]) => b > mid).length;
-    return spot(first ? l.from : mid + 1, first ? mid : l.to, 'both', 'Each hand knows it: together is the hard part. Half at a time first.');
+    return spot(first ? l.from : mid + 1, first ? mid : l.to, 'both', L('Each hand knows it: together is the hard part. Half at a time first.', 'Cada mão já sabe: juntas é que é difícil. Primeiro metade de cada vez.'));
   }
   const [bar, e] = weakBars[0];
   let from = Math.max(l.from, bar - 1), to = bar;
@@ -1016,9 +1017,9 @@ export function learn(song: Song, l: MLesson, groups: GroupEv[], run: { accuracy
   let rest: string | undefined;
   if (flat || worse) {
     st.session.restAt = st.session.runs.length;
-    rest = 'A good moment to stop: your playing has levelled off for today, and sleep turns practice into skill. Come back tomorrow.';
+    rest = L('A good moment to stop: your playing has levelled off for today, and sleep turns practice into skill. Come back tomorrow.', 'Um bom momento para parar: hoje já estabilizaste, e o sono transforma prática em habilidade. Volta amanhã.');
   } else if (st.days.length === 1 && st.days[0] === today && pass && l.from === m.first && l.to === m.last && l.rung === TOP) {
-    rest = 'The whole song, clean at full speed. Play it like that on another day and it is yours.';
+    rest = L('The whole song, clean at full speed. Play it like that on another day and it is yours.', 'A música toda, limpa à velocidade real. Toca-a assim noutro dia e é tua.');
   }
 
   // Why it went wrong, for a short hint.
@@ -1261,7 +1262,7 @@ export function useMastery(song?: Song) {
 // ---------- Standing: where a song sits in his collection ----------
 
 export type Tier = 'none' | 'bronze' | 'silver' | 'gold' | 'forever';
-export const TIER_NAME: Record<Tier, string> = { none: 'Learning', bronze: 'Bronze', silver: 'Silver', gold: 'Gold', forever: 'Forever' };
+export const TIER_NAME: Record<Tier, string> = { get none() { return L('Learning', 'A aprender'); }, bronze: 'Bronze', get silver() { return L('Silver', 'Prata'); }, get gold() { return L('Gold', 'Ouro'); }, get forever() { return L('Forever', 'Para sempre'); } };
 
 export interface Standing {
   tier: Tier;

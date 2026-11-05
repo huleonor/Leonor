@@ -32,6 +32,7 @@ export interface SongEntry {
   image?: { src: string; by: string; alt: string };
   /** What the piece is like, in a line, for the marketplace. */
   about?: string;
+  aboutPt?: string;
   builtIn: boolean;
   /** Library shelf: film scores, modern piano, classical (imports go to "My songs"). */
   collection?: 'film' | 'modern' | 'classical';
@@ -88,6 +89,10 @@ export interface Settings {
   fingers: FingerMode;
   /** Minutes of practice a day that fill the daily goal. */
   dailyGoal: number;
+  /** The videos' speed: a factor on their planned pace (0.8 slower, 1, 1.2 faster). */
+  videoPace?: number;
+  /** With his piano connected, the videos stop at a note he has not played. */
+  videoWait?: boolean;
   /** A daily practice reminder at this time ("19:00"), or none. */
   reminder?: string | null;
   /** The first-run "connect your piano" card has been answered. */
