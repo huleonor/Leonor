@@ -4,7 +4,7 @@ import { markAppPlayed } from '../lib/input';
 import { audioContext, loadPiano, pianoReady, playNote, playSfx, stopAll, stopSfx, unlockAudio } from '../lib/audio';
 import { linkState, onLinkState, onNote } from '../lib/input';
 // The 3D gloves load on their own (three.js is large), only where WebGL runs.
-const Gloves3D = lazy(() => import('./Gloves3D').then(m => ({ default: m.Gloves3D })));
+const Hands3D = lazy(() => import('./Hands3D').then(m => ({ default: m.Hands3D })));
 const webglOk = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } };
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
@@ -798,6 +798,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
     named.current = map;
   }, [sayLine, spoken.at, spoken.words, tl, song.fifths]);
   // The drawn hands on the keys, on unless he turns them off (kept on this device).
+  // The gloves on the keys, on unless he turns them off (kept on this device).
   const [handsOn, setHandsOn] = useState(() => { try { return localStorage.getItem('leonor:hands') !== 'off'; } catch { return true; } });
   const toggleHands = () => setHandsOn(v => { try { localStorage.setItem('leonor:hands', v ? 'off' : 'on'); } catch { /* this visit only */ } return !v; });
   const firstNote = tl.notes[0]?.t ?? 0;
@@ -844,7 +845,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
         </header>
         <div className="reel-stage">
           <Lanes tl={tl} range={range} now={clock.now} held={held} presses={presses} hands={handsOn} flatHands={!use3d} geom={geomRef} shape={reel.kind === 'pattern' || reel.kind === 'L' || reel.kind === 'R' || reel.kind === 'fix'} jump={jumpKeys} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
-          {use3d && handsOn && <Suspense fallback={null}><Gloves3D tl={tl} now={clock.now} geom={geomRef} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} /></Suspense>}
+          {use3d && handsOn && <Suspense fallback={null}><Hands3D tl={tl} now={clock.now} geom={geomRef} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} /></Suspense>}
           {/* The caption floats over the falling notes, never under the keys (it pushed them up). */}
           <div className="reel-foot">
             {sayLine && !showTitle ? (
@@ -929,7 +930,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
                 <span>{voice.on ? <IconSpeaker size={24} /> : <IconSpeakerOff size={24} />}</span>Voice
               </button>
             )}
-            <button className="reel-act" onClick={e => { e.stopPropagation(); toggleHands(); }} aria-pressed={handsOn} aria-label={handsOn ? 'Hide the hands on the keys' : 'Show the hands on the keys'}><span><IconHand size={24} /></span>Hands</button>
+            <button className="reel-act" onClick={e => { e.stopPropagation(); toggleHands(); }} aria-pressed={handsOn} aria-label={handsOn ? 'Hide the gloves on the keys' : 'Show the gloves on the keys'}><span><IconHand size={24} /></span>Hands</button>
             {onNext && <button className="reel-act" onClick={onNext} aria-label="Next video"><span><IconArrowDown size={24} /></span>Next</button>}
           </motion.aside>
         )}
