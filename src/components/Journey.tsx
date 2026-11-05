@@ -8,6 +8,7 @@ import { askStrategy } from '../lib/strategy';
 import type { SongEntry } from '../lib/types';
 import { IconCheck, IconImport, IconKeysFill, IconPlay } from './Icons';
 import { SOFT, SPRING } from './Motion';
+import { SectionRow } from './SectionRow';
 import { type Section } from './SongScreen';
 
 const CURRENT = 'hugos-piano:current-song';
@@ -34,7 +35,7 @@ export function practiceFor(info: SongInfo, reel: Reel): Section | undefined {
   const steps = course.steps.filter(s => s.part !== undefined && ids.includes(s.part));
   if (!steps.length) return undefined;
   const done = steps.filter(s => (info.prog[s.id]?.stars ?? 0) > 0).length;
-  return { id: reel.id, title: L(`Phase ${reel.n}: ${reel.words.title}`, `Fase ${reel.n}: ${reel.words.title}`), bars: L(`Bars ${reel.from}-${reel.to}`, `Compassos ${reel.from}-${reel.to}`), from: reel.from, steps, done, learnt: done === steps.length };
+  return { id: reel.id, title: reel.words.title === reel.section ? reel.section : `${reel.section}: ${reel.words.title}`, bars: L(`Bars ${reel.from}-${reel.to}`, `Compassos ${reel.from}-${reel.to}`), from: reel.from, steps, done, learnt: done === steps.length };
 }
 
 function useBump(sub: (fn: () => void) => () => void) {
@@ -124,15 +125,15 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
     <div className="page journey">
       <section className="journey-hero">
         <h1>{entry.title}</h1>
-        <p className="journey-by">{[entry.composer, reels.length ? L(`${reels.length} phases, ${bars} bars`, `${reels.length} fases, ${bars} compassos`) : ''].filter(Boolean).join('. ')}</p>
+        <p className="journey-by">{[entry.composer, reels.length ? L(`${reels.length} sections, ${bars} bars`, `${reels.length} secções, ${bars} compassos`) : ''].filter(Boolean).join('. ')}</p>
         <p className="num-line" aria-label={L(`${pct}% of the song learnt`, `${pct}% da música aprendida`)}>
           <motion.span className="num" key={pct} initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING}>{pct}</motion.span>
-          <span>{L('percent learnt', 'por cento aprendido')}{next ? L(`, phase ${next.r.n} next`, `, a seguir a fase ${next.r.n}`) : ''}</span>
+          <span>{L('percent learnt', 'por cento aprendido')}{next ? L(`, ${next.r.section} next`, `, a seguir: ${next.r.section}`) : ''}</span>
         </p>
         <div className="journey-actions">
           {next ? (
             <button className="btn go big" onClick={() => (!next.watched ? onWatch(song.entry.id, next.i) : onPractice(song.entry.id, next.r))}>
-              {!next.watched ? <IconPlay size={18} /> : <IconKeysFill size={18} />}{!next.watched ? L(`Watch phase ${next.r.n}`, `Ver a fase ${next.r.n}`) : L(`Practise phase ${next.r.n}`, `Praticar a fase ${next.r.n}`)}
+              {!next.watched ? <IconPlay size={18} /> : <IconKeysFill size={18} />}{!next.watched ? L(`Watch ${next.r.section}`, `Ver ${next.r.section}`) : L(`Practise ${next.r.section}`, `Praticar ${next.r.section}`)}
             </button>
           ) : (
             <button className="btn go big" onClick={() => onWholeSong(info)}><IconKeysFill size={18} />{L('Play the whole song', 'Tocar a música toda')}</button>
@@ -141,10 +142,12 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
         </div>
       </section>
 
+      <SectionRow song={song} sections={reels} current={next?.r.id} onEnter={r => onWatch(song.entry.id, reels.indexOf(r))} onWhole={() => onWholeSong(info)} />
+
       <PhasePath
         nodes={[
           ...rows.map(x => ({
-            key: x.r.id, n: String(x.r.n), title: x.r.words.title, line: status(x),
+            key: x.r.id, n: String(x.r.n), title: x.r.section, line: x.r.words.title === x.r.section ? status(x) : `${x.r.words.title}. ${status(x)}`,
             state: next === x ? 'next' as const : x.watched && (x.practised || !x.section) ? 'done' as const : 'ahead' as const,
             onWatch: () => onWatch(song.entry.id, x.i), onPractice: x.section ? () => onPractice(song.entry.id, x.r) : undefined,
           })),
@@ -201,7 +204,7 @@ function PhasePath({ nodes }: { nodes: PathNode[] }) {
           <motion.li key={x.key} className={`path-node ${x.state} ${left ? 'left' : 'right'}`} style={{ top: TOP + i * STEP, left: `${xs[i] * 100}%` }}
             initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ ...SPRING, delay: i * 0.04 }}>
             {x.state === 'next' && <span className="path-start" aria-hidden="true">{L('Start', 'Começar')}</span>}
-            <button className="path-card" onClick={() => setOpen(isOpen ? null : x.key)} aria-expanded={isOpen} aria-label={`${x.n === String(i + 1) ? L(`Phase ${x.n}: `, `Fase ${x.n}: `) : ''}${x.title}. ${x.line}`}>
+            <button className="path-card" onClick={() => setOpen(isOpen ? null : x.key)} aria-expanded={isOpen} aria-label={`${x.title}. ${x.line}`}>
               {x.state === 'done' ? <IconCheck size={30} /> : x.state === 'finale' ? <IconKeysFill size={28} /> : <span className="num">{x.n}</span>}
             </button>
             <span className="path-label" aria-hidden="true" style={{ width: room }}><b>{x.title}</b><small>{x.line}</small></span>

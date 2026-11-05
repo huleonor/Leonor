@@ -525,6 +525,20 @@ p { margin: 0; }
 
 /* The actions: paper squares, a little crooked, floating on the right edge; they show only while
    the video is paused (Reels.tsx slides them in), so the video stays clear while it plays. */
+/* The song's sections by its form (Intro, Verse 1, ...): a row of cards, a speaker to hear each and
+   its name to go in; the one he is on is the pink card. The Song tab and the paused video. */
+.part-row ol { display: flex; gap: 10px; margin: 0; padding: 6px 2px 10px; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.part-row ol::-webkit-scrollbar { display: none; }
+.part-chip { flex: none; display: flex; align-items: stretch; min-height: 44px; background: var(--white); border: 2px solid var(--ink); transform: rotate(-0.6deg); }
+.part-chip:nth-child(even) { transform: rotate(0.5deg); }
+.part-chip.current { background: var(--pink-soft); }
+.part-listen { display: grid; place-items: center; width: 44px; padding: 0; background: none; border: 0; border-right: 2px solid var(--ink); color: var(--ink); cursor: pointer; }
+.part-listen[aria-pressed="true"] { background: var(--marker); }
+.part-go { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; background: none; border: 0; color: var(--ink); font: 700 16px/1 var(--font); white-space: nowrap; cursor: pointer; }
+.part-row { min-width: 0; max-width: 100%; }
+.journey .part-row { margin: -6px 0 0; }
+.reel-sections { position: absolute; left: 12px; right: 96px; bottom: 28px; z-index: 9; }
+.reel-sections .part-row ol { padding-left: 4px; }
 .reel-side { position: absolute; right: 12px; top: 50%; translate: 0 -50%; z-index: 8; display: grid; gap: 12px; }
 .reel-act { display: grid; justify-items: center; gap: 4px; font: 700 11px var(--font-mono); color: var(--ink); background: var(--paper); padding: 2px 0; }
 .reel-act span { width: 50px; height: 50px; display: grid; place-items: center; border: 2px solid var(--ink); background: var(--white); color: var(--ink); transition: background-color var(--dur) var(--ease); }

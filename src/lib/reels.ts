@@ -14,7 +14,7 @@ import { splitBars } from './analysis';
 import { barIndex, barLength, barStart, type BarGrid } from './bars';
 import { buildCourse } from './course';
 import { readSong } from './reading';
-import { SCRIPTS } from './reelScripts';
+import { SCRIPTS, SECTIONS } from './reelScripts';
 import { SCRIPTS_PT, STEP_TIPS_PT } from './reelScriptsPt';
 import { cleanPhase, type PhaseWords, type Talk } from './reelShape';
 import { difficultyOf } from './difficulty';
@@ -40,6 +40,9 @@ export interface Reel {
   id: string;
   /** Phase number, from 1. */
   n: number;
+  /** Its place in the song's form ("Intro", "Verse 1"), and how the voice says it ("the intro"). */
+  section: string;
+  sectionSaid: string;
   /** Bars of the phase, 1-based, inclusive. */
   from: number;
   to: number;
@@ -174,7 +177,7 @@ function ruleWords(facts: BarFacts[], n: number, from: number, to: number, twoHa
   for (const f of facts) if (f.moveTo) cues[f.bar] = tr(`Move the right hand: thumb on ${f.moveTo}`, `Muda a mão direita: polegar no ${f.moveTo}`);
   return {
     from, to,
-    title: tr(`Phase ${n}`, `Fase ${n}`),
+    title: tr(`Part ${n}`, `Parte ${n}`),
     hook: twoHands ? (repeats || sameShape ? right : left) : right,
     tricks: twoHands ? [`${tr('Left', 'Esquerda')}: ${left.charAt(0).toLowerCase()}${left.slice(1)}`, `${tr('Right', 'Direita')}: ${right.charAt(0).toLowerCase()}${right.slice(1)}`] : [right],
     L: octaves ? tr(`Octaves: ${seq}. Little finger low, thumb high`, `Oitavas: ${seq}. Mindinho em baixo, polegar em cima`) : `${tr('The bass', 'O baixo')}: ${seq}${held ? tr(', each held for the bar', ', cada um segurado o compasso todo') : ''}`,
@@ -293,8 +296,13 @@ export function reelsOf(song: Song): Reel[] {
       segments.push({ kind: 'both', ...fit(p.from, p.to, 0.7, 10, 2), speed: 0.7, label: tr('Slow', 'Devagar') });
     }
     segments.push({ kind: 'both', ...fit(p.from, p.to, 1, 20, 12), speed: 1, label: twoHands ? tr('Both hands', 'Duas mãos') : tr('Full speed', 'Velocidade real') });
+    // Its name in the song's form, written with the script (reelScripts.ts SECTIONS), else "Part n".
+    const sec = scripted ? SECTIONS[scriptId ?? '']?.[i] : undefined;
+    const inPt = lang() === 'pt';
     return {
       id: `phase-${i + 1}`, n: i + 1, from: p.from, to: p.to, words, segments,
+      section: sec ? sec[inPt ? 1 : 0] : tr(`Part ${i + 1}`, `Parte ${i + 1}`),
+      sectionSaid: sec ? sec[inPt ? 3 : 2] : tr(`part ${i + 1}`, `a parte ${i + 1}`),
       chords: bars.slice(p.from - 1, p.to).map(f => ({ bar: f.bar, name: f.chord })),
     };
   });
@@ -381,7 +389,6 @@ function leftWords(facts: BarFacts[]) {
   return { said: `${what}${held ? tr(', held for the whole bar', ', segurada o compasso todo') : ''}. ${octaves ? tr('Little finger low, thumb on top.', 'Mindinho em baixo, polegar em cima.') : ''}`.trim(), simple, head: octaves ? `${bass.join(' ')} ${tr('octaves', 'oitavas')}` : bass.join(' ') };
 }
 
-const NUMBER = () => (lang() === 'pt' ? ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez', 'onze', 'doze'] : ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']);
 const BOTH = () => (lang() === 'pt' ? ['Agora as duas mãos juntas. Com calma e devagar.', 'Junta-as, devagar, as duas mãos a cair no tempo um.', 'Agora as duas mãos. Sem pressa.'] : ['Both hands together now. Nice and slow.', 'Put them together, slowly, both hands landing on beat one.', 'Now both hands. Take your time.']);
 
 /**
@@ -666,18 +673,17 @@ export function clipsOf(song: Song): Clip[] {
     for (let a = r.from, part = 0; a <= r.to; a += size, part++) {
       const b = Math.min(r.to, a + size - 1);
       const what = lang() === 'pt'
-        ? (parts === 1 ? 'a fase toda' : part === 0 ? 'a primeira parte da fase' : b === r.to ? 'o fim da fase' : 'o meio da fase')
-        : (parts === 1 ? 'the whole phase' : part === 0 ? 'the first part of the phase' : b === r.to ? 'the end of the phase' : 'the middle of the phase');
-      mine.push(make('run', a, b, run, run >= 0.75 ? tr('Three quarter speed', 'Três quartos da velocidade') : tr('A little faster, still slow', 'Um pouco mais rápido, ainda devagar'), parts === 1 ? tr('The whole phase', 'A fase toda') : tr(`Bars ${a} to ${b}`, `Compassos ${a} a ${b}`),
+        ? (parts === 1 ? 'a secção toda' : part === 0 ? 'a primeira parte da secção' : b === r.to ? 'o fim da secção' : 'o meio da secção')
+        : (parts === 1 ? 'the whole section' : part === 0 ? 'the first part of the section' : b === r.to ? 'the end of the section' : 'the middle of the section');
+      mine.push(make('run', a, b, run, run >= 0.75 ? tr('Three quarter speed', 'Três quartos da velocidade') : tr('A little faster, still slow', 'Um pouco mais rápido, ainda devagar'), parts === 1 ? tr('The whole section', 'A secção toda') : tr(`Bars ${a} to ${b}`, `Compassos ${a} a ${b}`),
         `${tr(`Now ${what}, a little slower than the real thing.`, `Agora ${what}, um pouco mais devagar do que a música.`)} ${b === r.to ? (talk?.outro ?? r.words.tip) : tr('Keep going.', 'Continua.')}`, 100 + part));
     }
     mine.forEach((c, i) => out.push({ ...c, say: NT(c.say), head: NT(c.head), k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) }));
   }
   // Each video says what the next one teaches, so the series reads as one lesson.
   const about = (c: Clip, before: Clip) => {
-    const pt = lang() === 'pt';
-    if (c.kind === 'intro') return `${pt ? 'a fase' : 'phase'} ${NUMBER()[c.n] ?? c.n}${SCRIPTS[song.entry.slot ?? song.entry.id] && !/^(phase|fase) \d/i.test(c.words.title) ? `, ${c.words.title.toLowerCase()}` : ''}`;
-    if (c.kind === 'run') return c.from === c.phase.from ? tr('the whole phase, a little faster', 'a fase toda, um pouco mais rápido') : tr('the next part of the phase', 'a parte seguinte da fase');
+    if (c.kind === 'intro') return `${c.phase.sectionSaid}${SCRIPTS[song.entry.slot ?? song.entry.id] && !/^(phase|fase|part|parte) \d/i.test(c.words.title) ? `, ${c.words.title.toLowerCase()}` : ''}`;
+    if (c.kind === 'run') return c.from === c.phase.from ? tr('the whole section, a little faster', 'a secção toda, um pouco mais rápido') : tr('the next part of the section', 'a parte seguinte da secção');
     if (c.kind === 'jump') return tr('the jump', 'o salto');
     if (c.kind === 'tour') return tr('the same pattern on each chord', 'o mesmo padrão em cada acorde');
     if (c.kind === 'move') return tr('the move between the chords', 'a mudança entre os acordes');
@@ -815,7 +821,7 @@ export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
   }
   // 4. It says what comes next, so the videos read as one lesson.
   const after = until + 0.6;
-  const nextLine = clip.next ? tr(`Nice. Next up, ${clip.next}. Swipe up.`, `Boa. A seguir, ${clip.next}. Desliza para cima.`) : tr('Nice. That is this phase. Now practise it in the lessons.', 'Boa. Esta fase está feita. Agora pratica-a nas lições.');
+  const nextLine = clip.next ? tr(`Nice. Next up, ${clip.next}. Swipe up.`, `Boa. A seguir, ${clip.next}. Desliza para cima.`) : tr('Nice. That is this section. Now practise it in the lessons.', 'Boa. Esta secção está feita. Agora pratica-a nas lições.');
   const nextSaid = line(after, nextLine, 0);
   const duration = after + nextSaid + REST;
   const lo = { R: 127, L: 127 } as Record<Hand, number>, hi = { R: 0, L: 0 } as Record<Hand, number>;

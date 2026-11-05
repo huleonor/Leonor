@@ -47,10 +47,10 @@ export function HomePage({ title, song, clips, at, onContinue, onTab, onSettings
       </header>
       {song && clip ? (
         <motion.button className="home-continue taped" onClick={onContinue} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}
-          aria-label={L(`Continue: phase ${clip.n}, video ${clip.k} of ${clip.of}`, `Continuar: fase ${clip.n}, vídeo ${clip.k} de ${clip.of}`)}>
+          aria-label={L(`Continue: ${clip.phase.section}, video ${clip.k} of ${clip.of}`, `Continuar: ${clip.phase.section}, vídeo ${clip.k} de ${clip.of}`)}>
           <ReelPreview song={song} reel={clip} />
           <span className="home-continue-foot">
-            <span><b>{L('Phase', 'Fase')} {clip.n}: {clip.words.title}</b><small>{L(`Video ${clip.k} of ${clip.of}`, `Vídeo ${clip.k} de ${clip.of}`)}</small></span>
+            <span><b>{clip.phase.section === clip.words.title ? clip.phase.section : `${clip.phase.section}: ${clip.words.title}`}</b><small>{L(`Video ${clip.k} of ${clip.of}`, `Vídeo ${clip.k} de ${clip.of}`)}</small></span>
             <span className="btn go"><IconPlay size={16} />{L('Continue', 'Continuar')}</span>
           </span>
         </motion.button>

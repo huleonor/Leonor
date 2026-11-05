@@ -20,11 +20,12 @@ const webglOk = () => {
 };
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
-import { explainClips, FALL, fixClip, letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
+import { explainClips, FALL, fixClip, letter, markSeen, reelsOf, timelineOf, type Clip, type Reel, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
 import { anyVoice, hush, onVoice, pauseVoice, prepareVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
 import { IconCheck, IconClose, IconExplain, IconHand, IconKeys, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
 import { SOFT, SPRING } from './Motion';
+import { SectionRow } from './SectionRow';
 
 const LOOK = FALL; // seconds of falling notes above the keys
 
@@ -628,6 +629,9 @@ function Caption({ words, at, index }: { words: { w: string }[]; at: number; ind
 interface PlayerProps {
   song: Song;
   reel: Clip;
+  /** The song's sections, shown while paused to go to another (Intro, Verse 1, ...). */
+  sections?: Reel[];
+  onSection?: (r: Reel) => void;
   index: number;
   count: number;
   active: boolean;
@@ -651,7 +655,7 @@ export type ReelResult = { perfect: boolean; poor: boolean; fix?: { ticks: numbe
  * loops until he scrolls on, so he copies it on his piano as many times as he likes. The voice
  * says it once; the loops are the music alone. Tap to pause.
  */
-export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain, pace = 1, onResult }: PlayerProps) {
+export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain, pace = 1, onResult, sections, onSection }: PlayerProps) {
   // The pace is taken when the video comes on screen, so it never changes under him.
   const paceAt = useMemo(() => pace * videoPrefs.pace, [reel, active]); // eslint-disable-line react-hooks/exhaustive-deps
   const tl = useMemo(() => timelineOf(song, reel, paceAt), [song, reel, paceAt]);
@@ -913,7 +917,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
 
   return (
     <div className={`reel-slide ${active ? 'active' : ''}`}>
-      <div className="reel-frame" onClick={toggle} role="group" aria-label={L(`Phase ${reel.n}, video ${reel.k} of ${reel.of}: ${reel.head}`, `Fase ${reel.n}, vídeo ${reel.k} de ${reel.of}: ${reel.head}`)}>
+      <div className="reel-frame" onClick={toggle} role="group" aria-label={L(`${reel.phase.section}, video ${reel.k} of ${reel.of}: ${reel.head}`, `${reel.phase.section}, vídeo ${reel.k} de ${reel.of}: ${reel.head}`)}>
         <div className="reel-progress" aria-hidden="true">
           {Array.from({ length: reel.of }, (_, i) => <i key={i}><b style={{ width: `${i < reel.k - 1 ? 100 : i === reel.k - 1 ? pct * 100 : 0}%` }} /></i>)}
         </div>
@@ -922,7 +926,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
           <motion.p key={label} className="reel-kicker" initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.18, ease: ARRIVE }}>{label}</motion.p>
           <h2 className={`reel-hook hand-${seg.kind} ${reel.head.split(' ').some(x => !new RegExp(`^${NOTE_RE}$`).test(x) && x !== 'octaves' && x !== 'oitavas') ? 'words' : ''}`}>{reel.head.split(' ').map((x, i) => <motion.span key={`${reel.id}-${i}`} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x} </motion.span>)}</h2>
           {(paused || (inputOn && score.ok + score.bad > 0)) && (
-            <p className="reel-meta">{paused && L(`Phase ${reel.n}, ${reel.k} of ${reel.of}`, `Fase ${reel.n}, ${reel.k} de ${reel.of}`)}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">{paused ? '. ' : ''}{L('Your keys: ', 'As tuas teclas: ')}<b className="ok">{score.ok} {L('right', 'certas')}</b>, <b className="bad">{score.bad} {L('wrong', 'erradas')}</b></span>}</p>
+            <p className="reel-meta">{paused && L(`${reel.phase.section}, ${reel.k} of ${reel.of}`, `${reel.phase.section}, ${reel.k} de ${reel.of}`)}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">{paused ? '. ' : ''}{L('Your keys: ', 'As tuas teclas: ')}<b className="ok">{score.ok} {L('right', 'certas')}</b>, <b className="bad">{score.bad} {L('wrong', 'erradas')}</b></span>}</p>
           )}
         </header>
         <div className="reel-stage">
@@ -946,7 +950,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
           {showTitle && (
             <motion.div key="title" className="reel-card" initial={{ opacity: 1 }} exit={{ opacity: 0, filter: 'blur(8px)', transition: { duration: 0.18, ease: LEAVE } }}>
               <div>
-                <motion.small initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>{L('Phase', 'Fase')} {reel.n}: {w.title}</motion.small>
+                <motion.small initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>{reel.phase.section === w.title ? reel.phase.section : `${reel.phase.section}: ${w.title}`}</motion.small>
                 {/* The idea lands word by word, then holds dead still. */}
                 <h3>{w.hook.split(' ').map((x, i) => <motion.span key={i} style={{ display: 'inline-block' }} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x}&nbsp;</motion.span>)}</h3>
                 {sayLine && <Caption words={spoken.words} at={spoken.at} index={place.line} />}
@@ -1026,7 +1030,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
       <AnimatePresence>
         {paused && (
           <motion.aside key="side" className="reel-side" initial={{ x: 70, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 70, opacity: 0, transition: { duration: 0.14, ease: LEAVE } }} transition={{ duration: 0.3, ease: ARRIVE }}>
-            <button className="reel-act go" onClick={onPractice} aria-label={L(`Practise phase ${reel.n}`, `Praticar a fase ${reel.n}`)}><span><IconKeys size={26} /></span>{L('Practise', 'Praticar')}</button>
+            <button className="reel-act go" onClick={onPractice} aria-label={L(`Practise ${reel.phase.section}`, `Praticar ${reel.phase.section}`)}><span><IconKeys size={26} /></span>{L('Practise', 'Praticar')}</button>
             <button className="reel-act" onClick={replay} aria-label={L('From the start, with the voice', 'Do início, com a voz')}><span><IconRestart size={24} /></span>{L('Again', 'Outra vez')}</button>
             {anyVoice() && (
               <button className="reel-act" onClick={e => { e.stopPropagation(); unlockVoice(); setVoiceOn(!voice.on); }} aria-pressed={voice.on} aria-label={voice.on ? L('Turn the voice off', 'Desligar a voz') : L('Turn the voice on', 'Ligar a voz')}>
@@ -1035,6 +1039,11 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
             )}
             <button className="reel-act" onClick={e => { e.stopPropagation(); toggleHands(); }} aria-pressed={handsOn} aria-label={handsOn ? L('Hide the hands on the keys', 'Esconder as mãos nas teclas') : L('Show the hands on the keys', 'Mostrar as mãos nas teclas')}><span><IconHand size={24} /></span>{L('Hands', 'Mãos')}</button>
           </motion.aside>
+        )}
+        {paused && sections && sections.length > 1 && onSection && (
+          <motion.div key="sections" className="reel-sections" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0, transition: { duration: 0.14, ease: LEAVE } }} transition={{ duration: 0.3, ease: ARRIVE }}>
+            <SectionRow song={song} sections={sections} current={reel.phase.id} onEnter={onSection} />
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
@@ -1101,7 +1110,10 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
     return () => io.disconnect();
   }, [items]);
   useEffect(() => { if (items[active]) onActive?.(active, items[active]); }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
-  const goTo = (i: number) => { const el = ref.current!; el.scrollTo({ top: i * el.clientHeight, behavior: 'smooth' }); };
+  const goTo = (i: number, smooth = true) => { const el = ref.current!; el.scrollTo({ top: i * el.clientHeight, behavior: smooth ? 'smooth' : 'auto' }); };
+  // The sections of the song, to jump from a paused video to the first video of another.
+  const sections = useMemo(() => reelsOf(song), [song]);
+  const toSection = (r: Reel) => { const i = items.findIndex(c => c.phase.id === r.id); if (i >= 0) goTo(i, false); };
   const result = (i: number, r: ReelResult) => {
     const p = Math.round(Math.max(0.7, Math.min(1.3, pace * (r.perfect ? 1.1 : r.poor ? 0.85 : 1))) * 100) / 100;
     setPace(p);
@@ -1155,7 +1167,7 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
         {items.map((r, i) => (
           <section key={r.id} data-i={i} className="reel-snap">
             {Math.abs(i - active) <= 1 && (
-              <ReelPlayer song={song} reel={r} index={i} count={items.length} active={i === active} onPiano={onPiano} pace={pace} onResult={x => result(i, x)}
+              <ReelPlayer song={song} reel={r} index={i} count={items.length} active={i === active} onPiano={onPiano} pace={pace} onResult={x => result(i, x)} sections={sections} onSection={toSection}
                 onPractice={() => onPractice(r, i)} onNext={i < items.length - 1 ? () => goTo(i + 1) : undefined} onExplain={() => explain(i)} />
             )}
           </section>
