@@ -23,7 +23,7 @@ import { isBlack } from '../lib/names';
 import { explainClips, FALL, fixClip, letter, markSeen, reelsOf, timelineOf, type Clip, type Reel, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
 import { anyVoice, hush, onVoice, pauseVoice, prepareVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
-import { IconCheck, IconClose, IconExplain, IconHand, IconKeys, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
+import { IconCheck, IconClose, IconExplain, IconHand, IconKeys, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff, IconSpeed } from './Icons';
 import { SOFT, SPRING } from './Motion';
 import { SectionRow } from './SectionRow';
 
@@ -294,7 +294,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
         }
         if (yB - yTop > 24 && bw > 12) {
           ctx.fillStyle = n.train ? (n.hand === 'L' ? pal.tL : pal.tR) : pal.ink;
-          ctx.font = `900 ${Math.round(Math.max(11, Math.min(17, bw * 0.55)))}px ${FACE}`;
+          ctx.font = `900 ${Math.round(Math.max(12, Math.min(22, bw * 0.62)))}px ${FACE}`;
           ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
           ctx.fillText(N(letter(n.midi, flats)), k.x + k.w / 2, yB - 7);
         }
@@ -632,6 +632,8 @@ interface PlayerProps {
   /** The song's sections, shown while paused to go to another (Intro, Verse 1, ...). */
   sections?: Reel[];
   onSection?: (r: Reel) => void;
+  /** Speed chosen from the paused video: slower, normal, faster (Settings, Videos, Speed). */
+  onSpeed?: (v: number) => void;
   index: number;
   count: number;
   active: boolean;
@@ -655,9 +657,11 @@ export type ReelResult = { perfect: boolean; poor: boolean; fix?: { ticks: numbe
  * loops until he scrolls on, so he copies it on his piano as many times as he likes. The voice
  * says it once; the loops are the music alone. Tap to pause.
  */
-export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain, pace = 1, onResult, sections, onSection }: PlayerProps) {
+export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain, pace = 1, onResult, sections, onSection, onSpeed }: PlayerProps) {
   // The pace is taken when the video comes on screen, so it never changes under him.
-  const paceAt = useMemo(() => pace * videoPrefs.pace, [reel, active]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A speed chosen from the paused video takes effect at once (speedN), from the start of the video.
+  const [speedN, setSpeedN] = useState(0);
+  const paceAt = useMemo(() => pace * videoPrefs.pace, [reel, active, speedN]); // eslint-disable-line react-hooks/exhaustive-deps
   const tl = useMemo(() => timelineOf(song, reel, paceAt), [song, reel, paceAt]);
   // One keyboard for both hands, framed on this video's notes.
   const range = useMemo<[number, number]>(() => {
@@ -1037,6 +1041,14 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
                 <span>{voice.on ? <IconSpeaker size={24} /> : <IconSpeakerOff size={24} />}</span>{L('Voice', 'Voz')}
               </button>
             )}
+            {onSpeed && (() => {
+              const v = videoPrefs.pace, next = v < 0.9 ? 1 : v < 1.1 ? 1.2 : 0.8;
+              const name = v < 0.9 ? L('Slower', 'Mais lento') : v < 1.1 ? L('Normal', 'Normal') : L('Faster', 'Mais rápido');
+              return (
+                <button className="reel-act" onClick={e => { e.stopPropagation(); onSpeed(next); setSpeedN(x => x + 1); window.setTimeout(replay, 0); }}
+                  aria-label={L(`Speed: ${name}. Tap to change`, `Velocidade: ${name}. Toca para mudar`)}><span><IconSpeed size={24} /></span>{name}</button>
+              );
+            })()}
             <button className="reel-act" onClick={e => { e.stopPropagation(); toggleHands(); }} aria-pressed={handsOn} aria-label={handsOn ? L('Hide the hands on the keys', 'Esconder as mãos nas teclas') : L('Show the hands on the keys', 'Mostrar as mãos nas teclas')}><span><IconHand size={24} /></span>{L('Hands', 'Mãos')}</button>
           </motion.aside>
         )}
@@ -1087,13 +1099,14 @@ interface FeedProps {
   /** The video on screen changed (to remember where he was, for the home page). */
   onActive?: (index: number, clip: Clip) => void;
   onPiano?: () => void;
+  onSpeed?: (v: number) => void;
 }
 
 /** The song's reels in a vertical feed: swipe up for the next one, TikTok style. */
 const PACE = 'leonor:pace:';
 const readPace = (id: string) => { try { return Number(localStorage.getItem(PACE + id)) || 1; } catch { return 1; } };
 
-export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, onActive, onPiano }: FeedProps) {
+export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, onActive, onPiano, onSpeed }: FeedProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(start);
   // The feed follows him: videos it skips when he plays clean, fix-this-spot videos it adds where he
@@ -1167,7 +1180,7 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
         {items.map((r, i) => (
           <section key={r.id} data-i={i} className="reel-snap">
             {Math.abs(i - active) <= 1 && (
-              <ReelPlayer song={song} reel={r} index={i} count={items.length} active={i === active} onPiano={onPiano} pace={pace} onResult={x => result(i, x)} sections={sections} onSection={toSection}
+              <ReelPlayer song={song} reel={r} index={i} count={items.length} active={i === active} onPiano={onPiano} pace={pace} onResult={x => result(i, x)} sections={sections} onSection={toSection} onSpeed={onSpeed}
                 onPractice={() => onPractice(r, i)} onNext={i < items.length - 1 ? () => goTo(i + 1) : undefined} onExplain={() => explain(i)} />
             )}
           </section>

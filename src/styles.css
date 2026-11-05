@@ -23,7 +23,7 @@
   --pink-text: #C2004F;
   --pink-soft: #FFD6E6;
   --teal: #00A99D;
-  --teal-text: #00756D;
+  --teal-text: #006A62;
   --teal-soft: #CDEDE7;
   --marker: #FFE45C;
   --tape: rgba(255, 233, 150, .78);
@@ -532,7 +532,7 @@ p { margin: 0; }
    its name to go in; the one he is on is the pink card. The Song tab and the paused video. */
 .part-row ol { display: flex; gap: 10px; margin: 0; padding: 6px 2px 10px; list-style: none; overflow-x: auto; scrollbar-width: none; }
 .part-row ol::-webkit-scrollbar { display: none; }
-.part-chip { flex: none; display: flex; align-items: stretch; min-height: 44px; background: var(--white); border: 2px solid var(--ink); transform: rotate(-0.6deg); }
+.part-chip { flex: none; display: flex; align-items: stretch; min-height: 48px; background: var(--white); border: 2px solid var(--ink); transform: rotate(-0.6deg); }
 .part-chip:nth-child(even) { transform: rotate(0.5deg); }
 .part-chip.current { background: var(--pink-soft); }
 .part-listen { display: grid; place-items: center; width: 44px; padding: 0; background: none; border: 0; border-right: 2px solid var(--ink); color: var(--ink); cursor: pointer; }
@@ -573,7 +573,9 @@ p { margin: 0; }
   .reel-hold { left: auto; right: 16px; width: min(440px, 46%); }
   .app.watching .reel-head { padding-left: 74px; }
   .app.watching .reel-kicker { margin-left: 0; }
-  .reel-kicker { max-width: none; white-space: nowrap; }
+  .reel-kicker { max-width: none; white-space: nowrap; font-size: 16px; }
+  /* Read from the music stand, an arm away: nothing on the video under 14px. */
+  .reel-meta { font-size: 14px; }
 }
 @media (min-aspect-ratio: 5 / 4) and (max-height: 500px) {
   .reel-hook { font-size: 28px; }
@@ -582,8 +584,11 @@ p { margin: 0; }
   .reel-say { font-size: 20px; }
   .reel-cue { font-size: 16px; }
   .reel-card h3 { font-size: 26px; }
-  .reel-act span { width: 42px; height: 42px; }
-  .reel-side { gap: 6px; }
+  /* Five actions in a short window: the label beside its icon, the column under the piano chip. */
+  .reel-act span { width: 44px; height: 44px; order: 2; }
+  .reel-act { grid-auto-flow: column; align-items: center; gap: 8px; padding: 0; }
+  .reel-side { top: 74px; translate: none; gap: 4px; justify-items: end; }
+  .reel-sections { right: 150px; }
 }
 
 /* The menu on Watch: three lines at the top left; the tabs slide in from the left as a sheet. */
@@ -882,7 +887,7 @@ p { margin: 0; }
 .reel-explain:hover { background: var(--marker); border-color: var(--ink); color: var(--ink); }
 .reel-verdict { position: absolute; z-index: 6; top: 24%; left: 0; right: 0; width: max-content; max-width: calc(100% - 40px); margin: 0 auto; padding: 8px 14px; background: var(--white); border: 2px solid var(--ink); font: 700 16px var(--font-mono); color: var(--ink); pointer-events: none; }
 .reel-verdict.good { border-color: var(--ok); border-left-width: 8px; }
-.reel-piano { position: absolute; top: 18px; right: 14px; z-index: 7; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; background: var(--white); border: 2px solid var(--ink); color: var(--ink); font: 700 12px var(--font-mono); transform: rotate(1.5deg); }
+.reel-piano { position: absolute; top: 18px; right: 14px; z-index: 7; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; min-width: 44px; justify-content: center; padding: 0 10px; background: var(--white); border: 2px solid var(--ink); color: var(--ink); font: 700 12px var(--font-mono); transform: rotate(1.5deg); }
 .reel-piano > i { width: 8px; height: 8px; border-radius: 50%; background: var(--mark); margin-left: -4px; align-self: flex-start; margin-top: 6px; }
 .reel-piano.on > i { background: var(--ok); }
 .reel-piano:hover { background: var(--marker); }

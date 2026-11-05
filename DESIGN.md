@@ -13,7 +13,7 @@ colors:
   muted: "#625A49  hints and labels only"
   rule: "#C4B796 / rule-2 #8C8068  dashed rules"
   pink: "#FF006E  riso pink: the right hand, what is next (text in pink-text #C2004F, tint pink-soft #FFD6E6)"
-  teal: "#00A99D  riso teal: the left hand (text teal-text #00756D, tint teal-soft #CDEDE7)"
+  teal: "#00A99D  riso teal: the left hand (text teal-text #006A62, tint teal-soft #CDEDE7)"
   marker: "#FFE45C  the yellow highlighter: the tab he is on, the word being said, the next key, hover"
   tape: "translucent yellow strip holding the current card down"
   mark: "#E0301E  a wrong note"

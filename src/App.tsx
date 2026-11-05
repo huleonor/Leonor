@@ -292,6 +292,7 @@ export default function App() {
                   onClose={() => setTab('song')}
                   onPractice={reel => practise(currentInfo.entry.id, reel.phase)}
                   onPiano={() => setSheet('settings')}
+                  onSpeed={v => { setVideoPrefs({ pace: v }); update({ videoPace: v }); }}
                   onActive={(_, c) => { if (c.kind !== 'fix') rememberReel(currentInfo.entry.id, c.id); }}
                 />
               ) : journey
