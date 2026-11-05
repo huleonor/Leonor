@@ -1,8 +1,11 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { markAppPlayed } from '../lib/input';
 import { audioContext, loadPiano, pianoReady, playNote, playSfx, stopAll, stopSfx, unlockAudio } from '../lib/audio';
 import { linkState, onLinkState, onNote } from '../lib/input';
+// The 3D gloves load on their own (three.js is large), only where WebGL runs.
+const Gloves3D = lazy(() => import('./Gloves3D').then(m => ({ default: m.Gloves3D })));
+const webglOk = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } };
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
 import { FALL, fixClip, letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
@@ -130,7 +133,10 @@ const inOut = (x: number) => (x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2);
 /** A key he pressed on his piano: right or wrong, and when (for the mark that rises from it). */
 export type Press = { midi: number; ok: boolean; at: number };
 
-function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape, jump, hands }: { tl: ReelTimeline; range: [number, number]; now: () => number; held: React.RefObject<Map<number, boolean>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number; presses?: React.RefObject<Press[]>; shape?: boolean; jump?: [number, number]; hands?: boolean }) {
+/** Where the flat keyboard is this frame, for the 3D gloves drawn over it (Gloves3D.tsx). */
+export type KeysGeom = { X: (m: number) => { x: number; w: number } | null; kbTop: number; kbH: number; kbBot: number; unitW: number; W: number; H: number };
+
+function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape, jump, hands, flatHands = true, geom }: { tl: ReelTimeline; range: [number, number]; now: () => number; held: React.RefObject<Map<number, boolean>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number; presses?: React.RefObject<Press[]>; shape?: boolean; jump?: [number, number]; hands?: boolean; flatHands?: boolean; geom?: React.RefObject<KeysGeom | null> }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current!;
@@ -218,6 +224,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
       const kbH = Math.min((H - palmH) * 0.36, Math.max(frameUnit * 5.2, (H - palmH) * 0.24));
       const kbBot = H - palmH;
       const kbTop = kbBot - kbH;
+      if (geom) geom.current = { X, kbTop, kbH, kbBot, unitW, W, H };
       const fall = kbTop - 4, pps = fall / LOOK;
       const colour = (h: Hand) => (h === 'L' ? pal.L : pal.R);
       // Octave guides at every C.
@@ -337,7 +344,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
       // voice names the keys, the hand turns to point with the index finger at the key being named,
       // the other fingers curled. Every part glides on a spring; drawn as one outlined silhouette,
       // a little see-through so the keys show through it.
-      if (hands && cv.width > 0 && cv.height > 0) {
+      if (hands && flatHands && cv.width > 0 && cv.height > 0) {
         const nowMs = performance.now(), dt = Math.min(0.1, (nowMs - lastFrame) / 1000);
         lastFrame = nowMs;
         const k = 1 - Math.exp(-dt * 11);
@@ -450,7 +457,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [tl, range, now, held, flats, named, namedUntil, presses, shape, jump, hands]);
+  }, [tl, range, now, held, flats, named, namedUntil, presses, shape, jump, hands, flatHands, geom]);
   return <canvas ref={ref} className="reel-lanes" aria-hidden="true" />;
 }
 
@@ -794,6 +801,9 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
   const [handsOn, setHandsOn] = useState(() => { try { return localStorage.getItem('leonor:hands') !== 'off'; } catch { return true; } });
   const toggleHands = () => setHandsOn(v => { try { localStorage.setItem('leonor:hands', v ? 'off' : 'on'); } catch { /* this visit only */ } return !v; });
   const firstNote = tl.notes[0]?.t ?? 0;
+  // The gloves in 3D over the flat video where WebGL runs (the flat ones elsewhere).
+  const use3d = useMemo(() => webglOk(), []);
+  const geomRef = useRef<KeysGeom | null>(null);
   // A jump video: the key it leaves and the key it lands on, for the arc over the keys.
   const jumpKeys = useMemo<[number, number] | undefined>(() => {
     if (reel.kind !== 'jump') return undefined;
@@ -833,7 +843,8 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
           <p className="reel-meta">Phase {reel.n}, {reel.k} of {reel.of}. Bar {bar}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">. Your keys: <b className="ok">{score.ok} right</b>, <b className="bad">{score.bad} wrong</b></span>}</p>
         </header>
         <div className="reel-stage">
-          <Lanes tl={tl} range={range} now={clock.now} held={held} presses={presses} hands={handsOn} shape={reel.kind === 'pattern' || reel.kind === 'L' || reel.kind === 'R' || reel.kind === 'fix'} jump={jumpKeys} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
+          <Lanes tl={tl} range={range} now={clock.now} held={held} presses={presses} hands={handsOn} flatHands={!use3d} geom={geomRef} shape={reel.kind === 'pattern' || reel.kind === 'L' || reel.kind === 'R' || reel.kind === 'fix'} jump={jumpKeys} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
+          {use3d && handsOn && <Suspense fallback={null}><Gloves3D tl={tl} now={clock.now} geom={geomRef} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} /></Suspense>}
           {/* The caption floats over the falling notes, never under the keys (it pushed them up). */}
           <div className="reel-foot">
             {sayLine && !showTitle ? (
