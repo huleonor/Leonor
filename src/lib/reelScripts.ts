@@ -309,3 +309,73 @@ const TALK: Record<string, Talk[]> = {
 };
 for (const [id, talks] of Object.entries(TALK)) SCRIPTS[id]?.phases.forEach((p, i) => { if (talks[i]) p.talk = talks[i]; });
 
+
+/**
+ * A tip for every video after a phase's first step, written by hand for Interstellar Experience
+ * after the score (the user's choice 2026-11: the trick of that moment, by a teacher). Keyed by the
+ * video's kind (L, R, B both hands, J a jump) and the bar its step starts on. Never the notes.
+ */
+const STEP_TIPS: Record<string, Record<string, string>> = {
+  'interstellar-experience': {
+    B3: 'Keep the pattern even while the octave changes under it.',
+    R5: 'Keep the top finger where it is. The lower fingers step down.',
+    B5: 'Drop the octave first, then let the pattern roll.',
+    B7: 'Same feeling: the octave on beat one, the pattern on top.',
+    J9: 'Look at the new key a beat early, then move.',
+    R9: 'The hand climbs a little here. Lead with the top note.',
+    B9: 'Listen for the top notes. They make the tune.',
+    R11: 'This is where the hand moves most. Look ahead to the next place.',
+    B11: 'Slow is fine. Keep both hands landing together.',
+    R16: 'Keep the wrist level and the fingers close to the keys.',
+    B16: 'Let the left hand keep the beat while the right hand sings.',
+    R18: 'Same shape, a little higher. Try not to look at your hands.',
+    B18: 'Count four in every bar, out loud if it helps.',
+    R20: 'Watch the sharp. One black key changes the colour.',
+    B20: 'Lean on the first beat of each bar.',
+    B25: 'Same wave in the left hand. Keep it smooth, not loud.',
+    R27: 'Bigger shapes now. Open the hand before you play.',
+    B27: 'If it feels crowded, play the left hand quieter.',
+    R29: 'The top moves up. Get ready for the stretch early.',
+    B29: 'Keep the beat steady through the stretch.',
+    J31: 'This is the big leap of the piece. Take your time.',
+    R31: 'Here comes the leap. Look at the high key first.',
+    B31: 'Slow down for the leap, then catch the beat again.',
+    B33: 'You know this one. Play it a little more freely.',
+    R35: 'A new chord. Feel the shape before you press.',
+    B35: 'Keep the left hand rolling under the new chord.',
+    R37: 'The last new shape of this phase. Take it slowly.',
+    B37: 'End the phase calm and soft.',
+    B41: 'The same hands as phase two, just higher up.',
+    R45: 'Watch the sharp again, the same black key as before.',
+    B45: 'Let this part breathe before the build.',
+    J47: 'Keep the left hand loose for the jump.',
+    B49: 'Keep the eighths even while the right hand gets louder.',
+    L51: 'One note, again and again. Bounce it lightly from the wrist.',
+    R51: 'A wider shape. Reach with the little finger, not the arm.',
+    B51: 'Louder now, but keep it even.',
+    B53: 'Let the build grow, bar by bar.',
+    J57: 'Move the hand in one go, not finger by finger.',
+    L57: 'These two bars have only three beats. Count one, two, three.',
+    R57: 'Three beats here. Do not wait for a fourth.',
+    B57: 'Count three, then the big chords arrive.',
+    B61: 'Hold the tied chord across the bar line.',
+    R63: 'Shape the chord in the air, then land it.',
+    B63: 'The left hand keeps rolling under the chords.',
+    R65: 'One finger moves. The rest of the chord stays.',
+    B65: 'Play the top note a little louder than the rest.',
+    R67: 'The melody runs here. Light fingers.',
+    B67: 'Keep the run light and the left hand steady.',
+    B69: 'Same as before. Enjoy it.',
+    L73: 'A new bass. Find it before the bar starts.',
+    R73: 'The pattern from the start is back. Your hand knows it.',
+    B73: 'Bring the sound down at the end of the phase.',
+    B77: 'Softer now. Let each chord ring.',
+    B79: 'Slow down a little. The ending is near.',
+    J81: 'Let the hand fall to the low key, no rush.',
+    R81: 'The last run goes up to the top. Keep it light and even.',
+    B81: 'Let the last note ring until it fades.',
+  },
+};
+for (const [id, tips] of Object.entries(STEP_TIPS)) SCRIPTS[id]?.phases.forEach(p => {
+  p.steps = Object.fromEntries(Object.entries(tips).filter(([k]) => { const bar = Number(k.slice(1)); return bar >= p.from && bar <= p.to; }));
+});

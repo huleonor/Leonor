@@ -24,6 +24,10 @@ A song is cut into phases (where the music changes). Each phase is a run of vide
 
 **Follow the piece's difficulty, and him.** The hard spot of a step (its biggest quick jump, a ninth or more) gets a jump video first ("Watch the jump. From A, up to the high E. Look at the new key before you move."), at most two a phase; a step with a jump goes slower. With his piano connected the feed adapts (`ReelFeed` in `Reels.tsx`): a clean Train with me skips the next step's hands-alone videos; a pace per song rises with clean videos and falls with poor ones; a place he misses twice gets a fix video right after ("Let's fix this spot. You missed E. Here it is again, slowly."). New fixed lines go through the recorder like any other.
 
+**A tip for every video** (`STEP_TIPS` in `reelScripts.ts`, keyed `R5`, `B5`, `L51`, `J31`: the kind and the bar its step starts on): written by hand after the score, the trick of that moment (what moves, what stays, where to look, how to count, how loud), one or two short sentences, never the notes read out. Run the recorder after adding any.
+
+**The picture moves with the music:** the camera follows the hand; a dashed line draws a pattern's shape through its falling notes; a jump gets an arc over the keys; the keyboard counts the beat.
+
 A **step** is a musical phrase, never a fixed count: two bars at least, more (up to four) until it holds a dozen notes and four seconds of music. So no video is one held note (the user, 2026-11: "videos that are literally pressing one note"). When a step opens with a bar he knows, the voice starts from the new one ("You know the first bar already. Here is the new one.").
 
 Rules: one idea per video; never the hard part first; nothing at full speed but the idea; the very same notes again get no video. Each video ends by naming the next one ("Nice. Next up, the right hand, a bit further on. Swipe up."), so the series reads as one lesson. The voice never says bar numbers: the screen shows them.

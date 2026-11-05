@@ -467,6 +467,8 @@ export function clipsOf(song: Song): Clip[] {
     const tail = chunks[chunks.length - 1];
     if (chunks.length > 1 && (tail[0] === tail[1] || onsets(tail[0], tail[1]) < 8) && tail[1] - chunks[chunks.length - 2][0] < 5) { chunks.pop(); chunks[chunks.length - 1][1] = tail[1]; }
     let firstBoth = true, said = 0, jumps = 0;
+    // The hand-written tip for a video of the step starting at this bar, said after its own line.
+    const withTip = (line: string, key: string) => { const t = r.words.steps?.[key]; return t ? `${line} ${t}` : line; };
     chunks.forEach(([a, b], ci) => {
       const first = ci === 0;
       const facts = bars.slice(a - 1, b);
@@ -516,13 +518,13 @@ export function clipsOf(song: Song): Clip[] {
         const tail = seq[best.i + 1]?.[0] ?? t1 + song.ppq / 2;
         const up = m1 > m0, from = letter(m0, flats), to = letter(m1, flats);
         const say = `Watch the jump. From ${from}, ${up ? 'up to the high' : 'down to the low'} ${to}. Look at the new key before you move.`;
-        mine.push(make('jump', barIndex(grid, t0) + 1, barIndex(grid, t1) + 1, slow(a, b, h, 1.6, 0.45), h === 'L' ? 'Left hand jump, slow' : 'The jump, slow', `${from} ${to}`, say, ci, false, { ticks: [t0, tail], times: 4, kind: (h ?? 'both') as Segment['kind'] }));
+        mine.push(make('jump', barIndex(grid, t0) + 1, barIndex(grid, t1) + 1, slow(a, b, h, 1.6, 0.45), h === 'L' ? 'Left hand jump, slow' : 'The jump, slow', `${from} ${to}`, (r.words.steps?.[`J${a}`] ? say.replace(' Look at the new key before you move.', ` ${r.words.steps[`J${a}`]}`) : say), ci, false, { ticks: [t0, tail], times: 4, kind: (h ?? 'both') as Segment['kind'] }));
         return true;
       };
       // A step with a jump goes slower: fewer notes a second.
       const pace = (h: Hand | undefined) => (jumpOf(h) ? 2 : 2.5);
-      if (soloL) { patternOf('L', fromL); const ps = pace('L'); mine.push(make('L', a, b, slow(a, b, 'L', ps), 'Left hand, slow', lw.head, lLine, ci)); }
-      if (soloR) { patternOf(hR, fromR); const ps = pace(hR); mine.push(make('R', a, b, slow(a, b, hR, ps), twoHands ? 'Right hand, slow' : 'Slow', rw.head, rLine, ci)); }
+      if (soloL) { patternOf('L', fromL); const ps = pace('L'); mine.push(make('L', a, b, slow(a, b, 'L', ps), 'Left hand, slow', lw.head, withTip(lLine, `L${a}`), ci)); }
+      if (soloR) { patternOf(hR, fromR); const ps = pace(hR); mine.push(make('R', a, b, slow(a, b, hR, ps), twoHands ? 'Right hand, slow' : 'Slow', rw.head, withTip(rLine, `R${a}`), ci)); }
       // Only the right hand plays here and it had its own video: nothing to put together.
       const together = twoHands && plays(a, b, 'L') && plays(a, b, hR);
       if (twoHands && (together || !(soloL || soloR))) {
@@ -537,7 +539,7 @@ export function clipsOf(song: Song): Clip[] {
         if (knownStep && prev?.kind === 'both' && prev.knownStep && prev.to === a - 1 && b - prev.from < 8) {
           const merged = make('both', prev.from, b, slow(prev.from, b, undefined, 3, SLOW_BOTH), 'Both hands, slow', prev.head, '', prev.step ?? ci);
           const chords = [...(prev.bassLine ?? []), ...bass].filter((x, i, xs) => xs[i - 1] !== x);
-          mine[mine.length - 1] = { ...merged, id: prev.id, knownStep: true, bassLine: chords, say: `Same shapes as before, now on new chords: ${listOf(chords.slice(0, 6))}. Both hands, slowly.` };
+          mine[mine.length - 1] = { ...merged, id: prev.id, knownStep: true, bassLine: chords, say: withTip(`Same shapes as before, now on new chords: ${listOf(chords.slice(0, 6))}. Both hands, slowly.`, `B${prev.from}`) };
         } else {
           const say = knownStep
             ? `Same shapes as before, now on new chords: ${listOf(bass.slice(0, 6))}. Both hands, slowly.`
@@ -545,7 +547,7 @@ export function clipsOf(song: Song): Clip[] {
               ? `${folded.join(' ')} ${folded.length < 2 ? (soloL || soloR ? 'Now both hands, slowly.' : 'Both hands, slowly.') : ''}`.trim()
               : firstBoth ? 'Now put the hands together, slowly. Land them on beat one together.' : BOTH[said++ % BOTH.length];
           // The head shows the keys: the right hand's first notes (or the bass when only it plays).
-          mine.push({ ...make('both', a, b, slow(a, b, undefined, 3, SLOW_BOTH), 'Both hands, slow', plays(a, b, hR) ? rw.head : lw.head, say, ci), knownStep, bassLine: bass });
+          mine.push({ ...make('both', a, b, slow(a, b, undefined, 3, SLOW_BOTH), 'Both hands, slow', plays(a, b, hR) ? rw.head : lw.head, withTip(say, `B${a}`), ci), knownStep, bassLine: bass });
         }
         firstBoth = false;
       }
@@ -594,6 +596,8 @@ export interface ReelTimeline {
   /** Where the video stops by itself for him to practise on his own ("two more times"). */
   hold?: { t: number; reps: number };
   duration: number; lo: Record<Hand, number>; hi: Record<Hand, number>;
+  /** Beats in a bar where the video starts (the keyboard counts them). */
+  beats?: number;
   /** Where a loop starts again. */ loopFrom: number;
 }
 
@@ -677,7 +681,7 @@ export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
   const lo = { R: 127, L: 127 } as Record<Hand, number>, hi = { R: 0, L: 0 } as Record<Hand, number>;
   for (const x of notes) { lo[x.hand] = Math.min(lo[x.hand], x.midi); hi[x.hand] = Math.max(hi[x.hand], x.midi); }
   // The loop is Train with me again: the count-in and his turn, without the voice.
-  return { notes, cards, lines, sfx, passes, countIn: { t: ci, beat, n }, train: { t: trainStart + LEAD, until }, hold: { t: holdAt, reps: 2 }, duration, lo, hi, loopFrom: ci - 0.2 };
+  return { notes, cards, lines, sfx, passes, countIn: { t: ci, beat, n }, train: { t: trainStart + LEAD, until }, hold: { t: holdAt, reps: 2 }, duration, lo, hi, loopFrom: ci - 0.2, beats: grid.sigs[Math.max(0, sg.from - 1)]?.[0] ?? 4 };
 }
 
 /** What every bar holds, to write a script from (window.__reelFacts in the dev console). */

@@ -20,7 +20,7 @@ function palette(el: Element) {
   return {
     R: v('--right'), L: v('--left'), keyR: v('--right-key'), keyL: v('--left'), inkR: v('--right-ink'), inkL: v('--left-ink'),
     ok: v('--ok'), white: v('--key-white'), whiteEdge: v('--key-edge'), black: v('--key-black'),
-    ink: v('--key-ink'), paper: v('--paper'), muted: v('--muted'), bad: v('--mark'), tR: v('--pink-text'), tL: v('--teal-text'), lane: v('--reel-lane'), now: v('--now-line'),
+    ink: v('--key-ink'), paper: v('--paper'), muted: v('--muted'), bad: v('--mark'), next: v('--marker'), tR: v('--pink-text'), tL: v('--teal-text'), lane: v('--reel-lane'), now: v('--now-line'),
   };
 }
 const FACE = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -130,7 +130,7 @@ const inOut = (x: number) => (x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2);
 /** A key he pressed on his piano: right or wrong, and when (for the mark that rises from it). */
 export type Press = { midi: number; ok: boolean; at: number };
 
-function Lanes({ tl, range, now, held, flats, named, namedUntil, presses }: { tl: ReelTimeline; range: [number, number]; now: () => number; held: React.RefObject<Map<number, boolean>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number; presses?: React.RefObject<Press[]> }) {
+function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape, jump }: { tl: ReelTimeline; range: [number, number]; now: () => number; held: React.RefObject<Map<number, boolean>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number; presses?: React.RefObject<Press[]>; shape?: boolean; jump?: [number, number] }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current!;
@@ -140,6 +140,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses }: { tl
     let [wLo, wHi] = pickRange(lo - 7, hi + 7, 30);
     let lay = keyLayout(wLo, wHi);
     let frame: [number, number] = [lay[lo]?.x ?? 0, (lay[hi]?.x ?? 1) + (lay[hi]?.w ?? 0)];
+    let split = false;
     // Two hands far apart: one keyboard so wide that every key gets thin and hard to read. Then it
     // is cut in two, the left hand's keys and the right hand's side by side with a gap between,
     // each as big as it can be (the keys in between are left out).
@@ -161,7 +162,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses }: { tl
         const both: Record<number, { x: number; w: number; black: boolean }> = {};
         for (const [m, g] of Object.entries(la)) both[Number(m)] = { ...g, x: g.x * wa / total, w: g.w * wa / total };
         for (const [m, g] of Object.entries(lb)) both[Number(m)] = { ...g, x: (wa + gap + g.x * wb) / total, w: g.w * wb / total };
-        lay = both; wLo = A[0]; wHi = B[1]; frame = [0, 1];
+        lay = both; wLo = A[0]; wHi = B[1]; frame = [0, 1]; split = true;
       }
     }
     // Which hand plays each key in this video (for the colour of a key the voice names).
@@ -176,7 +177,28 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses }: { tl
       ctx.clearRect(0, 0, W, H);
       const t = now();
       const z = inOut(Math.max(0, Math.min(1, (t - 0.15) / 0.9)));
-      const v0 = frame[0] * z, v1 = 1 + (frame[1] - 1) * z;
+      // The camera follows the hand: it frames the notes of the next second and a half (averaged
+      // over the last moments, so it glides and is the same picture at the same time), never
+      // tighter than six tenths of the video's own frame, never on a keyboard cut in two.
+      let f0 = frame[0], f1 = frame[1];
+      if (!split) {
+        const fw = frame[1] - frame[0], minW = fw * 0.6;
+        let a0 = 0, a1 = 0, k = 0;
+        for (let i = 0; i < 6; i++) {
+          const ts = t - i * 0.15;
+          let mn = Infinity, mx = -Infinity;
+          for (const n of tl.notes) if (n.t >= ts - 0.2 && n.t <= ts + 1.4 && lay[n.midi]) { mn = Math.min(mn, lay[n.midi].x); mx = Math.max(mx, lay[n.midi].x + lay[n.midi].w); }
+          if (mn === Infinity) { mn = frame[0]; mx = frame[1]; }
+          const pad = (mx - mn) * 0.15 + 0.01;
+          let w0 = mn - pad, w1 = mx + pad;
+          if (w1 - w0 < minW) { const c = (w0 + w1) / 2; w0 = c - minW / 2; w1 = c + minW / 2; }
+          if (w0 < frame[0]) { w1 += frame[0] - w0; w0 = frame[0]; }
+          if (w1 > frame[1]) { w0 -= w1 - frame[1]; w1 = frame[1]; }
+          a0 += w0; a1 += w1; k++;
+        }
+        f0 = a0 / k; f1 = a1 / k;
+      }
+      const v0 = f0 * z, v1 = 1 + (f1 - 1) * z;
       const X = (m: number) => lay[m] ? { x: ((lay[m].x - v0) / (v1 - v0)) * W, w: (lay[m].w / (v1 - v0)) * W } : null;
       const unitW = (X(60)?.w ?? W / 20);
       const kbH = Math.min(H * 0.36, Math.max(unitW * 5.2, H * 0.24));
@@ -221,9 +243,49 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses }: { tl
           ctx.fillText(letter(n.midi, flats), k.x + k.w / 2, yB - 7);
         }
       }
+      // The shape of a pattern drawn through its falling notes: a dashed line from note to note.
+      if (shape) {
+        const pts: [number, number][] = [];
+        for (const n of tl.notes) {
+          if (n.t < t - 0.05 || n.t > t + LOOK) continue;
+          if (n.train && tl.countIn && t < tl.countIn.t + tl.countIn.n * tl.countIn.beat) continue;
+          const k = X(n.midi);
+          if (k) pts.push([k.x + k.w / 2, kbTop - 4 - (n.t - t) * pps]);
+        }
+        if (pts.length > 1) {
+          ctx.save(); ctx.strokeStyle = pal.ink; ctx.lineWidth = 2; ctx.setLineDash([3, 6]); ctx.lineCap = 'round';
+          ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); ctx.restore();
+        }
+      }
+      // A jump: an arc over the keys from the key he leaves to the key he lands on, with its head.
+      if (jump) {
+        const a = X(jump[0]), b = X(jump[1]);
+        if (a && b) {
+          const x0 = a.x + a.w / 2, x1 = b.x + b.w / 2, y = kbTop - 18, h = Math.min(90, Math.abs(x1 - x0) * 0.45 + 20);
+          ctx.save(); ctx.strokeStyle = pal.ink; ctx.lineWidth = 3; ctx.setLineDash([8, 6]);
+          ctx.beginPath(); ctx.moveTo(x0, y); ctx.quadraticCurveTo((x0 + x1) / 2, y - h, x1, y); ctx.stroke();
+          ctx.setLineDash([]); ctx.fillStyle = pal.ink;
+          const dir = Math.sign(x1 - x0) || 1;
+          ctx.beginPath(); ctx.moveTo(x1, y + 2); ctx.lineTo(x1 - 12 * dir, y - 12); ctx.lineTo(x1 + 4 * dir, y - 14); ctx.closePath(); ctx.fill();
+          ctx.restore();
+        }
+      }
       // The now line.
       ctx.fillStyle = pal.now;
       ctx.fillRect(0, kbTop - 4, W, 3);
+      // The keyboard counts the beat while the music plays: 1 2 3 4, the beat it is on marked.
+      const last = [...tl.notes].reverse().find(n => n.t <= t && n.t > t - 1.2);
+      if (last) {
+        const beats = tl.beats ?? 4;
+        ctx.font = `700 15px 'Courier New', Courier, monospace`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+        for (let i = 0; i < beats; i++) {
+          const x = 16 + i * 24, y = kbTop - 20;
+          if (i === last.beat % beats) { ctx.fillStyle = pal.next; ctx.fillRect(x - 10, y - 10, 20, 20); }
+          ctx.fillStyle = i === last.beat % beats ? pal.ink : pal.muted;
+          ctx.fillText(String(i + 1), x, y + 1);
+        }
+        ctx.textBaseline = 'alphabetic';
+      }
       // The keys.
       const naming = t < namedUntil ? named.current ?? new Map<number, number>() : new Map<number, number>();
       const mine = held.current ?? new Map<number, boolean>();
@@ -288,7 +350,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses }: { tl
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [tl, range, now, held, flats, named, namedUntil, presses]);
+  }, [tl, range, now, held, flats, named, namedUntil, presses, shape, jump]);
   return <canvas ref={ref} className="reel-lanes" aria-hidden="true" />;
 }
 
@@ -629,6 +691,14 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
     named.current = map;
   }, [sayLine, spoken.at, spoken.words, tl, song.fifths]);
   const firstNote = tl.notes[0]?.t ?? 0;
+  // A jump video: the key it leaves and the key it lands on, for the arc over the keys.
+  const jumpKeys = useMemo<[number, number] | undefined>(() => {
+    if (reel.kind !== 'jump') return undefined;
+    const on: number[] = [];
+    for (const n of tl.notes) if (!n.train && !on.includes(n.t)) on.push(n.t);
+    const at = (x: number) => tl.notes.filter(n => n.t === x).reduce((a, b) => (b.midi > a.midi ? b : a)).midi;
+    return on.length > 1 ? [at(on[0]), at(on[1])] : undefined;
+  }, [reel, tl]);
   const w = reel.words;
   const seg = reel.segments[0];
   // While both hands play the whole phase: the caption of the bar (or the one just before it).
@@ -660,7 +730,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
           <p className="reel-meta">Phase {reel.n}, {reel.k} of {reel.of}. Bar {bar}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">. Your keys: <b className="ok">{score.ok} right</b>, <b className="bad">{score.bad} wrong</b></span>}</p>
         </header>
         <div className="reel-stage">
-          <Lanes tl={tl} range={range} now={clock.now} held={held} presses={presses} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
+          <Lanes tl={tl} range={range} now={clock.now} held={held} presses={presses} shape={reel.kind === 'pattern' || reel.kind === 'L' || reel.kind === 'R' || reel.kind === 'fix'} jump={jumpKeys} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
           {/* The caption floats over the falling notes, never under the keys (it pushed them up). */}
           <div className="reel-foot">
             {sayLine && !showTitle ? (
