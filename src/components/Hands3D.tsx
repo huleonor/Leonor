@@ -165,7 +165,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           fingers.push({
             f, bones: chain, ends, rest: chain.map(b => b.quaternion.clone()), axis: chain.map((_, i) => ends[i].position.clone().normalize()), len,
             theta: [0.3, 0.7], abd: 0, x: 0, y: 0, vx: 0, vy: 0,
-            hover: rnd(f + (h === 'L' ? 10 : 0)), stiff: 15 + rnd(f * 3 + (h === 'L' ? 5 : 0)) * 7,
+            hover: rnd(f + (h === 'L' ? 10 : 0)), stiff: 24 + rnd(f * 3 + (h === 'L' ? 5 : 0)) * 8,
           });
         }
         const span = W(bones.get('index_01')!).distanceTo(W(bones.get('pinky_01')!));
@@ -342,7 +342,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // Damped springs, stepped finely so they stay stable on a slow frame.
           const steps = Math.max(1, Math.ceil(dt / 0.006)), h2 = dt / steps;
           for (const fg of rig.fingers) {
-            const w = want[fg.f], om = fg.stiff, ze = 0.82;
+            const w = want[fg.f], om = fg.stiff, ze = 0.9;
             for (let k = 0; k < steps; k++) {
               fg.vx += (om * om * (w.x! - fg.x) - 2 * ze * om * fg.vx) * h2; fg.x += fg.vx * h2;
               fg.vy += (om * om * (w.y - fg.y) - 2 * ze * om * fg.vy) * h2; fg.y += fg.vy * h2;
@@ -353,10 +353,13 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           const p = rig.point;
           // The wrist, led by the notes about to sound, on its own slower spring.
           let sx = 0, sw = 0;
-          for (let f = 1; f <= 5; f++) { const w = want[f].real ? 1 / (0.06 + want[f].soon) : 0.15; sx += ((want[f].real ? want[f].x! : rig.fingers[f - 1].x) - (f - 3) * dir * (rig.span * s) / 3) * w; sw += w; }
+          for (let f = 1; f <= 5; f++) { const w = want[f].real ? 1 / (0.06 + Math.max(0, want[f].soon - 0.25)) : 0.15; sx += ((want[f].real ? want[f].x! : rig.fingers[f - 1].x) - (f - 3) * dir * (rig.span * s) / 3) * w; sw += w; }
           const handX = p > 0.5 ? rig.px + dir * kw * 0.9 : sx / sw;
-          const om = 13, ze = 0.9;
-          for (let k = 0; k < steps; k++) { rig.vwx += (om * om * (handX - rig.wx) - 2 * ze * om * rig.vwx) * h2; rig.wx += rig.vwx * h2; }
+          // A stiff, critically damped spring (no overshoot), towards a target that already leans on
+          // the notes coming in the next quarter second, so the hand arrives with them, not after.
+          const om = 20, ze = 1;
+          const aimX = handX;
+          for (let k = 0; k < steps; k++) { rig.vwx += (om * om * (aimX - rig.wx) - 2 * ze * om * rig.vwx) * h2; rig.wx += rig.vwx * h2; }
           const pressSide = [1, 2, 3, 4, 5].reduce((a, f) => a + want[f].press * (f - 3), 0);
           rig.yaw += (clamp(-rig.vwx / (kw * 45), -0.12, 0.12) - rig.yaw) * (1 - Math.exp(-dt * 6));
           rig.roll += (clamp(pressSide * 0.035 * dir, -0.12, 0.12) - rig.roll) * (1 - Math.exp(-dt * 7));
@@ -377,7 +380,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           for (let f = 1; f <= 5; f++) if (want[f].real && want[f].soon < 1) reachY = Math.min(reachY, want[f].y + (f === 1 ? -G.kbH * 0.1 : 0));
           const kyWant = p > 0.5 ? rig.py : reachY;
           if (!rig.ky) rig.ky = kyWant;
-          for (let k = 0; k < steps; k++) { rig.vky += (49 * (kyWant - rig.ky) - 2 * 7 * rig.vky) * h2; rig.ky += rig.vky * h2; }
+          for (let k = 0; k < steps; k++) { rig.vky += (144 * (kyWant - rig.ky) - 2 * 12 * rig.vky) * h2; rig.ky += rig.vky * h2; }
           const keyY = rig.ky;
           // The hand gives a little with each press, from the wrist, so a strike is felt in the arm.
           const pressNow = Math.max(...[1, 2, 3, 4, 5].map(f => want[f].press));
