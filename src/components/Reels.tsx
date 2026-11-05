@@ -177,32 +177,39 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
       ctx.clearRect(0, 0, W, H);
       const t = now();
       const z = inOut(Math.max(0, Math.min(1, (t - 0.15) / 0.9)));
-      // The camera follows the hand: it frames the notes of the next second and a half (averaged
-      // over the last moments, so it glides and is the same picture at the same time), never
-      // tighter than six tenths of the video's own frame, never on a keyboard cut in two.
+      // The camera follows the hand without shaking: the video is cut in blocks of 2.4 s, each
+      // framing the notes it holds (never tighter than six tenths of the video's own frame, never on
+      // a keyboard cut in two), and the camera moves from one block's frame to the next in one slow
+      // glide over the last 0.8 s of the block, then holds still. The same picture at the same time.
+      const BLOCK = 2.4, GLIDE = 0.8;
+      const blockFrame = (bi: number): [number, number] => {
+        let mn = Infinity, mx = -Infinity;
+        for (const n of tl.notes) if (n.t >= bi * BLOCK - 0.3 && n.t <= (bi + 1) * BLOCK + 0.6 && lay[n.midi]) { mn = Math.min(mn, lay[n.midi].x); mx = Math.max(mx, lay[n.midi].x + lay[n.midi].w); }
+        if (mn === Infinity) return frame;
+        const fw = frame[1] - frame[0], minW = fw * 0.6, pad = (mx - mn) * 0.15 + 0.01;
+        let w0 = mn - pad, w1 = mx + pad;
+        if (w1 - w0 < minW) { const c = (w0 + w1) / 2; w0 = c - minW / 2; w1 = c + minW / 2; }
+        if (w0 < frame[0]) { w1 += frame[0] - w0; w0 = frame[0]; }
+        if (w1 > frame[1]) { w0 -= w1 - frame[1]; w1 = frame[1]; }
+        return [w0, w1];
+      };
       let f0 = frame[0], f1 = frame[1];
       if (!split) {
-        const fw = frame[1] - frame[0], minW = fw * 0.6;
-        let a0 = 0, a1 = 0, k = 0;
-        for (let i = 0; i < 6; i++) {
-          const ts = t - i * 0.15;
-          let mn = Infinity, mx = -Infinity;
-          for (const n of tl.notes) if (n.t >= ts - 0.2 && n.t <= ts + 1.4 && lay[n.midi]) { mn = Math.min(mn, lay[n.midi].x); mx = Math.max(mx, lay[n.midi].x + lay[n.midi].w); }
-          if (mn === Infinity) { mn = frame[0]; mx = frame[1]; }
-          const pad = (mx - mn) * 0.15 + 0.01;
-          let w0 = mn - pad, w1 = mx + pad;
-          if (w1 - w0 < minW) { const c = (w0 + w1) / 2; w0 = c - minW / 2; w1 = c + minW / 2; }
-          if (w0 < frame[0]) { w1 += frame[0] - w0; w0 = frame[0]; }
-          if (w1 > frame[1]) { w0 -= w1 - frame[1]; w1 = frame[1]; }
-          a0 += w0; a1 += w1; k++;
-        }
-        f0 = a0 / k; f1 = a1 / k;
+        const bi = Math.max(0, Math.floor(t / BLOCK));
+        const [a0, a1] = blockFrame(bi), [b0, b1] = blockFrame(bi + 1);
+        const e = inOut(Math.max(0, Math.min(1, (t - (bi + 1) * BLOCK + GLIDE) / GLIDE)));
+        f0 = a0 + (b0 - a0) * e; f1 = a1 + (b1 - a1) * e;
       }
       const v0 = f0 * z, v1 = 1 + (f1 - 1) * z;
       const X = (m: number) => lay[m] ? { x: ((lay[m].x - v0) / (v1 - v0)) * W, w: (lay[m].w / (v1 - v0)) * W } : null;
       const unitW = (X(60)?.w ?? W / 20);
-      const kbH = Math.min(H * 0.36, Math.max(unitW * 5.2, H * 0.24));
-      const kbTop = H - kbH;
+      // The keyboard's height is set from the video's own frame (not the moving camera), so it never
+      // pumps as the camera moves; with the gloves on, a strip under the keys holds their palms.
+      const frameUnit = ((lay[60]?.w ?? 1 / 20) / Math.max(0.05, (1 + (frame[1] - 1) * z) - frame[0] * z)) * W;
+      const palmH = hands ? Math.min(H * 0.16, 90) : 0;
+      const kbH = Math.min((H - palmH) * 0.36, Math.max(frameUnit * 5.2, (H - palmH) * 0.24));
+      const kbBot = H - palmH;
+      const kbTop = kbBot - kbH;
       const fall = kbTop - 4, pps = fall / LOOK;
       const colour = (h: Hand) => (h === 'L' ? pal.L : pal.R);
       // Octave guides at every C.
@@ -243,26 +250,12 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
           ctx.fillText(letter(n.midi, flats), k.x + k.w / 2, yB - 7);
         }
       }
-      // The shape of a pattern drawn through its falling notes: a dashed line from note to note.
-      if (shape) {
-        const pts: [number, number][] = [];
-        for (const n of tl.notes) {
-          if (n.t < t - 0.05 || n.t > t + LOOK) continue;
-          if (n.train && tl.countIn && t < tl.countIn.t + tl.countIn.n * tl.countIn.beat) continue;
-          const k = X(n.midi);
-          if (k) pts.push([k.x + k.w / 2, kbTop - 4 - (n.t - t) * pps]);
-        }
-        if (pts.length > 1) {
-          ctx.save(); ctx.strokeStyle = pal.ink; ctx.lineWidth = 2; ctx.setLineDash([3, 6]); ctx.lineCap = 'round';
-          ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); ctx.restore();
-        }
-      }
       // A jump: an arc over the keys from the key he leaves to the key he lands on, with its head.
       if (jump) {
         const a = X(jump[0]), b = X(jump[1]);
         if (a && b) {
           const x0 = a.x + a.w / 2, x1 = b.x + b.w / 2, y = kbTop - 18, h = Math.min(90, Math.abs(x1 - x0) * 0.45 + 20);
-          ctx.save(); ctx.strokeStyle = pal.ink; ctx.lineWidth = 3; ctx.setLineDash([8, 6]);
+          ctx.save(); ctx.strokeStyle = pal.ink; ctx.lineWidth = 3;
           ctx.beginPath(); ctx.moveTo(x0, y); ctx.quadraticCurveTo((x0 + x1) / 2, y - h, x1, y); ctx.stroke();
           ctx.setLineDash([]); ctx.fillStyle = pal.ink;
           const dir = Math.sign(x1 - x0) || 1;
@@ -329,59 +322,78 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
         ctx.fillRect(k.x - k.w * 0.3 * e, kbTop - 16 - 40 * e, k.w * (1 + 0.6 * e), 12 + 40 * e);
         ctx.globalAlpha = 1;
       }
-      // The gloves: a small white cartoon glove for each hand (the user's choice), pointing down at
-      // the key that hand plays now or next, tapping it as the note starts, its finger number on the
-      // back; while the voice names the keys it points at the key being named. It sits just above
-      // the keys so the key, its letter and its colour stay in sight. Placed from the notes of the
-      // next moments, averaged so it glides (the same picture at the same time).
+      // The gloves, seen as he sees his own hands at the piano: a white cartoon glove for each hand,
+      // its palm on the strip in front of the keys and five fingers up onto them, each finger over
+      // the key it plays (from the notes' fingering), its number on the tip. A finger slides to its
+      // next key just before it plays it (an ease over 0.3 s, then still, so nothing shakes) and
+      // presses in its hand's colour while the note sounds; while the voice names the keys, the
+      // finger for each named key lights on the marker. A finger with no note in the video sits a
+      // white key from its neighbour.
       if (hands) {
-        const s = Math.max(38, Math.min(62, unitW * 1.8));
-        const naming = t < namedUntil && named.current && named.current.size ? [...named.current.entries()].sort((x, y) => y[1] - x[1])[0][0] : undefined;
+        const fw = Math.max(12, Math.min(unitW * 0.78, 34));
         for (const h of ['L', 'R'] as Hand[]) {
-          const target = (ts: number) => {
-            if (naming !== undefined) return (handOf.get(naming) ?? (naming < 60 ? 'L' : 'R')) === h ? { midi: naming, finger: tl.notes.find(n => n.midi === naming)?.finger } : undefined;
-            let best: ReelNote | undefined;
-            for (const n of tl.notes) {
-              if (n.hand !== h || n.t + n.dur < ts || n.t > ts + 1.2) continue;
-              if (!best || n.t < best.t || (n.t === best.t && (h === 'R' ? n.midi > best.midi : n.midi < best.midi))) best = n;
-            }
-            return best;
-          };
-          let sx = 0, k = 0;
-          let finger: number | undefined;
-          for (let i = 0; i < 5; i++) {
-            const g = target(t - i * 0.1);
-            const key = g && X(g.midi);
-            if (!key) continue;
-            sx += key.x + key.w / 2; k++;
-            if (i === 0) finger = g.finger;
-          }
-          if (k < 2) continue;
-          const x = sx / k;
-          // The tap: down for a moment as one of its notes starts.
-          let tap = 0;
-          for (const n of tl.notes) if (n.hand === h && t >= n.t && t < n.t + 0.2) tap = Math.max(tap, 1 - (t - n.t) / 0.2);
-          const y = kbTop + 6 + tap * 8;
+          const mine = tl.notes.filter(n => n.hand === h && n.finger);
+          if (!mine.length) continue;
           const dir = h === 'R' ? 1 : -1;
-          ctx.save();
-          // Leaning in from the side, the tip on the key, so the note falling onto it stays in sight.
-          ctx.translate(x, y); ctx.rotate(dir * 0.55);
-          ctx.lineWidth = 2.5; ctx.strokeStyle = pal.ink; ctx.lineJoin = 'round';
-          const blob = (cx: number, cy: number, rx: number, ry: number, rot = 0) => { ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, rot, 0, Math.PI * 2); ctx.fillStyle = pal.white; ctx.fill(); ctx.stroke(); };
-          // Thumb, palm, the curled fingers, the pointing finger, then the cuff in the hand's colour.
-          blob(0 - dir * s * 0.3, 0 - s * 0.82, s * 0.13, s * 0.22, dir * 0.6);
-          blob(0 + dir * s * 0.06, 0 - s * 0.8, s * 0.3, s * 0.27);
-          blob(0 + dir * s * 0.26, 0 - s * 0.6, s * 0.12, s * 0.11);
-          blob(0 + dir * s * 0.34, 0 - s * 0.76, s * 0.11, s * 0.1);
-          ctx.beginPath(); ctx.roundRect(0 - s * 0.11, 0 - s * 0.66, s * 0.22, s * 0.66, s * 0.11); ctx.fillStyle = pal.white; ctx.fill(); ctx.stroke();
-          ctx.beginPath(); ctx.roundRect(0 + dir * s * 0.06 - s * 0.26, 0 - s * 1.16, s * 0.52, s * 0.17, s * 0.06); ctx.fillStyle = h === 'L' ? pal.L : pal.R; ctx.fill(); ctx.stroke();
-          if (finger) {
-            ctx.fillStyle = pal.ink; ctx.font = `700 ${Math.round(s * 0.3)}px 'Courier New', Courier, monospace`;
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(String(finger), 0 + dir * s * 0.06, 0 - s * 0.84);
-            ctx.textBaseline = 'alphabetic';
+          const xs: (number | undefined)[] = [];
+          for (let f = 1; f <= 5; f++) {
+            const ns = mine.filter(n => n.finger === f).sort((p, q) => p.t - q.t);
+            if (!ns.length) continue;
+            let i = ns.findIndex(n => n.t - 0.35 > t);
+            if (i < 0) i = ns.length;
+            const prev = ns[Math.max(0, i - 1)], next = ns[Math.min(ns.length - 1, i)];
+            const px = X(prev.midi), nx = X(next.midi);
+            if (!px || !nx) continue;
+            const e = i >= ns.length || i === 0 ? (i === 0 ? 1 : 0) : inOut(Math.max(0, Math.min(1, (t - (next.t - 0.35)) / 0.3)));
+            const a = i === 0 ? nx.x + nx.w / 2 : px.x + px.w / 2, b = nx.x + nx.w / 2;
+            xs[f] = a + (b - a) * e;
           }
+          for (let f = 1; f <= 5; f++) if (xs[f] === undefined) {
+            let best: number | undefined, bd = 9;
+            for (let g = 1; g <= 5; g++) if (xs[g] !== undefined && Math.abs(g - f) < bd) { bd = Math.abs(g - f); best = xs[g]! + (f - g) * dir * unitW; }
+            xs[f] = best;
+          }
+          if (xs.slice(1).some(x => x === undefined)) continue;
+          const fx = xs.slice(1) as number[];
+          const lo = Math.min(...fx) - fw * 0.6, hi = Math.max(...fx) + fw * 0.6;
+          const palmTop = kbBot - kbH * 0.12;
+          const tone = h === 'L' ? pal.L : pal.R;
+          ctx.save();
+          ctx.lineWidth = 3; ctx.strokeStyle = pal.ink; ctx.lineJoin = 'round';
+          // Fingers first (the palm covers their roots): long middle three, shorter little finger,
+          // the thumb short and turned in towards the other fingers.
+          for (let f = 5; f >= 1; f--) {
+            const x = fx[f - 1];
+            const playing = mine.some(n => n.finger === f && n.t <= t && n.t + n.dur > t);
+            const pointed = t < namedUntil && mine.some(n => n.finger === f && (named.current?.has(n.midi) ?? false));
+            const reach = f === 1 ? 0.3 : f === 5 ? 0.5 : f === 3 ? 0.66 : 0.6;
+            const tip = kbBot - kbH * reach + (playing ? kbH * 0.07 : 0);
+            ctx.save();
+            if (f === 1) { ctx.translate(x, palmTop); ctx.rotate(dir * 0.35); ctx.translate(-x, -palmTop); }
+            ctx.beginPath(); ctx.roundRect(x - fw / 2, tip, fw, palmTop - tip + fw, fw / 2);
+            ctx.fillStyle = playing ? tone : pointed ? pal.next : pal.white; ctx.fill(); ctx.stroke();
+            ctx.fillStyle = playing ? pal.paper : pal.ink;
+            ctx.font = `700 ${Math.round(Math.max(11, fw * 0.5))}px 'Courier New', Courier, monospace`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(String(f), x, tip + fw * 0.55);
+            ctx.restore();
+          }
+          // The palm and the cuff in the hand's colour, on the strip in front of the keys.
+          // A rounded mitten of a palm, narrowing to a short cuff at the wrist.
+          const cuffH = Math.max(12, palmH * 0.22), wristW = (hi - lo) * 0.62, mid = (lo + hi) / 2;
+          const bottom = H - cuffH + 2, r = Math.min((hi - lo) * 0.45, bottom - palmTop);
+          ctx.beginPath();
+          ctx.moveTo(lo, palmTop + r * 0.4);
+          ctx.quadraticCurveTo(lo, palmTop, lo + r * 0.6, palmTop);
+          ctx.lineTo(hi - r * 0.6, palmTop);
+          ctx.quadraticCurveTo(hi, palmTop, hi, palmTop + r * 0.4);
+          ctx.quadraticCurveTo(hi, bottom, mid + wristW / 2, bottom);
+          ctx.lineTo(mid - wristW / 2, bottom);
+          ctx.quadraticCurveTo(lo, bottom, lo, palmTop + r * 0.4);
+          ctx.closePath(); ctx.fillStyle = pal.white; ctx.fill(); ctx.stroke();
+          ctx.beginPath(); ctx.roundRect(mid - wristW / 2 - 4, bottom - 2, wristW + 8, cuffH + 20, 6); ctx.fillStyle = tone; ctx.fill(); ctx.stroke();
           ctx.restore();
+          ctx.textBaseline = 'alphabetic';
         }
       }
       // Each key he presses sends up a small mark in green or red with its letter, so he sees what
