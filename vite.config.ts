@@ -8,6 +8,8 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 const built = new Date().toISOString().slice(0, 16).replace('T', ' ');
 
 export default defineConfig({
+  // GitHub Pages serves the app under /Leonor/ (BASE_PATH, set by the Pages workflow); elsewhere at /.
+  base: process.env.BASE_PATH ?? '/',
   // Shown in Settings, and used to tell an iPhone app that is older than this site needs.
   define: {
     __APP_VERSION__: JSON.stringify(`${pkg.version} · ${built} UTC`),
@@ -28,7 +30,7 @@ export default defineConfig({
         short_name: "Leonor",
         description: 'Learn the songs you love from short videos, one pattern at a time, then play them.',
         lang: 'en',
-        start_url: '/',
+        start_url: './',
         display: 'fullscreen',
         orientation: 'any',
         background_color: '#EDE4CF',
@@ -46,7 +48,7 @@ export default defineConfig({
         runtimeCaching: [
           {
             // The recorded voice of the videos and the sound effects: fetched as the videos need them, kept.
-            urlPattern: ({ url }) => url.pathname.startsWith('/voice/') || url.pathname.startsWith('/sfx/') || url.pathname.startsWith('/models/'),
+            urlPattern: ({ url }) => /\/(voice|sfx|models)\//.test(url.pathname),
             handler: 'CacheFirst',
             options: { cacheName: 'voice', expiration: { maxEntries: 4000 }, cacheableResponse: { statuses: [0, 200] } },
           },

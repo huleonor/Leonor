@@ -4,6 +4,8 @@ The look is Lo-Fi (the user's choice in the 2026-11 redesign, anchor C of three 
 
 Read DESIGN.md before touching any UI. These rules are fixed unless the user changes them.
 
+Deploys only when he says (the user's choice 2026-11): changes are committed and pushed to the session's branch, but no pull request into main is opened or merged until he asks for a deploy. A merge into main deploys the app on GitHub Pages (`.github/workflows/pages.yml`, https://huleonor.github.io/Leonor/, built with `BASE_PATH=/Leonor/`, so every file the app fetches goes through `import.meta.env.BASE_URL`, never a bare `/path`). Vercel's deploys from git are off (`vercel.json`, to save its deployments); `api/plan.ts` lives only there, so on Pages the teaching plan comes from the rules.
+
 ## Brand (2026-11)
 - The app is called Leonor. There is no logo in the app (the user found it ugly, 2026-11): the shell has none. The key mark (`public/brand/leonor-mark.svg`, `<Logo />`) stays only for the PNG icons in `public/icons` and the iPhone icon. There is no profile screen (the user removed it): the penguin avatar code (`Penguin.tsx`, `Profile.tsx`) stays unused.
 - No game elements: no energy, gems, shop, XP, streaks, medals or daily goals, and no Premium or paywall. What is left is the music and his progress in it: a percent per song, parts learnt, and the stars on a practice result. Progress per song shows in the Library rows. The old economy code (`Economy.tsx`, `energy.ts`, `billing.ts`, `Paywall.tsx`, the path) stays in the repo unused for now.

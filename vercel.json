@@ -1,5 +1,6 @@
 {
   "functions": {
     "api/plan.ts": { "maxDuration": 300 }
-  }
+  },
+  "git": { "deploymentEnabled": false }
 }

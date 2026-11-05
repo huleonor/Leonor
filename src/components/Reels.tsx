@@ -893,6 +893,15 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
   // While a video plays nothing sits over it: the menu, the piano chip and the actions show only
   // when he pauses (the user's choice 2026-11).
   const paused = active && !clock.playing && !holding && !waitingFor;
+  // The Explain chip comes five seconds into the video: a timer of its own, so it shows even when
+  // nothing else on screen changes at that moment.
+  const [explainReady, setExplainReady] = useState(false);
+  useEffect(() => {
+    if (!active) { setExplainReady(false); return; }
+    if (explainReady || !clock.playing) return;
+    const id = window.setTimeout(() => setExplainReady(true), Math.max(0, 5 - clock.now()) * 1000);
+    return () => window.clearTimeout(id);
+  }, [active, clock.playing, explainReady]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!active) return;
     const root = document.documentElement;
@@ -982,7 +991,7 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
         </AnimatePresence>
         {/* Explain it slower: discreet, a moment into the video, only while it plays (paused, the piano chip has its place). */}
         <AnimatePresence>
-          {onExplain && active && clock.ready && clock.playing && !holding && !waitingFor && reel.kind !== 'intro' && reel.kind !== 'explain' && clock.now() > 5 && (
+          {onExplain && active && clock.ready && clock.playing && !holding && !waitingFor && reel.kind !== 'intro' && reel.kind !== 'explain' && explainReady && (
             <motion.button key="explain" className="reel-explain" onClick={e => { e.stopPropagation(); onExplain(); }} aria-label={L('Explain this part slower, piece by piece', 'Explicar esta parte mais devagar, por partes')}
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.3, ease: ARRIVE }}>
               <IconExplain size={16} />{L('Explain', 'Explicar')}
