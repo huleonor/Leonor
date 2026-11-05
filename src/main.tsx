@@ -34,6 +34,14 @@ if (import.meta.env.DEV) {
   // The hands' quality check on the video on screen: await window.__handCheck(20).
   (window as unknown as { __handCheck: unknown }).__handCheck = async (s?: number) => (await import('./lib/handCheck')).handCheck(s);
   (window as unknown as { __handFrames: unknown }).__handFrames = async () => (await import('./lib/handCheck')).probe.last;
+  // How playable the automatic fingering is: await window.__fingerCheck('song-id').
+  (window as unknown as { __fingerCheck: unknown }).__fingerCheck = async (id: string) => {
+    const { listSongs, loadSong } = await import('./lib/library');
+    const { fingerReport } = await import('./lib/fingering');
+    const entry = (await listSongs()).find(e => e.id === id || e.slot === id);
+    if (!entry) return `No song ${id}`;
+    return fingerReport((await loadSong(entry)).notes);
+  };
   (window as unknown as { __reelFacts: unknown }).__reelFacts = async (id: string) => {
     const { listSongs, loadSong } = await import('./lib/library');
     const { reelFacts } = await import('./lib/reels');

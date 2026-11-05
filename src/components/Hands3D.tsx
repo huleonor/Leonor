@@ -73,7 +73,7 @@ type Finger = {
 type Rig = {
   h: Hand; root: THREE.Group; fingers: Finger[]; all: THREE.Bone[]; restAll: THREE.Quaternion[];
   align: THREE.Quaternion; fwd: THREE.Vector3; back: THREE.Vector3; span: number; length: number;
-  wx: number; vwx: number; ky: number; vky: number; dip: number; edge: number; yaw: number; roll: number; point: number; px: number; py: number; seen: boolean; shift: number;
+  wx: number; vwx: number; ky: number; vky: number; dip: number; edge: number; yaw: number; roll: number; point: number; px: number; py: number; seen: boolean; shiftWant: number;
 };
 
 export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
@@ -179,7 +179,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
         }
         const span = W(bones.get('index_01')!).distanceTo(W(bones.get('pinky_01')!));
         const length = W(bones.get('middle_01')!).distanceTo(wrist) + fingers[2].len.reduce((a, b) => a + b, 0);
-        rigs[h] = { h, root, fingers, all: sk.bones, restAll: sk.bones.map(b => b.quaternion.clone()), align, fwd, back, span, length, wx: 0, vwx: 0, ky: 0, vky: 0, dip: 0, edge: 0, yaw: 0, roll: 0, point: 0, px: 0, py: 0, seen: false, shift: 0 };
+        rigs[h] = { h, root, fingers, all: sk.bones, restAll: sk.bones.map(b => b.quaternion.clone()), align, fwd, back, span, length, wx: 0, vwx: 0, ky: 0, vky: 0, dip: 0, edge: 0, yaw: 0, roll: 0, point: 0, px: 0, py: 0, seen: false, shiftWant: 0 };
       }).catch(err => console.warn('[hands] the hand model could not load:', err));
     }
 
@@ -384,7 +384,11 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // the notes coming in the next quarter second (earlier for a far jump, about 0.06 s a key,
           // so a hand crossing over arrives on time), so the hand arrives with them, not after.
           const om = 20, ze = 1;
-          const aimX = handX;
+          // The thumb and the little finger reach sideways only so far from their knuckles: while one
+          // is on its key and still misses it sideways, the wrist's target slides over by the miss
+          // (measured last frame, at most 1.2 keys, only when the tip is short of its key), as a pianist's hand does on an octave,
+          // and comes back as soon as it lets go (the check found the thumb half a key short).
+          const aimX = handX + rig.shiftWant;
           for (let k = 0; k < steps; k++) { rig.vwx += (om * om * (aimX - rig.wx) - 2 * ze * om * rig.vwx) * h2; rig.wx += rig.vwx * h2; }
           const pressSide = [1, 2, 3, 4, 5].reduce((a, f) => a + want[f].press * (f - 3), 0);
           rig.yaw += (clamp(-rig.vwx / (kw * 45), -0.12, 0.12) - rig.yaw) * (1 - Math.exp(-dt * 6));
@@ -415,30 +419,14 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // them and comes down a little, as a pianist's forearm turns, so they reach their keys.
           const edgeNow = Math.max(want[1].press, want[5].press, want[1].real ? smooth(1 - want[1].soon / 0.25) : 0, want[5].real ? smooth(1 - want[5].soon / 0.25) : 0);
           rig.edge += (edgeNow - rig.edge) * (1 - Math.exp(-dt * 14));
-          rig.root.position.set(rig.wx + rig.shift - k3.x, -(keyY + fl * 0.55) - k3.y, fl * (0.44 - 0.035 * rig.dip - 0.1 * rig.edge) - k3.z);
+          rig.root.position.set(rig.wx - k3.x, -(keyY + fl * 0.55) - k3.y, fl * (0.44 - 0.035 * rig.dip - 0.1 * rig.edge) - k3.z);
           rig.root.updateMatrixWorld(true);
-          // The thumb and the little finger reach sideways only so far from their knuckles: when one
-          // is about to play a key beyond that, the whole hand moves over for it (at most a key and a
-          // half, eased), as a pianist's does on an octave (the check found the thumb short of it).
-          let need = 0;
-          for (const f of [1, 5]) {
-            const w = want[f];
-            if (!w.real || (w.press <= 0 && w.soon > 0.3)) continue;
-            const fg = rig.fingers[f - 1], base = fg.bones[0].getWorldPosition(v()).x;
-            const reach = fg.len.reduce((a, b) => a + b, 0) * s * (f === 1 ? 0.8 : 0.55);
-            const dx = w.x! - base;
-            if (Math.abs(dx) > reach) need += Math.sign(dx) * (Math.abs(dx) - reach);
-          }
-          need = clamp(need, -kw * 1.5, kw * 1.5);
-          const shiftWas = rig.shift;
-          rig.shift += (need - rig.shift) * (1 - Math.exp(-dt * 14));
-          if (rig.shift !== shiftWas) { rig.root.position.x += rig.shift - shiftWas; rig.root.updateMatrixWorld(true); }
 
           // The hand's frame in the world, for the fingers' planes.
           const Fw = rig.fwd.clone().applyQuaternion(rig.root.quaternion).normalize();
           const Dn = rig.back.clone().applyQuaternion(rig.root.quaternion).normalize().negate();
           const Ac = v().crossVectors(Dn, Fw).normalize();
-          const farOf: boolean[] = [];
+          const farOf: boolean[] = [], missX: number[] = [];
           for (const fg of rig.fingers) {
             const f = fg.f, thumb = f === 1;
             const M = fg.bones[0].getWorldPosition(v());
@@ -448,10 +436,13 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             const down = thumb ? Dn.clone().multiplyScalar(0.8).addScaledVector(toPalm, 0.6).normalize() : Dn.clone();
             const lim: [number, number, number, number] = thumb ? [-0.7, 0.9, 0.0, 1.4] : [-0.25, 1.35, 0.18, 1.75];
             /** Turns the finger's bones to its angles; gives back where its tip lands. */
+            // The bending plane: forward turned by the abduction, and down squared against it (the
+            // thumb's down leans in to the palm; left oblique, a wide thumb landed a key outside its key).
+            const downOf = (pl: THREE.Vector3) => down.clone().addScaledVector(pl, -down.dot(pl)).normalize();
             const pose = () => {
-              const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
+              const plane = Fw.clone().applyAxisAngle(Dn, fg.abd), dn = downOf(plane);
               const [a, b] = fg.theta, c = b * 0.72;
-              const seg = (ang: number, l: number) => plane.clone().multiplyScalar(Math.cos(ang) * l).addScaledVector(down, Math.sin(ang) * l);
+              const seg = (ang: number, l: number) => plane.clone().multiplyScalar(Math.cos(ang) * l).addScaledVector(dn, Math.sin(ang) * l);
               const P2 = M.clone().add(seg(a, len[0])), P3 = P2.clone().add(seg(a + b, len[1])), P4 = P3.clone().add(seg(a + b + c, len[2]));
               aim(fg.bones[0], fg.rest[0], fg.axis[0], P2);
               aim(fg.bones[1], fg.rest[1], fg.axis[1], P3);
@@ -472,7 +463,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             const rel = T.clone().sub(M);
             const sp = SPREAD[f] * dir;
             const lat = rel.dot(Ac), fwdD = Math.max(1, rel.dot(Fw));
-            const range = thumb ? 1.35 : f === 5 ? 0.6 : f === 2 ? 0.38 : 0.32;
+            const range = thumb ? 1.1 : f === 5 ? 0.6 : f === 2 ? 0.38 : 0.32;
             fg.abd += (clamp(Math.atan2(lat, fwdD), sp - range, sp + range) - fg.abd) * (lock > 0.5 ? 1 : 0.5);
             const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
             // A key out of this finger's reach (wide keys on a big screen): it stays relaxed in its
@@ -481,7 +472,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             const off = Math.abs(rel.dot(v().crossVectors(Dn, plane).normalize()));
             const far = off > Lf * (thumb ? 0.95 : f === 5 ? 0.65 : 0.45);
             farOf[f] = far;
-            let u = far ? Lf * 0.62 : rel.dot(plane), d = far ? Lf * 0.5 : rel.dot(down);
+            let u = far ? Lf * 0.62 : rel.dot(plane), d = far ? Lf * 0.5 : rel.dot(downOf(plane));
             solve(fg, len, u, d, lim);
             let tip = pose();
             // The model's fingertip is not exactly at the end of the solved chain (the bones' own
@@ -492,8 +483,9 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             if (!far) {
               const passes = lock > 0 || pointing ? (thumb ? 5 : 3) : 2;
               // The best pose found is kept: a key out of reach must not send the finger past it. It is
-              // judged on the keys' plane first (where the tip lands), its height counting half.
-              const miss = (p: THREE.Vector3) => Math.hypot(p.x - T.x, p.y - T.y, (p.z - T.z) * 0.5);
+              // judged on the keys. plane first (where the tip lands); a tip too high counts half, one
+              // inside the keys one and a half.
+              const miss = (p: THREE.Vector3) => Math.hypot(p.x - T.x, p.y - T.y, (p.z - T.z) * (p.z < T.z ? 1.5 : 0.5));
               let best = { e: miss(tip), th: [...fg.theta] as [number, number], abd: fg.abd };
               for (let k = 0; k < passes; k++) {
                 const err = T.clone().sub(tip);
@@ -501,13 +493,18 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
                 if (err.length() < Lf * 0.01) break;
                 const pl = Fw.clone().applyAxisAngle(Dn, fg.abd), side = v().crossVectors(Dn, pl).normalize();
                 fg.abd = clamp(fg.abd + Math.atan2(err.dot(side), Math.max(Lf * 0.5, u)), sp - range - 0.1, sp + range + 0.1);
-                u += err.dot(pl); d += err.dot(down);
+                u += err.dot(pl); d += err.dot(downOf(pl));
                 solve(fg, len, u, d, lim);
                 tip = pose();
               }
               if (miss(tip) > best.e) { fg.theta = best.th; fg.abd = best.abd; tip = pose(); }
+              // Only a tip short of its key (the key further out than the tip) moves the hand.
+              if ((f === 1 || f === 5) && lock > 0.5 && Math.sign(T.x - tip.x) === Math.sign(T.x - rig.wx)) missX[f] = T.x - tip.x;
             }
           }
+          const edgeMiss = (missX[1] ?? 0) + (missX[5] ?? 0);
+          if (missX[1] !== undefined || missX[5] !== undefined) rig.shiftWant = clamp(rig.shiftWant + edgeMiss * Math.min(1, dt * 12), -kw * 1.2, kw * 1.2);
+          else rig.shiftWant *= Math.exp(-dt * 14);
           // The quality check (handCheck.ts, dev only) reads every frame while it records.
           if (probe.frames) {
             const fingers: ProbeFinger[] = rig.fingers.map(fg => {
