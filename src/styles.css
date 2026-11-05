@@ -859,6 +859,8 @@ p { margin: 0; }
 .lib-now.waiting { background: var(--pink-soft); margin-bottom: 10px; }
 .lib-now.waiting .lib-now-foot { flex-wrap: wrap; }
 /* His piano on the video: connect it, and his right and wrong keys counted as he plays along. */
+.reel-explain { position: absolute; z-index: 7; top: 26px; right: 14px; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 10px; background: var(--white); border: 1px solid var(--rule-2); color: var(--ink-2); font: 700 12px var(--font-mono); }
+.reel-explain:hover { background: var(--marker); border-color: var(--ink); color: var(--ink); }
 .reel-verdict { position: absolute; z-index: 6; top: 24%; left: 0; right: 0; width: max-content; max-width: calc(100% - 40px); margin: 0 auto; padding: 8px 14px; background: var(--white); border: 2px solid var(--ink); font: 700 16px var(--font-mono); color: var(--ink); pointer-events: none; }
 .reel-verdict.good { border-color: var(--ok); border-left-width: 8px; }
 .reel-piano { position: absolute; top: 18px; right: 14px; z-index: 7; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; background: var(--white); border: 2px solid var(--ink); color: var(--ink); font: 700 12px var(--font-mono); transform: rotate(1.5deg); }

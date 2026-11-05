@@ -59,8 +59,8 @@ if (import.meta.env.DEV) {
   // note names and as pieces, so nothing of his file is recorded.
   (window as unknown as { __voiceKeys: unknown }).__voiceKeys = async () => {
     const { listSongs, loadSong } = await import('./lib/library');
-    const { clipsOf, timelineOf } = await import('./lib/reels');
-    const { lang, notePrefs, NT, setLang } = await import('./lib/lang');
+    const { clipsOf, explainLines, timelineOf } = await import('./lib/reels');
+    const { L, lang, notePrefs, NT, setLang } = await import('./lib/lang');
     const { SCRIPTS } = await import('./lib/reelScripts');
     const { SCRIPTS_PT } = await import('./lib/reelScriptsPt');
     const { allItems, naturalText, sentences, splitSentence } = await import('./lib/voicePieces');
@@ -73,6 +73,8 @@ if (import.meta.env.DEV) {
       setLang(l); notePrefs.solfege = solfege;
       const add = (k: string) => { if (!out.has(k)) out.set(k, [k, naturalText(k, l), l]); };
       allItems(l).forEach(add);
+      // The explanation's fixed lines, and the sentences its videos are made of.
+      [...explainLines(), L('Left hand.', 'Mão esquerda.'), L('Right hand.', 'Mão direita.'), L('Now both hands, slowly.', 'Agora as duas mãos, devagar.')].forEach(add);
       for (const { entry, song } of songs) {
         // Hand-written lines are recorded whole; for a song he brought, others only as note-free sentences and pieces.
         // Only lines written by hand (never the rules' lines with his notes in them).

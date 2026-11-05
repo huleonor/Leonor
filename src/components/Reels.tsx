@@ -20,10 +20,10 @@ const webglOk = () => {
 };
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
-import { FALL, fixClip, letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
+import { explainClips, FALL, fixClip, letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
 import { anyVoice, hush, onVoice, pauseVoice, prepareVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
-import { IconCheck, IconClose, IconHand, IconKeys, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
+import { IconCheck, IconClose, IconExplain, IconHand, IconKeys, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
 import { SOFT, SPRING } from './Motion';
 
 const LOOK = FALL; // seconds of falling notes above the keys
@@ -631,6 +631,8 @@ interface PlayerProps {
   active: boolean;
   onPractice: () => void;
   onNext?: () => void;
+  /** "Explain it slower": the part taken apart into small, slower videos, put right after this one. */
+  onExplain?: () => void;
   /** Open Settings, where the piano is connected. */
   onPiano?: () => void;
   /** How fast the videos go for him (see timelineOf). */
@@ -647,7 +649,7 @@ export type ReelResult = { perfect: boolean; poor: boolean; fix?: { ticks: numbe
  * loops until he scrolls on, so he copies it on his piano as many times as he likes. The voice
  * says it once; the loops are the music alone. Tap to pause.
  */
-export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, onResult }: PlayerProps) {
+export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain, pace = 1, onResult }: PlayerProps) {
   // The pace is taken when the video comes on screen, so it never changes under him.
   const paceAt = useMemo(() => pace * videoPrefs.pace, [reel, active]); // eslint-disable-line react-hooks/exhaustive-deps
   const tl = useMemo(() => timelineOf(song, reel, paceAt), [song, reel, paceAt]);
@@ -978,6 +980,15 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, 
             <motion.span className="reel-paused" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={SPRING} aria-hidden="true"><IconPlay size={34} /></motion.span>
           )}
         </AnimatePresence>
+        {/* Explain it slower: discreet, a moment into the video, only while it plays (paused, the piano chip has its place). */}
+        <AnimatePresence>
+          {onExplain && active && clock.ready && clock.playing && !holding && !waitingFor && reel.kind !== 'intro' && reel.kind !== 'explain' && clock.now() > 5 && (
+            <motion.button key="explain" className="reel-explain" onClick={e => { e.stopPropagation(); onExplain(); }} aria-label={L('Explain this part slower, piece by piece', 'Explicar esta parte mais devagar, por partes')}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.3, ease: ARRIVE }}>
+              <IconExplain size={16} />{L('Explain', 'Explicar')}
+            </motion.button>
+          )}
+        </AnimatePresence>
         {!clock.ready && active && <span className="reel-loading" role="status">{L('Loading the piano', 'A carregar o piano')}</span>}
         {/* His piano: a key icon with a dot (green when connected) to connect it, and, once he plays
             along, how many keys were right and how many wrong in this video. */}
@@ -1098,12 +1109,22 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
         }
       }
       // The same place missed again and again: a video for just that spot comes next.
-      if (r.fix && cur.kind !== 'fix') {
+      if (r.fix && cur.kind !== 'fix' && cur.kind !== 'explain') {
         const fix = fixClip(song, cur, r.fix.ticks, r.fix.ms);
         if (!out.some(x => x.id === fix.id)) out = [...out.slice(0, i + 1), fix, ...out.slice(i + 1)];
       }
       return out;
     });
+  };
+  // Explain it slower: the part in small pieces, each hand then both, slower; then the part again.
+  const explain = (i: number) => {
+    setItems(list => {
+      const cur = list[i];
+      if (!cur || list[i + 1]?.id.startsWith(`${cur.id}-explain-`)) return list;
+      const parts = explainClips(song, cur);
+      return [...list.slice(0, i + 1), ...parts, { ...cur, id: `${cur.id}-again` }, ...list.slice(i + 1)];
+    });
+    window.setTimeout(() => goTo(i + 1), 60);
   };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -1124,7 +1145,7 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
           <section key={r.id} data-i={i} className="reel-snap">
             {Math.abs(i - active) <= 1 && (
               <ReelPlayer song={song} reel={r} index={i} count={items.length} active={i === active} onPiano={onPiano} pace={pace} onResult={x => result(i, x)}
-                onPractice={() => onPractice(r, i)} onNext={i < items.length - 1 ? () => goTo(i + 1) : undefined} />
+                onPractice={() => onPractice(r, i)} onNext={i < items.length - 1 ? () => goTo(i + 1) : undefined} onExplain={() => explain(i)} />
             )}
           </section>
         ))}
