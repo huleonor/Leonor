@@ -154,10 +154,22 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
     const ctx = cv.getContext('2d')!;
     const pal = palette(cv);
     const [lo, hi] = range;
-    let [wLo, wHi] = pickRange(lo - 7, hi + 7, 30);
+    // With the hands on a wide screen the keys are kept narrow enough for a hand of real proportions
+    // (about four white keys across its knuckles, eight from the wrist to the tips) to sit under
+    // them and span an octave; on a computer a few keys across the whole width left it no room.
+    const W0 = cv.clientWidth || 1, H0 = cv.clientHeight || 1;
+    const minWhites = hands && W0 > H0 ? Math.ceil(W0 / (H0 * 0.105)) : 0;
+    let [wLo, wHi] = pickRange(lo - 7, hi + 7, Math.max(30, Math.ceil((minWhites * 12) / 7) + 4));
     let lay = keyLayout(wLo, wHi);
     let frame: [number, number] = [lay[lo]?.x ?? 0, (lay[hi]?.x ?? 1) + (lay[hi]?.w ?? 0)];
     let split = false;
+    const whitesIn = (x: [number, number]) => { let k = 0; for (let m = x[0]; m <= x[1]; m++) if (!isBlack(m)) k++; return k; };
+    const needFrac = minWhites ? Math.min(1, minWhites / whitesIn([wLo, wHi])) : 0;
+    if (frame[1] - frame[0] < needFrac) {
+      const c = (frame[0] + frame[1]) / 2;
+      frame = [Math.max(0, Math.min(1 - needFrac, c - needFrac / 2)), 0];
+      frame[1] = frame[0] + needFrac;
+    }
     // Two hands far apart: one keyboard so wide that every key gets thin and hard to read. Then it
     // is cut in two, the left hand's keys and the right hand's side by side with a gap between,
     // each as big as it can be (the keys in between are left out).
@@ -173,7 +185,13 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
       };
       const A = tight(ls), B = tight(rs);
       if (A[1] < B[0] - 4) {
-        const whites = (x: [number, number]) => { let k = 0; for (let m = x[0]; m <= x[1]; m++) if (!isBlack(m)) k++; return k; };
+        const whites = whitesIn;
+        // Room for the hands on a wide screen: more keys outside each hand's own.
+        while (minWhites && whites(A) + whites(B) + 1.2 < minWhites && (A[0] > 21 || B[1] < 108)) {
+          if (A[0] > 21) { A[0]--; while (isBlack(A[0]) && A[0] > 21) A[0]--; }
+          if (whites(A) + whites(B) + 1.2 >= minWhites) break;
+          if (B[1] < 108) { B[1]++; while (isBlack(B[1]) && B[1] < 108) B[1]++; }
+        }
         const wa = whites(A), wb = whites(B), gap = 1.2, total = wa + wb + gap;
         const la = keyLayout(A[0], A[1]), lb = keyLayout(B[0], B[1]);
         const both: Record<number, { x: number; w: number; black: boolean }> = {};
@@ -211,7 +229,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
         let mn = Infinity, mx = -Infinity;
         for (const n of tl.notes) if (n.t >= bi * BLOCK - 0.3 && n.t <= (bi + 1) * BLOCK + 0.6 && lay[n.midi]) { mn = Math.min(mn, lay[n.midi].x); mx = Math.max(mx, lay[n.midi].x + lay[n.midi].w); }
         if (mn === Infinity) return frame;
-        const fw = frame[1] - frame[0], minW = fw * 0.6, pad = (mx - mn) * 0.15 + 0.01;
+        const fw = frame[1] - frame[0], minW = Math.max(fw * 0.6, split ? 0 : needFrac), pad = (mx - mn) * 0.15 + 0.01;
         let w0 = mn - pad, w1 = mx + pad;
         if (w1 - w0 < minW) { const c = (w0 + w1) / 2; w0 = c - minW / 2; w1 = c + minW / 2; }
         if (w0 < frame[0]) { w1 += frame[0] - w0; w0 = frame[0]; }

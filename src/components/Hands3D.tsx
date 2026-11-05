@@ -67,7 +67,7 @@ type Finger = {
 type Rig = {
   h: Hand; root: THREE.Group; fingers: Finger[]; all: THREE.Bone[]; restAll: THREE.Quaternion[];
   align: THREE.Quaternion; fwd: THREE.Vector3; back: THREE.Vector3; span: number; length: number;
-  wx: number; vwx: number; ky: number; vky: number; yaw: number; roll: number; point: number; px: number; py: number; seen: boolean;
+  wx: number; vwx: number; ky: number; vky: number; dip: number; yaw: number; roll: number; point: number; px: number; py: number; seen: boolean;
 };
 
 export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
@@ -103,6 +103,16 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
 
     const rigs: Partial<Record<Hand, Rig>> = {};
     let alive = true;
+    // Each hand's widest stretch in this video, in white keys: notes that sound together, or one
+    // straight after another.
+    const whiteIdx = (m: number) => Math.floor(m / 12) * 7 + [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6][m % 12];
+    const stretch: Partial<Record<Hand, number>> = {};
+    for (const h of ['L', 'R'] as Hand[]) {
+      const ns = tl.notes.filter(n => n.hand === h);
+      let w = 0;
+      for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length && ns[j].t - ns[i].t < 0.2; j++) w = Math.max(w, Math.abs(whiteIdx(ns[j].midi) - whiteIdx(ns[i].midi)));
+      stretch[h] = w;
+    }
     const handOf = new Map<number, Hand>();
     for (const n of tl.notes) if (!handOf.has(n.midi)) handOf.set(n.midi, n.hand);
 
@@ -160,7 +170,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
         }
         const span = W(bones.get('index_01')!).distanceTo(W(bones.get('pinky_01')!));
         const length = W(bones.get('middle_01')!).distanceTo(wrist) + fingers[2].len.reduce((a, b) => a + b, 0);
-        rigs[h] = { h, root, fingers, all: sk.bones, restAll: sk.bones.map(b => b.quaternion.clone()), align, fwd, back, span, length, wx: 0, vwx: 0, ky: 0, vky: 0, yaw: 0, roll: 0, point: 0, px: 0, py: 0, seen: false };
+        rigs[h] = { h, root, fingers, all: sk.bones, restAll: sk.bones.map(b => b.quaternion.clone()), align, fwd, back, span, length, wx: 0, vwx: 0, ky: 0, vky: 0, dip: 0, yaw: 0, roll: 0, point: 0, px: 0, py: 0, seen: false };
       }).catch(err => console.warn('[hands] the hand model could not load:', err));
     }
 
@@ -256,7 +266,9 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // Size: knuckles of index to little finger over about four white keys (big enough to span an
           // octave with the thumb, like the hands in the video he liked);
           // the forearm may leave the screen at the bottom, the hand itself never.
-          const s = Math.min((kw * 3.9) / rig.span, (Ht - G.kbTop) * (Wd > Ht ? 2.2 : 1.5) / rig.length);
+          // A video with octaves in this hand gets a hand that spans them (thumb to little finger).
+          const keysAcross = Math.max(3.9, (stretch[h] ?? 0) * 0.6);
+          const s = Math.min((kw * keysAcross) / rig.span, (Ht - G.kbTop) * (Wd > Ht ? 2.6 : 1.6) / rig.length);
           rig.root.scale.setScalar(s);
           const fl = rig.fingers[2].len.reduce((a, b) => a + b, 0) * s;
           // A free finger rests a key along from its neighbour, or closer when the keys are wide and
@@ -264,23 +276,35 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           const step = Math.min(kw * 0.95, (rig.span * s) / 3 * 1.05);
           // Each finger's next note: where on the key, and its press envelope from the note times.
           const want: { x?: number; y: number; z: number; real: boolean; soon: number; press: number }[] = [];
+          // Fingers look ahead 1.4 s; a hand with nothing that near (resting between its entries)
+          // waits over the next notes it will play rather than where it last was, so it never sits
+          // on the other hand.
+          const near = (h0: number) => mine.some(n => n.t + n.dur > t - 0.12 && n.t < t + h0) || mine.some(n => n.t <= t && n.t + n.dur > t - 0.6);
+          const horizon = rig.seen && near(1.4) ? 1.4 : 1e9;
           for (let f = 1; f <= 5; f++) {
             const ns = mine.filter(n => n.finger === f);
             // A finger goes to its next note only when it is near (or the last one it played, just
             // after); a note far ahead would drag it over its neighbours' keys.
-            const nx = ns.find(n => n.t + n.dur > t - 0.12 && n.t < t + (rig.seen ? 1.4 : 1e9)) ?? [...ns].reverse().find(n => n.t <= t && n.t + n.dur > t - 0.6);
+            const nx = ns.find(n => n.t + n.dur > t - 0.12 && n.t < t + horizon) ?? [...ns].reverse().find(n => n.t <= t && n.t + n.dur > t - 0.6);
             const k = nx && G.X(nx.midi);
             const hover = fl * (0.07 + 0.05 * rig.fingers[f - 1].hover);
             if (nx && k) {
-              let z = hover, press = 0;
-              const t0 = nx.t, t1 = nx.t + Math.max(0.12, nx.dur * 0.92), lift = fl * 0.2;
-              if (t < t0 - 0.24) z = hover;
-              else if (t < t0 - 0.07) z = hover + (lift - hover) * smooth((t - (t0 - 0.24)) / 0.17);
-              else if (t < t0) { const e = (t - (t0 - 0.07)) / 0.07; z = lift * (1 - e * e * e); press = e; }
-              else if (t < t1) { z = -fl * 0.02; press = 1; }
-              else if (t < t1 + 0.14) { const e = smooth((t - t1) / 0.14); z = -fl * 0.02 + (hover + fl * 0.02) * e; press = 1 - e; }
               const black = isBlack(nx.midi);
-              want[f] = { x: k.x + k.w / 2, y: G.kbTop + G.kbH * (black ? 0.3 : f === 1 ? 0.7 : 0.6), z: z + (black ? fl * 0.08 : 0), real: true, soon: Math.max(0, t0 - t), press };
+              // A black key stands above the white ones: the finger lifts a little higher to clear
+              // it, strikes its top and sinks in by the key's own depth, so the press reads.
+              const top = black ? fl * 0.09 : 0, depth = fl * (black ? 0.05 : 0.03);
+              let z = hover + top, press = 0;
+              const t0 = nx.t, t1 = nx.t + Math.max(0.12, nx.dur * 0.92), lift = fl * (black ? 0.24 : 0.2) + top;
+              if (t < t0 - 0.3) z = hover + top;
+              else if (t < t0 - 0.09) z = hover + top + (lift - hover - top) * smooth((t - (t0 - 0.3)) / 0.21);
+              else if (t < t0) { const e = (t - (t0 - 0.09)) / 0.09; z = lift + (top - depth - lift) * e * e * (3 - 2 * e) * (0.4 + 0.6 * e); press = e; }
+              else if (t < t1) { z = top - depth; press = 1; }
+              else if (t < t1 + 0.2) { const e = smooth((t - t1) / 0.2); z = top - depth + (hover + depth) * e; press = 1 - e; }
+              // Into the black keys and out again gradually, as the note comes, not in one jump.
+              const restY = G.kbTop + G.kbH * (f === 1 ? 0.7 : 0.6);
+              const keyY = G.kbTop + G.kbH * (black ? 0.3 : f === 1 ? 0.7 : 0.6);
+              const soon = Math.max(0, t0 - t), into = t >= t0 ? 1 : smooth(1 - soon / 0.7);
+              want[f] = { x: k.x + k.w / 2, y: restY + (keyY - restY) * into, z, real: true, soon, press };
             } else want[f] = { y: G.kbTop + G.kbH * 0.6, z: hover * 1.8, real: false, soon: 9, press: 0 };
           }
           for (let f = 1; f <= 5; f++) if (want[f].x === undefined) {
@@ -346,13 +370,19 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           const k3 = rig.fingers[2].bones[0].getWorldPosition(v());
           // The hand moves in towards the black keys when a finger is about to play one, so every
           // finger can reach its key with a soft curve (it never stretches flat to get there).
-          let reachY = Infinity;
-          for (let f = 1; f <= 5; f++) if (want[f].real && want[f].soon < 0.6) reachY = Math.min(reachY, want[f].y + (f === 1 ? -G.kbH * 0.1 : 0));
-          const kyWant = p > 0.5 ? rig.py : reachY < Infinity ? reachY : rig.fingers[2].y;
+          // Each finger's want eases in as its note comes (its y already does), and the hand follows
+          // on a critically damped spring: it glides forward and back, never overshoots.
+          const restY = G.kbTop + G.kbH * 0.6;
+          let reachY = restY;
+          for (let f = 1; f <= 5; f++) if (want[f].real && want[f].soon < 1) reachY = Math.min(reachY, want[f].y + (f === 1 ? -G.kbH * 0.1 : 0));
+          const kyWant = p > 0.5 ? rig.py : reachY;
           if (!rig.ky) rig.ky = kyWant;
-          for (let k = 0; k < steps; k++) { rig.vky += (100 * (kyWant - rig.ky) - 2 * 0.9 * 10 * rig.vky) * h2; rig.ky += rig.vky * h2; }
+          for (let k = 0; k < steps; k++) { rig.vky += (49 * (kyWant - rig.ky) - 2 * 7 * rig.vky) * h2; rig.ky += rig.vky * h2; }
           const keyY = rig.ky;
-          rig.root.position.set(rig.wx - k3.x, -(keyY + fl * 0.55) - k3.y, fl * 0.44 - k3.z);
+          // The hand gives a little with each press, from the wrist, so a strike is felt in the arm.
+          const pressNow = Math.max(...[1, 2, 3, 4, 5].map(f => want[f].press));
+          rig.dip += (pressNow - rig.dip) * (1 - Math.exp(-dt * 12));
+          rig.root.position.set(rig.wx - k3.x, -(keyY + fl * 0.55) - k3.y, fl * (0.44 - 0.035 * rig.dip) - k3.z);
           rig.root.updateMatrixWorld(true);
 
           // The hand's frame in the world, for the fingers' planes.
@@ -386,20 +416,20 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             const w = want[f];
             const pointing = p > 0.5 && f === 2;
             // A finger about to play (or playing) lands on its key itself, not on its lagging spring.
-            const lock = pointing ? 0 : w.real ? clamp(Math.max(w.press, 1 - w.soon / 0.12), 0, 1) : 0;
+            const lock = pointing ? 0 : w.real ? Math.max(w.press, smooth(1 - w.soon / 0.28)) : 0;
             const tx = fg.x + (w.x! - fg.x) * lock, ty = fg.y + (w.y - fg.y) * lock;
             const T = v(pointing ? rig.px : tx, -(pointing ? rig.py : ty), pointing ? fl * 0.35 : w.z);
             const rel = T.clone().sub(M);
             const sp = SPREAD[f] * dir;
             const lat = rel.dot(Ac), fwdD = Math.max(1, rel.dot(Fw));
-            const range = thumb ? 0.9 : f === 5 ? 0.42 : 0.32;
+            const range = thumb ? 1.1 : f === 5 ? 0.6 : f === 2 ? 0.38 : 0.32;
             fg.abd += (clamp(Math.atan2(lat, fwdD), sp - range, sp + range) - fg.abd) * (lock > 0.5 ? 1 : 0.5);
             const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
             // A key out of this finger's reach (wide keys on a big screen): it stays relaxed in its
             // own lane instead of twisting after it.
             const Lf = len[0] + len[1] + len[2];
             const off = Math.abs(rel.dot(v().crossVectors(Dn, plane).normalize()));
-            const far = off > Lf * (thumb ? 0.8 : 0.45);
+            const far = off > Lf * (thumb ? 0.95 : f === 5 ? 0.65 : 0.45);
             let u = far ? Lf * 0.62 : rel.dot(plane), d = far ? Lf * 0.5 : rel.dot(down);
             solve(fg, len, u, d, lim);
             let tip = pose();
