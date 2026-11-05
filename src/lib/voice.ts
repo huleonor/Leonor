@@ -86,7 +86,7 @@ const joining = new Map<string, Promise<AudioBuffer | null>>();
 function file(name: string) {
   let p = files.get(name);
   if (!p) {
-    p = fetch(`/voice/${name}`).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+    p = fetch(`${import.meta.env.BASE_URL}voice/${name}`).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
       .then(b => audioContext().decodeAudioData(b)).catch(err => { console.warn('[voice] recorded piece missing:', name, err); files.delete(name); return null; });
     files.set(name, p);
   }

@@ -52,7 +52,8 @@ export async function loadSong(entry: SongEntry): Promise<Song> {
   if (hit) return hit;
   let data: ArrayBuffer;
   if (entry.builtIn && entry.file) {
-    const res = await fetch(entry.file);
+    // Served from the app's own folder (the site may live under a path, GitHub Pages).
+    const res = await fetch(`${import.meta.env.BASE_URL}${entry.file.replace(/^\//, '')}`);
     if (!res.ok) throw new Error('err.loadFailed');
     data = await res.arrayBuffer();
   } else {

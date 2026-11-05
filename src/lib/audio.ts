@@ -107,7 +107,7 @@ const sfxBuffers = new Map<string, Promise<AudioBuffer | null>>();
 export function loadSfx(name: string): Promise<AudioBuffer | null> {
   let p = sfxBuffers.get(name);
   if (!p) {
-    p = fetch(`/sfx/${name}.mp3`).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.statusText))))
+    p = fetch(`${import.meta.env.BASE_URL}sfx/${name}.mp3`).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.statusText))))
       .then(b => audioContext().decodeAudioData(b)).catch(() => null);
     sfxBuffers.set(name, p);
   }

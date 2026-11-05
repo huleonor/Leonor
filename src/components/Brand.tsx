@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 /** The app's logo: the penguin with the round glasses. The only character in the app for now. */
 export function Logo({ size = 40, className = '' }: { size?: number; className?: string }) {
-  return <img src="/icons/logo.png" width={size} height={size} alt="Leonor" className={`logo ${className}`} draggable={false} />;
+  return <img src={`${import.meta.env.BASE_URL}icons/logo.png`} width={size} height={size} alt="Leonor" className={`logo ${className}`} draggable={false} />;
 }
 
 /** A big icon on a tinted disc, the illustration for sheets and empty states. */

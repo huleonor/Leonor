@@ -69,7 +69,7 @@ export function startWebReminders() {
     const m = message();
     try {
       const reg = await navigator.serviceWorker?.getRegistration();
-      if (reg) await reg.showNotification(m.title, { body: m.body, icon: '/icons/icon-192.png', tag: 'practice' });
+      if (reg) await reg.showNotification(m.title, { body: m.body, icon: `${import.meta.env.BASE_URL}icons/icon-192.png`, tag: 'practice' });
       else new Notification(m.title, { body: m.body });
     } catch { /* not allowed here */ }
   }, 60_000);

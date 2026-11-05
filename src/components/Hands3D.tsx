@@ -45,7 +45,7 @@ vec3 getGradientIrradiance( vec3 normal, vec3 lightDirection ) {
 }`;
 
 let model: Promise<THREE.Object3D> | null = null;
-const loadModel = () => (model ??= new GLTFLoader().loadAsync('/models/hand/hand.glb').then(g => g.scene));
+const loadModel = () => (model ??= new GLTFLoader().loadAsync(`${import.meta.env.BASE_URL}models/hand/hand.glb`).then(g => g.scene));
 
 const NAMES = ['', 'thumb', 'index', 'middle', 'ring', 'pinky'];
 const SPREAD = [0, 0, -0.06, 0, 0.05, 0.12];
