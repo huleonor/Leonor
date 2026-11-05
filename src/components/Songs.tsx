@@ -1,24 +1,18 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
 import { FIRST_SONG } from './Journey';
-import { addToLibrary, myLibrary, onLibrary, removeFromLibrary } from '../lib/library';
 import { keyName } from '../lib/analysis';
 import { meterOf, pctOf } from '../lib/mastery';
 import type { Song, SongEntry } from '../lib/types';
-import { IconCheck, IconClose, IconImport, IconMore, IconPlus } from './Icons';
-import { SOFT, SPRING } from './Motion';
-import { OpeningStaff, SongCover } from './SongCover';
+import { IconClose, IconImport, IconMore, IconPlus } from './Icons';
+import { SOFT } from './Motion';
+import { SongCover } from './SongCover';
+import { SongPreview } from './SongPreview';
 
 const COLLECTIONS: [NonNullable<SongEntry['collection']>, string][] = [['classical', 'Classical'], ['film', 'Film scores'], ['modern', 'Modern piano']];
 
 export const byLine = (e: SongEntry) => [e.composer, e.film && e.film !== e.title ? e.film : undefined].filter(Boolean).join(' · ');
-
-function useLibrary() {
-  const [ids, setIds] = useState(myLibrary);
-  useEffect(() => onLibrary(() => setIds(myLibrary())), []);
-  return ids;
-}
 
 /** A small square cover, the same design for every song (SongCover.tsx). */
 function Cover({ entry, song }: { entry: SongEntry; song?: Song }) {
@@ -38,17 +32,40 @@ function lineFor(e: SongEntry, song?: Song) {
   return who;
 }
 
-/** A song in my library, as a row: title and composer, and its percent set big on the right. */
-function LibRow({ info, onOpen, onEdit }: { info: SongInfo; onOpen: () => void; onEdit?: () => void }) {
-  const e = info.entry;
-  const pct = pctFor(info.song);
+/** How a card was touched last: a finger previews first, a mouse previews on hover. */
+type Via = 'mouse' | 'touch';
+
+/**
+ * A song as an index card: its main part as notes falling onto keys (SongPreview), its title, who
+ * wrote it and how far he has come. With a mouse the preview plays while the pointer rests on the
+ * card and a click opens it; with a finger the first tap plays the preview and the second opens it.
+ */
+function SongCard({ info, big, previewing, onPreview, onOpen, onEdit }: {
+  info: SongInfo; big?: boolean; previewing: boolean;
+  onPreview: (on: boolean) => void; onOpen: () => void; onEdit?: () => void;
+}) {
+  const e = info.entry, song = info.song!;
+  const pct = pctFor(song);
+  const via = useRef<Via>('mouse');
+  const hover = useRef(0);
   return (
-    <motion.li className="lib-row" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={SOFT}>
-      <button className="lib-open" onClick={onOpen} aria-label={`Learn ${e.title}, ${pct}% learnt`}>
-        <span><b>{e.title}</b><small>{lineFor(e, info.song)}</small></span>
-        <span className={`num ${pct ? '' : 'fresh'}`} aria-hidden="true">{pct}%</span>
+    <motion.li className={`song-card ${big ? 'big' : ''} ${previewing ? 'playing' : ''}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={SOFT}>
+      <button className="song-card-open"
+        onPointerDown={ev => { via.current = ev.pointerType === 'mouse' ? 'mouse' : 'touch'; }}
+        onPointerEnter={ev => { if (ev.pointerType !== 'mouse') return; window.clearTimeout(hover.current); hover.current = window.setTimeout(() => onPreview(true), 220); }}
+        onPointerLeave={ev => { if (ev.pointerType !== 'mouse') return; window.clearTimeout(hover.current); onPreview(false); }}
+        onClick={() => { if (via.current === 'touch' && !previewing) { onPreview(true); return; } window.clearTimeout(hover.current); onPreview(false); onOpen(); }}
+        aria-label={`${big ? 'Learning now: ' : ''}${e.title}, ${pct}% learnt. Open it`}>
+        <span className="song-card-stage"><SongPreview song={song} playing={previewing} onEnd={() => onPreview(false)} /></span>
+        <span className="song-card-foot">
+          <span>
+            <b>{e.title}</b>
+            <small>{previewing && via.current === 'touch' ? 'Tap again to learn it' : big ? ['Learning now', e.composer].filter(Boolean).join('. ') : lineFor(e, song)}</small>
+          </span>
+          <span className={`num ${pct ? '' : 'fresh'}`} aria-hidden="true">{pct}<i>%</i></span>
+        </span>
       </button>
-      {onEdit && <button className="icon-btn ghost" onClick={onEdit} aria-label={`Edit ${e.title}`}><IconMore size={20} /></button>}
+      {onEdit && <button className="icon-btn ghost song-card-edit" onClick={onEdit} aria-label={`Edit ${e.title}`}><IconMore size={20} /></button>}
     </motion.li>
   );
 }
@@ -64,11 +81,14 @@ interface Props {
   onEdit: (entry: SongEntry) => void;
 }
 
-/** My songs: only the ones he brought into his library; the marketplace adds more. */
+/**
+ * My songs: every song the app has ready (the pieces it ships, a slot filled with his MIDI file, the
+ * files he uploaded) is in the library by itself; "Add songs" brings in the pieces that need his file.
+ */
 export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }: Props) {
-  const lib = useLibrary();
   const [market, setMarket] = useState(false);
-  const mine = entries.filter(e => !e.missing && (!e.builtIn || lib.includes(e.id) || (e.slot && lib.includes(e.slot)))).map(e => infos[e.id]).filter(Boolean);
+  const [preview, setPreview] = useState<string | null>(null);
+  const mine = entries.filter(e => !e.missing).map(e => infos[e.id]).filter((i): i is SongInfo => !!i?.song);
 
   // Interstellar Experience is always in his library: until his MIDI file is in, a card asks for it
   // (the song is under copyright, so nothing of it ships with the app).
@@ -76,6 +96,11 @@ export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }:
   const waiting = filled ? undefined : entries.find(e => e.id === FIRST_SONG || e.slot === FIRST_SONG);
   const now = mine.find(info => current === (info.entry.slot ?? info.entry.id));
   const rest = mine.filter(info => info !== now);
+  const card = (info: SongInfo, big = false) => (
+    <SongCard key={info.entry.id} info={info} big={big} previewing={preview === info.entry.id}
+      onPreview={on => setPreview(p => (on ? info.entry.id : p === info.entry.id ? null : p))}
+      onOpen={() => onOpen(info)} onEdit={info.entry.builtIn ? undefined : () => onEdit(info.entry)} />
+  );
 
   return (
     <div className="page songs">
@@ -95,32 +120,23 @@ export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }:
       {ready && !mine.length && !waiting && (
         <section className="empty-library">
           <h2>Your library is empty</h2>
-          <p className="sub">Pick songs from the marketplace, or upload a MIDI file of your own.</p>
+          <p className="sub">Upload a MIDI file of a piece you want to learn.</p>
           <div className="actions">
-            <button className="btn go big" onClick={() => setMarket(true)}>Browse songs</button>
-            <button className="btn" onClick={() => onAdd()}><IconImport size={16} />Upload MIDI</button>
+            <button className="btn go big" onClick={() => onAdd()}><IconImport size={16} />Upload MIDI</button>
           </div>
         </section>
-      )}
-      {ready && now && (
-        <button className="lib-now" onClick={() => onOpen(now)} aria-label={`Learning now: ${now.entry.title}, ${pctFor(now.song)}% learnt`}>
-          <OpeningStaff song={now.song} />
-          <span className="lib-now-foot">
-            <span><b>{now.entry.title}</b><small>{['Learning now', now.entry.composer].filter(Boolean).join('. ')}</small></span>
-            <span className="num" aria-hidden="true">{pctFor(now.song)}<i>%</i></span>
-          </span>
-        </button>
       )}
       {ready && mine.length > 0 && (
         <ul className="lib-list">
           <AnimatePresence>
-            {rest.map(info => <LibRow key={info.entry.id} info={info} onOpen={() => onOpen(info)} onEdit={info.entry.builtIn ? undefined : () => onEdit(info.entry)} />)}
+            {now && card(now, true)}
+            {rest.map(info => card(info))}
           </AnimatePresence>
-          <li><button className="lib-add" onClick={() => setMarket(true)}><IconPlus size={18} />Add songs from the marketplace</button></li>
+          <li className="lib-more"><button className="lib-add" onClick={() => setMarket(true)}><IconPlus size={18} />Add songs</button></li>
         </ul>
       )}
       <AnimatePresence>
-        {market && <Marketplace entries={entries} infos={infos} lib={lib} onClose={() => setMarket(false)} onUpload={onAdd} />}
+        {market && <Marketplace entries={entries} infos={infos} onClose={() => setMarket(false)} onUpload={onAdd} />}
       </AnimatePresence>
     </div>
   );
@@ -132,52 +148,37 @@ function facts(e: SongEntry, song?: Song) {
   return [length(song.duration), `${keyName(song).name}`, song.hands.length === 2 ? 'two hands' : 'one hand'].join(', ');
 }
 
-/** The marketplace: every song the app offers, to bring into the library with one tap. */
-function Marketplace({ entries, infos, lib, onClose, onUpload }: { entries: SongEntry[]; infos: Record<string, SongInfo>; lib: string[]; onClose: () => void; onUpload: (slot?: SongEntry) => void }) {
-  const built = entries.filter(e => e.builtIn || e.slot);
+/** Adding songs: the pieces that need his own MIDI file (the others are in the library already). */
+function Marketplace({ entries, infos, onClose, onUpload }: { entries: SongEntry[]; infos: Record<string, SongInfo>; onClose: () => void; onUpload: (slot?: SongEntry) => void }) {
+  const slots = entries.filter(e => e.missing);
   return (
     <motion.div className="market" role="dialog" aria-modal="true" aria-labelledby="market-title" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={SOFT}>
       <header className="market-head">
-        <button className="icon-btn ghost" onClick={onClose} aria-label="Close the marketplace"><IconClose size={24} /></button>
-        <h1 id="market-title">Marketplace</h1>
+        <button className="icon-btn ghost" onClick={onClose} aria-label="Close"><IconClose size={24} /></button>
+        <h1 id="market-title">Add songs</h1>
         <button className="btn small" onClick={() => onUpload()}><IconImport size={16} />Upload MIDI</button>
       </header>
       <div className="market-body">
+        <p className="sub">Every piece the app has is in your library. These ones need your own MIDI file of them.</p>
         {COLLECTIONS.map(([c, title]) => {
-          const list = built.filter(e => (e.collection ?? 'film') === c && !e.slot);
+          const list = slots.filter(e => (e.collection ?? 'film') === c);
           if (!list.length) return null;
           return (
             <section key={c} className="market-shelf" aria-labelledby={`market-${c}`}>
               <h2 id={`market-${c}`}>{title}</h2>
               <ul className="market-list">
-                {list.map(e => {
-                  const filled = entries.find(x => x.slot === e.id);
-                  const have = lib.includes(e.id);
-                  const needsFile = e.missing && !filled;
-                  return (
-                    <li key={e.id} className={have ? 'have' : ''}>
-                      <Cover entry={e} song={(filled && infos[filled.id]?.song) || infos[e.id]?.song} />
-                      <span className="song-text market-text">
-                        <b>{e.title}</b>
-                        <span>{[e.composer, e.film && e.film !== e.title ? e.film : undefined, e.year].filter(Boolean).join(', ')}</span>
-                        {e.about && <span className="market-about">{e.about}</span>}
-                        <span className="market-facts">{facts(e, (filled && infos[filled.id]?.song) || infos[e.id]?.song)}</span>
-                      </span>
-                      {needsFile ? (
-                        <button className="btn small" onClick={() => { addToLibrary(e.id); onUpload(e); }}>Add MIDI</button>
-                      ) : (
-                        <motion.button className={`btn small ${have ? 'added' : 'go'}`} onClick={() => (have ? removeFromLibrary(e.id) : addToLibrary(e.id))}
-                          aria-pressed={have} aria-label={have ? `Remove ${e.title} from my songs` : `Add ${e.title} to my songs`} whileTap={{ scale: 0.92 }} layout transition={SPRING}>
-                          <AnimatePresence mode="wait" initial={false}>
-                            <motion.span key={have ? 'in' : 'add'} className="add-label" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={SPRING}>
-                              {have ? <><IconCheck size={16} />Added</> : <><IconPlus size={16} />Add</>}
-                            </motion.span>
-                          </AnimatePresence>
-                        </motion.button>
-                      )}
-                    </li>
-                  );
-                })}
+                {list.map(e => (
+                  <li key={e.id}>
+                    <Cover entry={e} song={infos[e.id]?.song} />
+                    <span className="song-text market-text">
+                      <b>{e.title}</b>
+                      <span>{[e.composer, e.film && e.film !== e.title ? e.film : undefined, e.year].filter(Boolean).join(', ')}</span>
+                      {e.about && <span className="market-about">{e.about}</span>}
+                      <span className="market-facts">{facts(e, infos[e.id]?.song)}</span>
+                    </span>
+                    <button className="btn small" onClick={() => onUpload(e)}>Add MIDI</button>
+                  </li>
+                ))}
               </ul>
             </section>
           );

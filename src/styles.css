@@ -287,32 +287,37 @@ p { margin: 0; }
 .opening-staff .n ellipse { fill: currentColor; }
 .opening-staff .n line { stroke-width: 1.6; opacity: 1; }
 
-/* ---------- Library: the songs as cards with halftone ---------- */
-.lib-now { position: relative; display: grid; gap: 12px; width: 100%; padding: 20px 18px 18px; text-align: left; border: 2px solid var(--ink); transform: rotate(-1deg);
-  background: radial-gradient(rgba(255, 0, 110, .45) 1.3px, transparent 1.5px) 0 0 / 7px 7px, var(--white); }
+/* ---------- Library: every song as an index card with its main part falling onto keys ---------- */
+.lib-now { position: relative; display: grid; gap: 12px; width: 100%; padding: 20px 18px 18px; text-align: left; border: 2px solid var(--ink); transform: rotate(-1deg); background: var(--white); }
 .lib-now::before { content: ''; position: absolute; top: -11px; left: 28px; width: 96px; height: 22px; background: var(--tape); transform: rotate(-5deg); }
-.lib-now:hover { background-color: var(--pink-soft); }
-.lib-now .opening-staff { color: var(--ink); max-width: 420px; }
 .lib-now-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
-.lib-now b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1; text-shadow: var(--riso); }
+.lib-now b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1; }
 .lib-now small { font-family: var(--font-mono); color: var(--ink-2); font-size: 13px; }
-.lib-now .num { font-size: 30px; background: var(--marker); padding: 0 6px; }
-.lib-now .num i { font-style: normal; font-size: .6em; }
-.lib-list { list-style: none; margin: 22px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.lib-row { position: relative; display: grid; border: 2px solid var(--ink); min-height: 150px;
-  background: radial-gradient(rgba(0, 169, 157, .42) 1.3px, transparent 1.5px) 0 0 / 7px 7px, var(--white); }
-.lib-row:nth-child(4n+2) { background-image: radial-gradient(rgba(255, 0, 110, .4) 1.3px, transparent 1.5px); transform: rotate(1.6deg); }
-.lib-row:nth-child(4n+1) { transform: rotate(-1.8deg); }
-.lib-row:nth-child(4n+3) { transform: rotate(1.2deg); }
-.lib-row:nth-child(4n) { transform: rotate(-1deg); }
-.lib-open { display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 12px; text-align: left; }
-.lib-open b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.05; background: var(--white); }
-.lib-open small { font-family: var(--font-mono); color: var(--ink-2); font-size: 11px; background: var(--white); }
-.lib-open .num { font-size: 15px; background: var(--white); padding: 0 3px; }
-.lib-open .num.fresh { color: var(--muted); }
-.lib-open:hover b { background: var(--marker); }
-.lib-row .icon-btn { position: absolute; top: 6px; right: 6px; background: var(--white); }
-.lib-list > li:last-child { grid-column: 1 / -1; }
+.lib-list { list-style: none; margin: 22px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.song-card { position: relative; border: 2px solid var(--ink); background: var(--white); transition: border-color 240ms steps(3); }
+.song-card.big { grid-column: 1 / -1; transform: rotate(-0.8deg); }
+.song-card.big::before { content: ''; position: absolute; z-index: 1; top: -11px; left: 28px; width: 96px; height: 22px; background: var(--tape); transform: rotate(-5deg); }
+.song-card:not(.big):nth-child(4n+1) { transform: rotate(1.2deg); }
+.song-card:not(.big):nth-child(4n+2) { transform: rotate(-1.4deg); }
+.song-card:not(.big):nth-child(4n+3) { transform: rotate(0.8deg); }
+.song-card:not(.big):nth-child(4n) { transform: rotate(-0.6deg); }
+.song-card.playing { border-color: var(--pink); }
+.song-card-open { display: grid; width: 100%; text-align: left; padding: 0; }
+.song-card-stage { display: block; height: 110px; background: var(--paper-2); border-bottom: 2px solid var(--ink); }
+.song-card.big .song-card-stage { height: 170px; }
+.song-preview { display: block; width: 100%; height: 100%; }
+.song-card-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; padding: 10px 12px 12px; }
+.song-card-foot b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.05; }
+.song-card.big .song-card-foot b { font-size: 28px; }
+.song-card-foot small { display: block; margin-top: 4px; font-family: var(--font-mono); color: var(--ink-2); font-size: 11px; }
+.song-card.big .song-card-foot small { font-size: 13px; }
+.song-card-foot .num { font-family: var(--font-mono); font-weight: 700; font-size: 15px; padding: 0 3px; }
+.song-card-foot .num i { font-style: normal; font-size: .7em; }
+.song-card-foot .num.fresh { color: var(--muted); }
+.song-card.big .song-card-foot .num { font-size: 26px; background: var(--marker); padding: 0 6px; }
+.song-card-open:hover b, .song-card.playing b { background: var(--marker); }
+.song-card-edit { position: absolute; top: 6px; right: 6px; background: var(--white); }
+.lib-list > .lib-more { grid-column: 1 / -1; }
 .lib-add { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 64px; border: 2px dashed var(--ink); font-family: var(--font-mono); font-size: 15px; font-weight: 700; }
 .lib-add:hover { background: var(--marker); }
 .lib-skeleton { height: 150px; border: 2px dashed var(--rule-2); margin-bottom: 14px; }
@@ -460,16 +465,16 @@ p { margin: 0; }
 .reel-progress { display: flex; gap: 4px; padding: 12px 16px 0; }
 .reel-progress i { flex: 1; height: 3px; background: var(--rule); overflow: hidden; }
 .reel-progress b { display: block; height: 100%; background: var(--ink); }
-.reel-head { display: grid; gap: 8px; align-content: start; padding: 18px 18px 8px; }
+.reel-head { display: grid; gap: 6px; align-content: start; padding: 16px 18px 6px; }
 .reel-kicker { justify-self: start; font: 700 clamp(13px, 2vh, 16px)/1.2 var(--font-mono); color: var(--ink); background: var(--marker); padding: 2px 6px; transform: rotate(-1.5deg); }
 .reel-meta { font-size: 12px; font-family: var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
 .reel-screen:not(.embedded) .reel-head { padding-left: 64px; }
 .reel-speed { padding: 3px 8px; background: var(--ink); color: var(--white); font: 700 12px var(--font-mono); white-space: nowrap; }
 .reel-speed.hand-L { background: var(--teal); color: var(--white); }
 .reel-speed.train { background: var(--pink); color: var(--white); }
-.reel-hook { color: var(--ink); font-family: var(--font); font-weight: 900; font-size: clamp(46px, 8.4vh, 92px); line-height: .9; letter-spacing: -.02em; max-width: 12ch; }
+.reel-hook { color: var(--ink); font-family: var(--font); font-weight: 900; font-size: clamp(32px, 5.4vh, 56px); line-height: .9; letter-spacing: -.02em; max-width: 12ch; }
 /* A head in words (the idea, both hands) is set in Times and smaller: the huge size is for notes. */
-.reel-hook.words { font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 4.6vh, 46px); line-height: 1; letter-spacing: 0; max-width: 18ch; }
+.reel-hook.words { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 3.4vh, 32px); line-height: 1; letter-spacing: 0; max-width: 18ch; }
 .reel-hook span { display: inline-block; white-space: pre; margin-right: .12em; }
 .reel-hook.hand-L { color: var(--teal-text); }
 .reel-stage { position: relative; min-height: 0; margin: 10px 0 20px; }
@@ -543,8 +548,8 @@ p { margin: 0; }
      whole width under it, the caption under the keys. */
   .reel-head { grid-template-columns: auto auto 1fr; align-items: center; column-gap: 18px; padding: 14px 20px 4px; }
   .reel-head .reel-meta { justify-self: start; }
-  .reel-hook { font-size: clamp(40px, 9vh, 76px); max-width: none; white-space: nowrap; }
-  .reel-hook.words { font-size: clamp(24px, 5vh, 38px); white-space: normal; max-width: 22ch; }
+  .reel-hook { font-size: clamp(30px, 6.5vh, 54px); max-width: none; white-space: nowrap; }
+  .reel-hook.words { font-size: clamp(20px, 4vh, 30px); white-space: normal; max-width: 22ch; }
   .reel-stage { margin: 6px 20px 20px; }
   .reel-foot { padding: 0 20px; }
   .reel-say { max-width: 46ch; font-size: clamp(26px, 5vh, 44px); }
@@ -553,8 +558,8 @@ p { margin: 0; }
   .app.watching .reel-kicker { margin-left: 0; }
 }
 @media (min-aspect-ratio: 5 / 4) and (max-height: 500px) {
-  .reel-hook { font-size: 34px; }
-  .reel-hook.words { font-size: 22px; }
+  .reel-hook { font-size: 28px; }
+  .reel-hook.words { font-size: 19px; }
   .reel-head { padding-top: 10px; }
   .reel-say { font-size: 20px; }
   .reel-cue { font-size: 16px; }
@@ -566,6 +571,9 @@ p { margin: 0; }
 /* The menu on Watch: three lines at the top left; the tabs slide in from the left as a sheet. */
 .nav-toggle { position: fixed; top: calc(18px + var(--safe-t)); left: calc(12px + var(--safe-l)); z-index: 12; width: 44px; height: 44px; display: grid; place-items: center; background: var(--white); border: 2px solid var(--ink); color: var(--ink); transform: rotate(-2deg); }
 .nav-toggle:hover { background: var(--marker); }
+/* While a video plays the menu steps out of the way; it is back the moment he pauses. */
+.nav-toggle { transition: opacity 240ms steps(3); }
+.reel-playing .nav-toggle { opacity: 0; pointer-events: none; }
 .app.watching { grid-template-rows: minmax(0, 1fr); }
 .app.watching .reel-kicker { margin-left: 52px; }
 .nav-scrim { position: fixed; inset: 0; z-index: 25; background: var(--scrim); }
@@ -848,7 +856,8 @@ p { margin: 0; }
 .home-item b { font-family: var(--font-display); font-weight: 700; font-size: 21px; }
 .home-item small { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
 .app:not(.watching) .content.tab-home { padding-bottom: 30px; }
-.lib-now.waiting { background: var(--pink-soft); }
+.lib-now.waiting { background: var(--pink-soft); margin-bottom: 10px; }
+.lib-now.waiting .lib-now-foot { flex-wrap: wrap; }
 /* His piano on the video: connect it, and his right and wrong keys counted as he plays along. */
 .reel-piano { position: absolute; top: 18px; right: 14px; z-index: 7; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; background: var(--white); border: 2px solid var(--ink); color: var(--ink); font: 700 12px var(--font-mono); transform: rotate(1.5deg); }
 .reel-piano > i { width: 8px; height: 8px; border-radius: 50%; background: var(--mark); margin-left: -4px; align-self: flex-start; margin-top: 6px; }

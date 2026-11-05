@@ -22,7 +22,7 @@ import { isBlack } from '../lib/names';
 import { FALL, fixClip, letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
 import { anyVoice, hush, onVoice, pauseVoice, prepareVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
-import { IconArrowDown, IconCheck, IconClose, IconHand, IconKeys, IconPause, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
+import { IconCheck, IconClose, IconHand, IconKeys, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
 import { SOFT, SPRING } from './Motion';
 
 const LOOK = FALL; // seconds of falling notes above the keys
@@ -625,7 +625,7 @@ export type ReelResult = { perfect: boolean; poor: boolean; fix?: { ticks: numbe
  * loops until he scrolls on, so he copies it on his piano as many times as he likes. The voice
  * says it once; the loops are the music alone. Tap to pause.
  */
-export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pace = 1, onResult }: PlayerProps) {
+export function ReelPlayer({ song, reel, active, onPractice, onPiano, pace = 1, onResult }: PlayerProps) {
   // The pace is taken when the video comes on screen, so it never changes under him.
   const paceAt = useMemo(() => pace, [reel, active]); // eslint-disable-line react-hooks/exhaustive-deps
   const tl = useMemo(() => timelineOf(song, reel, paceAt), [song, reel, paceAt]);
@@ -834,13 +834,22 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
   }, [place.playing, place.bar, reel.kind, seg.from, w]);
   const pass = tl.passes[0];
   const pct = pass ? Math.max(0, Math.min(1, (clock.now() - pass.t) / (pass.until - pass.t))) : 0;
-  const bar = place.playing && place.bar ? place.bar : seg.from;
   const showTitle = place.card === 'title' && loops === 0;
   // Where in the teaching the video is: the count-in, his turn, or the music shown.
   const beatNo = place.count;
   const counting = beatNo > 0;
   const training = place.train;
   const label = waitingFor ? `Your turn: play ${[...waitingFor].map(m => letter(m, song.fifths < 0)).join(' ')}` : holding ? 'On your own' : training ? (loops > 0 ? `Train with me, round ${loops + 1}` : 'Train with me') : seg.label;
+
+  // While a video plays nothing sits over it: the menu, the piano chip and the actions show only
+  // when he pauses (the user's choice 2026-11).
+  const paused = active && !clock.playing && !holding && !waitingFor;
+  useEffect(() => {
+    if (!active) return;
+    const root = document.documentElement;
+    root.classList.toggle('reel-playing', !paused);
+    return () => root.classList.remove('reel-playing');
+  }, [active, paused]);
 
   return (
     <div className={`reel-slide ${active ? 'active' : ''}`}>
@@ -852,7 +861,9 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
         <header className="reel-head">
           <motion.p key={label} className="reel-kicker" initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.18, ease: ARRIVE }}>{label}</motion.p>
           <h2 className={`reel-hook hand-${seg.kind} ${reel.head.split(' ').some(x => !/^[A-G](?:#|b)?m?$/.test(x) && x !== 'octaves') ? 'words' : ''}`}>{reel.head.split(' ').map((x, i) => <motion.span key={`${reel.id}-${i}`} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x} </motion.span>)}</h2>
-          <p className="reel-meta">Phase {reel.n}, {reel.k} of {reel.of}. Bar {bar}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">. Your keys: <b className="ok">{score.ok} right</b>, <b className="bad">{score.bad} wrong</b></span>}</p>
+          {(paused || (inputOn && score.ok + score.bad > 0)) && (
+            <p className="reel-meta">{paused && `Phase ${reel.n}, ${reel.k} of ${reel.of}`}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">{paused ? '. ' : ''}Your keys: <b className="ok">{score.ok} right</b>, <b className="bad">{score.bad} wrong</b></span>}</p>
+          )}
         </header>
         <div className="reel-stage">
           <Lanes tl={tl} range={range} now={clock.now} held={held} presses={presses} hands={handsOn} flatHands={!use3d} geom={geomRef} shape={reel.kind === 'pattern' || reel.kind === 'L' || reel.kind === 'R' || reel.kind === 'fix'} jump={jumpKeys} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
@@ -915,10 +926,15 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
         {!clock.ready && active && <span className="reel-loading" role="status">Loading the piano</span>}
         {/* His piano: a key icon with a dot (green when connected) to connect it, and, once he plays
             along, how many keys were right and how many wrong in this video. */}
-        <button className={`reel-piano ${inputOn ? 'on' : ''}`} onClick={e => { e.stopPropagation(); onPiano?.(); }} aria-label={inputOn ? 'Piano connected. Open settings' : 'Connect your piano'}>
-          <IconKeys size={20} /><i aria-hidden="true" />
-          {!inputOn && <span className="reel-connect">Connect</span>}
-        </button>
+        <AnimatePresence>
+          {paused && (
+            <motion.button key="piano" className={`reel-piano ${inputOn ? 'on' : ''}`} onClick={e => { e.stopPropagation(); onPiano?.(); }} aria-label={inputOn ? 'Piano connected. Open settings' : 'Connect your piano'}
+              initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.25, ease: ARRIVE }}>
+              <IconKeys size={20} /><i aria-hidden="true" />
+              {!inputOn && <span className="reel-connect">Connect</span>}
+            </motion.button>
+          )}
+        </AnimatePresence>
         {/* Scrub: drag along the bottom to go back to any moment, like TikTok. */}
         <div className="reel-scrub" role="slider" aria-label="Where in the video" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct * 100)} tabIndex={0}
           onClick={e => e.stopPropagation()}
@@ -931,10 +947,9 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
 
       {/* The actions show only when he pauses, sliding in from the edge, so the video stays clear. */}
       <AnimatePresence>
-        {active && !clock.playing && !holding && !waitingFor && (
+        {paused && (
           <motion.aside key="side" className="reel-side" initial={{ x: 70, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 70, opacity: 0, transition: { duration: 0.14, ease: LEAVE } }} transition={{ duration: 0.3, ease: ARRIVE }}>
             <button className="reel-act go" onClick={onPractice} aria-label={`Practise phase ${reel.n}`}><span><IconKeys size={26} /></span>Practise</button>
-            <button className="reel-act" onClick={toggle} aria-label={clock.playing ? 'Pause' : 'Play'}><span>{clock.playing ? <IconPause size={24} /> : <IconPlay size={24} />}</span>{clock.playing ? 'Pause' : 'Play'}</button>
             <button className="reel-act" onClick={replay} aria-label="From the start, with the voice"><span><IconRestart size={24} /></span>Again</button>
             {anyVoice() && (
               <button className="reel-act" onClick={e => { e.stopPropagation(); unlockVoice(); setVoiceOn(!voice.on); }} aria-pressed={voice.on} aria-label={voice.on ? 'Turn the voice off' : 'Turn the voice on'}>
@@ -942,7 +957,6 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pa
               </button>
             )}
             <button className="reel-act" onClick={e => { e.stopPropagation(); toggleHands(); }} aria-pressed={handsOn} aria-label={handsOn ? 'Hide the gloves on the keys' : 'Show the gloves on the keys'}><span><IconHand size={24} /></span>Hands</button>
-            {onNext && <button className="reel-act" onClick={onNext} aria-label="Next video"><span><IconArrowDown size={24} /></span>Next</button>}
           </motion.aside>
         )}
       </AnimatePresence>

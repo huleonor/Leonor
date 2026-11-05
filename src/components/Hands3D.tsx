@@ -67,7 +67,7 @@ type Finger = {
 type Rig = {
   h: Hand; root: THREE.Group; fingers: Finger[]; all: THREE.Bone[]; restAll: THREE.Quaternion[];
   align: THREE.Quaternion; fwd: THREE.Vector3; back: THREE.Vector3; span: number; length: number;
-  wx: number; vwx: number; yaw: number; roll: number; point: number; px: number; py: number; seen: boolean;
+  wx: number; vwx: number; ky: number; vky: number; yaw: number; roll: number; point: number; px: number; py: number; seen: boolean;
 };
 
 export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
@@ -160,7 +160,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
         }
         const span = W(bones.get('index_01')!).distanceTo(W(bones.get('pinky_01')!));
         const length = W(bones.get('middle_01')!).distanceTo(wrist) + fingers[2].len.reduce((a, b) => a + b, 0);
-        rigs[h] = { h, root, fingers, all: sk.bones, restAll: sk.bones.map(b => b.quaternion.clone()), align, fwd, back, span, length, wx: 0, vwx: 0, yaw: 0, roll: 0, point: 0, px: 0, py: 0, seen: false };
+        rigs[h] = { h, root, fingers, all: sk.bones, restAll: sk.bones.map(b => b.quaternion.clone()), align, fwd, back, span, length, wx: 0, vwx: 0, ky: 0, vky: 0, yaw: 0, roll: 0, point: 0, px: 0, py: 0, seen: false };
       }).catch(err => console.warn('[hands] the hand model could not load:', err));
     }
 
@@ -209,6 +209,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
     };
 
     let raf = 0, last = performance.now();
+    let cam: { m: number; xa: number; xb: number } | null = null;
     const draw = () => {
       const G = geom.current;
       const Wd = host.clientWidth, Ht = host.clientHeight;
@@ -222,6 +223,24 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
         camera.position.set(Wd / 2, -Ht / 2, D); camera.lookAt(Wd / 2, -Ht / 2, 0); camera.updateProjectionMatrix();
         const t = now();
         const namedKey = t < untilRef.current && named.current && named.current.size ? [...named.current.entries()].sort((a, b) => b[1] - a[1])[0][0] : undefined;
+        // The camera glides along the keys: everything the hands hold in screen pixels moves with
+        // it first, so a hand never trails behind its keys while the picture moves.
+        let ma = 0;
+        for (let m = 36; m < 96; m++) if (G.X(m) && G.X(m + 12)) { ma = m; break; }
+        if (ma) {
+          const xa = G.X(ma)!.x, xb = G.X(ma + 12)!.x;
+          if (cam && cam.m === ma && cam.xb !== cam.xa) {
+            const a = (xb - xa) / (cam.xb - cam.xa), b0 = xa - a * cam.xa;
+            if (Math.abs(a - 1) > 1e-4 || Math.abs(b0) > 0.05) {
+              for (const rig of Object.values(rigs)) {
+                if (!rig) continue;
+                rig.wx = a * rig.wx + b0; rig.vwx *= a; rig.px = a * rig.px + b0;
+                for (const fg of rig.fingers) { fg.x = a * fg.x + b0; fg.vx *= a; }
+              }
+            }
+          }
+          cam = { m: ma, xa, xb };
+        }
         // A white key's pitch on screen (unitW is the key's own width, narrower than its step).
         let kw = G.unitW;
         for (let m = 60; m < 84; m++) {
@@ -234,9 +253,10 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           if (!rig) continue;
           const dir = h === 'R' ? 1 : -1;
           const mine = tl.notes.filter(n => n.hand === h && n.finger);
-          // Size: knuckles of index to little finger over about three white keys, as a real hand;
+          // Size: knuckles of index to little finger over about four white keys (big enough to span an
+          // octave with the thumb, like the hands in the video he liked);
           // the forearm may leave the screen at the bottom, the hand itself never.
-          const s = Math.min((kw * 3.3) / rig.span, (Ht - G.kbTop) * (Wd > Ht ? 2.2 : 1.5) / rig.length);
+          const s = Math.min((kw * 3.9) / rig.span, (Ht - G.kbTop) * (Wd > Ht ? 2.2 : 1.5) / rig.length);
           rig.root.scale.setScalar(s);
           const fl = rig.fingers[2].len.reduce((a, b) => a + b, 0) * s;
           // A free finger rests a key along from its neighbour, or closer when the keys are wide and
@@ -309,9 +329,9 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           const p = rig.point;
           // The wrist, led by the notes about to sound, on its own slower spring.
           let sx = 0, sw = 0;
-          for (let f = 1; f <= 5; f++) { const w = want[f].real ? 1 / (0.2 + want[f].soon) : 0.15; sx += (rig.fingers[f - 1].x - (f - 3) * dir * (rig.span * s) / 3) * w; sw += w; }
+          for (let f = 1; f <= 5; f++) { const w = want[f].real ? 1 / (0.06 + want[f].soon) : 0.15; sx += ((want[f].real ? want[f].x! : rig.fingers[f - 1].x) - (f - 3) * dir * (rig.span * s) / 3) * w; sw += w; }
           const handX = p > 0.5 ? rig.px + dir * kw * 0.9 : sx / sw;
-          const om = 9, ze = 0.9;
+          const om = 13, ze = 0.9;
           for (let k = 0; k < steps; k++) { rig.vwx += (om * om * (handX - rig.wx) - 2 * ze * om * rig.vwx) * h2; rig.wx += rig.vwx * h2; }
           const pressSide = [1, 2, 3, 4, 5].reduce((a, f) => a + want[f].press * (f - 3), 0);
           rig.yaw += (clamp(-rig.vwx / (kw * 45), -0.12, 0.12) - rig.yaw) * (1 - Math.exp(-dt * 6));
@@ -324,8 +344,15 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           rig.root.position.set(0, 0, 0);
           rig.root.updateMatrixWorld(true);
           const k3 = rig.fingers[2].bones[0].getWorldPosition(v());
-          const keyY = p > 0.5 ? rig.py : rig.fingers[2].y;
-          rig.root.position.set(rig.wx - k3.x, -(keyY + fl * 0.66) - k3.y, fl * 0.58 - k3.z);
+          // The hand moves in towards the black keys when a finger is about to play one, so every
+          // finger can reach its key with a soft curve (it never stretches flat to get there).
+          let reachY = Infinity;
+          for (let f = 1; f <= 5; f++) if (want[f].real && want[f].soon < 0.6) reachY = Math.min(reachY, want[f].y + (f === 1 ? -G.kbH * 0.1 : 0));
+          const kyWant = p > 0.5 ? rig.py : reachY < Infinity ? reachY : rig.fingers[2].y;
+          if (!rig.ky) rig.ky = kyWant;
+          for (let k = 0; k < steps; k++) { rig.vky += (100 * (kyWant - rig.ky) - 2 * 0.9 * 10 * rig.vky) * h2; rig.ky += rig.vky * h2; }
+          const keyY = rig.ky;
+          rig.root.position.set(rig.wx - k3.x, -(keyY + fl * 0.55) - k3.y, fl * 0.44 - k3.z);
           rig.root.updateMatrixWorld(true);
 
           // The hand's frame in the world, for the fingers' planes.
@@ -339,31 +366,57 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             // The thumb bends in towards the palm (opposition), the others straight down.
             const toPalm = Ac.clone().multiplyScalar(-dir);
             const down = thumb ? Dn.clone().multiplyScalar(0.8).addScaledVector(toPalm, 0.6).normalize() : Dn.clone();
+            const lim: [number, number, number, number] = thumb ? [-0.2, 0.9, 0.05, 1.0] : [-0.25, 1.35, 0.18, 1.75];
+            /** Turns the finger's bones to its angles; gives back where its tip lands. */
+            const pose = () => {
+              const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
+              const [a, b] = fg.theta, c = b * 0.72;
+              const seg = (ang: number, l: number) => plane.clone().multiplyScalar(Math.cos(ang) * l).addScaledVector(down, Math.sin(ang) * l);
+              const P2 = M.clone().add(seg(a, len[0])), P3 = P2.clone().add(seg(a + b, len[1])), P4 = P3.clone().add(seg(a + b + c, len[2]));
+              aim(fg.bones[0], fg.rest[0], fg.axis[0], P2);
+              aim(fg.bones[1], fg.rest[1], fg.axis[1], P3);
+              aim(fg.bones[2], fg.rest[2], fg.axis[2], P4);
+              return fg.ends[2].getWorldPosition(v());
+            };
             if (p > 0.5 && f !== 2) {
               fg.theta = [fg.theta[0] + ((thumb ? 0.5 : 1.15) - fg.theta[0]) * 0.25, fg.theta[1] + ((thumb ? 0.7 : 1.45) - fg.theta[1]) * 0.25];
-            } else {
-              const w = want[f];
-              const pointing = p > 0.5 && f === 2;
-              const T = v(pointing ? rig.px : fg.x, -(pointing ? rig.py : fg.y), pointing ? fl * 0.35 : w.z);
-              const rel = T.clone().sub(M);
-              const sp = SPREAD[f] * dir;
-              const lat = rel.dot(Ac), fwdD = Math.max(1, rel.dot(Fw));
-              fg.abd += (clamp(Math.atan2(lat, fwdD), sp - (thumb ? 0.7 : 0.3), sp + (thumb ? 0.7 : 0.3)) - fg.abd) * 0.5;
-              const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
-              // A key out of this finger's reach (wide keys on a big screen): it stays relaxed in
-              // its own lane instead of twisting after it.
-              const Lf = len[0] + len[1] + len[2];
-              const off = Math.abs(rel.dot(v().crossVectors(Dn, plane).normalize()));
-              const far = off > Lf * (thumb ? 0.8 : 0.45);
-              solve(fg, len, far ? Lf * 0.62 : rel.dot(plane), far ? Lf * 0.5 : rel.dot(down), thumb ? [-0.2, 0.9, 0.05, 1.0] : [-0.25, 1.35, 0.18, 1.75]);
+              pose();
+              continue;
             }
+            const w = want[f];
+            const pointing = p > 0.5 && f === 2;
+            // A finger about to play (or playing) lands on its key itself, not on its lagging spring.
+            const lock = pointing ? 0 : w.real ? clamp(Math.max(w.press, 1 - w.soon / 0.12), 0, 1) : 0;
+            const tx = fg.x + (w.x! - fg.x) * lock, ty = fg.y + (w.y - fg.y) * lock;
+            const T = v(pointing ? rig.px : tx, -(pointing ? rig.py : ty), pointing ? fl * 0.35 : w.z);
+            const rel = T.clone().sub(M);
+            const sp = SPREAD[f] * dir;
+            const lat = rel.dot(Ac), fwdD = Math.max(1, rel.dot(Fw));
+            const range = thumb ? 0.9 : f === 5 ? 0.42 : 0.32;
+            fg.abd += (clamp(Math.atan2(lat, fwdD), sp - range, sp + range) - fg.abd) * (lock > 0.5 ? 1 : 0.5);
             const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
-            const [a, b] = fg.theta, c = b * 0.72;
-            const seg = (ang: number, l: number) => plane.clone().multiplyScalar(Math.cos(ang) * l).addScaledVector(down, Math.sin(ang) * l);
-            const P2 = M.clone().add(seg(a, len[0])), P3 = P2.clone().add(seg(a + b, len[1])), P4 = P3.clone().add(seg(a + b + c, len[2]));
-            aim(fg.bones[0], fg.rest[0], fg.axis[0], P2);
-            aim(fg.bones[1], fg.rest[1], fg.axis[1], P3);
-            aim(fg.bones[2], fg.rest[2], fg.axis[2], P4);
+            // A key out of this finger's reach (wide keys on a big screen): it stays relaxed in its
+            // own lane instead of twisting after it.
+            const Lf = len[0] + len[1] + len[2];
+            const off = Math.abs(rel.dot(v().crossVectors(Dn, plane).normalize()));
+            const far = off > Lf * (thumb ? 0.8 : 0.45);
+            let u = far ? Lf * 0.62 : rel.dot(plane), d = far ? Lf * 0.5 : rel.dot(down);
+            solve(fg, len, u, d, lim);
+            let tip = pose();
+            // The model's fingertip is not exactly at the end of the solved chain (the bones' own
+            // bend, the pad of the finger): where it must hit a key, the miss is measured on the
+            // posed hand and folded back into the target, twice, so it lands on the key.
+            if (!far && (lock > 0 || pointing)) {
+              for (let k = 0; k < 2; k++) {
+                const err = T.clone().sub(tip);
+                if (err.length() < Lf * 0.01) break;
+                const pl = Fw.clone().applyAxisAngle(Dn, fg.abd), side = v().crossVectors(Dn, pl).normalize();
+                fg.abd = clamp(fg.abd + Math.atan2(err.dot(side), Math.max(Lf * 0.5, u)), sp - range - 0.1, sp + range + 0.1);
+                u += err.dot(pl); d += err.dot(down);
+                solve(fg, len, u, d, lim);
+                tip = pose();
+              }
+            }
           }
         }
         outline.render(scene, camera);
