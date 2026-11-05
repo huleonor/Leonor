@@ -36,6 +36,7 @@ import type { ReelTimeline } from '../lib/reels';
 import { isBlack } from '../lib/names';
 import type { Hand } from '../lib/types';
 import type { KeysGeom } from './Reels';
+import { probe, type ProbeFinger } from '../lib/handCheck';
 
 /** The toon ramp read in colour (three's own chunk takes only the red channel). */
 const RAMP = `uniform sampler2D gradientMap;
@@ -72,7 +73,7 @@ type Finger = {
 type Rig = {
   h: Hand; root: THREE.Group; fingers: Finger[]; all: THREE.Bone[]; restAll: THREE.Quaternion[];
   align: THREE.Quaternion; fwd: THREE.Vector3; back: THREE.Vector3; span: number; length: number;
-  wx: number; vwx: number; ky: number; vky: number; dip: number; edge: number; yaw: number; roll: number; point: number; px: number; py: number; seen: boolean;
+  wx: number; vwx: number; ky: number; vky: number; dip: number; edge: number; yaw: number; roll: number; point: number; px: number; py: number; seen: boolean; shift: number;
 };
 
 export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
@@ -178,7 +179,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
         }
         const span = W(bones.get('index_01')!).distanceTo(W(bones.get('pinky_01')!));
         const length = W(bones.get('middle_01')!).distanceTo(wrist) + fingers[2].len.reduce((a, b) => a + b, 0);
-        rigs[h] = { h, root, fingers, all: sk.bones, restAll: sk.bones.map(b => b.quaternion.clone()), align, fwd, back, span, length, wx: 0, vwx: 0, ky: 0, vky: 0, dip: 0, edge: 0, yaw: 0, roll: 0, point: 0, px: 0, py: 0, seen: false };
+        rigs[h] = { h, root, fingers, all: sk.bones, restAll: sk.bones.map(b => b.quaternion.clone()), align, fwd, back, span, length, wx: 0, vwx: 0, ky: 0, vky: 0, dip: 0, edge: 0, yaw: 0, roll: 0, point: 0, px: 0, py: 0, seen: false, shift: 0 };
       }).catch(err => console.warn('[hands] the hand model could not load:', err));
     }
 
@@ -227,12 +228,19 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
     };
 
     let raf = 0, last = performance.now();
+    // Only the video on screen draws its hands: the feed keeps its neighbours mounted, and three
+    // renderers at once halved the frame rate on a phone.
+    let onScreen = true;
+    const io = new IntersectionObserver(es => { for (const e of es) onScreen = e.isIntersecting && e.intersectionRatio > 0.5; }, { threshold: [0, 0.5, 1] });
+    io.observe(host);
+    const id = Math.random().toString(36).slice(2, 7);
     let cam: { m: number; xa: number; xb: number } | null = null;
     const draw = () => {
       const G = geom.current;
       const Wd = host.clientWidth, Ht = host.clientHeight;
-      if (G && Wd > 0 && Ht > 0) {
-        const nowMs = performance.now(), dt = Math.min(0.05, (nowMs - last) / 1000);
+      if (!onScreen) last = performance.now();
+      else if (G && Wd > 0 && Ht > 0) {
+        const nowMs = performance.now(), dt = Math.min(0.12, (nowMs - last) / 1000);
         slowFrames = nowMs - last > 26 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
         if (slowFrames > 30 && ratio > 1) { ratio = 1; renderer.setPixelRatio(1); slowFrames = 0; }
         last = nowMs;
@@ -285,7 +293,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // the hand would have to splay: never wider than its own knuckles allow.
           const step = Math.min(kw * 0.95, (rig.span * s) / 3 * 1.05);
           // Each finger's next note: where on the key, and its press envelope from the note times.
-          const want: { x?: number; y: number; z: number; real: boolean; soon: number; press: number }[] = [];
+          const want: { x?: number; y: number; z: number; real: boolean; soon: number; press: number; since?: number; gap?: number; n?: { midi: number; t: number; dur: number }; kx?: number }[] = [];
           // Fingers look ahead 1.4 s; a hand with nothing that near (resting between its entries)
           // waits over the next notes it will play rather than where it last was, so it never sits
           // on the other hand.
@@ -311,10 +319,10 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
               else if (t < t1) { z = top - depth; press = 1; }
               else if (t < t1 + 0.2) { const e = smooth((t - t1) / 0.2); z = top - depth + (hover + depth) * e; press = 1 - e; }
               // Into the black keys and out again gradually, as the note comes, not in one jump.
-              const restY = G.kbTop + G.kbH * (f === 1 ? 0.7 : 0.6);
-              const keyY = G.kbTop + G.kbH * (black ? 0.3 : f === 1 ? 0.7 : 0.6);
+              const restY = G.kbTop + G.kbH * (f === 1 ? 0.88 : 0.6);
+              const keyY = G.kbTop + G.kbH * (black ? 0.3 : f === 1 ? 0.88 : 0.6);
               const soon = Math.max(0, t0 - t), into = t >= t0 ? 1 : smooth(1 - soon / 0.7);
-              want[f] = { x: k.x + k.w / 2, y: restY + (keyY - restY) * into, z, real: true, soon, press };
+              want[f] = { x: k.x + k.w / 2, y: restY + (keyY - restY) * into, z, real: true, soon, press, since: Math.max(0, t - t0), gap: nx.t - mine.reduce((a, n) => (n.t < nx.t - 0.01 && n.t > a ? n.t : a), -1e9), n: nx, kx: k.x + k.w / 2 };
             } else want[f] = { y: G.kbTop + G.kbH * 0.6, z: hover * 1.8, real: false, soon: 9, press: 0 };
           }
           for (let f = 1; f <= 5; f++) if (want[f].x === undefined) {
@@ -344,7 +352,10 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           rig.root.visible = true;
           // Tendons: a pressing finger pulls its neighbours down a little.
           for (let f = 2; f <= 5; f++) for (const g of [f - 1, f + 1]) if (g >= 2 && g <= 5 && want[g].press > 0.5 && want[f].press < 0.2) want[f].z -= fl * 0.03 * want[g].press;
-          const pk = namedKey !== undefined && (handOf.get(namedKey) ?? (namedKey < 60 ? 'L' : 'R')) === h ? G.X(namedKey) : null;
+          // It points at a key the voice names only while it has nothing to play: a note due within
+          // 0.7 s wins, so the hand is there when it sounds (the check found it still pointing).
+          const due = [1, 2, 3, 4, 5].some(f => want[f].real && (want[f].press > 0 || want[f].soon < 0.7));
+          const pk = !due && namedKey !== undefined && (handOf.get(namedKey) ?? (namedKey < 60 ? 'L' : 'R')) === h ? G.X(namedKey) : null;
           if (!rig.seen) {
             for (const fg of rig.fingers) { fg.x = want[fg.f].x!; fg.y = want[fg.f].y; }
             rig.wx = want[3].x!; rig.px = want[2].x!; rig.py = want[2].y; rig.seen = true;
@@ -361,9 +372,13 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           rig.point += ((pk ? 1 : 0) - rig.point) * (1 - Math.exp(-dt * 8));
           if (pk) { rig.px += (pk.x + pk.w / 2 - rig.px) * (1 - Math.exp(-dt * 10)); rig.py += (G.kbTop + G.kbH * 0.45 - rig.py) * (1 - Math.exp(-dt * 10)); }
           const p = rig.point;
-          // The wrist, led by the notes about to sound, on its own slower spring.
+          // The wrist, led by the notes about to sound, on its own slower spring; a note already held
+          // pulls less and less, so the hand leaves it for the next one (the pedal keeps it sounding);
+          // it sets off at most halfway through the gap since the hand's last note, so between quick
+          // far notes it still sits on each one as it sounds. The thumb is short from the knuckles, so
+          // its note pulls twice as hard.
           let sx = 0, sw = 0;
-          for (let f = 1; f <= 5; f++) { const far = want[f].real ? Math.abs(want[f].x! - rig.wx) / kw : 0; const lead = 0.25 + Math.min(0.55, far * 0.06); const w = want[f].real ? 1 / (0.06 + Math.max(0, want[f].soon - lead)) : 0.15; sx += ((want[f].real ? want[f].x! : rig.fingers[f - 1].x) - (f - 3) * dir * (rig.span * s) / 3) * w; sw += w; }
+          for (let f = 1; f <= 5; f++) { const far = want[f].real ? Math.abs(want[f].x! - rig.wx) / kw : 0; const lead = Math.min(0.25 + Math.min(0.55, far * 0.06), Math.max(0.12, (want[f].gap ?? 9) * 0.5)); const w = want[f].real ? 1 / (0.06 + Math.max(0, want[f].soon - lead) + 0.6 * Math.max(0, (want[f].since ?? 0) - 0.15)) : 0.15; const wt = f === 1 && want[f].real ? w * 2 : w; sx += ((want[f].real ? want[f].x! : rig.fingers[f - 1].x) - (f - 3) * dir * (rig.span * s) / 3) * wt; sw += wt; }
           const handX = p > 0.5 ? rig.px + dir * kw * 0.9 : sx / sw;
           // A stiff, critically damped spring (no overshoot), towards a target that already leans on
           // the notes coming in the next quarter second (earlier for a far jump, about 0.06 s a key,
@@ -388,7 +403,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // on a critically damped spring: it glides forward and back, never overshoots.
           const restY = G.kbTop + G.kbH * 0.6;
           let reachY = restY;
-          for (let f = 1; f <= 5; f++) if (want[f].real && want[f].soon < 1) reachY = Math.min(reachY, want[f].y + (f === 1 ? -G.kbH * 0.1 : 0));
+          for (let f = 1; f <= 5; f++) if (want[f].real && want[f].soon < 1) reachY = Math.min(reachY, want[f].y + (f === 1 ? -G.kbH * 0.5 : 0));
           const kyWant = p > 0.5 ? rig.py : reachY;
           if (!rig.ky) rig.ky = kyWant;
           for (let k = 0; k < steps; k++) { rig.vky += (144 * (kyWant - rig.ky) - 2 * 12 * rig.vky) * h2; rig.ky += rig.vky * h2; }
@@ -400,13 +415,30 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // them and comes down a little, as a pianist's forearm turns, so they reach their keys.
           const edgeNow = Math.max(want[1].press, want[5].press, want[1].real ? smooth(1 - want[1].soon / 0.25) : 0, want[5].real ? smooth(1 - want[5].soon / 0.25) : 0);
           rig.edge += (edgeNow - rig.edge) * (1 - Math.exp(-dt * 14));
-          rig.root.position.set(rig.wx - k3.x, -(keyY + fl * 0.55) - k3.y, fl * (0.44 - 0.035 * rig.dip - 0.1 * rig.edge) - k3.z);
+          rig.root.position.set(rig.wx + rig.shift - k3.x, -(keyY + fl * 0.55) - k3.y, fl * (0.44 - 0.035 * rig.dip - 0.1 * rig.edge) - k3.z);
           rig.root.updateMatrixWorld(true);
+          // The thumb and the little finger reach sideways only so far from their knuckles: when one
+          // is about to play a key beyond that, the whole hand moves over for it (at most a key and a
+          // half, eased), as a pianist's does on an octave (the check found the thumb short of it).
+          let need = 0;
+          for (const f of [1, 5]) {
+            const w = want[f];
+            if (!w.real || (w.press <= 0 && w.soon > 0.3)) continue;
+            const fg = rig.fingers[f - 1], base = fg.bones[0].getWorldPosition(v()).x;
+            const reach = fg.len.reduce((a, b) => a + b, 0) * s * (f === 1 ? 0.8 : 0.55);
+            const dx = w.x! - base;
+            if (Math.abs(dx) > reach) need += Math.sign(dx) * (Math.abs(dx) - reach);
+          }
+          need = clamp(need, -kw * 1.5, kw * 1.5);
+          const shiftWas = rig.shift;
+          rig.shift += (need - rig.shift) * (1 - Math.exp(-dt * 14));
+          if (rig.shift !== shiftWas) { rig.root.position.x += rig.shift - shiftWas; rig.root.updateMatrixWorld(true); }
 
           // The hand's frame in the world, for the fingers' planes.
           const Fw = rig.fwd.clone().applyQuaternion(rig.root.quaternion).normalize();
           const Dn = rig.back.clone().applyQuaternion(rig.root.quaternion).normalize().negate();
           const Ac = v().crossVectors(Dn, Fw).normalize();
+          const farOf: boolean[] = [];
           for (const fg of rig.fingers) {
             const f = fg.f, thumb = f === 1;
             const M = fg.bones[0].getWorldPosition(v());
@@ -414,7 +446,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             // The thumb bends in towards the palm (opposition), the others straight down.
             const toPalm = Ac.clone().multiplyScalar(-dir);
             const down = thumb ? Dn.clone().multiplyScalar(0.8).addScaledVector(toPalm, 0.6).normalize() : Dn.clone();
-            const lim: [number, number, number, number] = thumb ? [-0.2, 0.9, 0.05, 1.0] : [-0.25, 1.35, 0.18, 1.75];
+            const lim: [number, number, number, number] = thumb ? [-0.7, 0.9, 0.0, 1.4] : [-0.25, 1.35, 0.18, 1.75];
             /** Turns the finger's bones to its angles; gives back where its tip lands. */
             const pose = () => {
               const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
@@ -440,7 +472,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             const rel = T.clone().sub(M);
             const sp = SPREAD[f] * dir;
             const lat = rel.dot(Ac), fwdD = Math.max(1, rel.dot(Fw));
-            const range = thumb ? 1.1 : f === 5 ? 0.6 : f === 2 ? 0.38 : 0.32;
+            const range = thumb ? 1.35 : f === 5 ? 0.6 : f === 2 ? 0.38 : 0.32;
             fg.abd += (clamp(Math.atan2(lat, fwdD), sp - range, sp + range) - fg.abd) * (lock > 0.5 ? 1 : 0.5);
             const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
             // A key out of this finger's reach (wide keys on a big screen): it stays relaxed in its
@@ -448,15 +480,24 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             const Lf = len[0] + len[1] + len[2];
             const off = Math.abs(rel.dot(v().crossVectors(Dn, plane).normalize()));
             const far = off > Lf * (thumb ? 0.95 : f === 5 ? 0.65 : 0.45);
+            farOf[f] = far;
             let u = far ? Lf * 0.62 : rel.dot(plane), d = far ? Lf * 0.5 : rel.dot(down);
             solve(fg, len, u, d, lim);
             let tip = pose();
             // The model's fingertip is not exactly at the end of the solved chain (the bones' own
             // bend, the pad of the finger): where it must hit a key, the miss is measured on the
             // posed hand and folded back into the target, twice, so it lands on the key.
-            if (!far && (lock > 0 || pointing)) {
-              for (let k = 0; k < (thumb ? 5 : 3); k++) {
+            // An idle finger gets two passes too, so it hovers where it was asked and never rests
+            // inside the keys (the quality check found the thumb below them a third of the time).
+            if (!far) {
+              const passes = lock > 0 || pointing ? (thumb ? 5 : 3) : 2;
+              // The best pose found is kept: a key out of reach must not send the finger past it. It is
+              // judged on the keys' plane first (where the tip lands), its height counting half.
+              const miss = (p: THREE.Vector3) => Math.hypot(p.x - T.x, p.y - T.y, (p.z - T.z) * 0.5);
+              let best = { e: miss(tip), th: [...fg.theta] as [number, number], abd: fg.abd };
+              for (let k = 0; k < passes; k++) {
                 const err = T.clone().sub(tip);
+                if (miss(tip) < best.e) best = { e: miss(tip), th: [...fg.theta] as [number, number], abd: fg.abd };
                 if (err.length() < Lf * 0.01) break;
                 const pl = Fw.clone().applyAxisAngle(Dn, fg.abd), side = v().crossVectors(Dn, pl).normalize();
                 fg.abd = clamp(fg.abd + Math.atan2(err.dot(side), Math.max(Lf * 0.5, u)), sp - range - 0.1, sp + range + 0.1);
@@ -464,7 +505,16 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
                 solve(fg, len, u, d, lim);
                 tip = pose();
               }
+              if (miss(tip) > best.e) { fg.theta = best.th; fg.abd = best.abd; tip = pose(); }
             }
+          }
+          // The quality check (handCheck.ts, dev only) reads every frame while it records.
+          if (probe.frames) {
+            const fingers: ProbeFinger[] = rig.fingers.map(fg => {
+              const tp = fg.ends[2].getWorldPosition(v()), w = want[fg.f];
+              return { x: tp.x, y: -tp.y, z: tp.z, press: w.press, wz: w.z, midi: w.n?.midi, kx: w.kx, on: w.n?.t, off: w.n ? w.n.t + w.n.dur : undefined, far: !!farOf[fg.f] };
+            });
+            probe.frames.push({ id, t, ms: nowMs, h, kw, fl, wx: rig.wx, x0: cam?.xa ?? 0, fingers });
           }
         }
         outline.render(scene, camera);
@@ -472,7 +522,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
       raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
-    return () => { alive = false; cancelAnimationFrame(raf); gradient.dispose(); renderer.dispose(); renderer.forceContextLoss(); host.removeChild(renderer.domElement); };
+    return () => { alive = false; io.disconnect(); cancelAnimationFrame(raf); gradient.dispose(); renderer.dispose(); renderer.forceContextLoss(); host.removeChild(renderer.domElement); };
   }, [tl, now, geom, named]);
   return <div ref={box} className="reel-gloves" aria-hidden="true" />;
 }

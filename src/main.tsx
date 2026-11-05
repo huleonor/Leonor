@@ -31,6 +31,9 @@ if (import.meta.env.DEV) {
 
 // What each reel shows, bar by bar, to write its script from: await window.__reelFacts('song-id').
 if (import.meta.env.DEV) {
+  // The hands' quality check on the video on screen: await window.__handCheck(20).
+  (window as unknown as { __handCheck: unknown }).__handCheck = async (s?: number) => (await import('./lib/handCheck')).handCheck(s);
+  (window as unknown as { __handFrames: unknown }).__handFrames = async () => (await import('./lib/handCheck')).probe.last;
   (window as unknown as { __reelFacts: unknown }).__reelFacts = async (id: string) => {
     const { listSongs, loadSong } = await import('./lib/library');
     const { reelFacts } = await import('./lib/reels');
