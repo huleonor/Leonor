@@ -718,11 +718,11 @@ export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
   }
   // 3. Train with me, in rounds (the user's choice 2026-11: practising alone was no use, he cannot
   // remember the notes yet): every round has its count-in and the notes falling for him to play, and
-  // the help fades each round (the piano guiding at 40%, then 20%, then 10%), so the notes stay on
+  // the help fades each round (the piano guiding at 75%, then 60%, then 50%: always heard, the user found it went silent at 10%), so the notes stay on
   // screen while the music moves into his hands. A step takes two rounds, three when it is hard; a
   // pattern, a jump or a fix (already four times over) and the whole phase take one.
   const rounds = clip.kind === 'run' || clip.kind === 'pattern' || clip.kind === 'jump' || clip.kind === 'fix' ? 1 : (clip.difficulty ?? 0) >= 0.6 ? 3 : 2;
-  const GUIDE = [0.4, 0.2, 0.1];
+  const GUIDE = [0.75, 0.6, 0.5];
   const beat = Math.max(0.45, Math.min(1, song.ticksToSeconds(song.ppq) / sg.speed));
   // Count 1, 2, 3 (the user's choice), then the notes start falling in silence (no more clicks
   // after the 3), landing on the beat the count set.

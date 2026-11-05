@@ -63,6 +63,9 @@ export default function App() {
   const { ready, entries, infos } = useCatalog();
 
   useEffect(() => onLinkState(setLinks), []);
+  // The piano's sound loads as soon as the app opens: the first video he lands on (often not the
+  // first of a phase) must not start before it (it played silent, the user's complaint 2026-11).
+  useEffect(() => { loadPiano().catch(() => {}); }, []);
   useEffect(() => { watchForMidi(); }, []);
   useEffect(() => { saveSettings(settings); }, [settings]);
   // Practice reminders: rewritten when the setting changes and after practice (today's is skipped once the goal is met).

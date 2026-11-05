@@ -67,7 +67,7 @@ type Finger = {
 type Rig = {
   h: Hand; root: THREE.Group; fingers: Finger[]; all: THREE.Bone[]; restAll: THREE.Quaternion[];
   align: THREE.Quaternion; fwd: THREE.Vector3; back: THREE.Vector3; span: number; length: number;
-  wx: number; vwx: number; ky: number; vky: number; dip: number; yaw: number; roll: number; point: number; px: number; py: number; seen: boolean;
+  wx: number; vwx: number; ky: number; vky: number; dip: number; edge: number; yaw: number; roll: number; point: number; px: number; py: number; seen: boolean;
 };
 
 export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
@@ -78,7 +78,10 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
   useEffect(() => {
     const host = box.current!;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    // Sharp, but light enough for a phone: at most 1.5 pixels a point, down to 1 when frames run slow.
+    let ratio = Math.min(1.5, window.devicePixelRatio || 1);
+    renderer.setPixelRatio(ratio);
+    let slowFrames = 0;
     host.appendChild(renderer.domElement);
     // Drawn, not photographed (the user's choice 2026-11, from a piano video with comic hands): the
     // skin is flat colour in three tones from the light, with an ink line round the hand.
@@ -170,7 +173,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
         }
         const span = W(bones.get('index_01')!).distanceTo(W(bones.get('pinky_01')!));
         const length = W(bones.get('middle_01')!).distanceTo(wrist) + fingers[2].len.reduce((a, b) => a + b, 0);
-        rigs[h] = { h, root, fingers, all: sk.bones, restAll: sk.bones.map(b => b.quaternion.clone()), align, fwd, back, span, length, wx: 0, vwx: 0, ky: 0, vky: 0, dip: 0, yaw: 0, roll: 0, point: 0, px: 0, py: 0, seen: false };
+        rigs[h] = { h, root, fingers, all: sk.bones, restAll: sk.bones.map(b => b.quaternion.clone()), align, fwd, back, span, length, wx: 0, vwx: 0, ky: 0, vky: 0, dip: 0, edge: 0, yaw: 0, roll: 0, point: 0, px: 0, py: 0, seen: false };
       }).catch(err => console.warn('[hands] the hand model could not load:', err));
     }
 
@@ -225,6 +228,8 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
       const Wd = host.clientWidth, Ht = host.clientHeight;
       if (G && Wd > 0 && Ht > 0) {
         const nowMs = performance.now(), dt = Math.min(0.05, (nowMs - last) / 1000);
+        slowFrames = nowMs - last > 26 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
+        if (slowFrames > 30 && ratio > 1) { ratio = 1; renderer.setPixelRatio(1); slowFrames = 0; }
         last = nowMs;
         const pr = renderer.getPixelRatio();
         if (renderer.domElement.width !== Math.round(Wd * pr) || renderer.domElement.height !== Math.round(Ht * pr)) renderer.setSize(Wd, Ht);
@@ -353,16 +358,17 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           const p = rig.point;
           // The wrist, led by the notes about to sound, on its own slower spring.
           let sx = 0, sw = 0;
-          for (let f = 1; f <= 5; f++) { const w = want[f].real ? 1 / (0.06 + Math.max(0, want[f].soon - 0.25)) : 0.15; sx += ((want[f].real ? want[f].x! : rig.fingers[f - 1].x) - (f - 3) * dir * (rig.span * s) / 3) * w; sw += w; }
+          for (let f = 1; f <= 5; f++) { const far = want[f].real ? Math.abs(want[f].x! - rig.wx) / kw : 0; const lead = 0.25 + Math.min(0.55, far * 0.06); const w = want[f].real ? 1 / (0.06 + Math.max(0, want[f].soon - lead)) : 0.15; sx += ((want[f].real ? want[f].x! : rig.fingers[f - 1].x) - (f - 3) * dir * (rig.span * s) / 3) * w; sw += w; }
           const handX = p > 0.5 ? rig.px + dir * kw * 0.9 : sx / sw;
           // A stiff, critically damped spring (no overshoot), towards a target that already leans on
-          // the notes coming in the next quarter second, so the hand arrives with them, not after.
+          // the notes coming in the next quarter second (earlier for a far jump, about 0.06 s a key,
+          // so a hand crossing over arrives on time), so the hand arrives with them, not after.
           const om = 20, ze = 1;
           const aimX = handX;
           for (let k = 0; k < steps; k++) { rig.vwx += (om * om * (aimX - rig.wx) - 2 * ze * om * rig.vwx) * h2; rig.wx += rig.vwx * h2; }
           const pressSide = [1, 2, 3, 4, 5].reduce((a, f) => a + want[f].press * (f - 3), 0);
           rig.yaw += (clamp(-rig.vwx / (kw * 45), -0.12, 0.12) - rig.yaw) * (1 - Math.exp(-dt * 6));
-          rig.roll += (clamp(pressSide * 0.035 * dir, -0.12, 0.12) - rig.roll) * (1 - Math.exp(-dt * 7));
+          rig.roll += (clamp(pressSide * 0.07 * dir, -0.22, 0.22) - rig.roll) * (1 - Math.exp(-dt * 9));
           const breathe = Math.sin(t * 1.7 + (h === 'L' ? 1.3 : 0)) * 0.012 + Math.sin(t * 0.63 + (h === 'L' ? 2 : 0)) * 0.008;
           rig.root.quaternion.setFromEuler(new THREE.Euler(0.1 + breathe, rig.roll, rig.yaw, 'ZXY')).multiply(rig.align);
           // Reset the pose, then place the hand: the middle knuckle in front of the keys (lower on
@@ -385,7 +391,11 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // The hand gives a little with each press, from the wrist, so a strike is felt in the arm.
           const pressNow = Math.max(...[1, 2, 3, 4, 5].map(f => want[f].press));
           rig.dip += (pressNow - rig.dip) * (1 - Math.exp(-dt * 12));
-          rig.root.position.set(rig.wx - k3.x, -(keyY + fl * 0.55) - k3.y, fl * (0.44 - 0.035 * rig.dip) - k3.z);
+          // The thumb and the little finger are short from the knuckle line: the hand rolls over to
+          // them and comes down a little, as a pianist's forearm turns, so they reach their keys.
+          const edgeNow = Math.max(want[1].press, want[5].press, want[1].real ? smooth(1 - want[1].soon / 0.25) : 0, want[5].real ? smooth(1 - want[5].soon / 0.25) : 0);
+          rig.edge += (edgeNow - rig.edge) * (1 - Math.exp(-dt * 14));
+          rig.root.position.set(rig.wx - k3.x, -(keyY + fl * 0.55) - k3.y, fl * (0.44 - 0.035 * rig.dip - 0.1 * rig.edge) - k3.z);
           rig.root.updateMatrixWorld(true);
 
           // The hand's frame in the world, for the fingers' planes.
@@ -440,7 +450,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             // bend, the pad of the finger): where it must hit a key, the miss is measured on the
             // posed hand and folded back into the target, twice, so it lands on the key.
             if (!far && (lock > 0 || pointing)) {
-              for (let k = 0; k < 2; k++) {
+              for (let k = 0; k < (thumb ? 5 : 3); k++) {
                 const err = T.clone().sub(tip);
                 if (err.length() < Lf * 0.01) break;
                 const pl = Fw.clone().applyAxisAngle(Dn, fg.abd), side = v().crossVectors(Dn, pl).normalize();

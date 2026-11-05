@@ -75,12 +75,12 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void, onHo
     setPlaying(false);
   };
 
-  // The reel starts once the piano is loaded, or after three seconds without it (it plays silent
-  // until the sound arrives, rather than leaving him waiting on a still frame).
+  // The reel starts once the piano is loaded (it loads from the moment the app opens), or after
+  // twelve seconds without it, on a slow connection (it plays silent until the sound arrives).
   useEffect(() => {
     if (ready) return;
     loadPiano().then(() => setReady(true)).catch(() => setReady(true));
-    const t = window.setTimeout(() => setReady(true), 3000);
+    const t = window.setTimeout(() => setReady(true), 12000);
     return () => window.clearTimeout(t);
   }, [ready]);
   useEffect(() => {
@@ -100,7 +100,9 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void, onHo
         const n = tl.notes[s.next++];
         // The piano steps back a little while the voice talks, like music under a voice-over;
         // in Train with me it only guides, quietly, while he plays.
-        playNote(n.midi, Math.round((20 + n.vel * 100) * (n.train ? n.guide ?? 0.4 : speaking() ? 0.7 : 1)), Math.max(0.1, n.dur), s.start + n.t);
+        // Without his piano connected he is only watching: the piano stays at its guiding level.
+        const playsAlong = Object.values(linkState()).some(x => x.status === 'on');
+        playNote(n.midi, Math.round((20 + n.vel * 100) * (n.train ? (playsAlong ? n.guide ?? 0.75 : 0.85) : speaking() ? 0.7 : 1)), Math.max(0.1, n.dur), s.start + n.t);
         // The microphone must not take the video's own piano for his playing (the green keys he
         // saw while not playing): each note is marked as the app's while it sounds.
         const at = (s.start + n.t - audioContext().currentTime) * 1000, midi = n.midi;
