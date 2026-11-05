@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { markAppPlayed } from '../lib/input';
 import { audioContext, loadPiano, pianoReady, playNote, playSfx, stopAll, stopSfx, unlockAudio } from '../lib/audio';
 import { linkState, onLinkState, onNote } from '../lib/input';
 import { keyLayout, pickRange } from '../lib/keys';
@@ -85,6 +86,10 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void, onHo
         // The piano steps back a little while the voice talks, like music under a voice-over;
         // in Train with me it only guides, quietly, while he plays.
         playNote(n.midi, Math.round((20 + n.vel * 100) * (n.train ? 0.4 : speaking() ? 0.7 : 1)), Math.max(0.1, n.dur), s.start + n.t);
+        // The microphone must not take the video's own piano for his playing (the green keys he
+        // saw while not playing): each note is marked as the app's while it sounds.
+        const at = (s.start + n.t - audioContext().currentTime) * 1000, midi = n.midi;
+        for (let k = 0; k * 400 < n.dur * 1000 + 400; k++) window.setTimeout(() => markAppPlayed(midi), Math.max(0, at + k * 400));
       }
       while (s.nextSfx < tl.sfx.length && tl.sfx[s.nextSfx].t < t + 0.2) {
         const x = tl.sfx[s.nextSfx++];
@@ -384,6 +389,15 @@ const LEAVE = [0.4, 0, 1, 1] as const;
  * at a comma or a full stop; each word blurs in as it comes (0.13 s, 70 ms apart), the word being
  * said lit, and the group leaves in 0.12 s before the next.
  */
+// Kinetic captions: the words that carry the lesson (a note, a finger, a shape, an action) set big,
+// the little words small, so a line reads at a glance like a TikTok caption.
+const SMALL = new Set(['the', 'a', 'an', 'and', 'on', 'of', 'to', 'it', 'is', 'in', 'for', 'with', 'at', 'then', 'now', 'just', 'here', 'you', 'your', 'its', 'one', 'by', 'up']);
+const BIG = /^([A-G](?:#|b)?m?|thumb|finger|[1-5]|top|middle|low|lowest|octave|both|left|right|pattern|pause|slowly|together|turn|again|scale|chord|leap)$/i;
+function weight(w: string) {
+  const bare = w.replace(/[.,:;!?]/g, '');
+  return BIG.test(bare) ? 'big' : SMALL.has(bare.toLowerCase()) ? 'small' : '';
+}
+
 function Caption({ words, at, index }: { words: { w: string }[]; at: number; index: number }) {
   const chunks = useMemo(() => {
     const out: number[][] = [];
@@ -400,7 +414,7 @@ function Caption({ words, at, index }: { words: { w: string }[]; at: number; ind
     <AnimatePresence mode="wait">
       <motion.p key={`${index}-${chunk}`} className="reel-say" exit={{ opacity: 0, filter: 'blur(4px)', transition: { duration: 0.12, ease: LEAVE } }}>
         {(chunks[chunk] ?? []).map((i, j) => (
-          <motion.span key={i} className={i === at ? 'on' : i < at ? 'past' : ''} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: j * 0.07, ease: ARRIVE }}>{words[i].w} </motion.span>
+          <motion.span key={i} className={`${i === at ? 'on' : i < at ? 'past' : ''} ${weight(words[i].w)}`} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: j * 0.07, ease: ARRIVE }}>{words[i].w} </motion.span>
         ))}
       </motion.p>
     </AnimatePresence>
@@ -553,6 +567,8 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano }: 
       const turn = tl.train && t >= (tl.countIn?.t ?? tl.train.t) && t <= tl.train.until + 0.5;
       const ok = turn ? tl.notes.some(n => n.train && n.midi === e.midi && Math.abs(n.t - t) < 0.5) || (waitingRef.current && (waitRef.current?.has(e.midi) ?? false)) : keys.has(e.midi);
       held.current.set(e.midi, ok);
+      // A microphone sends no key-up: its keys go dark again on their own.
+      if (e.source === 'mic') window.setTimeout(() => held.current.delete(e.midi), 500);
       presses.current = [...presses.current.filter(p => performance.now() - p.at < 900), { midi: e.midi, ok, at: performance.now() }];
       setScore(x => (ok ? { ...x, ok: x.ok + 1 } : { ...x, bad: x.bad + 1 }));
     });
@@ -615,17 +631,18 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano }: 
         </header>
         <div className="reel-stage">
           <Lanes tl={tl} range={range} now={clock.now} held={held} presses={presses} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
-        </div>
-        <div className="reel-foot">
-          {sayLine && !showTitle ? (
-            <Caption words={spoken.words} at={spoken.at} index={place.line} />
-          ) : (
-            <AnimatePresence mode="wait">
-              {cue && (
-                <motion.p key={cue} className="reel-cue" initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }} transition={SOFT}>{cue}</motion.p>
-              )}
-            </AnimatePresence>
-          )}
+          {/* The caption floats over the falling notes, never under the keys (it pushed them up). */}
+          <div className="reel-foot">
+            {sayLine && !showTitle ? (
+              <Caption words={spoken.words} at={spoken.at} index={place.line} />
+            ) : (
+              <AnimatePresence mode="wait">
+                {cue && (
+                  <motion.p key={cue} className="reel-cue" initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }} transition={SOFT}>{cue}</motion.p>
+                )}
+              </AnimatePresence>
+            )}
+          </div>
         </div>
 
         <AnimatePresence>
