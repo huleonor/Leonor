@@ -237,10 +237,17 @@ export function say(text: string, onWord?: (charIndex: number) => void, onEnd?: 
     joined(text, plan).then(b => {
       if (ask !== asked) return;
       if (b) { if (heldBack) pausedNatural = { text, buf: b, at: 0, onWord, onEnd }; else playBuffer(text, b, 0, onWord, onEnd); }
+      // A piece could not be fetched (offline, a file missing): the device's voice says it, never silence.
+      else speakDevice(text, onWord, onEnd);
     });
     return true;
   }
   if (naturalVoiceWanted() && natural !== 'failed' && lang() !== 'pt') prepareVoice([text], true);
+  return speakDevice(text, onWord, onEnd);
+}
+
+/** The device's own speech engine. */
+function speakDevice(text: string, onWord?: (charIndex: number) => void, onEnd?: () => void) {
   if (!voiceSupported()) return false;
   const u = new SpeechSynthesisUtterance(spoken(text));
   const v = pick();
