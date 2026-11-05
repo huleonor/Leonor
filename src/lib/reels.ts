@@ -287,7 +287,7 @@ export interface Clip extends Reel {
   /** Its place in the phase, from 1, and how many the phase has. */
   k: number;
   of: number;
-  kind: 'intro' | 'pattern' | 'L' | 'R' | 'both' | 'run';
+  kind: 'intro' | 'pattern' | 'jump' | 'L' | 'R' | 'both' | 'run' | 'fix';
   /** The big line of the video: the idea, or the notes of the step. */
   head: string;
   /** What the voice says. */
@@ -466,7 +466,7 @@ export function clipsOf(song: Song): Clip[] {
     }
     const tail = chunks[chunks.length - 1];
     if (chunks.length > 1 && (tail[0] === tail[1] || onsets(tail[0], tail[1]) < 8) && tail[1] - chunks[chunks.length - 2][0] < 5) { chunks.pop(); chunks[chunks.length - 1][1] = tail[1]; }
-    let firstBoth = true, said = 0;
+    let firstBoth = true, said = 0, jumps = 0;
     chunks.forEach(([a, b], ci) => {
       const first = ci === 0;
       const facts = bars.slice(a - 1, b);
@@ -494,8 +494,35 @@ export function clipsOf(song: Song): Clip[] {
         const m = make('pattern', pat.bar, pat.bar, slow(pat.bar, pat.bar, h, 2), h === 'L' ? 'Left hand pattern, slow' : twoHands ? 'Right hand pattern, slow' : 'The pattern, slow', pat.head, pat.say, ci, false, extra);
         mine.push(m);
       };
-      if (soloL) { patternOf('L', fromL); mine.push(make('L', a, b, slow(a, b, 'L', 2.5), 'Left hand, slow', lw.head, lLine, ci)); }
-      if (soloR) { patternOf(hR, fromR); mine.push(make('R', a, b, slow(a, b, hR, 2.5), twoHands ? 'Right hand, slow' : 'Slow', rw.head, rLine, ci)); }
+      // The hard spot of the step, learnt on its own first: the biggest jump of a hand (a ninth or
+      // more, quickly), the two keys either side of it, four times, slowly.
+      const jumpOf = (h: Hand | undefined) => {
+        const on = new Map<number, number>();
+        for (const n of handNotes(a, b, h)) { const v = on.get(n.ticks); on.set(n.ticks, v === undefined ? n.midi : h === 'L' ? Math.min(v, n.midi) : Math.max(v, n.midi)); }
+        const seq = [...on.entries()].sort((x, y) => x[0] - y[0]);
+        let best: { i: number; size: number } | undefined;
+        for (let i = 1; i < seq.length; i++) {
+          const size = Math.abs(seq[i][1] - seq[i - 1][1]);
+          const quick = song.ticksToSeconds(seq[i][0]) - song.ticksToSeconds(seq[i - 1][0]) < 0.7;
+          if (size >= 13 && quick && (!best || size > best.size)) best = { i, size };
+        }
+        if (!best) return;
+        const [t0, m0] = seq[best.i - 1], [t1, m1] = seq[best.i];
+        // The same kind of jump is taught once, and at most two a phase, so the hard spots stand out.
+        const key = `${h}:jump:${m1 > m0 ? 'up' : 'down'}:${Math.round(Math.abs(m1 - m0) / 6)}`;
+        if (taught.has(key) || jumps >= 2) return;
+        jumps++;
+        taught.add(key);
+        const tail = seq[best.i + 1]?.[0] ?? t1 + song.ppq / 2;
+        const up = m1 > m0, from = letter(m0, flats), to = letter(m1, flats);
+        const say = `Watch the jump. From ${from}, ${up ? 'up to the high' : 'down to the low'} ${to}. Look at the new key before you move.`;
+        mine.push(make('jump', barIndex(grid, t0) + 1, barIndex(grid, t1) + 1, slow(a, b, h, 1.6, 0.45), h === 'L' ? 'Left hand jump, slow' : 'The jump, slow', `${from} ${to}`, say, ci, false, { ticks: [t0, tail], times: 4, kind: (h ?? 'both') as Segment['kind'] }));
+        return true;
+      };
+      // A step with a jump goes slower: fewer notes a second.
+      const pace = (h: Hand | undefined) => (jumpOf(h) ? 2 : 2.5);
+      if (soloL) { patternOf('L', fromL); const ps = pace('L'); mine.push(make('L', a, b, slow(a, b, 'L', ps), 'Left hand, slow', lw.head, lLine, ci)); }
+      if (soloR) { patternOf(hR, fromR); const ps = pace(hR); mine.push(make('R', a, b, slow(a, b, hR, ps), twoHands ? 'Right hand, slow' : 'Slow', rw.head, rLine, ci)); }
       // Only the right hand plays here and it had its own video: nothing to put together.
       const together = twoHands && plays(a, b, 'L') && plays(a, b, hR);
       if (twoHands && (together || !(soloL || soloR))) {
@@ -540,6 +567,7 @@ export function clipsOf(song: Song): Clip[] {
   const about = (c: Clip, before: Clip) => {
     if (c.kind === 'intro') return `phase ${NUMBER[c.n] ?? c.n}${SCRIPTS[song.entry.slot ?? song.entry.id] && !/^phase \d/i.test(c.words.title) ? `, ${c.words.title.toLowerCase()}` : ''}`;
     if (c.kind === 'run') return c.from === c.phase.from ? 'the whole phase, a little faster' : 'the next part of the phase';
+    if (c.kind === 'jump') return 'the jump';
     if (c.kind === 'pattern') return c.segments[0].kind === 'L' ? 'the left hand pattern' : twoHands ? 'the right hand pattern' : 'the pattern';
     const further = c.step !== before.step ? ', a bit further on' : '';
     return `${c.kind === 'L' ? 'the left hand' : c.kind === 'R' ? (twoHands ? 'the right hand' : 'the next bars') : 'both hands together'}${further}`;
@@ -551,7 +579,7 @@ export function clipsOf(song: Song): Clip[] {
 
 // ---------- Timeline: what plays when ----------
 
-export interface ReelNote { t: number; dur: number; midi: number; hand: Hand; finger?: number; vel: number; seg: number; bar: number; /** Beat of the bar, from 0. */ beat: number; /** In "Train with me": he plays it, the piano only guides. */ train?: boolean; }
+export interface ReelNote { t: number; dur: number; midi: number; hand: Hand; finger?: number; vel: number; seg: number; bar: number; /** Beat of the bar, from 0. */ beat: number; /** Where it is in the song. */ ticks: number; /** In "Train with me": he plays it, the piano only guides. */ train?: boolean; }
 export interface ReelCard { t: number; until: number; kind: 'title' | 'end'; }
 /** A line the voice says, from this time; `until` is about when it ends. */
 export interface ReelLine { t: number; until: number; text: string; seg?: number }
@@ -579,7 +607,11 @@ export const FALL = 2;
 const TURN = ['Your turn. Play it with me.', 'Now you. Play along with me.', 'Your turn, together with me.'];
 const PRACTISE = ['Now pause, and play it two more times on your own.', 'Pause here, and practise it two more times.', 'Your turn alone now. Two more times.'];
 
-export function timelineOf(song: Song, clip: Clip): ReelTimeline {
+/**
+ * The timeline of a video. `pace` follows him (1 at first): faster when he plays the videos clean,
+ * slower when they go wrong (Reels.tsx keeps it per song); the idea is always at its real speed.
+ */
+export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
   const { grid } = splitBars(song);
   const at = (bar: number) => song.ticksToSeconds(barStart(grid, bar - 1));
   const placeOf = (ticks: number) => { const i = barIndex(grid, ticks); return { bar: i + 1, beat: Math.floor((ticks - barStart(grid, i)) / (song.ppq * 4 / grid.sigs[i][1]) + 1e-6) }; };
@@ -589,7 +621,8 @@ export function timelineOf(song: Song, clip: Clip): ReelTimeline {
   const said = line(0.3, clip.say, clip.kind === 'intro' ? undefined : 0);
   sfx.push({ t: 0.05, name: clip.k % 2 ? 'whoosh-short' : 'whoosh', gain: 0.35 });
   if (clip.kind === 'intro') { cards.push({ t: 0, until: TITLE, kind: 'title' }); t = TITLE; }
-  const sg = clip.segments[0];
+  const sg0 = clip.segments[0];
+  const sg = clip.kind === 'intro' ? sg0 : { ...sg0, speed: Math.max(0.25, Math.min(clip.kind === 'run' ? 1 : 0.85, sg0.speed * pace)) };
   const hands: Hand[] = sg.kind === 'both' ? song.hands : [sg.kind];
   const [tLo, tHi] = sg.ticks ?? [barStart(grid, sg.from - 1), barStart(grid, sg.to)];
   const ns = song.notes.filter(n => hands.includes(n.hand) && n.ticks >= tLo - 1 && n.ticks < tHi - 1);
@@ -602,7 +635,7 @@ export function timelineOf(song: Song, clip: Clip): ReelTimeline {
   const lay = (t0: number, train = false) => {
     for (let k = 0; k < times; k++) for (const n of ns) {
       const dur = sg.ticks ? Math.min(n.duration, song.ticksToSeconds(tHi) - n.time) : n.duration;
-      notes.push({ t: t0 + LEAD + k * period + (n.time - start) / sg.speed, dur: Math.max(0.08, dur / sg.speed), midi: n.midi, hand: n.hand, finger: n.finger, vel: n.velocity, seg: 0, ...placeOf(n.ticks), train });
+      notes.push({ t: t0 + LEAD + k * period + (n.time - start) / sg.speed, dur: Math.max(0.08, dur / sg.speed), midi: n.midi, hand: n.hand, finger: n.finger, vel: n.velocity, seg: 0, ...placeOf(n.ticks), ticks: n.ticks, train });
     }
   };
   // The payoff (the whole phase): a riser into an impact as the music starts.
@@ -674,3 +707,27 @@ export function markSeen(songId: string, reelId: string) {
   } catch { /* storage blocked: nothing to remember */ }
 }
 export function onSeen(fn: () => void) { seenListeners.add(fn); return () => { seenListeners.delete(fn); }; }
+
+/**
+ * A video made on the spot for the place he keeps missing: the group he missed with the one before
+ * and the one after it, four times, slower, the voice naming the key he missed.
+ */
+export function fixClip(song: Song, clip: Clip, ticks: number, missed: number[]): Clip {
+  const { grid } = splitBars(song);
+  const sg = clip.segments[0];
+  const hands: Hand[] = sg.kind === 'both' ? song.hands : [sg.kind];
+  const onsets = [...new Set(song.notes.filter(n => hands.includes(n.hand)).map(n => n.ticks))].sort((x, y) => x - y);
+  const k = Math.max(0, onsets.findIndex(x => x >= ticks - 1));
+  const a = onsets[Math.max(0, k - 1)], z = onsets[Math.min(onsets.length - 1, k + 2)] ?? a + song.ppq;
+  const flats = song.fifths < 0;
+  const names = [...new Set(missed.map(m => letter(m, flats)))];
+  const span = song.notes.filter(n => hands.includes(n.hand) && n.ticks >= a && n.ticks < z).sort((x, y) => x.ticks - y.ticks || y.midi - x.midi);
+  const seq: string[] = [];
+  for (const n of span) { const l = letter(n.midi, flats); if (seq[seq.length - 1] !== l) seq.push(l); }
+  return {
+    ...clip, id: `${clip.id}-fix-${ticks}`, kind: 'fix', head: seq.slice(0, 5).join(' '),
+    say: `Let's fix this spot. You missed ${listOf(names)}. Here it is again, slowly. ${listOf(seq.slice(0, 6))}.`,
+    from: barIndex(grid, a) + 1, to: barIndex(grid, Math.max(a, z - 1)) + 1, where: '',
+    segments: [{ ...sg, speed: Math.max(0.3, sg.speed * 0.75), label: 'Fix this spot, slow', ticks: [a, z], times: 4 }],
+  };
+}

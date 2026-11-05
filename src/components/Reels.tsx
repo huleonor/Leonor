@@ -5,7 +5,7 @@ import { audioContext, loadPiano, pianoReady, playNote, playSfx, stopAll, stopSf
 import { linkState, onLinkState, onNote } from '../lib/input';
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
-import { FALL, letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
+import { FALL, fixClip, letter, markSeen, timelineOf, type Clip, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
 import { anyVoice, hush, onVoice, pauseVoice, prepareVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
 import { IconArrowDown, IconCheck, IconClose, IconKeys, IconPause, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff } from './Icons';
@@ -431,15 +431,24 @@ interface PlayerProps {
   onNext?: () => void;
   /** Open Settings, where the piano is connected. */
   onPiano?: () => void;
+  /** How fast the videos go for him (see timelineOf). */
+  pace?: number;
+  /** How Train with me went on his piano, once per video. */
+  onResult?: (r: ReelResult) => void;
 }
+
+/** What his piano told about a video: clean, poor, and the place he kept missing. */
+export type ReelResult = { perfect: boolean; poor: boolean; fix?: { ticks: number; ms: number[] } };
 
 /**
  * One small step of the song as a TikTok-style video: it plays by itself when it is on screen and
  * loops until he scrolls on, so he copies it on his piano as many times as he likes. The voice
  * says it once; the loops are the music alone. Tap to pause.
  */
-export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano }: PlayerProps) {
-  const tl = useMemo(() => timelineOf(song, reel), [song, reel]);
+export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano, pace = 1, onResult }: PlayerProps) {
+  // The pace is taken when the video comes on screen, so it never changes under him.
+  const paceAt = useMemo(() => pace, [reel, active]); // eslint-disable-line react-hooks/exhaustive-deps
+  const tl = useMemo(() => timelineOf(song, reel, paceAt), [song, reel, paceAt]);
   // One keyboard for both hands, framed on this video's notes.
   const range = useMemo<[number, number]>(() => {
     const ms = tl.notes.map(n => n.midi);
@@ -469,7 +478,21 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano }: 
   clockRef.current = clock;
   const place = usePlace(tl, clock.now, clock.playing);
   const voice = useNarration(tl, place.line, clock.playing || holding, active, epoch);
-  const release = () => { setHolding(false); setReps(0); unlockAudio(); if (tl.hold) clock.play(tl.hold.t + 0.01); };
+  // What Train with me showed of his playing: where the video had to wait for him and where he hit
+  // a wrong key, counted per note group, told once when the video goes on (to adapt the next ones).
+  const trouble = useRef({ waits: 0, wrong: 0, played: 0, at: new Map<string, { n: number; ticks: number; ms: number[] }>(), told: false });
+  useEffect(() => { trouble.current = { waits: 0, wrong: 0, played: 0, at: new Map(), told: false }; }, [tl]);
+  // Leaving a video he played along with also tells how it went.
+  useEffect(() => { if (!active) report(); }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
+  const report = () => {
+    const tr = trouble.current;
+    if (tr.told || !anyOn(linkState()) || !groupsToPlay.length || tr.played < 3) return;
+    tr.told = true;
+    const worst = [...tr.at.values()].sort((x, y) => y.n - x.n)[0];
+    const misses = tr.waits + tr.wrong;
+    onResult?.({ perfect: tr.waits <= 1 && tr.wrong <= 1, poor: misses >= Math.max(4, groupsToPlay.length * 0.3), fix: worst && worst.n >= 2 ? { ticks: worst.ticks, ms: worst.ms } : undefined });
+  };
+  const release = () => { report(); setHolding(false); setReps(0); unlockAudio(); if (tl.hold) clock.play(tl.hold.t + 0.01); };
   const trainAgain = () => { setHolding(false); setReps(0); unlockAudio(); if (tl.countIn) clock.play(tl.countIn.t - 0.2); };
   useEffect(() => { if (!active) { setHolding(false); setReps(0); } }, [active]);
   // Is a piano connected? Then his runs are counted; otherwise he says when he is done.
@@ -478,8 +501,8 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano }: 
   useEffect(() => onLinkState(st => setInputOn(anyOn(st))), []);
   // His runs, note group by note group: a clean run is every group in order with at most two slips.
   const groupsToPlay = useMemo(() => {
-    const out: { t: number; ms: Set<number> }[] = [];
-    for (const n of tl.notes) if (n.train) { const g = out[out.length - 1]; if (g && Math.abs(g.t - n.t) < 0.03) g.ms.add(n.midi); else out.push({ t: n.t, ms: new Set([n.midi]) }); }
+    const out: { t: number; ms: Set<number>; ticks: number }[] = [];
+    for (const n of tl.notes) if (n.train) { const g = out[out.length - 1]; if (g && Math.abs(g.t - n.t) < 0.03) g.ms.add(n.midi); else out.push({ t: n.t, ms: new Set([n.midi]), ticks: n.ticks }); }
     return out;
   }, [tl]);
   // The voice's lines are made ahead (the natural voice), this video's first when it is on screen.
@@ -517,6 +540,8 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano }: 
         waitingRef.current = true;
         waitRef.current = new Map([...g.ms].map((m, k) => [m, k + 1]));
         setWaitingFor(g.ms);
+        if (import.meta.env.DEV) (window as unknown as { __waiting?: number[] }).__waiting = [...g.ms];
+        if (loopsRef.current === 0) { const k = `${g.ticks}`; trouble.current.waits++; trouble.current.at.set(k, { n: (trouble.current.at.get(k)?.n ?? 0) + 1, ticks: g.ticks, ms: [...g.ms] }); }
         c().pause();
       }
       raf = requestAnimationFrame(tick);
@@ -567,12 +592,17 @@ export function ReelPlayer({ song, reel, active, onPractice, onNext, onPiano }: 
       const turn = tl.train && t >= (tl.countIn?.t ?? tl.train.t) && t <= tl.train.until + 0.5;
       const ok = turn ? tl.notes.some(n => n.train && n.midi === e.midi && Math.abs(n.t - t) < 0.5) || (waitingRef.current && (waitRef.current?.has(e.midi) ?? false)) : keys.has(e.midi);
       held.current.set(e.midi, ok);
+      if (turn) trouble.current.played++;
+      if (turn && !ok && loopsRef.current === 0) {
+        const g = groupsToPlay.reduce((best, x) => (Math.abs(x.t - t) < Math.abs(best.t - t) ? x : best), groupsToPlay[0]);
+        if (g) { const k = `${g.ticks}`; trouble.current.wrong++; trouble.current.at.set(k, { n: (trouble.current.at.get(k)?.n ?? 0) + 1, ticks: g.ticks, ms: [...g.ms] }); }
+      }
       // A microphone sends no key-up: its keys go dark again on their own.
       if (e.source === 'mic') window.setTimeout(() => held.current.delete(e.midi), 500);
       presses.current = [...presses.current.filter(p => performance.now() - p.at < 900), { midi: e.midi, ok, at: performance.now() }];
       setScore(x => (ok ? { ...x, ok: x.ok + 1 } : { ...x, bad: x.bad + 1 }));
     });
-  }, [active]);
+  }, [active, tl, groupsToPlay]);
 
   const toggle = () => { unlockVoice(); if (clock.playing) clock.pause(); else { unlockAudio(); clock.play(); } };
   const replay = () => { unlockAudio(); unlockVoice(); hush(); setLoops(0); setEpoch(e => e + 1); clock.play(0); };
@@ -758,45 +788,77 @@ interface FeedProps {
   onClose: () => void;
   onPractice: (reel: Clip, index: number) => void;
   /** The video on screen changed (to remember where he was, for the home page). */
-  onActive?: (index: number) => void;
+  onActive?: (index: number, clip: Clip) => void;
   onPiano?: () => void;
 }
 
 /** The song's reels in a vertical feed: swipe up for the next one, TikTok style. */
+const PACE = 'leonor:pace:';
+const readPace = (id: string) => { try { return Number(localStorage.getItem(PACE + id)) || 1; } catch { return 1; } };
+
 export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, onActive, onPiano }: FeedProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(start);
+  // The feed follows him: videos it skips when he plays clean, fix-this-spot videos it adds where he
+  // keeps missing, and a pace (kept per song) that rises with clean videos and falls with poor ones.
+  const [items, setItems] = useState(reels);
+  const [pace, setPace] = useState(() => readPace(song.entry.id));
+  useEffect(() => { ref.current!.scrollTo({ top: start * ref.current!.clientHeight }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const el = ref.current!;
-    el.scrollTo({ top: start * el.clientHeight });
     const io = new IntersectionObserver(es => {
       for (const e of es) if (e.isIntersecting && e.intersectionRatio > 0.6) setActive(Number((e.target as HTMLElement).dataset.i));
     }, { root: el, threshold: [0.6] });
     el.querySelectorAll('[data-i]').forEach(s => io.observe(s));
     return () => io.disconnect();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { onActive?.(active); }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [items]);
+  useEffect(() => { if (items[active]) onActive?.(active, items[active]); }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
   const goTo = (i: number) => { const el = ref.current!; el.scrollTo({ top: i * el.clientHeight, behavior: 'smooth' }); };
+  const result = (i: number, r: ReelResult) => {
+    const p = Math.round(Math.max(0.7, Math.min(1.3, pace * (r.perfect ? 1.1 : r.poor ? 0.85 : 1))) * 100) / 100;
+    setPace(p);
+    try { localStorage.setItem(PACE + song.entry.id, String(p)); } catch { /* only for this visit */ }
+    setItems(list => {
+      const cur = list[i];
+      if (!cur) return list;
+      let out = list;
+      // Clean: the hands-alone videos of the next step go, straight to both hands.
+      if (r.perfect) {
+        const next = list[i + 1];
+        if (next && next.step !== cur.step && ['pattern', 'jump', 'L', 'R'].includes(next.kind)) {
+          let j = i + 1;
+          while (out[j] && out[j].step === next.step && out[j].phase.id === next.phase.id && ['pattern', 'jump', 'L', 'R'].includes(out[j].kind)) j++;
+          if (out[j]) out = [...out.slice(0, i + 1), ...out.slice(j)];
+        }
+      }
+      // The same place missed again and again: a video for just that spot comes next.
+      if (r.fix && cur.kind !== 'fix') {
+        const fix = fixClip(song, cur, r.fix.ticks, r.fix.ms);
+        if (!out.some(x => x.id === fix.id)) out = [...out.slice(0, i + 1), fix, ...out.slice(i + 1)];
+      }
+      return out;
+    });
+  };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' && active < reels.length - 1) { e.preventDefault(); goTo(active + 1); }
+      if (e.key === 'ArrowDown' && active < items.length - 1) { e.preventDefault(); goTo(active + 1); }
       if (e.key === 'ArrowUp' && active > 0) { e.preventDefault(); goTo(active - 1); }
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
-  }, [active, reels.length, onClose]);
+  }, [active, items.length, onClose]);
 
   return (
     <div className={`reel-screen ${embedded ? 'embedded' : ''}`}>
       {!embedded && <button className="icon-btn reel-close" onClick={onClose} aria-label="Close the videos"><IconClose size={24} /></button>}
-      <span className="reel-count" aria-live="polite">{active + 1}/{reels.length}</span>
+      <span className="reel-count" aria-live="polite">{active + 1}/{items.length}</span>
       <div className="reel-feed" ref={ref}>
-        {reels.map((r, i) => (
+        {items.map((r, i) => (
           <section key={r.id} data-i={i} className="reel-snap">
             {Math.abs(i - active) <= 1 && (
-              <ReelPlayer song={song} reel={r} index={i} count={reels.length} active={i === active} onPiano={onPiano}
-                onPractice={() => onPractice(r, i)} onNext={i < reels.length - 1 ? () => goTo(i + 1) : undefined} />
+              <ReelPlayer song={song} reel={r} index={i} count={items.length} active={i === active} onPiano={onPiano} pace={pace} onResult={x => result(i, x)}
+                onPractice={() => onPractice(r, i)} onNext={i < items.length - 1 ? () => goTo(i + 1) : undefined} />
             )}
           </section>
         ))}
