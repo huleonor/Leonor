@@ -49,6 +49,11 @@ const loadModel = () => (model ??= new GLTFLoader().loadAsync(`${import.meta.env
 
 const NAMES = ['', 'thumb', 'index', 'middle', 'ring', 'pinky'];
 const SPREAD = [0, 0, -0.06, 0, 0.05, 0.12];
+// Where each finger rests from the middle finger, in white keys, after PianoPlayer's hand model
+// (Marco Musy, github.com/marcomusy/pianoplayer, MIT: -7, -2.8, 0, 2.8, 5.6 cm for a medium hand,
+// 2.35 cm a key): the thumb sits well apart, the others closer, so a free finger rests where a
+// real hand's would, not one key from its neighbour.
+const REST_KEYS = [0, -2.4, -1, 0, 1, 2];
 const v = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const clamp = (x: number, a: number, b: number) => Math.max(a, Math.min(b, x));
 const smooth = (x: number) => { const t = clamp(x, 0, 1); return t * t * (3 - 2 * t); };
@@ -314,7 +319,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           }
           for (let f = 1; f <= 5; f++) if (want[f].x === undefined) {
             let best: number | undefined, bd = 9;
-            for (let g = 1; g <= 5; g++) if (want[g].real && Math.abs(g - f) < bd) { bd = Math.abs(g - f); best = want[g].x! + (f - g) * dir * step; }
+            for (let g = 1; g <= 5; g++) if (want[g].real && Math.abs(g - f) < bd) { bd = Math.abs(g - f); best = want[g].x! + (REST_KEYS[f] - REST_KEYS[g]) * dir * step; }
             want[f].x = best;
           }
           if (want.slice(1).some(w => w.x === undefined)) {
