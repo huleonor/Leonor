@@ -328,7 +328,9 @@ export interface Clip extends Reel {
   /** Its place in the phase, from 1, and how many the phase has. */
   k: number;
   of: number;
-  kind: 'intro' | 'pattern' | 'tour' | 'move' | 'jump' | 'L' | 'R' | 'both' | 'run' | 'fix' | 'explain';
+  kind: 'intro' | 'pattern' | 'tour' | 'move' | 'jump' | 'L' | 'R' | 'both' | 'run' | 'fix' | 'explain' | 'read';
+  /** A 'read' item: the lesson step (course.ts) he plays on the staff, in the feed. */
+  stepId?: string;
   /** The big line of the video: the idea, or the notes of the step. */
   head: string;
   /** What the voice says. */
@@ -759,6 +761,16 @@ export function clipsOf(song: Song): Clip[] {
         mine[0] = { ...make('intro', intro.from, b1, 1, tr('Listen', 'Ouve'), intro.head, say, 0, true), id: intro.id };
       }
     }
+    // One course (the user's choice 2026-11: "the videos and the practice one course, scroll on"):
+    // right after each both-hands video (the only hand's, in a one-hand piece), the same bars on the
+    // staff, Simply Piano's page in the feed (free play, it waits for each note), so he reads what
+    // the video just taught; then the next video. App.tsx makes the lesson step from its bars.
+    for (let i = mine.length - 1; i >= 0; i--) {
+      const c = mine[i];
+      if (c.kind === 'both' || (!twoHands && c.kind === 'R')) {
+        mine.splice(i + 1, 0, { ...make('read', c.from, c.to, 1, tr('On the staff', 'Na pauta'), tr('Read it on the staff', 'Lê na pauta'), '', c.step ?? 0), stepId: `read-${c.from}-${c.to}` });
+      }
+    }
     mine.forEach((c, i) => out.push({ ...c, say: NT(c.say), head: NT(c.head), k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) }));
   }
   // The song first (the user's choice 2026-11: "start with an overview of the song and how it is
@@ -787,6 +799,7 @@ export function clipsOf(song: Song): Clip[] {
   const about = (c: Clip, before: Clip) => {
     if (c.kind === 'intro') return `${c.phase.sectionSaid}${SCRIPTS[song.entry.slot ?? song.entry.id] && !/^(phase|fase|part|parte) \d/i.test(c.words.title) ? `, ${c.words.title.toLowerCase()}` : ''}`;
     if (c.kind === 'run') return c.from === c.phase.from ? tr('the whole section, a little faster', 'a secção toda, um pouco mais rápido') : tr('the next part of the section', 'a parte seguinte da secção');
+    if (c.kind === 'read') return tr('the same bars on the staff', 'os mesmos compassos na pauta');
     if (c.kind === 'jump') return tr('the jump', 'o salto');
     if (c.kind === 'tour') return tr('the same pattern on each chord', 'o mesmo padrão em cada acorde');
     if (c.kind === 'move') return tr('the move between the chords', 'a mudança entre os acordes');
@@ -839,6 +852,8 @@ const LAST = () => tr('One last time. You lead.', 'Uma última vez. Tu é que gu
  * slower when they go wrong (Reels.tsx keeps it per song); the idea is always at its real speed.
  */
 export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
+  // A staff item has no timeline of its own: the lesson page runs it.
+  if (clip.kind === 'read') return { notes: [], cards: [], lines: [], sfx: [], passes: [], duration: 1, lo: { R: 60, L: 48 }, hi: { R: 72, L: 60 }, loopFrom: 0 } as unknown as ReelTimeline;
   const { grid } = splitBars(song);
   const at = (bar: number) => song.ticksToSeconds(barStart(grid, bar - 1));
   const placeOf = (ticks: number) => { const i = barIndex(grid, ticks); return { bar: i + 1, beat: Math.floor((ticks - barStart(grid, i)) / (song.ppq * 4 / grid.sigs[i][1]) + 1e-6) }; };

@@ -9,6 +9,7 @@ import { ContinueCard, lastReel, rememberReel } from './components/HomePage';
 import { clipsOf, listenClip, seenReels, type Clip, type Reel } from './lib/reels';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
+import type { CourseStep } from './lib/course';
 import { SettingsSheet } from './components/SettingsSheet';
 import { PianoStep, pianoAsked } from './components/PianoStep';
 import { EditSong } from './components/EditSong';
@@ -284,6 +285,18 @@ export default function App() {
                   onPractice={reel => practise(currentInfo.entry.id, reel.phase)}
                   onPiano={() => setSheet('settings')}
                   onSpeed={v => { setVideoPrefs({ pace: v }); update({ videoPace: v }); }}
+                  practice={(clip, done) => {
+                    // The staff item of the course: the bars the video just taught, free play with
+                    // both hands (or the only hand), on the lesson page; a pass moves the feed on.
+                    const song = currentInfo.song!;
+                    const step: CourseStep = { id: clip.stepId ?? `read-${clip.from}-${clip.to}`, kind: 'phrase', title: L(`On the staff, ${clip.where}`, `Na pauta, ${clip.where}`), short: 'R+L', from: clip.from, to: clip.to, hands: song.hands.length === 2 ? 'both' : song.hands[0], speed: 0.8, wait: true };
+                    const section: Section = { id: step.id, title: `${clip.phase.section}: ${L('on the staff', 'na pauta')}`, bars: clip.where, from: clip.from, steps: [step], done: 0, learnt: false };
+                    return (
+                      <Lesson info={currentInfo} section={section} settings={settings} update={update} links={links}
+                        onExit={() => setTab('song')} exitLabel={L('Back to the song', 'Voltar à música')}
+                        onFinish={done} onRecorded={() => refreshSong(currentInfo.entry.id)} onSettings={() => setSheet('settings')} />
+                    );
+                  }}
                   onActive={(_, c) => { if (c.kind !== 'fix' && !hearing) rememberReel(currentInfo.entry.id, c.id); }}
                 />
               ) : journey

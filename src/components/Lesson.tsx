@@ -50,6 +50,8 @@ interface Props {
   links: Record<Source, LinkState>;
   onExit: () => void;
   onNextSection?: () => void;
+  /** In the videos' feed (one course): a passed step calls this at once, no result screen. */
+  onFinish?: () => void;
   /** Words for the last step's "next" button and the way out (a song's lesson, or the daily session). */
   nextLabel?: string;
   exitLabel?: string;
@@ -133,7 +135,7 @@ interface RunProps extends Props {
   onGo: (i: number) => void;
 }
 
-function LessonRun({ info, section, step, index, settings, update, onExit, onNextSection, nextLabel = L('Next section', 'Secção seguinte'), exitLabel = L('Back to the song', 'Voltar à música'), minStars = 1, onStop, stopLabel = L('Finish', 'Terminar'), onRecorded, onPrev, onNext, onAgain, session, onPace, onPerfect, onStruggle, onGo }: RunProps) {
+function LessonRun({ info, section, step, index, settings, update, onExit, onNextSection, onFinish, nextLabel = L('Next section', 'Secção seguinte'), exitLabel = L('Back to the song', 'Voltar à música'), minStars = 1, onStop, stopLabel = L('Finish', 'Terminar'), onRecorded, onPrev, onNext, onAgain, session, onPace, onPerfect, onStruggle, onGo }: RunProps) {
   const song = step.song ?? info.song!;
   // The coach sets this step's speed, how soon help comes and how many finger numbers show.
   // A Mastery step comes with its own speed: the planner climbs the tempo ladder itself.
@@ -240,7 +242,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           return;
         }
         const stars = starsFor(s.accuracy);
-        const quick = step.wait && !!onNext;
+        const quick = (step.wait || !!onFinish) && (!!onNext || !!onFinish);
         const perfect = step.wait && s.wrong === 0 && s.accuracy >= 0.999;
         onPace?.(perfect);
         if (quick && onStruggle && s.accuracy < 0.85) {
@@ -264,7 +266,7 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           }
           if (quick) {
             setFlash({ text: stars === 3 ? L('Perfect!', 'Perfeito!') : stars === 2 ? L('Great!', 'Muito bem!') : L('Good!', 'Bem!'), good: true });
-            window.setTimeout(onNext!, 1100);
+            window.setTimeout(onNext ?? onFinish!, 1100);
             return;
           }
           setResult({ ...s, stars });
