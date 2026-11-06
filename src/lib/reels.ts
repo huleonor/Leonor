@@ -18,6 +18,7 @@ import { SCRIPTS, SECTIONS } from './reelScripts';
 import { SCRIPTS_PT, STEP_TIPS_PT } from './reelScriptsPt';
 import { cleanPhase, type PhaseWords, type Talk } from './reelShape';
 import { difficultyOf } from './difficulty';
+import { mainPart } from './preview';
 import { L as tr, lang, NT, videoSolfege } from './lang';
 import { estimate } from './voice';
 import type { Hand, Song, SongNote } from './types';
@@ -496,6 +497,11 @@ export function clipsOf(song: Song): Clip[] {
   };
   const out: Clip[] = [];
   const hR0: Hand | undefined = twoHands ? 'R' : undefined;
+  // Every section measured, so a section's tips say what stands out in it against the rest of the
+  // song (a whole song may be hard; only its hardest section is called the hardest).
+  const secD = reels.map(r => difficultyOf(handNotes(r.from, r.to), seconds(song, grid, r.from, r.to)));
+  const mean = (k: keyof (typeof secD)[number]) => secD.reduce((a, d) => a + d[k], 0) / Math.max(1, secD.length);
+  const byHard = secD.map((d, i) => ({ i, s: d.score })).sort((a, b) => b.s - a.s).map(x => x.i);
   for (const r of reels) {
     const talk = r.words.talk;
     const mine: Omit<Clip, 'k' | 'of'>[] = [];
@@ -573,7 +579,7 @@ export function clipsOf(song: Song): Clip[] {
     }
     const tail = chunks[chunks.length - 1];
     if (chunks.length > 1 && (tail[0] === tail[1] || onsets(tail[0], tail[1]) < 8) && tail[1] - chunks[chunks.length - 2][0] < 5) { chunks.pop(); chunks[chunks.length - 1][1] = tail[1]; }
-    let firstBoth = true, said = 0, jumps = 0;
+    let firstBoth = true, said = 0, jumps = 0, repeats = 0;
     // The hand-written tip for a video of the step starting at this bar, said after its own line.
     const withTip = (line: string, key: string) => { const t = r.words.steps?.[key]; return t ? `${line} ${t}` : line; };
     chunks.forEach(([a, b], ci) => {
@@ -582,7 +588,7 @@ export function clipsOf(song: Song): Clip[] {
       const hR: Hand | undefined = twoHands ? 'R' : undefined;
       // The very same notes again (a repeat in the score): nothing new to show.
       const exact = handNotes(a, b).map(n => `${n.ticks - barStart(grid, a - 1)}:${n.midi}:${n.hand}`).join(',');
-      if (seen.both.has(exact)) return;
+      if (seen.both.has(exact)) { repeats++; return; }
       const newL = twoHands && plays(a, b, 'L') && !known(a, b, 'L', seen.L);
       const newR = plays(a, b, hR) && !known(a, b, hR, seen.R);
       // A hard step gets each new hand on its own even with less in it, so the hands never meet a
@@ -710,7 +716,70 @@ export function clipsOf(song: Song): Clip[] {
       }
       if (mine.length <= SERIES) break;
     }
+    // How the section is learnt and what to watch for, said in its opening (the user's choice
+    // 2026-11: "an overview of each part, how it will be approached, and tips from its content"):
+    // the patterns it opens with, how many steps, then the whole section; and up to two tips read
+    // from its own notes (a jump, how hard, hands apart, a wide reach, black keys, speed, repeats).
+    {
+      const count = (k: Clip['kind'], seg?: Segment['kind']) => mine.filter(c => c.kind === k && (!seg || c.segments[0].kind === seg)).length;
+      const pr = twoHands ? count('pattern', 'R') : count('pattern'), pl = twoHands ? count('pattern', 'L') : 0;
+      const steps = count('L') + count('R') + count('both');
+      const pt = lang() === 'pt';
+      const W = pt ? ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez', 'onze', 'doze'] : ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+      const n = (x: number) => W[x] ?? String(x);
+      const pats = pt
+        ? (pr && pl ? `primeiro ${pr === 1 ? 'o padrão' : `os ${n(pr)} padrões`} da mão direita e ${n(pl)} da esquerda` : pr || pl ? `primeiro ${(pr || pl) === 1 ? 'o padrão' : `os ${n(pr || pl)} padrões`}${twoHands ? (pr ? ' da mão direita' : ' da mão esquerda') : ''}` : '')
+        : (pr && pl ? `first its ${pr === 1 ? 'pattern' : `${n(pr)} patterns`} for the right hand and ${n(pl)} for the left` : pr || pl ? `first its ${(pr || pl) === 1 ? 'pattern' : `${n(pr || pl)} patterns`}${twoHands ? (pr ? ' for the right hand' : ' for the left hand') : ''}` : '');
+      const st = steps ? (pt ? `${n(steps)} ${steps === 1 ? 'passo pequeno' : 'passos pequenos'}, devagar` : `${n(steps)} small ${steps === 1 ? 'step' : 'steps'}, slowly`) : '';
+      const how = pt
+        ? `Como a vamos aprender: ${[pats, pats && st ? `depois ${st}` : st].filter(Boolean).join(', ')}, e no fim a secção toda.`
+        : `How we learn it: ${[pats, pats && st ? `then ${st}` : st].filter(Boolean).join(', ')}, then the whole section.`;
+      const ri = reels.indexOf(r), d = secD[ri], rank = byHard.indexOf(ri), many = reels.length >= 3;
+      const ex = (k: 'apart' | 'reach' | 'black' | 'speed' | 'leaps') => d[k] - mean(k);
+      const cands: [number, string][] = [
+        [count('jump') && ex('leaps') > 0 ? 0.5 + ex('leaps') : 0, tr('Watch for the jump: look at the new key before you move.', 'Atenção ao salto: olha para a tecla nova antes de mexer a mão.')],
+        [many && rank === 0 ? 0.95 : 0, tr('This is the hardest section of the song, so it goes slowest. Take your time.', 'Esta é a secção mais difícil da música, por isso vai mais devagar. Sem pressa.')],
+        [many && rank === reels.length - 1 ? 0.6 : 0, tr('One of the easier sections, so it comes quickly.', 'Uma das secções mais fáceis, por isso vai depressa.')],
+        [twoHands && ex('apart') > 0.1 ? 0.3 + ex('apart') : 0, tr('The hands do different things here, so each one learns alone first.', 'Aqui as mãos fazem coisas diferentes, por isso cada uma aprende primeiro sozinha.')],
+        [ex('reach') > 0.1 ? 0.3 + ex('reach') : 0, tr('The hands open wide here: let the wrist move, not just the fingers.', 'Aqui as mãos abrem muito: deixa o pulso mexer, não só os dedos.')],
+        [ex('black') > 0.1 ? 0.3 + ex('black') : 0, tr('More black keys here: keep the hand a little forward on the keys.', 'Aqui há mais teclas pretas: mantém a mão um pouco mais à frente nas teclas.')],
+        [ex('speed') > 0.1 ? 0.3 + ex('speed') : 0, tr('This is the quickest part, so we start slowly.', 'Esta é a parte mais rápida, por isso começamos devagar.')],
+        [repeats || mine.some(c => c.knownStep) ? 0.35 : 0, tr('Some of it repeats, so it comes quickly.', 'Parte dela repete-se, por isso vai depressa.')],
+      ];
+      const tips = cands.filter(c => c[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, 2).map(c => c[1]);
+      if (!tips.length) tips.push(tr('Calm and even: count the beats as you go.', 'Calmo e igual: conta os tempos.'));
+      const intro = mine[0];
+      if (intro?.kind === 'intro') {
+        const say = `${intro.say} ${how} ${tips.join(' ')}`;
+        // The opening plays on under the voice for as long as it speaks.
+        let b1 = intro.from;
+        while (b1 < r.to && seconds(song, grid, intro.from, b1 + 1) <= Math.max(6, estimate(say) - 2)) b1++;
+        mine[0] = { ...make('intro', intro.from, b1, 1, tr('Listen', 'Ouve'), intro.head, say, 0, true), id: intro.id };
+      }
+    }
     mine.forEach((c, i) => out.push({ ...c, say: NT(c.say), head: NT(c.head), k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) }));
+  }
+  // The song first (the user's choice 2026-11: "start with an overview of the song and how it is
+  // divided"): its theme heard at its real speed while the voice says what the song is, its sections
+  // in order, and how each one is learnt. Its own phase (n 0), outside every section's series.
+  if (reels.length > 1 && out.length) {
+    const part = mainPart(song);
+    const ns = part.notes;
+    const from = ns.length ? barIndex(grid, Math.min(...ns.map(x => x.ticks))) + 1 : reels[0].from;
+    const pt = lang() === 'pt';
+    const names = reels.map(r => r.sectionSaid);
+    const title = song.entry.title;
+    const say = pt
+      ? `Isto é ${title}. Divide-se em ${reels.length} secções: ${listOf(names)}. Cada uma aprende-se da mesma maneira: primeiro os padrões, depois passos pequenos, devagar, e no fim a secção toda. Ouve primeiro como soa.`
+      : `This is ${title}. It comes in ${reels.length} sections: ${listOf(names)}. Each one is learnt the same way: first its patterns, then small steps, slowly, and then the whole section. First, hear how it sounds.`;
+    let b = from;
+    while (b < reels[reels.length - 1].to && seconds(song, grid, from, b + 1) <= Math.max(8, estimate(say) - 2)) b++;
+    const phase: Reel = { ...reels[0], id: 'overview', n: 0, section: tr('The song', 'A música'), sectionSaid: tr('the song', 'a música'), from, to: b,
+      words: { ...reels[0].words, title, hook: reels.map(r => r.section).join(', ') }, chords: [] };
+    out.unshift({
+      ...phase, id: 'overview-1', phase, kind: 'intro', head: phase.words.hook, say, from, to: b, where: '', step: 0, k: 1, of: 1,
+      segments: [{ kind: 'both', from, to: b, speed: 1, label: tr('The song', 'A música'), listen: true }],
+    } as Clip);
   }
   // Each video says what the next one teaches, so the series reads as one lesson.
   const about = (c: Clip, before: Clip) => {
