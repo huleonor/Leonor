@@ -8,59 +8,58 @@ web
 
 ## Stack
 
-delegated: Vite + React + TypeScript, installable PWA, static deploy on Vercel (project `hugos-piano`, account hugo4s). Chosen because the app is fully client-side (audio, MIDI, mic) and needs no backend.
+delegated: Vite + React + TypeScript, installable PWA, static deploy on GitHub Pages (https://huleonor.github.io/Leonor/, from main, `.github/workflows/pages.yml`); an iPhone app (Capacitor) wraps the same site for CoreMIDI. Vercel's git deploys are off. Everything runs on the device (audio, MIDI, microphone, the voice, the hands); no backend and no API key at runtime.
 
 ## Users
 
-Hugo, one learner practising at his own digital piano. The phone sits sideways (landscape) on the piano's music stand, a hand's length from his eyes, while both hands are on the keys. He glances at it between notes; he cannot tap it often mid-song.
+Hugo, one learner practising at his own digital piano. The phone sits sideways (landscape) on the piano's music stand, an arm away, while both hands are on the keys; sometimes upright in his hand. He glances at it between notes and cannot tap it often mid-song.
 
 ## Product Purpose
 
-2026-11: one song at a time, taught by short vertical reels (TikTok style) drawn live from the song's notes, each pattern (left hand, right hand, both) followed straight away by the practice step for it. Claude writes the words on the reels (api/reels.ts). The first song is Tony Ann's Interstellar Experience, a slot that takes his own MIDI file.
+Leonor teaches one song at a time, the song he chose, in short vertical videos he plays along with, like a teacher in clips: see the pattern, play it with me, repeat. Interstellar Experience by Tony Ann first (his own MIDI file in its slot). Success: he plays a piece he chose, first slowly in pieces, then the whole song at full speed.
 
+## How it teaches (2026-11)
 
-Hugo's Piano teaches songs Hugo actually wants to play (Hans Zimmer film scores first) by showing the notes falling toward an on-screen keyboard and listening to what he plays. Success: he gets through a piece he chose, first slowly, then at full speed.
+- The song first: one video of its theme while the voice says what the song is, its sections in order (Intro, Verse 1, Interlude, ..., named by the song's form) and how each is learnt.
+- Each section is a short series (at most twelve videos): its opening says how it will be learnt and gives two tips from its own notes; then its patterns (the shape alone, the same shape on each chord, the moves between chords), small steps (each hand, then both, slowly), and the whole section.
+- Every video: the voice explains while the keys light, the music slowly, then "Train with me" in rounds; with his piano connected the video waits at a note he has not played and says how each round went, or honestly that it heard nothing.
+- The videos are drawn live from the song's notes (falling notes, one keyboard, 3D comic hands), never recorded; his MIDI never leaves the device.
+- Practise opens the step-by-step lessons (Simply Piano's page: the staff, free play first, then with the beat) and Mastery, which plans the next exercise from every note he plays.
 
 ## Positioning
 
-A personal Simply Piano built around Hugo's own library: any MIDI file he imports becomes a lesson, and his real keyboard (Bluetooth MIDI) or the phone's microphone is the input. No subscription, no fixed catalogue.
+A personal teacher in clips built around his own library: any MIDI file he brings becomes a song taught this way, and his real keyboard (cable or Bluetooth MIDI) or the phone's microphone is the input. No subscription, no fixed catalogue, no game.
 
 ## Operating Context
 
-- Phone: iPhone 13 (Lightning), mainly through the Hugo's Piano iPhone app (Capacitor, sideloaded with SideStore), which loads the live site from Vercel and reads the piano through CoreMIDI: USB cable via the Lightning to USB Camera Adapter, or Bluetooth MIDI paired in the system sheet. In iPhone browsers only the microphone works (no Web MIDI or Web Bluetooth). Android/desktop Chrome get Web MIDI and Web Bluetooth directly.
-- Landscape on a music stand, room lighting of a home, often evening.
-- Sessions: pick a song, loop a hard passage slowly, speed up.
+- Phone: iPhone 13, through the Leonor iPhone app (Capacitor, sideloaded) for cable and Bluetooth MIDI; iPhone browsers have only the microphone. Desktop and Android Chrome get Web MIDI and Web Bluetooth.
+- Landscape on a music stand, a home's lighting, often evening.
+- Sessions: open the song, continue where he left off, watch and play along, go to a section that needs work.
 
-## Capabilities and Constraints
+## Navigation
 
-- Input: CoreMIDI in the iPhone app (cable and Bluetooth, rescanned automatically), Web MIDI and Web Bluetooth in desktop/Android Chrome, and the microphone everywhere. The mic detector is polyphonic (onsets plus harmonic analysis, with a targeted check of the notes the song expects), so chords count by mic. Keys played on a MIDI keyboard sound through the app's piano by default.
-- Learning loop (Simply Piano): every song, bundled or imported, becomes a course of short parts; each part is learnt right hand, left hand, hands together (the music waits), then in tempo; then the whole song and a final performance. Each step earns 1 to 3 stars and opens the next. A daily streak and a daily minutes goal count real practice time.
-- Song screen (Simply Piano sheet music): the engraved score with a tool bar of modes: Play (score following, notes turn green; Magic scroll waits for him, Auto scroll runs in tempo), Listen, Teach me (sections as lessons), Feedback on/off, a mini keyboard with the keys to play. Lessons: one engraved line per section with fingering, the next notes in teal, a finger bubble, an n/N notes counter, arrows between steps; falling notes remain as an alternative lesson view. Wait-mode hints show the keys after a wrong note or a stall; song tips come from an analysis of the notes (repeats, hand positions, tricky bars).
-- No beginner curriculum: the user chose songs only.
-- Song library: bundled songs plus MIDI (.mid) import, stored on the device. Each reel shows a cover photo that evokes the song (free Unsplash photos; film posters are not used).
-- Playback speed presets: 0.6x, 0.8x, 1x, 1.2x.
-- Wait mode: the song only advances when the correct note(s) are played.
-- Falling-notes view (Synthesia-style) above a piano keyboard, as the alternative to the staff.
-- Bundled songs are fan MIDI transcriptions (no official MIDI exists): Cornfield Chase (midisfree.com) and He's a Pirate (bitmidi.com, Badelt/Zimmer). Time, Interstellar Main Theme, Now We Are Free, A Way of Life and Maestro are reels waiting for a file: tapping one imports a .mid into that slot. Personal use; the deployed link is not to be shared publicly.
+Three destinations: Song (the song being learnt: Continue, its sections as a list, the full song), Library (his songs, bring a MIDI file), Settings (the piano, language, the videos). The videos open from the song and keep a back arrow.
 
 ## Brand Commitments
 
-- Name: "Hugo's Piano".
-- Reference the user named: Simply Piano, for the learning loop and, by the user's choice in the 2026-10 redesign, for the look too: the category standard played straight (dark indigo app, go-green actions, gold stars, streak flame, scrolling staff). Craft bar: Simply Piano and Duolingo.
-- Language: English-only UI (the user first asked for Portuguese plus English, then for English only). Note names default to C D E, with Dó Ré Mi as an option.
+- Name: Leonor. No logo in the app.
+- Look: Lo-Fi, a practice notebook (DESIGN.md): paper, index cards, riso pink (right hand) and teal (left hand).
+- Two languages, everything including the voice: English and Portuguese of Portugal.
+- No game elements: no energy, gems, shop, XP, streaks, medals, daily goals or paywall.
 
 ## Evidence on Hand
 
-- Raw MIDI files in `_midi_raw/`.
-- No logo, imagery, testimonials or other brand assets exist. Do not invent progress stats or claims about songs' official status.
+- Public-domain pieces ship with the app (Gymnopédie No. 1, Für Elise, Handel's Sarabande and Passacaglia, Clair de Lune). Pieces under copyright are slots that take his own MIDI file; nothing of them ships.
+- Do not invent progress stats or claims about songs' official status.
 
 ## Product Principles
 
-1. Readable at arm's length: everything he needs mid-song is legible from the music stand without tapping.
-2. Hands stay on the keys: controls that matter while playing (speed, wait, restart section) are one tap, big targets.
-3. His music, not a catalogue: importing a song is first-class, not buried.
-4. Honest listening: show clearly what the app heard, so a wrong detection is visible, not mysterious.
+1. Readable at arm's length: what he needs mid-song is legible from the music stand without tapping.
+2. Hands stay on the keys: nothing covers the video while it plays; the few controls show when he pauses.
+3. His music, not a catalogue: bringing a song is first-class.
+4. Honest listening: show what the app heard, and say plainly when it heard nothing.
+5. Simple over features: one song, its sections, short clips.
 
 ## Accessibility & Inclusion
 
-Large touch targets (min 44px), high contrast for the falling notes and keys under home lighting, respects reduced motion for non-essential UI animation.
+Touch targets of 44px or more, text at WCAG AA, nothing on the videos under 14px in landscape, reduced motion respected.

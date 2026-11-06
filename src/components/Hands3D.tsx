@@ -234,7 +234,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
     const io = new IntersectionObserver(es => { for (const e of es) onScreen = e.isIntersecting && e.intersectionRatio > 0.5; }, { threshold: [0, 0.5, 1] });
     io.observe(host);
     const id = Math.random().toString(36).slice(2, 7);
-    let cam: { m: number; xa: number; xb: number } | null = null;
+    const cams: Record<'L' | 'R' | 'both', { m: number; xa: number; xb: number } | null> = { L: null, R: null, both: null };
     const draw = () => {
       const G = geom.current;
       const Wd = host.clientWidth, Ht = host.clientHeight;
@@ -253,22 +253,28 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
         const namedKey = t < untilRef.current && named.current && named.current.size ? [...named.current.entries()].sort((a, b) => b[1] - a[1])[0][0] : undefined;
         // The camera glides along the keys: everything the hands hold in screen pixels moves with
         // it first, so a hand never trails behind its keys while the picture moves.
-        let ma = 0;
-        for (let m = 36; m < 96; m++) if (G.X(m) && G.X(m + 12)) { ma = m; break; }
-        if (ma) {
+        // On a keyboard cut in two, each half has its own camera: each hand follows its own half
+        // (the left hand the left half), anchored on two keys an octave apart inside it.
+        for (const h of (G.side ? ['L', 'R'] : ['both']) as ('L' | 'R' | 'both')[]) {
+          const want = h === 'L' ? 0 : 1;
+          let ma = 0;
+          for (let m = 24; m < 100; m++) if (G.X(m) && G.X(m + 12) && (!G.side || (G.side(m) === want && G.side(m + 12) === want))) { ma = m; break; }
+          const prev = cams[h];
+          if (!ma) { cams[h] = null; continue; }
           const xa = G.X(ma)!.x, xb = G.X(ma + 12)!.x;
-          if (cam && cam.m === ma && cam.xb !== cam.xa) {
-            const a = (xb - xa) / (cam.xb - cam.xa), b0 = xa - a * cam.xa;
+          if (prev && prev.m === ma && prev.xb !== prev.xa) {
+            const a = (xb - xa) / (prev.xb - prev.xa), b0 = xa - a * prev.xa;
             if (Math.abs(a - 1) > 1e-4 || Math.abs(b0) > 0.05) {
               for (const rig of Object.values(rigs)) {
-                if (!rig) continue;
+                if (!rig || (h !== 'both' && rig.h !== h)) continue;
                 rig.wx = a * rig.wx + b0; rig.vwx *= a; rig.px = a * rig.px + b0;
                 for (const fg of rig.fingers) { fg.x = a * fg.x + b0; fg.vx *= a; }
               }
             }
           }
-          cam = { m: ma, xa, xb };
+          cams[h] = { m: ma, xa, xb };
         }
+        const cam = cams.both ?? cams.R ?? cams.L;
         // A white key's pitch on screen (unitW is the key's own width, narrower than its step).
         let kw = G.unitW;
         for (let m = 60; m < 84; m++) {
@@ -378,7 +384,12 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // far notes it still sits on each one as it sounds. The thumb is short from the knuckles, so
           // its note pulls twice as hard.
           let sx = 0, sw = 0;
-          for (let f = 1; f <= 5; f++) { const far = want[f].real ? Math.abs(want[f].x! - rig.wx) / kw : 0; const lead = Math.min(0.25 + Math.min(0.55, far * 0.06), Math.max(0.12, (want[f].gap ?? 9) * 0.5)); const w = want[f].real ? 1 / (0.06 + Math.max(0, want[f].soon - lead) + 0.6 * Math.max(0, (want[f].since ?? 0) - 0.15)) : 0.15; const wt = f === 1 && want[f].real ? w * 2 : w; sx += ((want[f].real ? want[f].x! : rig.fingers[f - 1].x) - (f - 3) * dir * (rig.span * s) / 3) * wt; sw += wt; }
+          // A note coming: the notes already held weigh little on the wrist (and almost nothing more
+          // than five keys from it), so the hand goes where it plays next; a held finger that still
+          // reaches its key keeps it. A held note lets go of the wrist as a hand leaves a key on a leap and the pedal
+          // keeps it sounding (the check found the wrist left halfway on a B to high C).
+          const coming = [1, 2, 3, 4, 5].filter(g => want[g].real && want[g].soon > 0 && want[g].soon < 0.45).map(g => want[g].x!);
+          for (let f = 1; f <= 5; f++) { const far = want[f].real ? Math.abs(want[f].x! - rig.wx) / kw : 0; const lead = Math.min(0.25 + Math.min(0.55, far * 0.06), Math.max(0.12, (want[f].gap ?? 9) * 0.5)); const held = want[f].real && want[f].soon === 0 && (want[f].since ?? 0) > 0.2 && coming.length > 0; const left = !held ? 1 : coming.some(x => Math.abs(x - want[f].x!) > kw * 5) ? 0.08 : 0.15; const w = want[f].real ? left / (0.06 + Math.max(0, want[f].soon - lead) + 0.6 * Math.max(0, (want[f].since ?? 0) - 0.15)) : 0.15; const wt = f === 1 && want[f].real ? w * 2 : w; sx += ((want[f].real ? want[f].x! : rig.fingers[f - 1].x) - (f - 3) * dir * (rig.span * s) / 3) * wt; sw += wt; }
           const handX = p > 0.5 ? rig.px + dir * kw * 0.9 : sx / sw;
           // A stiff, critically damped spring (no overshoot), towards a target that already leans on
           // the notes coming in the next quarter second (earlier for a far jump, about 0.06 s a key,

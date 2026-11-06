@@ -14,7 +14,7 @@ import { splitBars } from './analysis';
 import { barIndex, barLength, barStart, type BarGrid } from './bars';
 import { buildCourse } from './course';
 import { readSong } from './reading';
-import { SCRIPTS, SECTIONS } from './reelScripts';
+import { RULE_SECTIONS, SCRIPTS, SECTIONS } from './reelScripts';
 import { SCRIPTS_PT, STEP_TIPS_PT } from './reelScriptsPt';
 import { cleanPhase, type PhaseWords, type Talk } from './reelShape';
 import { difficultyOf } from './difficulty';
@@ -298,10 +298,12 @@ export function reelsOf(song: Song): Reel[] {
     }
     segments.push({ kind: 'both', ...fit(p.from, p.to, 1, 20, 12), speed: 1, label: twoHands ? tr('Both hands', 'Duas mãos') : tr('Full speed', 'Velocidade real') });
     // Its name in the song's form, written with the script (reelScripts.ts SECTIONS), else "Part n".
-    const sec = scripted ? SECTIONS[scriptId ?? '']?.[i] : undefined;
+    // Without a script, a name written for the bars the rules cut (RULE_SECTIONS), only if they match.
+    const ruled = !scripted ? RULE_SECTIONS[song.entry.id]?.find(x => x[0] === p.from && x[1] === p.to) : undefined;
+    const sec = scripted ? SECTIONS[scriptId ?? '']?.[i] : ruled ? ([ruled[2], ruled[3], ruled[4], ruled[5]] as [string, string, string, string]) : undefined;
     const inPt = lang() === 'pt';
     return {
-      id: `phase-${i + 1}`, n: i + 1, from: p.from, to: p.to, words, segments,
+      id: `phase-${i + 1}`, n: i + 1, from: p.from, to: p.to, words: ruled ? { ...words, title: ruled[inPt ? 3 : 2] } : words, segments,
       section: sec ? sec[inPt ? 1 : 0] : tr(`Part ${i + 1}`, `Parte ${i + 1}`),
       sectionSaid: sec ? sec[inPt ? 3 : 2] : tr(`part ${i + 1}`, `a parte ${i + 1}`),
       chords: bars.slice(p.from - 1, p.to).map(f => ({ bar: f.bar, name: f.chord })),
@@ -895,7 +897,10 @@ export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
   // screen while the music moves into his hands. A step takes two rounds, three when it is hard; a
   // pattern, a jump or a fix (already four times over) and the whole phase take one.
   // A move between chords is repeated in rounds too: repeating the movement is how it is learnt.
-  const rounds = clip.kind === 'run' || clip.kind === 'pattern' || clip.kind === 'jump' || clip.kind === 'fix' ? 1 : clip.kind === 'tour' || clip.kind === 'move' ? 2 : (clip.difficulty ?? 0) >= 0.6 ? 3 : 2;
+  // The rounds add up to about seventy seconds of music at most, so no video runs to three minutes
+  // (a long merged step takes one); he can loop it as often as he likes.
+  const planned = clip.kind === 'run' || clip.kind === 'pattern' || clip.kind === 'jump' || clip.kind === 'fix' ? 1 : clip.kind === 'tour' || clip.kind === 'move' ? 2 : (clip.difficulty ?? 0) >= 0.6 ? 3 : 2;
+  const rounds = Math.max(1, Math.min(planned, Math.floor(70 / Math.max(1, length))));
   const GUIDE = [0.75, 0.6, 0.5];
   const beat = Math.max(0.45, Math.min(1, song.ticksToSeconds(song.ppq) / sg.speed));
   // Count 1, 2, 3 (the user's choice), then the notes start falling in silence (no more clicks
