@@ -740,7 +740,11 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
   // he sees it come into his hands round by round.
   const roundHits = useRef<number[]>([]);
   const waitSince = useRef(0);
-  const [verdict, setVerdict] = useState<{ round: number; ok: number; of: number } | null>(null);
+  const [verdict, setVerdict] = useState<{ round: number; ok: number; of: number; silent?: 'mic' | 'keys' } | null>(null);
+  // Every key his piano sent during the round, to tell an honest "I did not hear your piano" from a
+  // round that went badly (the 2026-11 audit: errors that say what happened).
+  const heard = useRef(0);
+  useEffect(() => (active ? onNote(e => { if (e.type === 'on') heard.current++; }) : undefined), [active]);
   const lastRound = useRef(0);
   useEffect(() => {
     const prev = lastRound.current, now = place.train ? place.round : 0;
@@ -748,11 +752,15 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
     // Round `prev` is over: the next one began, or Train with me ended.
     if (!active || !inputOn || loops > 0 || prev < 1 || (now !== 0 && now !== prev + 1)) return;
     const r = prev - 1, of = groupsToPlay.filter(g => g.round === r).length, ok = Math.min(of, roundHits.current[r] ?? 0);
+    const keys = heard.current;
+    heard.current = 0;
     if (!of) return;
-    setVerdict({ round: prev, ok, of });
+    // Not a single key from his piano in the whole round: say what is wrong, not "0 of 20".
+    const on = Object.entries(linkState()).find(([, x]) => x.status === 'on')?.[0];
+    setVerdict({ round: prev, ok, of, silent: keys === 0 ? (on === 'mic' ? 'mic' : 'keys') : undefined });
     if (ok >= of * 0.8) playSfx('pop', 0.4);
   }, [place.round, place.train]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!verdict) return; const id = window.setTimeout(() => setVerdict(null), 2600); return () => window.clearTimeout(id); }, [verdict]);
+  useEffect(() => { if (!verdict) return; const id = window.setTimeout(() => setVerdict(null), verdict.silent ? 5000 : 2600); return () => window.clearTimeout(id); }, [verdict]);
   useEffect(() => {
     if (!active || !inputOn || !tl.train || !groupsToPlay.length) return;
     const waits = videoPrefs.wait;
@@ -972,9 +980,13 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
         </AnimatePresence>
         <AnimatePresence>
           {verdict && (
-            <motion.p key={`verdict-${verdict.round}`} className={`reel-verdict ${verdict.ok >= verdict.of * 0.8 ? 'good' : ''}`} role="status"
+            <motion.p key={`verdict-${verdict.round}`} className={`reel-verdict ${verdict.silent ? 'silent' : verdict.ok >= verdict.of * 0.8 ? 'good' : ''}`} role="status"
               initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.15 } }} transition={SPRING}>
-              {L(`Round ${verdict.round}: ${verdict.ok} of ${verdict.of} on time`, `Ronda ${verdict.round}: ${verdict.ok} de ${verdict.of} a tempo`)}
+              {verdict.silent === 'mic'
+                ? L('I did not hear your piano. Bring the phone closer or play a little louder.', 'Não ouvi o teu piano. Aproxima o telemóvel ou toca um pouco mais forte.')
+                : verdict.silent === 'keys'
+                  ? L('No notes came from your piano. Check the cable or Bluetooth in Settings.', 'Não chegaram notas do teu piano. Vê o cabo ou o Bluetooth nas Definições.')
+                  : L(`Round ${verdict.round}: ${verdict.ok} of ${verdict.of} on time`, `Ronda ${verdict.round}: ${verdict.ok} de ${verdict.of} a tempo`)}
             </motion.p>
           )}
         </AnimatePresence>

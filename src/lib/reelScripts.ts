@@ -410,3 +410,39 @@ export const SECTIONS: Record<string, [string, string, string, string][]> = {
     ['Verse 2', 'Verso 2', 'verse 2', 'o verso 2'],
   ],
 };
+
+/**
+ * Section names for songs taught by the rules (no hand-written script), by the bars the rules cut
+ * them into: a name holds only while its bars match exactly, so a change in the rules falls back to
+ * "Part n" rather than a wrong name. Read from the form of each piece and the bars that repeat:
+ * [from, to, English, Portuguese, English said, Portuguese said].
+ */
+export const RULE_SECTIONS: Record<string, [number, number, string, string, string, string][]> = {
+  // Handel, Sarabande HWV 437: the theme in four phrases (bars 1 and 9, 17 and 25 begin alike),
+  // then its variations.
+  'sarabande': [
+    [1, 8, 'Theme 1a', 'Tema 1a', 'theme 1 a', 'o tema 1 a'],
+    [9, 16, 'Theme 1b', 'Tema 1b', 'theme 1 b', 'o tema 1 b'],
+    [17, 24, 'Theme 2a', 'Tema 2a', 'theme 2 a', 'o tema 2 a'],
+    [25, 32, 'Theme 2b', 'Tema 2b', 'theme 2 b', 'o tema 2 b'],
+    [33, 40, 'Variation 1', 'Variação 1', 'variation 1', 'a variação 1'],
+    [41, 48, 'Variation 2', 'Variação 2', 'variation 2', 'a variação 2'],
+  ],
+  // Handel, Passacaglia HWV 432: the four-bar ground, each phrase twice, then the variations over it.
+  'passacaglia': [
+    [1, 16, 'Theme', 'Tema', 'the theme', 'o tema'],
+    [17, 32, 'Variation 1', 'Variação 1', 'variation 1', 'a variação 1'],
+    [33, 48, 'Variation 2', 'Variação 2', 'variation 2', 'a variação 2'],
+    [49, 64, 'Variation 3', 'Variação 3', 'variation 3', 'a variação 3'],
+    [65, 72, 'Outro', 'Final', 'the outro', 'o final'],
+  ],
+  // Debussy, Clair de Lune: the quiet opening, the theme that flows (tempo rubato), the climb to the
+  // first climax, the second climax and the opening's return (bars 59-60 are bars 9-10), the end.
+  'clair-de-lune': [
+    [1, 16, 'Intro', 'Intro', 'the intro', 'a intro'],
+    [17, 32, 'Verse 1', 'Verso 1', 'verse 1', 'o verso 1'],
+    [33, 48, 'Build', 'Subida', 'the build', 'a subida'],
+    [49, 64, 'Climax', 'Clímax', 'the climax', 'o clímax'],
+    [65, 72, 'Outro', 'Final', 'the outro', 'o final'],
+  ],
+};

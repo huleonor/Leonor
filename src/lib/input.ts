@@ -1,6 +1,6 @@
 import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
 import { setAudioSession } from './audio';
-import { NoteListener } from './pitch';
+import { DEFAULT_TUNING, NoteListener, type ListenerTuning } from './pitch';
 
 export type Source = 'midi' | 'ble' | 'mic';
 export interface NoteEvent {
@@ -240,6 +240,20 @@ export function disconnectBle() {
 
 // ---------------- Microphone note detection ----------------
 let micStream: MediaStream | null = null;
+
+/**
+ * The microphone's sensitivity, from the calibration in Test your piano (the 2026-11 audit): how
+ * strong a strike must be over the room before it counts, kept on the device and used at once.
+ */
+const TUNE_KEY = 'leonor:mic-tuning';
+let micTune: Partial<ListenerTuning> = (() => { try { return JSON.parse(localStorage.getItem(TUNE_KEY) ?? '{}'); } catch { return {}; } })();
+let liveListener: NoteListener | null = null;
+export function micTuning(): ListenerTuning { return { ...DEFAULT_TUNING, ...micTune }; }
+export function setMicTuning(t: Partial<ListenerTuning> | null) {
+  micTune = t ? { ...micTune, ...t } : {};
+  try { if (t) localStorage.setItem(TUNE_KEY, JSON.stringify(micTune)); else localStorage.removeItem(TUNE_KEY); } catch { /* this visit only */ }
+  if (liveListener) liveListener.tuning = micTuning();
+}
 let micCtx: AudioContext | null = null;
 let micTimer = 0;
 /** Pitch classes the app itself just played, so the mic does not "hear" the accompaniment as Hugo. */
@@ -279,7 +293,8 @@ export async function connectMic() {
   micCtx = ctx;
   await ctx.resume().catch(() => {});
   const src = ctx.createMediaStreamSource(micStream);
-  const listener = new NoteListener(ctx.sampleRate);
+  const listener = new NoteListener(ctx.sampleRate, micTune);
+  liveListener = listener;
   const analyser = ctx.createAnalyser();
   analyser.fftSize = listener.size;
   analyser.smoothingTimeConstant = 0;

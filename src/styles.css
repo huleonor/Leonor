@@ -163,8 +163,8 @@ p { margin: 0; }
 .sub { color: var(--ink-2); font-size: 15px; }
 .warn { color: var(--mark-text); font-size: 14px; font-weight: 700; }
 .error-line { color: var(--mark-text); font-size: 14px; margin-top: 8px; }
-.stars, .tile-stars { display: inline-flex; gap: 2px; color: var(--star-off); }
-.stars .won, .tile-stars .on { color: var(--star); }
+.stars { display: inline-flex; gap: 2px; color: var(--star-off); }
+.stars .won { color: var(--star); }
 
 /* Segmented control: tabs cut from one strip of paper */
 .seg-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
@@ -180,8 +180,7 @@ p { margin: 0; }
 .field input { min-height: 48px; padding: 0 12px; border: 2px solid var(--ink); border-radius: 0; background: var(--white); color: var(--ink); font: 400 17px var(--font-display); }
 .field input:focus { outline: none; background: #FFF8DF; }
 .field input::placeholder { color: var(--muted); }
-.field-static { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding: 0 12px; border: 2px dashed var(--rule-2); }
-.field-static small { color: var(--muted); font-size: 13px; }
+
 .file-name { overflow-wrap: anywhere; font-family: var(--font-mono); }
 
 .switch { appearance: none; -webkit-appearance: none; flex: none; width: 50px; height: 28px; margin: 0; position: relative; cursor: pointer; background: var(--white); border: 2px solid var(--ink); transition: background-color var(--dur) var(--ease); }
@@ -209,7 +208,7 @@ p { margin: 0; }
   background: var(--paper); border-left: 2px solid var(--ink); border-right: 2px solid var(--ink);
 }
 .rail { grid-row: 2; display: flex; align-items: stretch; padding: 0 var(--safe-r) var(--safe-b) var(--safe-l); background: var(--paper); border-top: 2px solid var(--ink); }
-.rail-logo { display: none; }
+
 .rail-btn {
   flex: 1; display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 60px; padding: 6px 2px 8px;
   color: var(--muted); font-family: var(--font-mono); font-size: 12px; font-weight: 700;
@@ -244,33 +243,7 @@ p { margin: 0; }
 .journey-hero.waiting { padding: 24px 20px; background: var(--pink-soft); border: 2px solid var(--ink); transform: rotate(-1deg); }
 .journey-hero.waiting .sub { color: var(--ink-2); }
 
-.phase-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
-.phase-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; background: var(--white); border: 2px solid var(--ink); transition: transform var(--dur) var(--ease); }
-.phase-row:nth-child(4n+1) { transform: rotate(-1.4deg); }
-.phase-row:nth-child(4n+2) { transform: rotate(1deg); }
-.phase-row:nth-child(4n+3) { transform: rotate(-.6deg); }
-.phase-row:nth-child(4n) { transform: rotate(1.5deg); }
-.phase-open { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; align-items: center; min-height: 76px; padding: 12px 6px 12px 12px; text-align: left; }
-.phase-open .num { font-size: 26px; color: var(--muted); }
-.phase-text { display: grid; gap: 3px; min-width: 0; }
-.phase-text b { font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 1.05; }
-.phase-text small { font-family: var(--font-mono); color: var(--ink-2); font-size: 12px; }
-.phase-open:hover .phase-text b { background: var(--marker); }
-.phase-row.done .phase-open .num { text-decoration: line-through var(--pink) 3px; }
-.phase-practise { display: grid; justify-items: center; align-content: center; gap: 3px; width: 86px; color: var(--ink); font-family: var(--font-mono); font-size: 12px; font-weight: 700; border-left: 2px dashed var(--ink); }
-.phase-practise:hover { background: var(--marker); }
-.phase-practise .tile-stars { color: var(--rule-2); }
-.phase-practise .tile-stars .on { color: var(--pink); }
 /* The next one: pink sheet, taped down */
-.phase-row.next { background: var(--pink-soft); }
-.phase-row.next::before { content: ''; position: absolute; top: -12px; left: 46%; width: 90px; height: 24px; background: var(--tape); transform: rotate(5deg); z-index: 2; }
-.phase-row.next .phase-open .num { color: var(--pink-text); }
-.phase-row.finale { background: var(--ink); color: var(--white); }
-.phase-row.finale .phase-text b { color: var(--white); }
-.phase-row.finale .phase-text small, .phase-row.finale .phase-open .num { color: var(--paper-3); }
-.phase-row.finale .phase-open:hover .phase-text b { background: none; text-decoration: underline wavy var(--pink); }
-.phase-row.finale .phase-practise { color: var(--white); border-left-color: var(--paper-3); }
-.phase-row.finale .phase-practise:hover { background: var(--ink-2); }
 
 .journey-others h2 { font-size: 30px; margin-bottom: 14px; }
 .journey-others ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -354,7 +327,6 @@ p { margin: 0; }
 .song-text span { color: var(--ink-2); font-size: 14px; }
 .market-text .market-about { color: var(--ink); font-size: 15px; line-height: 1.4; }
 .market-text .market-facts { font-family: var(--font-mono); color: var(--muted); font-size: 12px; }
-.add-label { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ---------- Sheets, dialogs, toast: sheets of paper laid over the page ---------- */
 .scrim { position: fixed; inset: 0; z-index: 30; display: flex; justify-content: flex-end; background: var(--scrim); animation: fade var(--dur) var(--ease); }
@@ -380,7 +352,6 @@ p { margin: 0; }
 .toggle-row b { font-weight: 700; font-size: 15px; }
 .toggle-row small { color: var(--muted); font-size: 13px; }
 .about { gap: 8px; }
-.credits { font-size: 12px; font-family: var(--font-mono); }
 
 .veil { position: fixed; inset: 0; z-index: 4; display: grid; place-items: center; padding: 10px; overflow-y: auto; background: var(--scrim); animation: fade var(--dur) var(--ease); }
 .card { background: var(--white); border: 2px solid var(--ink); padding: 20px; }
@@ -401,6 +372,10 @@ p { margin: 0; }
 .toast.error { background: var(--mark); color: var(--mark-ink); }
 
 /* The piano check */
+.mic-cal { display: grid; gap: 10px; padding: 14px; background: var(--white); border: 2px solid var(--ink); }
+.mic-cal p { margin: 0; }
+.mic-cal-go { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; }
+.mic-cal-count { font: 700 16px var(--font-mono); background: var(--marker); padding: 0 6px; }
 .check-live { display: grid; gap: 2px; padding: 14px; background: var(--paper-2); border: 2px dashed var(--ink); }
 .check-live small { color: var(--muted); font-size: 13px; font-family: var(--font-mono); }
 .check-live strong { font-family: var(--font); font-weight: 900; font-size: 38px; color: var(--ink); text-shadow: var(--riso); min-height: 1.2em; }
@@ -472,9 +447,7 @@ p { margin: 0; }
 .reel-kicker { justify-self: start; max-width: calc(100% - 120px); font: 700 clamp(13px, 2vh, 16px)/1.2 var(--font-mono); color: var(--ink); background: var(--marker); padding: 2px 6px; transform: rotate(-1.5deg); }
 .reel-meta { font-size: 12px; font-family: var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
 .reel-screen:not(.embedded) .reel-head { padding-left: 64px; }
-.reel-speed { padding: 3px 8px; background: var(--ink); color: var(--white); font: 700 12px var(--font-mono); white-space: nowrap; }
-.reel-speed.hand-L { background: var(--teal); color: var(--white); }
-.reel-speed.train { background: var(--pink); color: var(--white); }
+
 .reel-hook { color: var(--ink); font-family: var(--font); font-weight: 900; font-size: clamp(32px, 5.4vh, 56px); line-height: .9; letter-spacing: -.02em; max-width: 12ch; }
 /* A head in words (the idea, both hands) is set in Times and smaller: the huge size is for notes. */
 .reel-hook.words { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 3.4vh, 32px); line-height: 1; letter-spacing: 0; max-width: 18ch; }
@@ -515,14 +488,11 @@ p { margin: 0; }
 .reel-card > div { display: grid; gap: 14px; justify-items: start; max-width: 30ch; }
 .reel-card small { color: var(--ink-2); font-size: 13px; font-family: var(--font-mono); font-weight: 700; }
 .reel-card h3 { color: var(--ink); font-size: clamp(30px, 5vh, 44px); line-height: .95; }
-.reel-tricks { list-style: none; margin: 0; padding: 0; width: 100%; border-bottom: 1px dashed var(--rule-2); }
-.reel-tricks li { padding: 10px 0; border-top: 1px dashed var(--rule-2); font-size: 16px; line-height: 1.3; }
+
 .reel-card.light { background: transparent; pointer-events: none; align-items: center; justify-items: center; }
-.reel-card .reel-label { padding: 12px 18px; background: var(--ink); color: var(--white); font-size: clamp(26px, 4vh, 36px); transform: rotate(-2deg); }
-.reel-card .reel-label.hand-L { background: var(--teal); color: var(--white); }
+
 .reel-card.end { cursor: default; }
-.reel-end-actions { display: grid; gap: 12px; width: min(100%, 280px); margin-top: 6px; }
-.reel-end-actions .btn { justify-content: flex-start; }
+
 .reel-paused { position: absolute; top: 50%; left: 50%; translate: -50% -50%; z-index: 4; width: 76px; height: 76px; display: grid; place-items: center; background: var(--ink); color: var(--white); transform: rotate(-3deg); box-shadow: 4px 4px 0 var(--pink); pointer-events: none; }
 .reel-loading { position: absolute; top: 50%; left: 50%; translate: -50% -50%; z-index: 6; padding: 10px 14px; background: var(--ink); color: var(--white); font: 700 14px var(--font-mono); }
 
@@ -600,15 +570,6 @@ p { margin: 0; }
 .reel-playing .nav-toggle.back { opacity: 0.6; }
 .app.watching { grid-template-rows: minmax(0, 1fr); }
 .app.watching .reel-kicker { margin-left: 52px; }
-.nav-scrim { position: fixed; inset: 0; z-index: 25; background: var(--scrim); }
-.nav-drawer { position: absolute; top: 0; bottom: 0; left: 0; width: min(280px, 80vw); display: grid; align-content: start; gap: 20px; padding: calc(18px + var(--safe-t)) 18px 20px calc(18px + var(--safe-l)); background: var(--paper); border-right: 2px solid var(--ink); }
-.nav-close { justify-self: start; }
-.nav-drawer .rail { grid-row: auto; flex-direction: column; align-items: stretch; gap: 8px; padding: 0; border: 0; background: none; }
-.nav-drawer .rail-btn { grid-auto-flow: column; justify-content: start; justify-items: start; gap: 14px; min-height: 52px; padding: 0 12px; font-size: 16px; border: 2px solid var(--ink); background: var(--white); color: var(--ink); }
-.nav-drawer .rail-btn:nth-child(odd) { transform: rotate(-.8deg); }
-.nav-drawer .rail-btn:nth-child(even) { transform: rotate(.8deg); }
-.nav-drawer .rail-btn.on { background: var(--marker); }
-.nav-drawer .rail-btn.on span { background: none; padding: 0; }
 
 /* ---------- The whole song ---------- */
 .song-screen { --pad: max(14px, calc((100vw - 1100px) / 2)); height: 100dvh; display: flex; flex-direction: column; background: var(--paper); }
@@ -715,7 +676,7 @@ p { margin: 0; }
   position: relative; height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr);
   background: var(--white); color: var(--ink); padding: 0 var(--safe-r) var(--safe-b) var(--safe-l);
 }
-.lesson.simply.view-notes { grid-template-rows: auto minmax(0, 1fr) clamp(78px, 21vh, 130px); background: var(--paper); color: var(--ink); }
+
 .lesson-bar { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: calc(12px + var(--safe-t)) 24px 6px; }
 .lesson-pause, .lesson-arrow { flex: none; display: grid; place-items: center; color: var(--ink); border: 2px solid var(--ink); background: var(--white); transition: background-color var(--dur) var(--ease); }
 .lesson-pause { width: 44px; height: 44px; }
@@ -875,7 +836,7 @@ p { margin: 0; }
 .home-item span { display: grid; gap: 2px; }
 .home-item b { font-family: var(--font-display); font-weight: 700; font-size: 21px; }
 .home-item small { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
-.app:not(.watching) .content.tab-home { padding-bottom: 30px; }
+
 .lib-now.waiting { background: var(--pink-soft); margin-bottom: 10px; }
 .lib-now.waiting .lib-now-foot { flex-wrap: wrap; }
 /* His piano on the video: connect it, and his right and wrong keys counted as he plays along. */
@@ -883,6 +844,7 @@ p { margin: 0; }
 .reel-explain:hover { background: var(--marker); border-color: var(--ink); color: var(--ink); }
 .reel-verdict { position: absolute; z-index: 6; top: 24%; left: 0; right: 0; width: max-content; max-width: calc(100% - 40px); margin: 0 auto; padding: 8px 14px; background: var(--white); border: 2px solid var(--ink); font: 700 16px var(--font-mono); color: var(--ink); pointer-events: none; }
 .reel-verdict.good { border-color: var(--ok); border-left-width: 8px; }
+.reel-verdict.silent { border-color: var(--mark); border-left-width: 8px; width: auto; max-width: min(360px, calc(100% - 40px)); line-height: 1.35; }
 .reel-piano { position: absolute; top: 18px; right: 14px; z-index: 7; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; min-width: 44px; justify-content: center; padding: 0 10px; background: var(--white); border: 2px solid var(--ink); color: var(--ink); font: 700 12px var(--font-mono); transform: rotate(1.5deg); }
 .reel-piano > i { width: 8px; height: 8px; border-radius: 50%; background: var(--mark); margin-left: -4px; align-self: flex-start; margin-top: 6px; }
 .reel-piano.on > i { background: var(--ok); }
