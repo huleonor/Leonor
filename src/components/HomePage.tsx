@@ -49,7 +49,7 @@ export function HomePage({ title, song, loading, clips, at, onContinue, onTab, o
       </header>
       {song && clip ? (
         <motion.button className="home-continue taped" onClick={onContinue} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}
-          aria-label={L(`Continue: ${clip.phase.section}, video ${clip.k} of ${clip.of}`, `Continuar: ${clip.phase.section}, vídeo ${clip.k} de ${clip.of}`)}>
+          aria-label={clip.phase.n === 0 ? L('Continue: overview of the song', 'Continuar: visão geral da música') : L(`Continue: ${clip.phase.section}, video ${clip.k} of ${clip.of}`, `Continuar: ${clip.phase.section}, vídeo ${clip.k} de ${clip.of}`)}>
           <ReelPreview song={song} reel={clip} />
           <span className="home-continue-foot">
             <span><b>{clip.phase.section === clip.words.title ? clip.phase.section : `${clip.phase.section}: ${clip.words.title}`}</b><small>{L(`Video ${clip.k} of ${clip.of}`, `Vídeo ${clip.k} de ${clip.of}`)}</small></span>
@@ -84,10 +84,12 @@ export function HomePage({ title, song, loading, clips, at, onContinue, onTab, o
 export function ContinueCard({ song, clip, onContinue }: { song: Song; clip: Clip; onContinue: () => void }) {
   return (
     <motion.button className="home-continue taped" onClick={onContinue} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}
-      aria-label={L(`Continue: ${clip.phase.section}, video ${clip.k} of ${clip.of}`, `Continuar: ${clip.phase.section}, vídeo ${clip.k} de ${clip.of}`)}>
+      aria-label={clip.phase.n === 0 ? L('Continue: overview of the song', 'Continuar: visão geral da música') : L(`Continue: ${clip.phase.section}, video ${clip.k} of ${clip.of}`, `Continuar: ${clip.phase.section}, vídeo ${clip.k} de ${clip.of}`)}>
       <ReelPreview song={song} reel={clip} />
       <span className="home-continue-foot">
-        <span><b>{clip.phase.section === clip.words.title ? clip.phase.section : `${clip.phase.section}: ${clip.words.title}`}</b><small>{L(`Video ${clip.k} of ${clip.of}`, `Vídeo ${clip.k} de ${clip.of}`)}</small></span>
+        {clip.phase.n === 0
+          ? <span><b>{L('Overview of the song', 'Visão geral da música')}</b><small>{L('Its sections and how each is learnt', 'As secções e como se aprende cada uma')}</small></span>
+          : <span><b>{clip.phase.section === clip.words.title ? clip.phase.section : `${clip.phase.section}: ${clip.words.title}`}</b><small>{L(`Video ${clip.k} of ${clip.of}`, `Vídeo ${clip.k} de ${clip.of}`)}</small></span>}
         <span className="btn go"><IconPlay size={16} />{L('Continue', 'Continuar')}</span>
       </span>
     </motion.button>

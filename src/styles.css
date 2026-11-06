@@ -226,13 +226,53 @@ p { margin: 0; }
 /* A phone on its side (the music stand): the page takes the whole width, the tabs stay at the bottom. */
 @media (max-height: 500px) and (orientation: landscape) {
   .app { max-width: none; border: 0; }
-  .rail-btn { min-height: 46px; grid-auto-flow: column; gap: 8px; }
+  .rail-btn { min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .page-head { padding: 14px 0 10px; }
   .page-head h1 { font-size: 34px; }
 }
 
 /* ---------- Song: the song being learnt, its phases as index cards ---------- */
-.journey { padding: calc(30px + var(--safe-t)) 0 40px; display: grid; gap: 26px; }
+.journey { padding: calc(24px + var(--safe-t)) 0 40px; display: grid; gap: 20px; }
+/* The Song page (the user: "more professional"): a quiet head, his progress as a bar of sections,
+   the one current card taped, and the sections as one card of rows. */
+.song-head { display: grid; gap: 6px; }
+.song-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.song-kicker { font: 700 13px var(--font-mono); color: var(--muted); }
+.song-top .btn.quiet { min-height: 44px; padding: 0 2px; font-size: 14px; }
+.song-head h1 { font-size: clamp(34px, 9vw, 46px); line-height: 1; letter-spacing: 0; }
+.song-meta { margin: 0; font: 700 13px/1.4 var(--font-mono); color: var(--ink-2); }
+.song-progress { display: grid; gap: 10px; }
+.song-progress-top { display: flex; align-items: baseline; gap: 12px; font: 700 14px var(--font-mono); color: var(--ink-2); }
+.song-progress-top .num { display: inline-block; font-size: 22px; color: var(--ink); background: var(--marker); padding: 0 6px; transform: rotate(-2deg); }
+.song-bar { display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.song-bar li { position: relative; flex-basis: 0; min-width: 10px; height: 12px; background: var(--paper-2); border: 2px solid var(--ink); }
+.song-bar li i { position: absolute; inset: 0 auto 0 0; background: var(--ink); }
+.song-bar li.learnt i { background: var(--teal); }
+.song-bar li.next { border-color: var(--pink); }
+.song-sections-title { margin: 6px 0 -6px; font: 700 22px var(--font-display); }
+.section-card { list-style: none; margin: 0; padding: 0; background: var(--white); border: 2px solid var(--ink); transform: rotate(-0.4deg); }
+.sec-row { display: flex; align-items: stretch; border-top: 2px dashed var(--rule-2); }
+.sec-row:first-child { border-top: 0; }
+.sec-main { flex: 1; min-width: 0; display: grid; grid-template-columns: 36px 1fr; align-items: center; gap: 12px; min-height: 64px; padding: 10px 12px; text-align: left; color: var(--ink); }
+.sec-main:hover { background: var(--marker); }
+.sec-num { display: grid; place-items: center; width: 36px; height: 36px; border: 2px solid var(--ink); font: 700 16px var(--font-mono); background: var(--paper); }
+.sec-words { display: grid; gap: 1px; min-width: 0; }
+.sec-words b { font: 700 19px/1.15 var(--font-display); }
+.sec-words em { font: italic 15px/1.3 var(--font-display); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sec-words small { font: 700 12px/1.35 var(--font-mono); color: var(--muted); }
+.sec-acts { display: flex; align-items: center; gap: 6px; padding-right: 10px; }
+.sec-act { display: grid; place-items: center; width: 44px; height: 44px; border: 2px solid var(--ink); background: var(--white); color: var(--ink); }
+.sec-act:hover { background: var(--marker); }
+.sec-row.ahead .sec-num { border-style: dashed; color: var(--ink-2); }
+.sec-row.done .sec-num { background: var(--teal-soft); }
+.sec-row.next { background: var(--pink-soft); }
+.sec-row.next .sec-num { background: var(--pink); color: var(--white); }
+.sec-row.next .sec-words small { color: var(--pink-text); }
+.sec-row.finale { background: var(--ink); }
+.sec-row.finale .sec-main { color: var(--paper); }
+.sec-row.finale .sec-main:hover { background: var(--ink-2); }
+.sec-row.finale .sec-num { background: var(--ink); color: var(--paper); border-color: var(--paper); }
+.sec-row.finale .sec-words small { color: var(--paper); }
 .journey-hero { display: grid; gap: 12px; }
 .journey-by { font-family: var(--font-mono); font-size: 14px; color: var(--muted); order: -1; }
 .journey-hero h1 { font-size: clamp(40px, 11vw, 58px); line-height: .95; text-shadow: var(--riso); }
@@ -789,6 +829,7 @@ p { margin: 0; }
 }
 
 /* ---------- Song: its sections ---------- */
+/* ---------- Song: its sections ---------- */
 /* The song's sections, a list of index cards (Journey.tsx SectionList): the number or a tick, the
    name in the song's form, what it is; Hear and Practise under it. The next one pink and taped. */
 .section-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
@@ -817,7 +858,7 @@ p { margin: 0; }
 .home { padding: calc(30px + var(--safe-t)) 0 40px; display: grid; gap: 24px; }
 .home-head { display: grid; gap: 8px; }
 .home-head h1 { font-size: clamp(36px, 9vw, 52px); line-height: .95; }
-.home-continue { display: grid; width: 100%; padding: 0; text-align: left; background: var(--white); border: 2px solid var(--ink); transform: rotate(-.8deg); box-shadow: 4px 4px 0 var(--ink); }
+.home-continue { display: grid; width: 100%; padding: 0; text-align: left; background: var(--white); border: 2px solid var(--ink); transform: rotate(-.6deg); }
 .home-continue.empty { padding: 20px; gap: 14px; justify-items: start; }
 .home-loading { display: block; width: 100%; height: 120px; background: var(--paper-2); }
 .home-continue-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-top: 2px dashed var(--ink); }
