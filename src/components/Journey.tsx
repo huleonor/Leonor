@@ -120,10 +120,10 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
   // One short line of where he is in a section: a professional list says it in a few words.
   const status = (x: (typeof rows)[number]) => {
     if (x.watched && (x.practised || !x.section)) return L('Learnt', 'Aprendida');
-    if (next === x) return !x.watched ? L(`Next, ${x.of} videos`, `A seguir, ${x.of} vídeos`) : L('Next, practise it', 'A seguir, praticar');
+    if (next === x) return !x.watched ? L(`Next, ${x.of} steps`, `A seguir, ${x.of} passos`) : L('Next, practise it', 'A seguir, praticar');
     if (x.watched) return L('Watched, practise it', 'Vista, falta praticar');
-    if (x.seenN) return L(`${x.seenN} of ${x.of} videos`, `${x.seenN} de ${x.of} vídeos`);
-    return L(`${x.of} videos`, `${x.of} vídeos`);
+    if (x.seenN) return L(`${x.seenN} of ${x.of} steps`, `${x.seenN} de ${x.of} passos`);
+    return L(`${x.of} steps`, `${x.of} passos`);
   };
   const totalBars = Math.max(1, bars);
   return (

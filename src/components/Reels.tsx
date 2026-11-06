@@ -696,7 +696,7 @@ export type ReelResult = { perfect: boolean; poor: boolean; fix?: { ticks: numbe
  * loops until he scrolls on, so he copies it on his piano as many times as he likes. The voice
  * says it once; the loops are the music alone. Tap to pause.
  */
-export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain, pace = 1, onResult, sections, onSection, onSpeed }: PlayerProps) {
+export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain, pace = 1, onResult, sections, onSection, onSpeed, onNext }: PlayerProps) {
   // The pace is taken when the video comes on screen, so it never changes under him.
   // A speed chosen from the paused video takes effect at once (speedN), from the start of the video.
   const [speedN, setSpeedN] = useState(0);
@@ -953,6 +953,21 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
   // While a video plays nothing sits over it: the menu, the piano chip and the actions show only
   // when he pauses (the user's choice 2026-11).
   const paused = active && !clock.playing && !holding && !waitingFor;
+  // One course that keeps moving (the user's choice 2026-11: "if I don't play it waits a little and
+  // rolls on to the next"): once the video has played through, its Train with me done, a stretch
+  // with no key from him (six seconds, three without a piano) scrolls on to the next. Paused, or
+  // stopped for his note, it waits.
+  const idleFrom = useRef(performance.now());
+  useEffect(() => (active ? onNote(e => { if (e.type === 'on') idleFrom.current = performance.now(); }) : undefined), [active]);
+  useEffect(() => { idleFrom.current = performance.now(); }, [loops, active]);
+  useEffect(() => {
+    if (!active || loops < 1 || !onNext) return;
+    const id = window.setInterval(() => {
+      if (!clock.playing || holding || waitingFor) { idleFrom.current = performance.now(); return; }
+      if (performance.now() - idleFrom.current > (inputOn ? 6000 : 3000)) { window.clearInterval(id); onNext(); }
+    }, 400);
+    return () => window.clearInterval(id);
+  }, [active, loops, onNext, clock.playing, holding, waitingFor, inputOn]);
   // The Explain chip comes five seconds into the video: a timer of its own, so it shows even when
   // nothing else on screen changes at that moment.
   const [explainReady, setExplainReady] = useState(false);
@@ -1154,13 +1169,15 @@ interface FeedProps {
   onActive?: (index: number, clip: Clip) => void;
   onPiano?: () => void;
   onSpeed?: (v: number) => void;
+  /** A staff item of the course (kind 'read'): the lesson page for its bars, and when it is done. */
+  practice?: (clip: Clip, done: () => void) => React.ReactNode;
 }
 
 /** The song's reels in a vertical feed: swipe up for the next one, TikTok style. */
 const PACE = 'leonor:pace:';
 const readPace = (id: string) => { try { return Number(localStorage.getItem(PACE + id)) || 1; } catch { return 1; } };
 
-export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, onActive, onPiano, onSpeed }: FeedProps) {
+export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, onActive, onPiano, onSpeed, practice }: FeedProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(start);
   // The feed follows him: videos it skips when he plays clean, fix-this-spot videos it adds where he
@@ -1233,7 +1250,11 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
       <div className="reel-feed" ref={ref}>
         {items.map((r, i) => (
           <section key={r.id} data-i={i} className="reel-snap">
-            {Math.abs(i - active) <= 1 && (
+            {r.kind === 'read' ? (
+              i === active && practice
+                ? <ReadSlide key={`${r.id}-${song.entry.id}`} onSkip={i < items.length - 1 ? () => goTo(i + 1) : undefined}>{practice(r, () => { markSeen(song.entry.id, r.id); if (r.k === r.of) markSeen(song.entry.id, r.phase.id); if (i < items.length - 1) goTo(i + 1); })}</ReadSlide>
+                : <ReadStill clip={r} />
+            ) : Math.abs(i - active) <= 1 && (
               <ReelPlayer song={song} reel={r} index={i} count={items.length} active={i === active} onPiano={onPiano} pace={pace} onResult={x => result(i, x)} sections={items.length > 1 ? sections : undefined} onSection={toSection} onSpeed={onSpeed}
                 onPractice={() => onPractice(r, i)} onNext={i < items.length - 1 ? () => goTo(i + 1) : undefined} onExplain={() => explain(i)} />
             )}
@@ -1243,3 +1264,32 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
     </div>
   );
 }
+
+/**
+ * A staff item of the course in the feed: the lesson page for the bars the video just taught.
+ * If he does not play at all (no key for twenty seconds, eight without a piano connected) it rolls
+ * on to the next video, as the videos do; once he has started it waits for him.
+ */
+function ReadSlide({ children, onSkip }: { children: React.ReactNode; onSkip?: () => void }) {
+  useEffect(() => {
+    if (!onSkip) return;
+    let started = false;
+    const on = Object.values(linkState()).some(x => x.status === 'on');
+    const off = onNote(e => { if (e.type === 'on') started = true; });
+    const id = window.setTimeout(() => { if (!started) onSkip(); }, on ? 20000 : 8000);
+    return () => { off(); window.clearTimeout(id); };
+  }, [onSkip]);
+  return <div className="read-slide">{children}</div>;
+}
+
+/** The staff item while it is not on screen: what it is, so the scroll shows the next thing. */
+function ReadStill({ clip }: { clip: Clip }) {
+  return (
+    <div className="read-still">
+      <p className="read-still-kicker">{L('On the staff', 'Na pauta')}</p>
+      <h2>{L('Read it on the staff', 'Lê na pauta')}</h2>
+      <p className="fine">{clip.phase.section}, {clip.where}</p>
+    </div>
+  );
+}
+
