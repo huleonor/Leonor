@@ -24,7 +24,8 @@ Leonor teaches one song at a time, the song he chose, in short vertical videos h
 - Each section is a short series (at most twelve videos): its opening says how it will be learnt and gives two tips from its own notes; then its patterns (the shape alone, the same shape on each chord, the moves between chords), small steps (each hand, then both, slowly), and the whole section.
 - Every video: the voice explains while the keys light, the music slowly, then "Train with me" in rounds; with his piano connected the video waits at a note he has not played and says how each round went, or honestly that it heard nothing.
 - The videos are drawn live from the song's notes (falling notes, one keyboard, 3D comic hands), never recorded; his MIDI never leaves the device.
-- Practise opens the step-by-step lessons (Simply Piano's page: the staff, free play first, then with the beat) and Mastery, which plans the next exercise from every note he plays.
+- Practice is mixed into the videos, never a separate place: short staff steps (Simply Piano's page, free play waiting for each note) come after the both-hands videos of new shapes, and again after a video he did not play clean. Everything moves on by scrolling: the videos, and the steps of a lesson.
+- The full song opens the step-by-step lessons and Mastery, which plans the next exercise from every note he plays.
 
 ## Positioning
 
