@@ -54,6 +54,33 @@ function tidyHands(notes: SongNote[]) {
   }
 }
 
+/**
+ * A chord wider than a tenth in one hand (as Debussy writes many in Clair de Lune, rolled or shared
+ * between the hands in the printed score): when the other hand strikes nothing at that moment, the
+ * notes beyond a ninth from the chord's own end go to it, so no hand is asked to span what no hand
+ * can (the fingering check found 99 such chords in Clair de Lune's right hand).
+ */
+function shareWideChords(notes: SongNote[]) {
+  const WHITE = [0, 0.5, 1, 1.5, 2, 3, 3.5, 4, 4.5, 5, 5.5, 6];
+  const pos = (m: number) => Math.floor(m / 12) * 7 + WHITE[((m % 12) + 12) % 12];
+  for (const h of ['R', 'L'] as const) {
+    const other = h === 'R' ? 'L' : 'R';
+    const byTick = new Map<number, SongNote[]>();
+    for (const n of notes) if (n.hand === h) byTick.set(n.ticks, [...(byTick.get(n.ticks) ?? []), n]);
+    for (const chord of byTick.values()) {
+      if (chord.length < 2) continue;
+      const ps = chord.map(n => pos(n.midi));
+      if (Math.max(...ps) - Math.min(...ps) <= 9) continue;
+      const t = chord[0].time;
+      if (notes.some(n => n.hand === other && Math.abs(n.time - t) < 0.08)) continue;
+      // The right hand keeps its top, the left its bottom; the far notes go to the free hand.
+      const anchor = h === 'R' ? Math.max(...ps) : Math.min(...ps);
+      const far = chord.filter(n => Math.abs(pos(n.midi) - anchor) > 8);
+      if (far.length && far.length < chord.length) far.forEach(n => (n.hand = other));
+    }
+  }
+}
+
 const NOTE_BEATS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8];
 /**
  * Performed MIDI lets notes go a little early (a half note played as 1.8 beats); printed, that
@@ -117,6 +144,7 @@ export function parseSong(buf: ArrayBuffer, entry: SongEntry): Song {
   }
 
   tidyHands(notes);
+  shareWideChords(notes);
   snapDurations(notes, midi.header.ppq, t => midi.header.ticksToSeconds(t));
   assignFingering(notes);
 
