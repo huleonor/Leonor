@@ -761,16 +761,6 @@ export function clipsOf(song: Song): Clip[] {
         mine[0] = { ...make('intro', intro.from, b1, 1, tr('Listen', 'Ouve'), intro.head, say, 0, true), id: intro.id };
       }
     }
-    // One course (the user's choice 2026-11: "the videos and the practice one course, scroll on"):
-    // right after each both-hands video (the only hand's, in a one-hand piece), the same bars on the
-    // staff, Simply Piano's page in the feed (free play, it waits for each note), so he reads what
-    // the video just taught; then the next video. App.tsx makes the lesson step from its bars.
-    for (let i = mine.length - 1; i >= 0; i--) {
-      const c = mine[i];
-      if (c.kind === 'both' || (!twoHands && c.kind === 'R')) {
-        mine.splice(i + 1, 0, { ...make('read', c.from, c.to, 1, tr('On the staff', 'Na pauta'), tr('Read it on the staff', 'Lê na pauta'), '', c.step ?? 0), stepId: `read-${c.from}-${c.to}` });
-      }
-    }
     mine.forEach((c, i) => out.push({ ...c, say: NT(c.say), head: NT(c.head), k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) }));
   }
   // The song first (the user's choice 2026-11: "start with an overview of the song and how it is
@@ -1072,3 +1062,14 @@ export function listenClip(song: Song, reel: Reel): Clip | undefined {
     chords: reel.chords,
   };
 }
+
+/**
+ * The same bars on the staff, put in the feed right after a both-hands video he did not play clean
+ * (the user's choice 2026-11: "the practice not separate from the videos, mixed in where it is
+ * needed"): Simply Piano's lesson page for those bars (App.tsx makes it), then he scrolls on.
+ */
+export function readClip(clip: Clip): Clip {
+  return { ...clip, id: `${clip.id}-read`, kind: 'read', head: tr('Read it on the staff', 'Lê na pauta'), say: '', stepId: `read-${clip.from}-${clip.to}`,
+    segments: [{ kind: 'both', from: clip.from, to: clip.to, speed: 1, label: tr('On the staff', 'Na pauta') }], next: undefined };
+}
+

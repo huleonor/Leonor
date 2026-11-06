@@ -3,7 +3,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { markAppPlayed } from '../lib/input';
 import { handsShown, L, N, NOTE_RE, showHands, videoPrefs } from '../lib/lang';
 import { audioContext, loadPiano, pianoReady, playNote, playSfx, stopAll, stopSfx, unlockAudio } from '../lib/audio';
-import { linkState, onLinkState, onNote } from '../lib/input';
+import { linkState, onLinkState, onNote, setExpected, setMicRange } from '../lib/input';
 // The 3D gloves load on their own (three.js is large), only where WebGL runs.
 const Hands3D = lazy(() => import('./Hands3D').then(m => ({ default: m.Hands3D })));
 // Asked once, and the test context is let go at once (each one held counts against the browser's few).
@@ -20,7 +20,7 @@ const webglOk = () => {
 };
 import { keyLayout, pickRange } from '../lib/keys';
 import { isBlack } from '../lib/names';
-import { explainClips, FALL, fixClip, letter, markSeen, reelsOf, timelineOf, type Clip, type Reel, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
+import { explainClips, FALL, fixClip, letter, markSeen, readClip, reelsOf, timelineOf, type Clip, type Reel, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
 import { anyVoice, hush, onVoice, pauseVoice, prepareVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
 import { IconCheck, IconClose, IconExplain, IconHand, IconKeys, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff, IconSpeed } from './Icons';
@@ -696,7 +696,7 @@ export type ReelResult = { perfect: boolean; poor: boolean; fix?: { ticks: numbe
  * loops until he scrolls on, so he copies it on his piano as many times as he likes. The voice
  * says it once; the loops are the music alone. Tap to pause.
  */
-export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain, pace = 1, onResult, sections, onSection, onSpeed, onNext }: PlayerProps) {
+export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, onResult, sections, onSection, onSpeed }: PlayerProps) {
   // The pace is taken when the video comes on screen, so it never changes under him.
   // A speed chosen from the paused video takes effect at once (speedN), from the start of the video.
   const [speedN, setSpeedN] = useState(0);
@@ -953,21 +953,19 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
   // While a video plays nothing sits over it: the menu, the piano chip and the actions show only
   // when he pauses (the user's choice 2026-11).
   const paused = active && !clock.playing && !holding && !waitingFor;
-  // One course that keeps moving (the user's choice 2026-11: "if I don't play it waits a little and
-  // rolls on to the next"): once the video has played through, its Train with me done, a stretch
-  // with no key from him (six seconds, three without a piano) scrolls on to the next. Paused, or
-  // stopped for his note, it waits.
-  const idleFrom = useRef(performance.now());
-  useEffect(() => (active ? onNote(e => { if (e.type === 'on') idleFrom.current = performance.now(); }) : undefined), [active]);
-  useEffect(() => { idleFrom.current = performance.now(); }, [loops, active]);
+  // The microphone hears better knowing what to listen for (the bench: 80% of notes right blind,
+  // 92% told): while the video is on screen, the notes due about now and the keys it uses.
   useEffect(() => {
-    if (!active || loops < 1 || !onNext) return;
+    if (!active) return;
+    const ms = tl.notes.map(n => n.midi);
+    if (ms.length) setMicRange(Math.min(...ms), Math.max(...ms));
     const id = window.setInterval(() => {
-      if (!clock.playing || holding || waitingFor) { idleFrom.current = performance.now(); return; }
-      if (performance.now() - idleFrom.current > (inputOn ? 6000 : 3000)) { window.clearInterval(id); onNext(); }
-    }, 400);
-    return () => window.clearInterval(id);
-  }, [active, loops, onNext, clock.playing, holding, waitingFor, inputOn]);
+      const t = clock.now();
+      setExpected([...new Set(tl.notes.filter(n => n.t > t - 0.3 && n.t < t + 0.6).map(n => n.midi))], false);
+    }, 100);
+    return () => { window.clearInterval(id); setExpected([]); setMicRange(21, 108); };
+  }, [active, tl]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // The Explain chip comes five seconds into the video: a timer of its own, so it shows even when
   // nothing else on screen changes at that moment.
   const [explainReady, setExplainReady] = useState(false);
@@ -1103,7 +1101,6 @@ export function ReelPlayer({ song, reel, active, onPractice, onPiano, onExplain,
       <AnimatePresence>
         {paused && (
           <motion.aside key="side" className="reel-side" initial={{ x: 70, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 70, opacity: 0, transition: { duration: 0.14, ease: LEAVE } }} transition={{ duration: 0.3, ease: ARRIVE }}>
-            <button className="reel-act go" onClick={onPractice} aria-label={L(`Practise ${reel.phase.section}`, `Praticar ${reel.phase.section}`)}><span><IconKeys size={26} /></span>{L('Practise', 'Praticar')}</button>
             <button className="reel-act" onClick={replay} aria-label={L('From the start, with the voice', 'Do início, com a voz')}><span><IconRestart size={24} /></span>{L('Again', 'Outra vez')}</button>
             {anyVoice() && (
               <button className="reel-act" onClick={e => { e.stopPropagation(); unlockVoice(); setVoiceOn(!voice.on); }} aria-pressed={voice.on} aria-label={voice.on ? L('Turn the voice off', 'Desligar a voz') : L('Turn the voice on', 'Ligar a voz')}>
@@ -1215,6 +1212,12 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
           if (out[j]) out = [...out.slice(0, i + 1), ...out.slice(j)];
         }
       }
+      // Not clean on a both-hands video (the only hand's in a one-hand piece): the same bars on the
+      // staff come next, practice mixed in where it is needed.
+      if (!r.perfect && (cur.kind === 'both' || (song.hands.length < 2 && cur.kind === 'R'))) {
+        const rd = readClip(cur);
+        if (!out.some(x => x.id === rd.id)) out = [...out.slice(0, i + 1), rd, ...out.slice(i + 1)];
+      }
       // The same place missed again and again: a video for just that spot comes next.
       if (r.fix && cur.kind !== 'fix' && cur.kind !== 'explain') {
         const fix = fixClip(song, cur, r.fix.ticks, r.fix.ms);
@@ -1252,7 +1255,7 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
           <section key={r.id} data-i={i} className="reel-snap">
             {r.kind === 'read' ? (
               i === active && practice
-                ? <ReadSlide key={`${r.id}-${song.entry.id}`} onSkip={i < items.length - 1 ? () => goTo(i + 1) : undefined}>{practice(r, () => { markSeen(song.entry.id, r.id); if (r.k === r.of) markSeen(song.entry.id, r.phase.id); if (i < items.length - 1) goTo(i + 1); })}</ReadSlide>
+                ? <ReadSlide key={`${r.id}-${song.entry.id}`} render={done => practice(r, () => { markSeen(song.entry.id, r.id); done(); })} />
                 : <ReadStill clip={r} />
             ) : Math.abs(i - active) <= 1 && (
               <ReelPlayer song={song} reel={r} index={i} count={items.length} active={i === active} onPiano={onPiano} pace={pace} onResult={x => result(i, x)} sections={items.length > 1 ? sections : undefined} onSection={toSection} onSpeed={onSpeed}
@@ -1267,19 +1270,18 @@ export function ReelFeed({ embedded, song, reels, start, onClose, onPractice, on
 
 /**
  * A staff item of the course in the feed: the lesson page for the bars the video just taught.
- * If he does not play at all (no key for twenty seconds, eight without a piano connected) it rolls
- * on to the next video, as the videos do; once he has started it waits for him.
+ * Passed, it says so and waits: he moves on by scrolling (the user's choice 2026-11).
  */
-function ReadSlide({ children, onSkip }: { children: React.ReactNode; onSkip?: () => void }) {
-  useEffect(() => {
-    if (!onSkip) return;
-    let started = false;
-    const on = Object.values(linkState()).some(x => x.status === 'on');
-    const off = onNote(e => { if (e.type === 'on') started = true; });
-    const id = window.setTimeout(() => { if (!started) onSkip(); }, on ? 20000 : 8000);
-    return () => { off(); window.clearTimeout(id); };
-  }, [onSkip]);
-  return <div className="read-slide">{children}</div>;
+function ReadSlide({ render }: { render: (done: () => void) => React.ReactNode }) {
+  const [done, setDone] = useState(false);
+  return (
+    <div className="read-slide">
+      {render(() => setDone(true))}
+      <AnimatePresence>
+        {done && <motion.p className="read-next" role="status" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.3, ease: ARRIVE }}>{L('Nice. Swipe up for the next.', 'Boa. Desliza para cima para o seguinte.')}</motion.p>}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 /** The staff item while it is not on screen: what it is, so the scroll shows the next thing. */

@@ -55,6 +55,8 @@ const SPREAD = [0, 0, -0.06, 0, 0.05, 0.12];
 // 2.35 cm a key): the thumb sits well apart, the others closer, so a free finger rests where a
 // real hand's would, not one key from its neighbour.
 const REST_KEYS = [0, -2.4, -1, 0, 1, 2];
+/** The hand points at a key the voice names (off: it flew there and back, the user found it unnatural). */
+const POINT = false;
 const v = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const clamp = (x: number, a: number, b: number) => Math.max(a, Math.min(b, x));
 const smooth = (x: number) => { const t = clamp(x, 0, 1); return t * t * (3 - 2 * t); };
@@ -361,7 +363,9 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // It points at a key the voice names only while it has nothing to play: a note due within
           // 0.7 s wins, so the hand is there when it sounds (the check found it still pointing).
           const due = [1, 2, 3, 4, 5].some(f => want[f].real && (want[f].press > 0 || want[f].soon < 0.7));
-          const pk = !due && namedKey !== undefined && (handOf.get(namedKey) ?? (namedKey < 60 ? 'L' : 'R')) === h ? G.X(namedKey) : null;
+          // Pointing is off (the user found the hands' moves unnatural, 2026-11: the hand flew to
+          // point at a named key and back): the key is outlined and numbered on the keyboard instead.
+          const pk = POINT && !due && namedKey !== undefined && (handOf.get(namedKey) ?? (namedKey < 60 ? 'L' : 'R')) === h ? G.X(namedKey) : null;
           if (!rig.seen) {
             for (const fg of rig.fingers) { fg.x = want[fg.f].x!; fg.y = want[fg.f].y; }
             rig.wx = want[3].x!; rig.px = want[2].x!; rig.py = want[2].y; rig.seen = true;
