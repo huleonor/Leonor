@@ -140,7 +140,7 @@ function MicCalibration() {
         if (cs >= 3) { setNote(L('Calibrated. It heard your three Cs and nothing in the quiet.', 'Calibrado. Ouviu os teus três Dós e nada no silêncio.')); setStep('done'); return; }
         if (++tries >= 3) { setNote(L('It still misses soft notes. Bring the phone closer to the piano, then try again.', 'Ainda falha notas suaves. Aproxima o telemóvel do piano e tenta outra vez.')); setStep('done'); return; }
         const t = micTuning();
-        setMicTuning({ fluxFloor: Math.max(2, t.fluxFloor - 2), fluxRatio: Math.max(1.2, Math.round((t.fluxRatio - 0.1) * 100) / 100) });
+        setMicTuning({ fluxFloor: Math.max(6, t.fluxFloor - 1) });
         cs = 0; setHeardC(0);
       }
     };

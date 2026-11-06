@@ -6,7 +6,7 @@ import { meterOf, pctOf } from '../lib/mastery';
 import { clipsOf, onSeen, reelsOf, seenReels, type Reel } from '../lib/reels';
 import { askStrategy } from '../lib/strategy';
 import type { Song, SongEntry } from '../lib/types';
-import { IconCheck, IconImport, IconKeys, IconKeysFill, IconPlay, IconSpeaker, IconStop } from './Icons';
+import { IconCheck, IconImport, IconKeysFill, IconPlay, IconSpeaker, IconStop } from './Icons';
 import { SPRING } from './Motion';
 import { listenBars, listening, onListening, stopListening } from '../lib/listen';
 import { type Section } from './SongScreen';
@@ -114,16 +114,17 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
     return { r, i, watched: seen.includes(r.id), section, stars, practised: !!section?.learnt, of: clips.length, seenN: clips.filter(c => seen.includes(c.id)).length };
   });
   // The next thing to do: the first phase not watched, or watched but not practised.
-  const next = rows.find(x => !x.watched || (x.section && !x.practised));
+  // The next thing to do: the first section not watched through (its practice is in the feed).
+  const next = rows.find(x => !x.watched);
   const pct = pctOf(meterOf(song).value);
   const bars = reels.length ? reels[reels.length - 1].to : 0;
   // One short line of where he is in a section: a professional list says it in a few words.
   const status = (x: (typeof rows)[number]) => {
-    if (x.watched && (x.practised || !x.section)) return L('Learnt', 'Aprendida');
-    if (next === x) return !x.watched ? L(`Next, ${x.of} steps`, `A seguir, ${x.of} passos`) : L('Next, practise it', 'A seguir, praticar');
-    if (x.watched) return L('Watched, practise it', 'Vista, falta praticar');
-    if (x.seenN) return L(`${x.seenN} of ${x.of} steps`, `${x.seenN} de ${x.of} passos`);
-    return L(`${x.of} steps`, `${x.of} passos`);
+    if (x.watched) return L('Learnt', 'Aprendida');
+    if (next === x) return L(`Next, ${x.of} videos`, `A seguir, ${x.of} vídeos`);
+    if (x.watched) return L('Watched', 'Vista');
+    if (x.seenN) return L(`${x.seenN} of ${x.of} videos`, `${x.seenN} de ${x.of} vídeos`);
+    return L(`${x.of} videos`, `${x.of} vídeos`);
   };
   const totalBars = Math.max(1, bars);
   return (
@@ -146,7 +147,7 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
         </div>
         <ol className="song-bar" aria-hidden="true">
           {rows.map(x => {
-            const learnt = x.watched && (x.practised || !x.section);
+            const learnt = x.watched;
             const fill = learnt ? 1 : x.of ? x.seenN / x.of : 0;
             return <li key={x.r.id} className={`${learnt ? 'learnt' : ''} ${next === x ? 'next' : ''}`} style={{ flexGrow: (x.r.to - x.r.from + 1) / totalBars }}><i style={{ width: `${Math.round(fill * 100)}%` }} /></li>;
           })}
@@ -154,9 +155,6 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
       </section>
 
       {resume}
-      {resume && next?.watched && next.section && (
-        <button className="btn" onClick={() => onPractice(song.entry.id, next.r)}><IconKeysFill size={18} />{L(`Practise ${next.r.section}`, `Praticar ${next.r.section}`)}</button>
-      )}
       {!resume && (
         next ? (
           <button className="btn go big" onClick={() => (!next.watched ? onWatch(song.entry.id, next.i) : onPractice(song.entry.id, next.r))}>
@@ -173,7 +171,7 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
         nodes={[
           ...rows.map(x => ({
             key: x.r.id, n: String(x.r.n), title: x.r.section, about: x.r.words.title === x.r.section ? '' : x.r.words.title, line: status(x),
-            state: next === x ? 'next' as const : x.watched && (x.practised || !x.section) ? 'done' as const : 'ahead' as const,
+            state: next === x ? 'next' as const : x.watched ? 'done' as const : 'ahead' as const,
             onWatch: () => onWatch(song.entry.id, x.i), onPractice: x.section ? () => onPractice(song.entry.id, x.r) : undefined, reel: x.r,
           })),
           { key: 'whole', n: String(bars), title: L('Full song', 'Música toda'), about: '', line: L(`All ${bars} bars, with the beat`, `Os ${bars} compassos, com o ritmo`), state: 'finale' as const, onPractice: () => onWholeSong(info) },
@@ -219,7 +217,6 @@ function SectionList({ song, nodes, onHear }: { song: Song; nodes: PathNode[]; o
               <span className="sec-acts">
                 <button className="sec-act" onClick={() => (onHear ? onHear(r) : on ? stopListening() : listenBars(song, r.from, r.to))} aria-pressed={onHear ? undefined : on}
                   aria-label={L(`Hear ${x.title}`, `Ouvir ${x.title}`)}>{on ? <IconStop size={18} /> : <IconSpeaker size={20} />}</button>
-                {x.onPractice && x.onWatch && <button className="sec-act" onClick={() => { stopListening(); x.onPractice!(); }} aria-label={L(`Practise ${x.title}`, `Praticar ${x.title}`)}><IconKeys size={20} /></button>}
               </span>
             )}
           </li>

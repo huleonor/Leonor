@@ -246,11 +246,23 @@ let micStream: MediaStream | null = null;
  * strong a strike must be over the room before it counts, kept on the device and used at once.
  */
 const TUNE_KEY = 'leonor:mic-tuning';
-let micTune: Partial<ListenerTuning> = (() => { try { return JSON.parse(localStorage.getItem(TUNE_KEY) ?? '{}'); } catch { return {}; } })();
+// Never more sensitive than the bench allows: at an onset floor under 6 the detector heard notes
+// that were not played (66 to 110 false notes where the usual setting hears 1 or 2). A setting kept
+// from an earlier calibration that went further is dropped.
+const SAFE_FLOOR = 6;
+let micTune: Partial<ListenerTuning> = (() => {
+  try {
+    const t = JSON.parse(localStorage.getItem(TUNE_KEY) ?? '{}') as Partial<ListenerTuning>;
+    if ((t.fluxFloor ?? 99) < SAFE_FLOOR || (t.fluxRatio ?? 99) < 1.5) { localStorage.removeItem(TUNE_KEY); return {}; }
+    return t;
+  } catch { return {}; }
+})();
 let liveListener: NoteListener | null = null;
 export function micTuning(): ListenerTuning { return { ...DEFAULT_TUNING, ...micTune }; }
 export function setMicTuning(t: Partial<ListenerTuning> | null) {
   micTune = t ? { ...micTune, ...t } : {};
+  if (micTune.fluxFloor !== undefined) micTune.fluxFloor = Math.max(SAFE_FLOOR, micTune.fluxFloor);
+  delete micTune.fluxRatio;
   try { if (t) localStorage.setItem(TUNE_KEY, JSON.stringify(micTune)); else localStorage.removeItem(TUNE_KEY); } catch { /* this visit only */ }
   if (liveListener) liveListener.tuning = micTuning();
 }
@@ -260,8 +272,10 @@ let micTimer = 0;
 const appPlayed = new Map<number, number>();
 export function markAppPlayed(midi: number) { appPlayed.set(midi % 12, performance.now()); }
 let expected: number[] = [];
+/** Whether a note the app just played may count as his when it is expected (the lessons: yes; the videos, whose guide piano plays those very notes: no). */
+let echoOk = true;
 /** Notes the song wants next: the detector checks these on weaker evidence. */
-export function setExpected(midis: number[]) { expected = midis; }
+export function setExpected(midis: number[], allowEcho = true) { expected = midis; echoOk = allowEcho; }
 let micRange: [number, number] = [33, 100];
 /** Limit what the mic listens for to the song's range (fewer false notes). */
 export function setMicRange(lo: number, hi: number) { micRange = [Math.max(21, lo - 5), Math.min(108, hi + 5)]; }
@@ -331,7 +345,7 @@ export async function connectMic() {
     if (!strike || !strike.notes.length) return;
     const notes = strike.notes.filter(m => {
       const echo = (appPlayed.get(m % 12) ?? 0) > strike.at - 500;
-      return !echo || expected.some(e => e % 12 === m % 12);
+      return !echo || (echoOk && expected.some(e => e % 12 === m % 12));
     });
     if (!notes.length) return;
     micMeter.notes = notes;

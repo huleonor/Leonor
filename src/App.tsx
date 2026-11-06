@@ -77,6 +77,13 @@ export default function App() {
   // The piano's sound loads as soon as the app opens: the first video he lands on (often not the
   // first of a phase) must not start before it (it played silent, the user's complaint 2026-11).
   useEffect(() => { loadPiano().catch(() => {}); }, []);
+  // The teaching hands ready before the first video (the user found them slow to come): their code
+  // and model are fetched once the page is idle, so the video only puts them on.
+  useEffect(() => {
+    const go = () => { import('./components/Hands3D').catch(() => {}); fetch(`${import.meta.env.BASE_URL}models/hand/hand.glb`).catch(() => {}); };
+    const w = window as unknown as { requestIdleCallback?: (f: () => void) => number };
+    if (w.requestIdleCallback) w.requestIdleCallback(go); else window.setTimeout(go, 1500);
+  }, []);
   useEffect(() => { watchForMidi(); }, []);
   useEffect(() => { saveSettings(settings); }, [settings]);
   // Practice reminders: rewritten when the setting changes and after practice (today's is skipped once the goal is met).
