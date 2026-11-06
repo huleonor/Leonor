@@ -897,7 +897,10 @@ export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
   // screen while the music moves into his hands. A step takes two rounds, three when it is hard; a
   // pattern, a jump or a fix (already four times over) and the whole phase take one.
   // A move between chords is repeated in rounds too: repeating the movement is how it is learnt.
-  const rounds = clip.kind === 'run' || clip.kind === 'pattern' || clip.kind === 'jump' || clip.kind === 'fix' ? 1 : clip.kind === 'tour' || clip.kind === 'move' ? 2 : (clip.difficulty ?? 0) >= 0.6 ? 3 : 2;
+  // The rounds add up to about seventy seconds of music at most, so no video runs to three minutes
+  // (a long merged step takes one); he can loop it as often as he likes.
+  const planned = clip.kind === 'run' || clip.kind === 'pattern' || clip.kind === 'jump' || clip.kind === 'fix' ? 1 : clip.kind === 'tour' || clip.kind === 'move' ? 2 : (clip.difficulty ?? 0) >= 0.6 ? 3 : 2;
+  const rounds = Math.max(1, Math.min(planned, Math.floor(70 / Math.max(1, length))));
   const GUIDE = [0.75, 0.6, 0.5];
   const beat = Math.max(0.45, Math.min(1, song.ticksToSeconds(song.ppq) / sg.speed));
   // Count 1, 2, 3 (the user's choice), then the notes start falling in silence (no more clicks
