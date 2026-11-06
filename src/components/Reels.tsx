@@ -149,7 +149,9 @@ const inOut = (x: number) => (x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2);
 export type Press = { midi: number; ok: boolean; at: number };
 
 /** Where the flat keyboard is this frame, for the 3D gloves drawn over it (Gloves3D.tsx). */
-export type KeysGeom = { X: (m: number) => { x: number; w: number } | null; kbTop: number; kbH: number; kbBot: number; unitW: number; W: number; H: number };
+export type KeysGeom = { X: (m: number) => { x: number; w: number } | null; kbTop: number; kbH: number; kbBot: number; unitW: number; W: number; H: number;
+  /** On a keyboard cut in two, which half a key is in (0 the left hand's, 1 the right's). */
+  side?: (m: number) => 0 | 1 };
 
 function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape, jump, hands, flatHands = true, geom }: { tl: ReelTimeline; range: [number, number]; now: () => number; held: React.RefObject<Map<number, boolean>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number; presses?: React.RefObject<Press[]>; shape?: boolean; jump?: [number, number]; hands?: boolean; flatHands?: boolean; geom?: React.RefObject<KeysGeom | null> }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -167,6 +169,9 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
     let lay = keyLayout(wLo, wHi);
     let frame: [number, number] = [lay[lo]?.x ?? 0, (lay[hi]?.x ?? 1) + (lay[hi]?.w ?? 0)];
     let split = false;
+    // The halves of a keyboard cut in two, in the layout's own units: where the left one ends, where
+    // the right one starts, and a white key's width.
+    let cut = { aEnd: 0, bStart: 0, unit: 0, gap: 0, follow: false };
     const whitesIn = (x: [number, number]) => { let k = 0; for (let m = x[0]; m <= x[1]; m++) if (!isBlack(m)) k++; return k; };
     const needFrac = minWhites ? Math.min(1, minWhites / whitesIn([wLo, wHi])) : 0;
     if (frame[1] - frame[0] < needFrac) {
@@ -202,6 +207,9 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
         for (const [m, g] of Object.entries(la)) both[Number(m)] = { ...g, x: g.x * wa / total, w: g.w * wa / total };
         for (const [m, g] of Object.entries(lb)) both[Number(m)] = { ...g, x: (wa + gap + g.x * wb) / total, w: g.w * wb / total };
         lay = both; wLo = A[0]; wHi = B[1]; frame = [0, 1]; split = true;
+        // A long stretch (a section heard through, the whole section): each half has more keys than
+        // it can show big, so each half gets its own camera on its own hand (below).
+        cut = { aEnd: wa / total, bStart: (wa + gap) / total, unit: 1 / total, gap: gap / total, follow: wa > 11 || wb > 11 };
       }
     }
     // Which hand plays each key in this video (for the colour of a key the voice names).
@@ -248,7 +256,38 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
         f0 = a0 + (b0 - a0) * e; f1 = a1 + (b1 - a1) * e;
       }
       const v0 = f0 * z, v1 = 1 + (f1 - 1) * z;
-      const X = (m: number) => lay[m] ? { x: ((lay[m].x - v0) / (v1 - v0)) * W, w: (lay[m].w / (v1 - v0)) * W } : null;
+      let X = (m: number) => lay[m] ? { x: ((lay[m].x - v0) / (v1 - v0)) * W, w: (lay[m].w / (v1 - v0)) * W } : null;
+      const side = (m: number): 0 | 1 => (lay[m] && lay[m].x < cut.aEnd + 1e-6 ? 0 : 1);
+      if (split && cut.follow) {
+        // Each half follows its own hand, block by block like the single camera: its notes framed,
+        // at least nine white keys, gliding to the next block's frame; the screen is shared out by
+        // how many keys each shows, and a key outside its half's window is not drawn.
+        const halfFrame = (bi: number, s0: 0 | 1): [number, number] => {
+          const lo0 = s0 ? cut.bStart : 0, hi0 = s0 ? 1 : cut.aEnd;
+          let mn = Infinity, mx = -Infinity;
+          for (const n of tl.notes) if (n.t >= bi * BLOCK - 0.3 && n.t <= (bi + 1) * BLOCK + 0.6 && lay[n.midi] && side(n.midi) === s0) { mn = Math.min(mn, lay[n.midi].x); mx = Math.max(mx, lay[n.midi].x + lay[n.midi].w); }
+          const minW = Math.min(hi0 - lo0, cut.unit * 9);
+          if (mn === Infinity) { mn = lo0; mx = lo0 + minW; }
+          let w0 = mn - cut.unit, w1 = mx + cut.unit;
+          if (w1 - w0 < minW) { const c = (w0 + w1) / 2; w0 = c - minW / 2; w1 = c + minW / 2; }
+          if (w0 < lo0) { w1 += lo0 - w0; w0 = lo0; }
+          if (w1 > hi0) { w0 -= w1 - hi0; w1 = hi0; }
+          return [Math.max(lo0, w0), Math.min(hi0, w1)];
+        };
+        const bi = Math.max(0, Math.floor(t / BLOCK));
+        const e = inOut(Math.max(0, Math.min(1, (t - (bi + 1) * BLOCK + GLIDE) / GLIDE)));
+        const glide = (s0: 0 | 1): [number, number] => { const [a0, a1] = halfFrame(bi, s0), [b0, b1] = halfFrame(bi + 1, s0); return [a0 + (b0 - a0) * e, a1 + (b1 - a1) * e]; };
+        const [la0, la1] = glide(0), [lb0, lb1] = glide(1);
+        const total = (la1 - la0) + (lb1 - lb0) + cut.gap;
+        const sA = (W * (la1 - la0)) / total, sB = sA + (W * cut.gap) / total, k = W / total;
+        X = (m: number) => {
+          const g = lay[m];
+          if (!g) return null;
+          const s0 = side(m), w0 = s0 ? lb0 : la0, w1 = s0 ? lb1 : la1;
+          if (g.x + g.w < w0 - 1e-6 || g.x > w1 + 1e-6) return null;
+          return { x: (s0 ? sB : 0) + (g.x - w0) * k, w: g.w * k };
+        };
+      }
       const unitW = (X(60)?.w ?? W / 20);
       // The keyboard's height is set from the video's own frame (not the moving camera), so it never
       // pumps as the camera moves; with the gloves on, a strip under the keys holds their palms.
@@ -257,7 +296,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
       const kbH = Math.min((H - palmH) * 0.36, Math.max(frameUnit * 5.2, (H - palmH) * 0.24));
       const kbBot = H - palmH;
       const kbTop = kbBot - kbH;
-      if (geom) geom.current = { X, kbTop, kbH, kbBot, unitW, W, H };
+      if (geom) geom.current = { X, kbTop, kbH, kbBot, unitW, W, H, side: split ? side : undefined };
       const fall = kbTop - 4, pps = fall / LOOK;
       const colour = (h: Hand) => (h === 'L' ? pal.L : pal.R);
       // Octave guides at every C.
