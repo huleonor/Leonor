@@ -22,7 +22,7 @@ import { HelpKeys } from './HelpKeys';
 import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
 import { Countdown } from './Countdown';
 import { FallingNotes } from './FallingNotes';
-import { IconArrowLeft, IconArrowRight, IconCheck, IconHeadphones, IconMoon, IconPause, IconPlay, IconRestart, IconStar, IconTarget } from './Icons';
+import { IconArrowDown, IconArrowLeft, IconArrowRight, IconArrowUp, IconCheck, IconHeadphones, IconMoon, IconPause, IconPlay, IconRestart, IconStar, IconTarget } from './Icons';
 import { Keyboard } from './Keyboard';
 import { LessonStaff } from './LessonStaff';
 import type { Section } from './SongScreen';
@@ -88,7 +88,46 @@ export function Lesson(props: Props) {
   const [run, setRun] = useState(0);
   const tried = useRef(new Set<string>());
   const step = steps[index];
-  const go = (i: number) => { setIndex(Math.max(0, Math.min(steps.length - 1, i))); setRun(r => r + 1); };
+  const dir = useRef(1);
+  const go = (i: number) => { const j = Math.max(0, Math.min(steps.length - 1, i)); dir.current = j >= index ? 1 : -1; setIndex(j); setRun(r => r + 1); };
+  // The steps are scrolled like the videos (the user's choice 2026-11): a swipe up (or the wheel,
+  // or Page Down) brings the next step up from below, a swipe down the one before. Only between a
+  // lesson's own steps: a single step (the staff step in the video feed) leaves the swipe to the feed.
+  const prev = index > 0 ? () => go(index - 1) : undefined;
+  const next = index < steps.length - 1 ? () => go(index + 1) : undefined;
+  const nav = useRef({ prev, next });
+  nav.current = { prev, next };
+  const touch = useRef<{ x: number; y: number; t: number } | null>(null);
+  const wheel = useRef({ sum: 0, last: 0 });
+  const free = (t: EventTarget | null) => !(t instanceof Element && t.closest('.sheet, .lesson-options, input, select, [data-noswipe]'));
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'PageDown') { nav.current.next?.(); e.preventDefault(); }
+      if (e.key === 'PageUp') { nav.current.prev?.(); e.preventDefault(); }
+    };
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  }, []);
+  const swipe = {
+    onTouchStart: (e: React.TouchEvent) => { const p = e.touches[0]; touch.current = e.touches.length === 1 && free(e.target) ? { x: p.clientX, y: p.clientY, t: Date.now() } : null; },
+    onTouchEnd: (e: React.TouchEvent) => {
+      const s = touch.current; touch.current = null;
+      if (!s) return;
+      const p = e.changedTouches[0], dx = p.clientX - s.x, dy = p.clientY - s.y;
+      if (Date.now() - s.t > 800 || Math.abs(dy) < 60 || Math.abs(dy) < 1.5 * Math.abs(dx)) return;
+      (dy < 0 ? nav.current.next : nav.current.prev)?.();
+    },
+    onWheel: (e: React.WheelEvent) => {
+      if (!free(e.target) || (!nav.current.next && !nav.current.prev)) return;
+      const w = wheel.current, now = Date.now();
+      if (now - w.last < 700) return;
+      w.sum = (Math.sign(w.sum) === Math.sign(e.deltaY) ? w.sum : 0) + e.deltaY;
+      if (Math.abs(w.sum) < 80) return;
+      const f = w.sum > 0 ? nav.current.next : nav.current.prev;
+      w.sum = 0;
+      if (f) { w.last = now; f(); }
+    },
+  };
   // What a perfect free-play run proves: the other free-play steps on the same hands (both hands
   // prove each hand alone). Those pass with it, and the lesson goes on to the next thing it has not.
   const proves = (k: number) => steps.filter((st, j) => j !== k && st.wait && (steps[k].hands === 'both' || st.hands === steps[k].hands));
@@ -100,13 +139,18 @@ export function Lesson(props: Props) {
   const target = adaptive && step.wait ? leap(index) : null;
   const firstTry = !tried.current.has(step.id);
   return (
+    <div className={`lesson-scroll ${steps.length > 1 ? 'steps' : ''}`} {...swipe}>
+    <AnimatePresence initial={false} custom={dir.current} mode="popLayout">
+    <motion.div key={step.id} className="lesson-slide" custom={dir.current}
+      variants={{ in: (d: number) => ({ y: `${d * 100}%` }), at: { y: 0 }, out: (d: number) => ({ y: `${-d * 100}%` }) }}
+      initial="in" animate="at" exit="out" transition={{ type: 'tween', ease: [0.16, 1, 0.3, 1], duration: 0.45 }}>
     <LessonRun
       key={`${step.id}-${run}`}
       {...props}
       step={step}
       index={index}
-      onPrev={index > 0 ? () => go(index - 1) : undefined}
-      onNext={index < steps.length - 1 ? () => go(index + 1) : undefined}
+      onPrev={prev}
+      onNext={next}
       onAgain={() => setRun(r => r + 1)}
       onPace={adaptive && step.wait ? perfect => { if (firstTry) recordPace(perfect); tried.current.add(step.id); } : undefined}
       onPerfect={target ? async acc => {
@@ -117,6 +161,9 @@ export function Lesson(props: Props) {
       onStruggle={fast >= 0 && index === fast ? () => go(0) : undefined}
       onGo={go}
     />
+    </motion.div>
+    </AnimatePresence>
+    </div>
   );
 }
 
@@ -334,12 +381,12 @@ function LessonRun({ info, section, step, index, settings, update, onExit, onNex
           <p className="sr-only">{stepLabel(step)}. {say.wrong ? `${say.wrong}. ${say.text}` : say.text}</p>
         </div>
         <div className="lesson-nav">
-          <button className="lesson-arrow" onClick={onPrev} disabled={!onPrev} aria-label={L('Previous step', 'Passo anterior')}><IconArrowLeft size={20} /></button>
+          {(onPrev || onNext) && <button className="lesson-arrow" onClick={onPrev} disabled={!onPrev} aria-label={L('Previous step', 'Passo anterior')}><IconArrowUp size={20} /></button>}
           <div className="lesson-count" aria-label={`${section.title}, ${L('step', 'passo')} ${index + 1} ${L('of', 'de')} ${section.steps.length}: ${stepLabel(step)}`}>
             <motion.i animate={{ width: `${Math.max(0.04, progress) * 100}%` }} transition={SOFT} />
             <span><Bump value={index + (flash?.good ? 1 : 0)} />/{section.steps.length}</span>
           </div>
-          <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label={L('Next step', 'Passo seguinte')}><IconArrowRight size={20} /></button>
+          {(onPrev || onNext) && <button className="lesson-arrow" onClick={onNext} disabled={!onNext} aria-label={L('Next step', 'Passo seguinte')}><IconArrowDown size={20} /></button>}
           {session && (step.reps ?? 1) > 1 && (
             <span className="rep-dots" aria-label={L(`${Math.min(session.good[index], step.reps ?? 1)} of ${step.reps} good runs`, `${Math.min(session.good[index], step.reps ?? 1)} de ${step.reps} boas tentativas`)}>
               {Array.from({ length: step.reps ?? 1 }, (_, k) => {

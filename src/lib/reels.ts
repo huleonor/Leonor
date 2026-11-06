@@ -761,7 +761,17 @@ export function clipsOf(song: Song): Clip[] {
         mine[0] = { ...make('intro', intro.from, b1, 1, tr('Listen', 'Ouve'), intro.head, say, 0, true), id: intro.id };
       }
     }
-    mine.forEach((c, i) => out.push({ ...c, say: NT(c.say), head: NT(c.head), k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) }));
+    // Short staff steps in the middle of the videos (the user's choice 2026-11: "short lessons on
+    // the staff where it makes sense, to go with the videos"): after a both-hands video of new
+    // shapes (the only hand's in a one-hand piece), its bars on the staff, when they are a short
+    // step (four bars at most), at most three a section. Not counted in the series.
+    let reads = 0;
+    mine.forEach((c, i) => {
+      const v: Clip = { ...c, say: NT(c.say), head: NT(c.head), k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) };
+      out.push(v);
+      const readable = twoHands ? c.kind === 'both' && !c.knownStep : c.kind === 'R';
+      if (readable && c.to - c.from < 4 && reads < 3) { out.push(readClip(v)); reads++; }
+    });
   }
   // The song first (the user's choice 2026-11: "start with an overview of the song and how it is
   // divided"): its theme heard at its real speed while the voice says what the song is, its sections
