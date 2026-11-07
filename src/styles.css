@@ -232,6 +232,26 @@ p { margin: 0; }
 }
 
 /* ---------- Song: the song being learnt, its phases as index cards ---------- */
+/* The song's opening across a wide staff on the Song page, ruled in and set down note by note. */
+.home-staff { display: block; width: calc(100% + 20px); margin: 6px -10px 0; height: auto; overflow: visible; }
+.home-staff .rule { stroke: var(--ink); stroke-width: 1.2; }
+.home-staff .now { stroke: var(--pink); stroke-width: 3; }
+.home-staff .head { fill: var(--pink); }
+.home-staff .plate { fill: var(--teal); }
+.home-staff .stem { stroke: var(--ink); stroke-width: 1.6; }
+/* The way in: a notebook page, a staff ruled across it, the name written in, then it lifts away. */
+.intro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--paper); cursor: pointer; }
+.intro-page { display: grid; justify-items: center; gap: 10px; width: min(560px, 100% - 40px); }
+.intro-staff { width: 100%; height: auto; overflow: visible; }
+.intro-staff line { stroke: var(--ink); stroke-width: 1.4; }
+.intro-staff .head { fill: var(--pink); }
+.intro-staff .head.teal { fill: var(--teal); }
+.intro-staff .plate { fill: var(--teal); opacity: .55; }
+.intro-staff .stem { stroke: var(--ink); stroke-width: 1.8; }
+.intro-name { position: relative; margin: 0; font: 700 clamp(56px, 16vw, 96px)/1 var(--font-display); color: var(--ink); }
+.intro-mark { position: absolute; left: -4%; right: -4%; bottom: 8%; height: 28%; z-index: -1; background: var(--marker); transform-origin: left center; }
+.intro-line { margin: 0; font: 700 16px var(--font-mono); color: var(--ink-2); }
+
 .journey { padding: calc(24px + var(--safe-t)) 0 40px; display: grid; gap: 20px; }
 /* The Song page (the user: "more professional"): a quiet head, his progress as a bar of sections,
    the one current card taped, and the sections as one card of rows. */
