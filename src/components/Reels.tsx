@@ -162,8 +162,12 @@ export type KeysGeom = { X: (m: number) => { x: number; w: number } | null; kbTo
   /** On a keyboard cut in two, which half a key is in (0 the left hand's, 1 the right's). */
   side?: (m: number) => 0 | 1 };
 
-function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape, jump, hands, flatHands = true, geom }: { tl: ReelTimeline; range: [number, number]; now: () => number; held: React.RefObject<Map<number, boolean>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number; presses?: React.RefObject<Press[]>; shape?: boolean; jump?: [number, number]; hands?: boolean; flatHands?: boolean; geom?: React.RefObject<KeysGeom | null> }) {
+function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape, jump, hands, flatHands = true, geom, fallOn = true }: { fallOn?: boolean; tl: ReelTimeline; range: [number, number]; now: () => number; held: React.RefObject<Map<number, boolean>>; flats: boolean; named: React.RefObject<Map<number, number>>; namedUntil: number; presses?: React.RefObject<Press[]>; shape?: boolean; jump?: [number, number]; hands?: boolean; flatHands?: boolean; geom?: React.RefObject<KeysGeom | null> }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  // Read on the staff instead (the user's choice 2026-11: the staff or the falling notes, not both):
+  // the keys and the hands stay, the falling notes, their guides and the now line go.
+  const fallRef = useRef(fallOn);
+  fallRef.current = fallOn;
   useEffect(() => {
     const cv = ref.current!;
     const ctx = cv.getContext('2d')!;
@@ -310,7 +314,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
       const colour = (h: Hand) => (h === 'L' ? pal.L : pal.R);
       // Octave guides at every C.
       ctx.fillStyle = pal.lane;
-      for (let m = wLo; m <= wHi; m++) if (m % 12 === 0) { const k = X(m); if (k) ctx.fillRect(k.x, 0, 1, fall); }
+      if (fallRef.current) for (let m = wLo; m <= wHi; m++) if (m % 12 === 0) { const k = X(m); if (k) ctx.fillRect(k.x, 0, 1, fall); }
       // The notes.
       const sounding = new Map<number, ReelNote>();
       for (const n of tl.notes) {
@@ -322,6 +326,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
         if (!k) continue;
         const on = n.t <= t && n.t + n.dur > t;
         if (on) sounding.set(n.midi, n);
+        if (!fallRef.current) continue;
         const yBottom = kbTop - 4 - (n.t - t) * pps;
         const yTop = Math.max(0, yBottom - Math.max(14, n.dur * pps - 3));
         const yB = Math.min(kbTop - 4, yBottom);
@@ -362,7 +367,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
       }
       // The now line.
       ctx.fillStyle = pal.now;
-      ctx.fillRect(0, kbTop - 4, W, 3);
+      if (fallRef.current) ctx.fillRect(0, kbTop - 4, W, 3);
       // The keyboard counts the beat while the music plays: 1 2 3 4, the beat it is on marked.
       const last = [...tl.notes].reverse().find(n => n.t <= t && n.t > t - 1.2);
       if (last) {
@@ -1008,14 +1013,11 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
             <p className="reel-meta">{paused && L(`${reel.phase.section}, ${reel.k} of ${reel.of}`, `${reel.phase.section}, ${reel.k} de ${reel.of}`)}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">{paused ? '. ' : ''}{L('Your keys: ', 'As tuas teclas: ')}<b className="ok">{score.ok} {L('right', 'certas')}</b>, <b className="bad">{score.bad} {L('wrong', 'erradas')}</b></span>}</p>
           )}
         </header>
-        {/* The staff over the falling notes: what he reads is what lands on the keys below. */}
-        {staffOn && (
-          <div className={`reel-staff-slot ${staffOnly ? 'one' : ''}`}>
-            {active && <ReelStaff song={song} from={reel.from} to={reel.to} only={staffOnly} tl={tl} now={clock.now} playing={!paused} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />}
-          </div>
-        )}
-        <div className="reel-stage">
-          <Lanes tl={tl} range={range} now={clock.now} held={held} presses={presses} hands={handsOn} flatHands={!use3d} geom={geomRef} shape={reel.kind === 'pattern' || reel.kind === 'L' || reel.kind === 'R' || reel.kind === 'fix'} jump={jumpKeys} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
+        <div className={`reel-stage ${staffOn ? 'on-staff' : ''}`}>
+          {/* The staff in place of the falling notes (his choice): big like the lessons' page, on
+              the bars being played, over the keys and the hands. */}
+          {staffOn && active && <ReelStaff song={song} from={reel.from} to={reel.to} only={staffOnly} tl={tl} now={clock.now} playing={!paused} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} geom={geomRef} />}
+          <Lanes fallOn={!staffOn} tl={tl} range={range} now={clock.now} held={held} presses={presses} hands={handsOn} flatHands={!use3d} geom={geomRef} shape={reel.kind === 'pattern' || reel.kind === 'L' || reel.kind === 'R' || reel.kind === 'fix'} jump={jumpKeys} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
           {use3d && handsOn && <Suspense fallback={null}><Hands3D tl={tl} now={clock.now} geom={geomRef} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} /></Suspense>}
           {/* The caption floats over the falling notes, never under the keys (it pushed them up). */}
           <div className="reel-foot">
@@ -1133,7 +1135,7 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
                   aria-label={L(`Speed: ${name}. Tap to change`, `Velocidade: ${name}. Toca para mudar`)}><span><IconSpeed size={24} /></span>{name}</button>
               );
             })()}
-            <button className="reel-act" onClick={e => { e.stopPropagation(); showStaff(!staffOn); }} aria-pressed={staffOn} aria-label={staffOn ? L('Hide the staff', 'Esconder a pauta') : L('Show the staff over the notes', 'Mostrar a pauta por cima das notas')}><span><IconSheet size={24} /></span>{L('Staff', 'Pauta')}</button>
+            <button className="reel-act" onClick={e => { e.stopPropagation(); showStaff(!staffOn); }} aria-pressed={staffOn} aria-label={staffOn ? L('Back to the falling notes', 'Voltar às notas a cair') : L('Read it on the staff', 'Ler na pauta')}><span><IconSheet size={24} /></span>{staffOn ? L('Notes', 'Notas') : L('Staff', 'Pauta')}</button>
             <button className="reel-act" onClick={e => { e.stopPropagation(); toggleHands(); }} aria-pressed={handsOn} aria-label={handsOn ? L('Hide the hands on the keys', 'Esconder as mãos nas teclas') : L('Show the hands on the keys', 'Mostrar as mãos nas teclas')}><span><IconHand size={24} /></span>{L('Hands', 'Mãos')}</button>
           </motion.aside>
         )}

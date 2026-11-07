@@ -82,12 +82,9 @@ Where the words live: hand-written per phase in `src/lib/reelScripts.ts` (`talk`
 
 The look is DESIGN.md (Cartaz): paper, ink, the right hand blue, the left red. One keyboard for both hands; the step's kicker small and its notes huge at the top; the caption under the keyboard; air below. Motion follows HyperFrames' craft: everything drawn from the clock (scrub works), the camera pushes in on the video's keys in the first second, expo arrivals, short exits, titles and captions blurring in word by word, no bounce, no loops for decoration.
 
-### The staff over the falling notes (2026-11)
+### Reading on the staff (2026-11)
 
-The user's choice, from a falling-notes video he sent ("learn with the keys falling and the staff, and still the hands below"): every video shows its bars engraved as a strip of music above the falling notes (`ReelStaff.tsx`, the lessons' own engraving), sliding under a pink now line in step with the video's clock. A hand-alone video prints only that hand's staff. Two links tie reading to playing, and every new video keeps them:
-- the notes sounding now print in their hand's ink (pink right, teal left) on the staff, the same colour as the falling note and the key below;
-- while the voice names keys (and while the video waits for him), those notes light on the staff as they light on the keys.
-The Staff button beside the video and Settings, Videos, "Staff over the notes", turn it off.
+The user's choice, from a falling-notes video he sent, then refined ("the staff or the falling notes", not both; "focused on the part we are doing, like the practice"): a video shows either the falling notes or, in their place, the staff (`ReelStaff.tsx`), always with the keys and the hands below. The staff is the lessons' page: big (about half the room above the keys), the clef fixed at the left edge, the lines across the width, the bar being played in front of him under a pink now line on the video's clock; one hand's staff in a hand-alone video. Two links tie reading to playing, and every new video keeps them: the notes sounding now print in their hand's ink (pink right, teal left), the colour of the key lit below; while the voice names keys, or the video waits for him, those notes light on the staff too. The Staff/Notes button beside the video and Settings, Videos, "Read on the staff" switch; falling notes by default.
 
 ### From explainer-video craft (iart-ai/explainer-video-skills, MIT)
 

@@ -545,14 +545,17 @@ p { margin: 0; }
 .reel-frame {
   position: relative; height: calc(100dvh - 20px); aspect-ratio: 9 / 16; max-width: calc(100vw - 120px);
   overflow: hidden; background: var(--field); color: var(--field-ink); cursor: pointer; border: 2px solid var(--ink);
-  display: grid; grid-template-rows: auto auto auto minmax(0, 1fr);
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr);
 }
-/* The staff over the falling notes: a white strip like a page of music, the now line in pink. */
-.reel-staff-slot { position: relative; height: clamp(96px, 17vh, 176px); margin: 4px 0 0; background: var(--white); border-block: 2px solid var(--ink); }
-.reel-staff-slot.one { height: clamp(64px, 10vh, 110px); }
-.reel-staff { position: absolute; inset: 0; overflow: hidden; }
+/* Reading on the staff: in place of the falling notes, a white page above the keys, the staff big on it. */
+.reel-staff { position: absolute; left: 0; right: 0; top: 0; height: 60%; overflow: hidden; background: var(--white); border-bottom: 2px solid var(--ink); z-index: 1; }
 .reel-staff-line { position: absolute; left: 0; top: 0; will-change: transform; }
 .reel-staff-line svg { display: block; overflow: visible; }
+.reel-staff-line g.abcjs-staff { opacity: 0; }
+.reel-staff-line .abcjs-time-signature { visibility: hidden; }
+.reel-staff .clef-panel { background: var(--white); z-index: 3; }
+.reel-staff .staff-ext { z-index: 0; }
+.reel-staff-line { z-index: 1; }
 .reel-staff-now { position: absolute; width: 3px; margin-left: -1px; background: var(--pink); z-index: 2; }
 .reel-screen.embedded .reel-frame { height: calc(100% - 20px); }
 .reel-progress { display: flex; gap: 4px; padding: 12px 16px 0; }

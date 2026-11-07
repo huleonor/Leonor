@@ -112,7 +112,7 @@ export function SettingsSheet({ settings, update, links, connectInput, disconnec
             <input className="switch" type="checkbox" checked={settings.videoWait ?? true} onChange={e => update({ videoWait: e.target.checked })} />
           </label>
           <label className="toggle-row">
-            <span><b>{L('Staff over the notes', 'Pauta por cima das notas')}</b><small>{L('The music written above the falling notes, moving with them.', 'A música escrita por cima das notas a cair, a andar com elas.')}</small></span>
+            <span><b>{L('Read on the staff', 'Ler na pauta')}</b><small>{L('The videos show the staff instead of the falling notes, with the keys and the hands below.', 'Os vídeos mostram a pauta em vez das notas a cair, com as teclas e as mãos em baixo.')}</small></span>
             <input className="switch" type="checkbox" checked={staff} onChange={e => { showStaff(e.target.checked); setStaff(e.target.checked); }} />
           </label>
           <label className="toggle-row">

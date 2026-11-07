@@ -23,7 +23,7 @@ export function showHands(on: boolean) {
 }
 
 /** The staff over the falling notes in the videos, on or off (Settings and the Staff button share it). */
-export const staffShown = () => { try { return localStorage.getItem('leonor:staff') !== 'off'; } catch { return true; } };
+export const staffShown = () => { try { return localStorage.getItem('leonor:staff') === 'on'; } catch { return false; } };
 export function showStaff(on: boolean) {
   try { localStorage.setItem('leonor:staff', on ? 'on' : 'off'); } catch { /* this visit only */ }
   window.dispatchEvent(new Event('leonor:staff'));
