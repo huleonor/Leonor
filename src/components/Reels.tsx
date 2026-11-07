@@ -37,7 +37,7 @@ function palette(el: Element) {
   return {
     R: v('--right'), L: v('--left'), keyR: v('--right-key'), keyL: v('--left'), inkR: v('--right-ink'), inkL: v('--left-ink'),
     ok: v('--ok'), white: v('--key-white'), whiteEdge: v('--key-edge'), black: v('--key-black'),
-    ink: v('--key-ink'), paper: v('--paper'), muted: v('--muted'), bad: v('--mark'), next: v('--marker'), tR: v('--pink-text'), tL: v('--teal-text'), lane: v('--reel-lane'), now: v('--now-line'),
+    ink: v('--key-ink'), paper: v('--paper'), muted: v('--muted'), bad: v('--mark'), next: v('--marker'), tR: v('--pink-text'), tL: v('--teal-text'), lane: v('--reel-lane'), now: v('--now-line') || v('--pink'), front: v('--key-front'), blackTop: v('--key-black-top'),
   };
 }
 const FACE = "'Bricolage Grotesque', 'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -312,9 +312,19 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
       if (geom) geom.current = { X, kbTop, kbH, kbBot, unitW, W, H, side: split ? side : undefined };
       const fall = kbTop - 4, pps = fall / LOOK;
       const colour = (h: Hand) => (h === 'L' ? pal.L : pal.R);
-      // Octave guides at every C.
-      ctx.fillStyle = pal.lane;
-      if (fallRef.current) for (let m = wLo; m <= wHi; m++) if (m % 12 === 0) { const k = X(m); if (k) ctx.fillRect(k.x, 0, 1, fall); }
+      // Depth (the user's "a more 3D vibe", 2026-11, from the falling-notes videos he likes): the
+      // notes come from far away, their lanes narrowing towards the top as on a stage seen from the
+      // piano, full size as they reach the keys. Only the falling notes: the keys and the hands stay
+      // flat, so the hands still land on their keys.
+      const DEPTH = 0.32, cx = W / 2;
+      const sc = (y: number) => 1 - DEPTH * (1 - Math.max(0, Math.min(1, y / Math.max(1, fall))));
+      const px = (x: number, y: number) => cx + (x - cx) * sc(y);
+      const quad = (x0: number, x1: number, y0: number, y1: number) => {
+        ctx.beginPath(); ctx.moveTo(px(x0, y0), y0); ctx.lineTo(px(x1, y0), y0); ctx.lineTo(px(x1, y1), y1); ctx.lineTo(px(x0, y1), y1); ctx.closePath();
+      };
+      // Octave guides at every C, converging into the distance.
+      ctx.strokeStyle = pal.lane; ctx.lineWidth = 1;
+      if (fallRef.current) for (let m = wLo; m <= wHi; m++) if (m % 12 === 0) { const k = X(m); if (k) { ctx.beginPath(); ctx.moveTo(px(k.x, 0), 0); ctx.lineTo(k.x, fall); ctx.stroke(); } }
       // The notes.
       const sounding = new Map<number, ReelNote>();
       for (const n of tl.notes) {
@@ -335,21 +345,22 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
         if (n.train) {
           // His turn: the note drawn open, for him to fill by playing it.
           ctx.strokeStyle = colour(n.hand); ctx.lineWidth = 3;
-          ctx.strokeRect(k.x + pad + 1.5, yTop + 1.5, bw - 3, yB - yTop - 3);
+          quad(k.x + pad + 1.5, k.x + pad + bw - 1.5, yTop + 1.5, yB - 1.5); ctx.stroke();
         } else {
           // Printed like a risograph: the other ink's plate a little off register under the note.
           ctx.globalAlpha = 0.45;
           ctx.fillStyle = n.hand === 'L' ? pal.R : pal.L;
-          ctx.fillRect(k.x + pad + 3, yTop + 2, bw, yB - yTop);
+          quad(k.x + pad + 3, k.x + pad + bw + 3, yTop + 2, yB + 2); ctx.fill();
           ctx.globalAlpha = 1;
           ctx.fillStyle = colour(n.hand);
-          ctx.fillRect(k.x + pad, yTop, bw, yB - yTop);
+          quad(k.x + pad, k.x + pad + bw, yTop, yB); ctx.fill();
         }
-        if (yB - yTop > 24 && bw > 12) {
+        const bwAt = bw * sc(yB);
+        if (yB - yTop > 24 && bwAt > 11) {
           ctx.fillStyle = n.train ? (n.hand === 'L' ? pal.tL : pal.tR) : pal.ink;
-          ctx.font = `900 ${Math.round(Math.max(12, Math.min(22, bw * 0.62)))}px ${FACE}`;
+          ctx.font = `900 ${Math.round(Math.max(11, Math.min(22, bwAt * 0.62)))}px ${FACE}`;
           ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-          ctx.fillText(N(letter(n.midi, flats)), k.x + k.w / 2, yB - 7);
+          ctx.fillText(N(letter(n.midi, flats)), px(k.x + k.w / 2, yB), yB - 7);
         }
       }
       // A jump: an arc over the keys from the key he leaves to the key he lands on, with its head.
@@ -391,10 +402,23 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
           if (!k || k.x + k.w < -2 || k.x > W + 2) continue;
           const h = black ? kbH * 0.62 : kbH;
           const s = sounding.get(m), order = naming.get(m), hand = s?.hand ?? handOf.get(m) ?? (m < 60 ? 'L' : 'R');
+          // The keys have depth (the user's "a more 3D vibe", 2026-11, from the falling-notes videos
+          // he likes): a white key shows its front edge under it, a black key its lighter top and a
+          // short front, and a key that sounds sinks (its front edge shorter). Flat tones, no gradients.
+          const down = !!s || mine.has(m);
+          const lip = Math.max(3, Math.min(10, kbH * 0.07)) * (down ? 0.35 : 1);
           // His own keys: green when right, red when wrong, whatever the video is doing.
           ctx.fillStyle = mine.has(m) ? (mine.get(m) ? pal.ok : pal.bad) : s ? colour(s.hand) : black ? pal.black : pal.white;
           ctx.fillRect(k.x + (black ? 0 : 0.5), kbTop, k.w - (black ? 0 : 1), h);
-          if (!black) { ctx.strokeStyle = pal.whiteEdge; ctx.lineWidth = 1; ctx.strokeRect(k.x + 0.5, kbTop, k.w - 1, h); }
+          if (!black) {
+            ctx.fillStyle = pal.front;
+            ctx.fillRect(k.x + 0.5, kbTop + h - lip, k.w - 1, lip);
+            ctx.strokeStyle = pal.whiteEdge; ctx.lineWidth = 1; ctx.strokeRect(k.x + 0.5, kbTop, k.w - 1, h);
+          } else if (!down) {
+            const bl = Math.max(3, h * 0.1);
+            ctx.fillStyle = pal.blackTop;
+            ctx.fillRect(k.x + k.w * 0.16, kbTop, k.w * 0.68, h - bl);
+          }
           if (!s && order !== undefined) { ctx.strokeStyle = colour(hand); ctx.lineWidth = Math.max(3, k.w * 0.12); ctx.strokeRect(k.x + 3, kbTop + 3, k.w - 6, h - 6); }
           if (s || order !== undefined) {
             ctx.fillStyle = mine.has(m) ? pal.paper : s ? pal.ink : hand === 'L' ? pal.tL : pal.tR;

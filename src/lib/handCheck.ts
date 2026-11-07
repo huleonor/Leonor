@@ -57,6 +57,8 @@ export interface HandReport {
   crowded: number;
   /** Frames with a finger below the keys' top while it is not pressing. */
   ghost: number;
+  /** Frames with two neighbouring fingers (index to little) more than two keys apart at the tips: a hand no one can make. */
+  splayed: number;
   /** Notes whose key was out of the finger's reach; misses (a third of a key or more) by finger, thumb first. */
   outOfReach: number; missBy: string;
 }
@@ -134,11 +136,13 @@ export function handReport(all: ProbeFrame[]): HandReport[] {
         if (d > 0) jerks.push(Math.abs(kx(p3) - 3 * kx(p2) + 3 * kx(p1) - kx(p0)) / d ** 3);
       }
     }
-    let crowded = 0, ghost = 0;
+    let crowded = 0, ghost = 0, splayed = 0;
     for (const F of fr) {
-      let c = false;
+      let c = false, sp = false;
       for (let i = 1; i < 4; i++) if (dir * (F.fingers[i + 1].x - F.fingers[i].x) < F.kw / 3) c = true;
+      for (let i = 1; i < 4; i++) if (Math.hypot(F.fingers[i + 1].x - F.fingers[i].x, F.fingers[i + 1].y - F.fingers[i].y) > F.kw * 2) sp = true;
       if (c) crowded++;
+      if (sp) splayed++;
       if (F.fingers.some(g => g.press < 0.05 && g.z < -F.fl * 0.01)) ghost++;
     }
     out.push({
@@ -146,7 +150,7 @@ export function handReport(all: ProbeFrame[]): HandReport[] {
       landP50: r2(q(land, 0.5)), landP90: r2(q(land, 0.9)), landHit: pct(land.filter(x => x < 1 / 3).length, land.length),
       early: pct(early, counted), leadP50: r2(q(lead, 0.5)), down: pct(down, counted),
       wristAtOnset: r2(q(atOn, 0.5)), tremble: r2(Math.sqrt(wob / Math.max(1, nw))), jerk: Math.round(q(jerks, 0.9)),
-      crowded: pct(crowded, fr.length), ghost: pct(ghost, fr.length),
+      crowded: pct(crowded, fr.length), ghost: pct(ghost, fr.length), splayed: pct(splayed, fr.length),
       outOfReach: far, missBy: missBy.slice(1).join(' '),
     });
   }
