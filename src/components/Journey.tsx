@@ -110,7 +110,7 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
   const rows = reels.map((r, i) => {
     const section = practiceFor(info, r);
     const stars = section?.steps.length ? Math.min(...section.steps.map(s => info.prog[s.id]?.stars ?? 0)) : 0;
-    const clips = clipsOf(song).filter(c => c.phase.id === r.id);
+    const clips = clipsOf(song).filter(c => c.phase.id === r.id && c.kind !== 'read');
     return { r, i, watched: seen.includes(r.id), section, stars, practised: !!section?.learnt, of: clips.length, seenN: clips.filter(c => seen.includes(c.id)).length };
   });
   // The next thing to do: the first phase not watched, or watched but not practised.

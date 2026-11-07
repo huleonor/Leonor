@@ -471,7 +471,7 @@ p { margin: 0; }
 /* The staff items of the course in the feed: the lesson page fills the slot, its bar clear of the
    back arrow; while not on screen, a card saying what it is. */
 .read-slide { width: 100%; height: 100%; }
-.read-slide .lesson.simply { height: 100%; }
+.read-slide .lesson.simply, .read-slide .lesson-scroll { height: 100%; }
 .read-slide .lesson-bar { padding-left: 74px; }
 .read-slide { position: relative; }
 .read-next { position: absolute; left: 50%; bottom: calc(30px + var(--safe-b)); translate: -50% 0; z-index: 9; margin: 0; padding: 10px 16px; background: var(--white); border: 2px solid var(--ink); border-left: 8px solid var(--ok); font: 700 16px var(--font-mono); color: var(--ink); white-space: nowrap; }
@@ -720,6 +720,10 @@ p { margin: 0; }
 .help-keys.wide { left: 0; right: 0; bottom: 0; translate: none; width: auto; height: clamp(64px, 15vh, 120px); padding: 0 0 var(--safe-b); border: 0; border-top: 1px solid var(--rule-2); background: var(--white); }
 @media (max-width: 640px) { .help-keys { bottom: calc(150px + var(--safe-b)); } }
 
+/* The steps scroll like the videos: the next one slides up from below. */
+.lesson-scroll { position: relative; height: 100dvh; overflow: hidden; background: var(--white); }
+.lesson-scroll.steps { touch-action: pan-x; }
+.lesson-slide { position: absolute; inset: 0; }
 /* ---------- Lessons: Simply Piano's page, white, the staff big across it, the keys as a strip along the bottom ---------- */
 .lesson.simply {
   --now-line: var(--pink);

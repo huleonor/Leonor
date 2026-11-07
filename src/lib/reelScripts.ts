@@ -187,6 +187,50 @@ export const SCRIPTS: Record<string, SongScript> = {
       }, 'Let it slow down. The last run is right hand alone.'),
     ],
   },
+  // Fly Me to the Moon (B. Howard), read from his Musicnotes score (piano, voice and guitar, in G,
+  // moderate swing): bar 1 is the piano's lead-in, then the 32 bars of the tune as it is first sung,
+  // A B A B (bars 2-33); after that the arrangement's solo chorus, the second chorus and the tag
+  // are cut by the rules. Taught as a pianist plays a standard: the sung tune in the right hand, the
+  // walking bass in the left (midi.ts melodyTrack). The fingerprint is that walking bass.
+  'fly-me-to-the-moon': {
+    fingerprint: { 2: 'E', 3: 'A', 4: 'D', 5: 'G', 6: 'C', 7: 'F#', 8: 'B', 9: 'E', 10: 'A', 11: 'D', 12: 'G', 13: 'B', 14: 'A', 16: 'G', 17: 'F#', 18: 'E', 19: 'A', 20: 'D', 21: 'G', 22: 'C', 23: 'F#' },
+    phases: [
+      ph(1, 9, 'The tune steps down', 'A tune that walks down the scale, with swing', [
+        'Right: the tune, G F# E D C, step by step down',
+        'Left: a walking bass, one note on every beat',
+      ], 'One note a beat, walking to the next chord', 'G F# E D C, then the same idea a step lower', {
+        2: 'Em7: the tune starts on G',
+        3: 'Am7: the bass walks from A',
+        5: 'Gmaj7: home',
+        6: 'C6: the same steps, lower',
+        7: 'F#m7b5, then B7 pulls back to E',
+        9: 'Em: a breath before the chorus',
+      }, 'Swing it: long, short on each pair of eighths.'),
+      ph(10, 17, 'In other words', 'The chords fall in fifths: A, D, G', [
+        'Right: a short call, then a long note',
+        'Left: the bass walks A, D, G as the chords fall',
+      ], 'A, D, G: each chord a fifth below the last', 'Short notes up to a long one, then rest and listen', {
+        10: 'Am7, D7, Gmaj7: the fall of fifths',
+        13: 'Bm7, E7: the same fall again',
+        16: 'G: home again',
+        17: 'B7 turns back to the verse',
+      }, 'Feel the pull of D7 to G. That is the whole song.'),
+      ph(18, 25, 'Fill my heart', 'The verse again: the same tune, new words', [
+        'Right: G F# E D C again, as in verse 1',
+        'Left: the same walking bass, you know it',
+      ], 'The same walk as verse 1: E, A, D, G', 'The verse tune again, with a new ending', {
+        18: 'Em7: the tune from G again',
+        21: 'Gmaj7, G7: lean into C',
+        24: 'B7 leads to E minor',
+      }, 'You already know this. Let the swing carry it.'),
+      ph(26, 33, 'I love you', 'The chorus again, and it lands home', [
+        'Right: the call, then a long last note',
+        'Left: A, D, then home to G',
+      ], 'A, D, G: the fall of fifths, home', 'The call again, then hold the last note', {
+        26: 'Am7, then D7: the last fall home',
+      }, 'Hold the last note and let it ring.'),
+    ],
+  },
 };
 
 /**
@@ -195,6 +239,36 @@ export const SCRIPTS: Record<string, SongScript> = {
  * names are written as they read ("F sharp"); a capital A alone is read as the letter.
  */
 const TALK: Record<string, Talk[]> = {
+  'fly-me-to-the-moon': [
+    {
+      intro: 'Fly Me to the Moon swings. The tune walks down the scale, G, F sharp, E, D, C, and under it the left hand walks too, one bass note on every beat.',
+      L: 'Left hand: a walking bass. One note on every beat, stepping towards the next chord. Each bar starts on its chord: E, A, D, G.',
+      R: 'Right hand: the tune. G, F sharp, E, D, C, one step at a time down the scale. Then the same idea again, a step lower.',
+      both: 'Together, slowly. The bass keeps the beat and the tune floats over it. Swing the eighths: long, short.',
+      outro: 'Swing it: on every pair of eighths, the first is long and the second short.',
+    },
+    {
+      intro: 'In other words. Here the chords fall in fifths: A, D, G. Each one pulls to the next, and that pull is what makes the song.',
+      L: 'Left hand: the bass walks A, D, G, then B, E, A, D. Each bar starts on its chord.',
+      R: 'Right hand: a short call, in other words, then a long note. Hold it and listen to the bass move under it.',
+      both: 'Together. When the right hand holds, the left hand keeps walking. Keep counting.',
+      outro: 'Feel the pull from D to G. That is the whole song.',
+    },
+    {
+      intro: 'Verse two is the verse again with new words: fill my heart with song. The same tune, the same walking bass. You know this one.',
+      L: 'Left hand: the same walk as verse one. E, A, D, G, and on.',
+      R: 'Right hand: the tune from G again, step by step down the scale.',
+      both: 'Together. Trust your hands, and let the swing carry it.',
+      outro: 'You already know this. Let the swing carry it.',
+    },
+    {
+      intro: 'The chorus comes back and brings the song home. In other words, I love you.',
+      L: 'Left hand: A, D, then home to G. The bass walks you there.',
+      R: 'Right hand: the call again, then a long last note.',
+      both: 'Together, slowly. Hold the last note and let it ring.',
+      outro: 'Hold the last note and let it ring.',
+    },
+  ],
   'interstellar-experience': [
     {
       intro: 'This whole opening is built from one shape. The right hand plays top, middle, low, middle on every beat, and the left hand holds one octave a bar: F, G, A, then E.',
@@ -388,6 +462,12 @@ for (const [id, tips] of Object.entries(STEP_TIPS)) SCRIPTS[id]?.phases.forEach(
  * what links, what builds, what ends. A phase without a name is "Part n".
  */
 export const SECTIONS: Record<string, [string, string, string, string][]> = {
+  'fly-me-to-the-moon': [
+    ['Verse 1', 'Verso 1', 'verse 1', 'o verso 1'],
+    ['Chorus 1', 'Refrão 1', 'chorus 1', 'o refrão 1'],
+    ['Verse 2', 'Verso 2', 'verse 2', 'o verso 2'],
+    ['Chorus 2', 'Refrão 2', 'chorus 2', 'o refrão 2'],
+  ],
   'interstellar-experience': [
     ['Intro', 'Intro', 'the intro', 'a intro'],
     ['Verse 1', 'Verso 1', 'verse 1', 'o verso 1'],

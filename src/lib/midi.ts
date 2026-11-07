@@ -104,6 +104,31 @@ function snapDurations(notes: SongNote[], ppq: number, toSec: (t: number) => num
   }
 }
 
+const MELODY = /vo[ci]|voz|melod|lead|sing|canto|tune|soprano/i;
+/**
+ * A song's file (a vocal score, a lead sheet) often has the tune on a track of its own beside the
+ * piano's: the singer's line, which the piano part does not play. To learn the song on the piano
+ * (the user's choice 2026-11, Fly Me to the Moon from a piano, voice and guitar score) the tune is
+ * the right hand and the bass the left, as a pianist plays a standard: the piano's own fills above
+ * middle C are left out. The tune's track is found by its name or its instrument (a voice), or, in
+ * a file of three tracks or more, as the one track that sings one note at a time above the others.
+ */
+function melodyTrack(tracks: Track[]): number {
+  if (tracks.length < 2) return -1;
+  const named = tracks.findIndex(t => MELODY.test(t.name) || MELODY.test(t.instrument?.name ?? '') || [52, 53, 54, 85].includes(t.instrument?.number ?? -1));
+  if (named >= 0) return named;
+  if (tracks.length < 3) return -1;
+  const single = (t: Track) => {
+    const ns = [...t.notes].sort((a, b) => a.ticks - b.ticks);
+    let over = 0;
+    for (let i = 1; i < ns.length; i++) if (ns[i].ticks < ns[i - 1].ticks + ns[i - 1].durationTicks - 10) over++;
+    return over <= ns.length * 0.05;
+  };
+  const avg = tracks.map(avgPitch), low = Math.min(...avg);
+  const cands = tracks.map((_, i) => i).filter(i => single(tracks[i]) && avg[i] > low + 7 && avg[i] >= 55 && avg[i] <= 84 && tracks[i].notes.length >= 16);
+  return cands.length === 1 ? cands[0] : -1;
+}
+
 export function parseSong(buf: ArrayBuffer, entry: SongEntry): Song {
   let midi: Midi;
   try {
@@ -118,7 +143,12 @@ export function parseSong(buf: ArrayBuffer, entry: SongEntry): Song {
   const byPitch = (t: Track) => t.notes.forEach(n => assigned.push({ n, hand: n.midi >= 60 ? 'R' : 'L' }));
   const names = tracks.map(t => handFromName(t.name));
 
-  if (tracks.length >= 2 && names.every(Boolean) && names.includes('R') && names.includes('L')) {
+  const tune = melodyTrack(tracks);
+  const bass = tune >= 0 ? tracks.filter((_, i) => i !== tune).flatMap(t => t.notes).filter(n => n.midi < 60) : [];
+  if (tune >= 0 && bass.length >= 8) {
+    tracks[tune].notes.forEach(n => assigned.push({ n, hand: 'R' }));
+    bass.forEach(n => assigned.push({ n, hand: 'L' }));
+  } else if (tracks.length >= 2 && names.every(Boolean) && names.includes('R') && names.includes('L')) {
     tracks.forEach((t, i) => t.notes.forEach(n => assigned.push({ n, hand: names[i]! })));
   } else if (tracks.length === 2) {
     const [a, b] = tracks;

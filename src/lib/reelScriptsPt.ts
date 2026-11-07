@@ -15,6 +15,66 @@ const ph = (title: string, hook: string, tricks: string[], L: string, R: string,
   ({ title, hook, tricks, L, R, cues, tip, talk });
 
 export const SCRIPTS_PT: Record<string, PhasePt[]> = {
+  'fly-me-to-the-moon': [
+    ph('Melodia a descer', 'Uma melodia que desce a escala, com swing', [
+      'Direita: a melodia, G F# E D C, a descer',
+      'Esquerda: um baixo a andar, uma nota por tempo',
+    ], 'Uma nota por tempo, a andar para o acorde seguinte', 'G F# E D C, depois a mesma ideia um degrau abaixo', {
+      2: 'Em7: a melodia começa no G',
+      3: 'Am7: o baixo anda a partir do A',
+      5: 'Gmaj7: em casa',
+      6: 'C6: os mesmos degraus, mais abaixo',
+      7: 'F#m7b5, depois B7 puxa para o E',
+      9: 'Em: respira antes do refrão',
+    }, 'Swing: em cada par de colcheias, longa e curta.', {
+      intro: 'Fly Me to the Moon tem swing. Aqui a melodia desce a escala, G, F#, E, D, C, e por baixo a mão esquerda também anda, uma nota do baixo em cada tempo.',
+      L: 'Mão esquerda: um baixo a andar. Uma nota em cada tempo, a caminho do acorde seguinte. Cada compasso começa no seu acorde: E, A, D, G.',
+      R: 'Mão direita: a melodia. G, F#, E, D, C, um degrau de cada vez pela escala abaixo. Depois a mesma ideia, um degrau mais abaixo.',
+      both: 'Juntas, devagar. O baixo marca o tempo e a melodia flutua por cima. Colcheias com swing: longa, curta.',
+      outro: 'Swing: em cada par de colcheias, a primeira é longa e a segunda curta.',
+    }),
+    ph('In other words', 'Os acordes caem em quintas: A, D, G', [
+      'Direita: uma frase curta, depois uma nota longa',
+      'Esquerda: o baixo anda A, D, G, como os acordes',
+    ], 'Baixo: A, D, G, cada acorde uma quinta abaixo', 'Notas curtas até uma longa, depois pausa e ouve', {
+      10: 'Am7, D7, Gmaj7: a queda em quintas',
+      13: 'Bm7, E7: a mesma queda outra vez',
+      16: 'G: outra vez em casa',
+      17: 'B7 volta para o verso',
+    }, 'Sente o D7 a puxar para o G. Isso é a música toda.', {
+      intro: 'In other words. Aqui os acordes caem em quintas: A, D, G. Cada um puxa para o seguinte, e é esse puxar que faz a música.',
+      L: 'Mão esquerda: o baixo anda A, D, G, e depois B, E, A, D. Cada compasso começa no seu acorde.',
+      R: 'Mão direita: uma frase curta, in other words, e depois uma nota longa. Segura-a e ouve o baixo a mexer por baixo.',
+      both: 'Juntas. Quando a direita segura, a esquerda continua a andar. Continua a contar.',
+      outro: 'Sente o D a puxar para o G. Isso é a música toda.',
+    }),
+    ph('Fill my heart', 'O verso outra vez: a mesma melodia, outras palavras', [
+      'Direita: G F# E D C outra vez, como no verso 1',
+      'Esquerda: o mesmo baixo a andar, já o conheces',
+    ], 'O mesmo caminho do verso 1: E, A, D, G', 'Outra vez a melodia do verso, com outro fim', {
+      18: 'Em7: a melodia outra vez a partir do G',
+      21: 'Gmaj7, G7: inclina para o C',
+      24: 'B7 leva ao Em',
+    }, 'Já sabes isto. Deixa o swing levar-te.', {
+      intro: 'O verso dois é o verso outra vez com outras palavras: fill my heart with song. Mesma melodia, mesmo baixo a andar. Já conheces esta.',
+      L: 'Mão esquerda: o mesmo caminho do verso um. E, A, D, G, e assim por diante.',
+      R: 'Mão direita: a melodia a partir do G outra vez, degrau a degrau pela escala abaixo.',
+      both: 'Juntas. Confia nas mãos e deixa o swing levar-te.',
+      outro: 'Já sabes isto. Deixa o swing levar-te.',
+    }),
+    ph('I love you', 'O refrão volta e leva a música para casa', [
+      'Direita: a frase, depois uma última nota longa',
+      'Esquerda: A, D, e depois em casa no G',
+    ], 'Baixo: A, D, G, a queda em quintas até casa', 'Outra vez a frase, depois segura a última nota', {
+      26: 'Am7, depois D7: a última queda para casa',
+    }, 'Segura a última nota e deixa-a soar.', {
+      intro: 'O refrão volta e leva a música para casa. In other words, I love you.',
+      L: 'Mão esquerda: A, D, e depois em casa no G. O baixo leva-te lá.',
+      R: 'Mão direita: a frase outra vez, e depois uma última nota longa.',
+      both: 'Juntas, devagar. Segura a última nota e deixa-a soar.',
+      outro: 'Segura a última nota e deixa-a soar.',
+    }),
+  ],
   'gymnopedie-1': [
     ph('O início a embalar', 'Dois acordes embalam, depois entra uma melodia lenta', [
       'Esquerda: nota grave no 1, acorde no 2. G, depois D',

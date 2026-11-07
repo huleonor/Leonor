@@ -269,7 +269,16 @@ export function reelsOf(song: Song): Reel[] {
   const twoHands = song.hands.length === 2;
   const scripted = scriptFor(song, bars);
   const scriptId = scripted ? scriptIdFor(song, bars) : undefined;
-  const phases = scripted ?? rulePhases(song).map((p, i) => ruleWords(bars.slice(p.from - 1, p.to), i + 1, p.from, p.to, twoHands));
+  // A script may cover only the start of a long arrangement (Fly Me to the Moon: the first chorus,
+  // the tune as it is sung); the bars after it are cut and worded by the rules, as Part n.
+  const written = scripted?.length ?? 0;
+  const lastScripted = scripted?.[written - 1]?.to ?? 0;
+  const rest = scripted && lastScripted < bars.length
+    ? rulePhases(song).filter(p => p.to > lastScripted).map(p => ({ from: Math.max(p.from, lastScripted + 1), to: p.to }))
+    : [];
+  const phases = scripted
+    ? [...scripted, ...rest.map((p, k) => ruleWords(bars.slice(p.from - 1, p.to), written + k + 1, p.from, p.to, twoHands))]
+    : rulePhases(song).map((p, i) => ruleWords(bars.slice(p.from - 1, p.to), i + 1, p.from, p.to, twoHands));
   const plays = (bar: number, h: Hand) => songBars[bar - 1]?.notes.some(n => n.hand === h);
   // A stretch that fits its time: from the first bar the hand plays, as many bars as the budget allows.
   const fit = (from: number, to: number, speed: number, budget: number, maxBars: number, h?: Hand) => {
@@ -281,11 +290,12 @@ export function reelsOf(song: Song): Reel[] {
   };
   const reels = phases.map((p, i): Reel => {
     // In Portuguese, the script's own Portuguese words (reelScriptsPt.ts), checked the same way.
-    const pt = lang() === 'pt' && scripted ? SCRIPTS_PT[scriptId ?? '']?.[i] : undefined;
+    const byScript = !!scripted && i < written;
+    const pt = lang() === 'pt' && byScript ? SCRIPTS_PT[scriptId ?? '']?.[i] : undefined;
     const ptSteps = pt ? Object.fromEntries(Object.entries(STEP_TIPS_PT[scriptId ?? ''] ?? {}).filter(([k]) => { const bar = Number(k.slice(1)); return bar >= p.from && bar <= p.to; })) : undefined;
     const source = pt ? { ...p, ...pt, steps: ptSteps } : p;
-    const written = (scripted && cleanPhase(source)) || (scripted ? ruleWords(bars.slice(p.from - 1, p.to), i + 1, p.from, p.to, twoHands) : p);
-    const spoken = written.talk ? written : { ...written, talk: ruleTalk(written, twoHands) };
+    const own = (byScript && cleanPhase(source)) || (byScript ? ruleWords(bars.slice(p.from - 1, p.to), i + 1, p.from, p.to, twoHands) : p);
+    const spoken = own.talk ? own : { ...own, talk: ruleTalk(own, twoHands) };
     const words = lang() === 'pt' ? ntWords(spoken) : spoken;
     const segments: Segment[] = [];
     if (twoHands) {
@@ -300,7 +310,7 @@ export function reelsOf(song: Song): Reel[] {
     // Its name in the song's form, written with the script (reelScripts.ts SECTIONS), else "Part n".
     // Without a script, a name written for the bars the rules cut (RULE_SECTIONS), only if they match.
     const ruled = !scripted ? RULE_SECTIONS[song.entry.id]?.find(x => x[0] === p.from && x[1] === p.to) : undefined;
-    const sec = scripted ? SECTIONS[scriptId ?? '']?.[i] : ruled ? ([ruled[2], ruled[3], ruled[4], ruled[5]] as [string, string, string, string]) : undefined;
+    const sec = byScript ? SECTIONS[scriptId ?? '']?.[i] : ruled ? ([ruled[2], ruled[3], ruled[4], ruled[5]] as [string, string, string, string]) : undefined;
     const inPt = lang() === 'pt';
     return {
       id: `phase-${i + 1}`, n: i + 1, from: p.from, to: p.to, words: ruled ? { ...words, title: ruled[inPt ? 3 : 2] } : words, segments,
@@ -761,7 +771,17 @@ export function clipsOf(song: Song): Clip[] {
         mine[0] = { ...make('intro', intro.from, b1, 1, tr('Listen', 'Ouve'), intro.head, say, 0, true), id: intro.id };
       }
     }
-    mine.forEach((c, i) => out.push({ ...c, say: NT(c.say), head: NT(c.head), k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) }));
+    // Short staff steps in the middle of the videos (the user's choice 2026-11: "short lessons on
+    // the staff where it makes sense, to go with the videos"): after a both-hands video of new
+    // shapes (the only hand's in a one-hand piece), its bars on the staff, when they are a short
+    // step (four bars at most), at most three a section. Not counted in the series.
+    let reads = 0;
+    mine.forEach((c, i) => {
+      const v: Clip = { ...c, say: NT(c.say), head: NT(c.head), k: i + 1, of: mine.length, difficulty: hardness(c.from, c.to, c.kind === 'L' ? 'L' : c.kind === 'R' ? hR0 : undefined) };
+      out.push(v);
+      const readable = twoHands ? c.kind === 'both' && !c.knownStep : c.kind === 'R';
+      if (readable && c.to - c.from < 4 && reads < 3) { out.push(readClip(v)); reads++; }
+    });
   }
   // The song first (the user's choice 2026-11: "start with an overview of the song and how it is
   // divided"): its theme heard at its real speed while the voice says what the song is, its sections

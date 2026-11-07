@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { markAppPlayed } from '../lib/input';
 import { handsShown, L, N, NOTE_RE, showHands, videoPrefs } from '../lib/lang';
-import { audioContext, loadPiano, pianoReady, playNote, playSfx, stopAll, stopSfx, unlockAudio } from '../lib/audio';
+import { audioContext, loadPiano, onAudioReset, pianoReady, playNote, playSfx, stopAll, stopSfx, unlockAudio } from '../lib/audio';
 import { linkState, onLinkState, onNote, setExpected, setMicRange } from '../lib/input';
 // The 3D gloves load on their own (three.js is large), only where WebGL runs.
 const Hands3D = lazy(() => import('./Hands3D').then(m => ({ default: m.Hands3D })));
@@ -75,6 +75,14 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void, onHo
     stopSfx();
     setPlaying(false);
   };
+  // Leaving the page pauses the video; a rebuilt audio clock (audio.ts) pauses it too, so the
+  // picture never jumps. He taps play to go on.
+  useEffect(() => {
+    const hide = () => { if (document.hidden) pause(); };
+    document.addEventListener('visibilitychange', hide);
+    const off = onAudioReset(() => pause());
+    return () => { document.removeEventListener('visibilitychange', hide); off(); };
+  }); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The reel starts once the piano is loaded (it loads from the moment the app opens), or after
   // twelve seconds without it, on a slow connection (it plays silent until the sound arrives).
