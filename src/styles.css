@@ -7,10 +7,10 @@
 
 :root {
   /* Paper: the notebook page, a sheet a step lighter for cards, one darker for wells */
-  --paper: #EDE4CF;
+  --paper: #EADFC4;
   --paper-2: #E2D7BB;
   --paper-3: #D6C9A8;
-  --white: #F5EDD8;
+  --white: #FBF6EA;
   --desk: #D9CCAA;
   /* Ink: the pencil and the print */
   --ink: #1B1A17;
@@ -82,10 +82,20 @@
   --cover-6: var(--teal);
   --cover-ink: var(--ink);
   --cover-line: rgba(27, 26, 23, .35);
-  /* Three faces, on purpose */
-  --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --font-display: 'Times New Roman', Times, 'Liberation Serif', serif;
-  --font-mono: 'Courier New', Courier, 'Liberation Mono', monospace;
+  /* Three faces, on purpose (the user's option 1, 2026-11: free OFL fonts kept inside the app, public/fonts) */
+  --font: 'Bricolage Grotesque', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-display: 'Fraunces', 'Times New Roman', Times, serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', Courier, monospace;
+  /* Each ink as a scale, 50 to 900 (500 is the ink itself): tints for surfaces, darks for text */
+  --pink-50: #FFF0F6; --pink-100: #FFD6E6; --pink-200: #FFADCC; --pink-300: #FF7AAD; --pink-400: #FF3D8A;
+  --pink-500: #FF006E; --pink-600: #D6005C; --pink-700: #A8004A; --pink-800: #7A0036; --pink-900: #4D0022;
+  --teal-50: #E8F7F5; --teal-100: #CDEDE7; --teal-200: #9EDDD4; --teal-300: #66C8BC; --teal-400: #2EB4A6;
+  --teal-500: #00A99D; --teal-600: #008A80; --teal-700: #006A62; --teal-800: #004D47; --teal-900: #00302C;
+  /* The paper's grain: fixed noise over the page, never moving */
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 .2 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  /* Motion that answers him: one curve, three lengths */
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --t-press: 120ms; --t-stamp: 420ms; --t-ink: 900ms;
   --track-display: -.01em;
   --space: 10px;
   /* Motion like stop-motion: a few frames, not a glide */
@@ -97,6 +107,12 @@
   --safe-t: env(safe-area-inset-top, 0px);
   color-scheme: light;
 }
+
+/* ---------- Faces (OFL, public/fonts/OFL.txt): Fraunces, Bricolage Grotesque, JetBrains Mono ---------- */
+@font-face { font-family: 'Fraunces'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/fonts/fraunces-latin-opsz-normal.woff2') format('woff2-variations'); }
+@font-face { font-family: 'Fraunces'; font-style: italic; font-weight: 100 900; font-display: swap; src: url('/fonts/fraunces-latin-opsz-italic.woff2') format('woff2-variations'); }
+@font-face { font-family: 'Bricolage Grotesque'; font-style: normal; font-weight: 200 800; font-display: swap; src: url('/fonts/bricolage-grotesque-latin-opsz-normal.woff2') format('woff2-variations'); }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 100 800; font-display: swap; src: url('/fonts/jetbrains-mono-latin-wght-normal.woff2') format('woff2-variations'); }
 
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
@@ -136,7 +152,9 @@ p { margin: 0; }
 .btn:hover { background: var(--marker); }
 .btn:active:not(:disabled) { transform: rotate(.4deg) translateY(1px); }
 .btn:disabled { color: var(--muted); border-color: var(--rule-2); background: var(--paper-2); }
-.btn.go { background: var(--ink); color: var(--white); border-color: var(--ink); box-shadow: 3px 3px 0 var(--pink); }
+.btn.go { background: var(--ink); color: var(--white); border-color: var(--ink); box-shadow: 3px 3px 0 var(--pink); transition: transform var(--t-press) var(--ease-out), box-shadow var(--t-press) var(--ease-out), background-color var(--dur) var(--ease); }
+/* Pressed like a stamp: the button sinks onto its pink block. */
+.btn.go:active:not(:disabled) { transform: translate(3px, 3px) rotate(-.6deg); box-shadow: 0 0 0 var(--pink); }
 .btn.go:hover { background: var(--ink-2); }
 .btn.big { min-height: 56px; padding: 0 22px; font-size: 17px; }
 .btn.small { min-height: 38px; padding: 0 12px; font-size: 14px; }
@@ -205,9 +223,9 @@ p { margin: 0; }
 .app {
   height: 100dvh; width: 100%; max-width: 560px; margin: 0 auto;
   display: grid; grid-template-rows: minmax(0, 1fr) auto;
-  background: var(--paper); border-left: 2px solid var(--ink); border-right: 2px solid var(--ink);
+  background: var(--grain), var(--paper); border-left: 2px solid var(--ink); border-right: 2px solid var(--ink);
 }
-.rail { grid-row: 2; display: flex; align-items: stretch; padding: 0 var(--safe-r) var(--safe-b) var(--safe-l); background: var(--paper); border-top: 2px solid var(--ink); }
+.rail { grid-row: 2; display: flex; align-items: stretch; padding: 0 var(--safe-r) var(--safe-b) var(--safe-l); background: var(--grain), var(--paper); border-top: 2px solid var(--ink); }
 
 .rail-btn {
   flex: 1; display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 60px; padding: 6px 2px 8px;
@@ -240,7 +258,7 @@ p { margin: 0; }
 .home-staff .plate { fill: var(--teal); }
 .home-staff .stem { stroke: var(--ink); stroke-width: 1.6; }
 /* The way in: a notebook page, a staff ruled across it, the name written in, then it lifts away. */
-.intro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--paper); cursor: pointer; }
+.intro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--grain), var(--paper); cursor: pointer; }
 .intro-page { display: grid; justify-items: center; gap: 10px; width: min(560px, 100% - 40px); }
 .intro-staff { width: 100%; height: auto; overflow: visible; }
 .intro-staff line { stroke: var(--ink); stroke-width: 1.4; }
@@ -266,7 +284,9 @@ p { margin: 0; }
 .song-progress-top .num { display: inline-block; font-size: 22px; color: var(--ink); background: var(--marker); padding: 0 6px; transform: rotate(-2deg); }
 .song-bar { display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .song-bar li { position: relative; flex-basis: 0; min-width: 10px; height: 12px; background: var(--paper-2); border: 2px solid var(--ink); }
-.song-bar li i { position: absolute; inset: 0 auto 0 0; background: var(--ink); }
+.song-bar li i { position: absolute; inset: 0 auto 0 0; background: var(--ink); animation: ink var(--t-ink) var(--ease-out) both; transform-origin: left center; }
+/* A segment fills like ink spreading along the paper, each time the page opens or it grows. */
+@keyframes ink { 0% { transform: scaleX(0); clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); } 60% { clip-path: polygon(0 0, 100% 0, 92% 50%, 100% 100%, 0 100%); } 100% { transform: scaleX(1); clip-path: polygon(0 0, 100% 0, 100% 50%, 100% 100%, 0 100%); } }
 .song-bar li.learnt i { background: var(--teal); }
 .song-bar li.next { border-color: var(--pink); }
 .song-sections-title { margin: 6px 0 -6px; font: 700 22px var(--font-display); }
@@ -284,7 +304,10 @@ p { margin: 0; }
 .sec-act { display: grid; place-items: center; width: 44px; height: 44px; border: 2px solid var(--ink); background: var(--white); color: var(--ink); }
 .sec-act:hover { background: var(--marker); }
 .sec-row.ahead .sec-num { border-style: dashed; color: var(--ink-2); }
-.sec-row.done .sec-num { background: var(--teal-soft); }
+.sec-row.done .sec-num { background: var(--teal); color: var(--white); }
+/* A learnt section's tick lands like a stamp: dropped, turned a little, set down. */
+.sec-row.done .sec-num svg { animation: stamp var(--t-stamp) var(--ease-out) both; }
+@keyframes stamp { 0% { opacity: 0; transform: scale(2.2) rotate(-18deg); } 55% { opacity: 1; transform: scale(.9) rotate(-8deg); } 100% { opacity: 1; transform: scale(1) rotate(-8deg); } }
 .sec-row.next { background: var(--pink-soft); }
 .sec-row.next .sec-num { background: var(--pink); color: var(--white); }
 .sec-row.next .sec-words small { color: var(--pink-text); }
