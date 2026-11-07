@@ -59,6 +59,8 @@
   --key-black: var(--ink);
   --key-ink: var(--ink);
   --key-next: var(--marker);
+  --key-front: #CDBF9C; /* a white key's front edge, its depth */
+  --key-black-top: #3A372F; /* a black key's top, lighter than its sides */
   --key-next-ink: var(--ink);
   /* The staff: printed on the page */
   --staff-ground: var(--white);

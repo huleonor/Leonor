@@ -442,6 +442,14 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           const Dn = rig.back.clone().applyQuaternion(rig.root.quaternion).normalize().negate();
           const Ac = v().crossVectors(Dn, Fw).normalize();
           const farOf: boolean[] = [], missX: number[] = [];
+          // A finger's sideways angle never crosses its neighbour's and never opens more than a
+          // little past it (the user saw a hand no one could make, 2026-11): index to little finger
+          // stay in order and close, as a relaxed hand does.
+          let prevAbd: number | undefined;
+          const nb = (f: number, a: number) => {
+            if (f < 3 || prevAbd === undefined) return a;
+            return dir > 0 ? clamp(a, prevAbd - 0.02, prevAbd + 0.32) : clamp(a, prevAbd - 0.32, prevAbd + 0.02);
+          };
           for (const fg of rig.fingers) {
             const f = fg.f, thumb = f === 1;
             const M = fg.bones[0].getWorldPosition(v());
@@ -449,7 +457,9 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             // The thumb bends in towards the palm (opposition), the others straight down.
             const toPalm = Ac.clone().multiplyScalar(-dir);
             const down = thumb ? Dn.clone().multiplyScalar(0.8).addScaledVector(toPalm, 0.6).normalize() : Dn.clone();
-            const lim: [number, number, number, number] = thumb ? [-0.7, 0.9, 0.0, 1.4] : [-0.25, 1.35, 0.18, 1.75];
+            // Joint limits (the knuckle, then the middle joint): the thumb no longer bends back past
+            // straight (it looked broken), the fingers only a little.
+            const lim: [number, number, number, number] = thumb ? [-0.7, 0.9, 0.0, 1.4] : [-0.2, 1.35, 0.18, 1.75];
             /** Turns the finger's bones to its angles; gives back where its tip lands. */
             // The bending plane: forward turned by the abduction, and down squared against it (the
             // thumb's down leans in to the palm; left oblique, a wide thumb landed a key outside its key).
@@ -478,8 +488,11 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
             const rel = T.clone().sub(M);
             const sp = SPREAD[f] * dir;
             const lat = rel.dot(Ac), fwdD = Math.max(1, rel.dot(Fw));
-            const range = thumb ? 1.1 : f === 5 ? 0.6 : f === 2 ? 0.38 : 0.32;
+            // How far each finger can turn sideways from its rest, as a real hand: the thumb most, the
+            // middle finger least.
+            const range = thumb ? 1.1 : f === 5 ? 0.4 : f === 2 ? 0.32 : f === 3 ? 0.22 : 0.26;
             fg.abd += (clamp(Math.atan2(lat, fwdD), sp - range, sp + range) - fg.abd) * (lock > 0.5 ? 1 : 0.5);
+            if (!thumb) fg.abd = nb(f, fg.abd);
             const plane = Fw.clone().applyAxisAngle(Dn, fg.abd);
             // A key out of this finger's reach (wide keys on a big screen): it stays relaxed in its
             // own lane instead of twisting after it.
@@ -507,7 +520,8 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
                 if (miss(tip) < best.e) best = { e: miss(tip), th: [...fg.theta] as [number, number], abd: fg.abd };
                 if (err.length() < Lf * 0.01) break;
                 const pl = Fw.clone().applyAxisAngle(Dn, fg.abd), side = v().crossVectors(Dn, pl).normalize();
-                fg.abd = clamp(fg.abd + Math.atan2(err.dot(side), Math.max(Lf * 0.5, u)), sp - range - 0.1, sp + range + 0.1);
+                fg.abd = clamp(fg.abd + Math.atan2(err.dot(side), Math.max(Lf * 0.5, u)), sp - range - 0.05, sp + range + 0.05);
+                if (!thumb) fg.abd = nb(f, fg.abd);
                 u += err.dot(pl); d += err.dot(downOf(pl));
                 solve(fg, len, u, d, lim);
                 tip = pose();
@@ -516,6 +530,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
               // Only a tip short of its key (the key further out than the tip) moves the hand.
               if ((f === 1 || f === 5) && lock > 0.5 && Math.sign(T.x - tip.x) === Math.sign(T.x - rig.wx)) missX[f] = T.x - tip.x;
             }
+            if (!thumb) prevAbd = fg.abd;
           }
           const edgeMiss = (missX[1] ?? 0) + (missX[5] ?? 0);
           if (missX[1] !== undefined || missX[5] !== undefined) rig.shiftWant = clamp(rig.shiftWant + edgeMiss * Math.min(1, dt * 12), -kw * 1.2, kw * 1.2);
