@@ -1,14 +1,15 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { L } from '../lib/lang';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SongInfo } from '../lib/catalog';
+import { hiddenSongs, onLibrary, unhideSong } from '../lib/library';
 import { FIRST_SONG } from './Journey';
 import { keyName } from '../lib/analysis';
 import { meterOf, pctOf } from '../lib/mastery';
 import type { Song, SongEntry } from '../lib/types';
 import { IconClose, IconImport, IconMore, IconPlus } from './Icons';
 import { SOFT } from './Motion';
-import { SongCover } from './SongCover';
+import { Ruling, SongCover } from './SongCover';
 import { SongPreview } from './SongPreview';
 
 const COLLECTIONS: [NonNullable<SongEntry['collection']>, () => string][] = [['classical', () => L('Classical', 'Clássica')], ['film', () => L('Film scores', 'Bandas sonoras')], ['modern', () => L('Modern piano', 'Piano moderno')]];
@@ -29,8 +30,9 @@ function pctFor(song?: Song) { return song ? pctOf(meterOf(song).value) : 0; }
 /** The line under a song's title: who wrote it, and its length while it is not started. */
 function lineFor(e: SongEntry, song?: Song) {
   const who = e.composer ?? (e.builtIn ? '' : L('Imported', 'Importada'));
-  if (song && meterOf(song).value <= 0) return [who, L(`${length(song.duration)}, not started`, `${length(song.duration)}, por começar`)].filter(Boolean).join('. ');
-  return who;
+  // Two short lines that never wrap: who wrote it, then its length while it is not started.
+  const second = song && meterOf(song).value <= 0 ? L(`${length(song.duration)}, not started`, `${length(song.duration)}, por começar`) : '';
+  return <>{who && <i>{who}</i>}{second && <i>{second}</i>}</>;
 }
 
 /** How a card was touched last: a finger previews first, a mouse previews on hover. */
@@ -66,7 +68,7 @@ function SongCard({ info, big, previewing, onPreview, onOpen, onEdit }: {
           <span className={`num ${pct ? '' : 'fresh'}`} aria-hidden="true">{pct}<i>%</i></span>
         </span>
       </button>
-      {onEdit && <button className="icon-btn ghost song-card-edit" onClick={onEdit} aria-label={`Edit ${e.title}`}><IconMore size={20} /></button>}
+      {onEdit && <button className="icon-btn ghost song-card-edit" onClick={onEdit} aria-label={L(`More for ${e.title}: edit or remove`, `Mais para ${e.title}: editar ou remover`)}><IconMore size={20} /></button>}
     </motion.li>
   );
 }
@@ -89,7 +91,10 @@ interface Props {
 export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }: Props) {
   const [market, setMarket] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
-  const mine = entries.filter(e => !e.missing).map(e => infos[e.id]).filter((i): i is SongInfo => !!i?.song);
+  const [, bump] = useState(0);
+  useEffect(() => onLibrary(() => bump(x => x + 1)), []);
+  const hidden = hiddenSongs();
+  const mine = entries.filter(e => !e.missing && !hidden.includes(e.id)).map(e => infos[e.id]).filter((i): i is SongInfo => !!i?.song);
 
   // Interstellar Experience is always in his library: until his MIDI file is in, a card asks for it
   // (the song is under copyright, so nothing of it ships with the app).
@@ -100,7 +105,7 @@ export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }:
   const card = (info: SongInfo, big = false) => (
     <SongCard key={info.entry.id} info={info} big={big} previewing={preview === info.entry.id}
       onPreview={on => setPreview(p => (on ? info.entry.id : p === info.entry.id ? null : p))}
-      onOpen={() => onOpen(info)} onEdit={info.entry.builtIn ? undefined : () => onEdit(info.entry)} />
+      onOpen={() => onOpen(info)} onEdit={() => onEdit(info.entry)} />
   );
 
   return (
@@ -109,7 +114,7 @@ export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }:
         <h1>{L('Library', 'Biblioteca')}</h1>
         <button className="btn" onClick={() => setMarket(true)}><IconPlus size={16} />{L('Add songs', 'Juntar músicas')}</button>
       </header>
-      {!ready && <div aria-busy="true">{Array.from({ length: 4 }, (_, i) => <span key={i} className="lib-skeleton" style={{ display: 'block' }} />)}</div>}
+      {!ready && <div aria-busy="true"><Ruling text={L('Opening your library...', 'A abrir a tua biblioteca...')} /></div>}
       {ready && waiting && (
         <button className="lib-now waiting" onClick={() => onAdd(waiting)} aria-label={`${waiting.title}: add your MIDI file`}>
           <span className="lib-now-foot">
@@ -120,6 +125,7 @@ export function Songs({ infos, entries, ready, current, onOpen, onAdd, onEdit }:
       )}
       {ready && !mine.length && !waiting && (
         <section className="empty-library">
+          <Ruling rest text={L('Not a note here yet.', 'Ainda nenhuma nota aqui.')} />
           <h2>{L('Your library is empty', 'A tua biblioteca está vazia')}</h2>
           <p className="sub">{L('Upload a MIDI file of a piece you want to learn.', 'Carrega um ficheiro MIDI de uma peça que queiras aprender.')}</p>
           <div className="actions">
@@ -151,7 +157,9 @@ function facts(e: SongEntry, song?: Song) {
 
 /** Adding songs: the pieces that need his own MIDI file (the others are in the library already). */
 function Marketplace({ entries, infos, onClose, onUpload }: { entries: SongEntry[]; infos: Record<string, SongInfo>; onClose: () => void; onUpload: (slot?: SongEntry) => void }) {
-  const slots = entries.filter(e => e.missing);
+  const hidden = hiddenSongs();
+  // The pieces that need his file, and the ones he took out of his library, to add back.
+  const slots = entries.filter(e => e.missing || hidden.includes(e.id));
   return (
     <motion.div className="market" role="dialog" aria-modal="true" aria-labelledby="market-title" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={SOFT}>
       <header className="market-head">
@@ -177,7 +185,9 @@ function Marketplace({ entries, infos, onClose, onUpload }: { entries: SongEntry
                       {e.about && <span className="market-about">{L(e.about, e.aboutPt ?? e.about)}</span>}
                       <span className="market-facts">{facts(e, infos[e.id]?.song)}</span>
                     </span>
-                    <button className="btn small" onClick={() => onUpload(e)}>{L('Add MIDI', 'Juntar MIDI')}</button>
+                    {e.missing
+                      ? <button className="btn small" onClick={() => onUpload(e)}>{L('Add MIDI', 'Juntar MIDI')}</button>
+                      : <button className="btn small" onClick={() => unhideSong(e.id)}><IconPlus size={14} />{L('Add back', 'Repor')}</button>}
                   </li>
                 ))}
               </ul>

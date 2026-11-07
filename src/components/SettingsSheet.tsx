@@ -87,11 +87,12 @@ export function SettingsSheet({ settings, update, links, connectInput, disconnec
 
         {appOutdated && <p className="warn">{L('A newer iPhone app is out. Update it in SideStore.', 'Há uma app nova para iPhone. Atualiza-a no SideStore.')}</p>}
         <section className="set-group" aria-labelledby="piano-title">
-          <h3 id="piano-title">{L('Your piano', 'O teu piano')}</h3>
+          <h3 id="piano-title"><span className="tab">1</span>{L('Your piano', 'O teu piano')}<span className="keys" aria-hidden="true"><i className="b" /><i className="b" /><i /><i className="b" /><i className="b" /><i className="b" /><i /></span></h3>
           <PianoChoices settings={settings} update={update} links={links} connectInput={connectInput} disconnectInput={disconnectInput} onCheck={onCheck} />
         </section>
 
-        <section className="set-group">
+        <section className="set-group" aria-labelledby="words-title">
+          <h3 id="words-title"><span className="tab">2</span>{L('Language and notes', 'Língua e notas')}</h3>
           <Segmented<Lang> label={L('Language', 'Língua')} value={settings.lang}
             onChange={v => update({ lang: v, naming: v === 'pt' ? 'solfege' : 'letters' })}
             options={[['en', 'English'], ['pt', 'Português']]} />
@@ -102,7 +103,7 @@ export function SettingsSheet({ settings, update, links, connectInput, disconnec
         </section>
 
         <section className="set-group" aria-labelledby="videos-title">
-          <h3 id="videos-title">{L('Videos', 'Vídeos')}</h3>
+          <h3 id="videos-title"><span className="tab">3</span>{L('Videos', 'Vídeos')}</h3>
           <Segmented<number> label={L('Speed', 'Velocidade')} value={settings.videoPace ?? 1} onChange={v => update({ videoPace: v })}
             options={[[0.8, L('Slower', 'Mais lento')], [1, 'Normal'], [1.2, L('Faster', 'Mais rápido')]]} />
           <label className="toggle-row">
@@ -116,7 +117,8 @@ export function SettingsSheet({ settings, update, links, connectInput, disconnec
           <NaturalVoiceRow />
         </section>
 
-        <section className="set-group">
+        <section className="set-group" aria-labelledby="sound-title">
+          <h3 id="sound-title"><span className="tab">4</span>{L('Sound', 'Som')}</h3>
           <label className="toggle-row">
             <span><b>{L('Hear the keys I play', 'Ouvir as teclas que toco')}</b><small>{L('Hear the app’s grand piano when you play a MIDI or Bluetooth keyboard.', 'Ouve o piano de cauda da app quando tocas num teclado MIDI ou Bluetooth.')}</small></span>
             <input className="switch" type="checkbox" checked={settings.localSound} onChange={e => update({ localSound: e.target.checked })} />

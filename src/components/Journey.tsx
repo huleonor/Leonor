@@ -5,6 +5,8 @@ import type { SongInfo } from '../lib/catalog';
 import { meterOf, pctOf } from '../lib/mastery';
 import { clipsOf, onSeen, reelsOf, seenReels, type Reel } from '../lib/reels';
 import { askStrategy } from '../lib/strategy';
+import { hiddenSongs } from '../lib/library';
+import { HomeStaff, Ruling } from './SongCover';
 import type { Song, SongEntry } from '../lib/types';
 import { IconCheck, IconImport, IconKeysFill, IconPlay, IconSpeaker, IconStop } from './Icons';
 import { SPRING } from './Motion';
@@ -74,10 +76,10 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
 
   const reels = useMemo(() => (song ? reelsOf(song) : []), [song, infos]); // eslint-disable-line react-hooks/exhaustive-deps
   const seen = song ? seenReels(song.entry.id) : [];
-  const others = entries.filter(e => !e.missing && e.id !== entry?.id && infos[e.id]?.song).slice(0, 6);
+  const others = entries.filter(e => !e.missing && !hiddenSongs().includes(e.id) && e.id !== entry?.id && infos[e.id]?.song).slice(0, 6);
 
   // Shown as soon as its own song is read (the catalog reads it first), not after the whole library.
-  if (!ready && !info) return <div className="page journey" aria-busy="true"><span className="journey-hero skeleton" /></div>;
+  if (!ready && !info) return <div className="page journey" aria-busy="true"><Ruling text={L('Reading the song...', 'A ler a música...')} /></div>;
 
   if (!entry || entry.missing || !song || !info) {
     const slot = entry ?? entries.find(e => e.id === FIRST_SONG);
@@ -118,6 +120,7 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
   const next = rows.find(x => !x.watched);
   const pct = pctOf(meterOf(song).value);
   const bars = reels.length ? reels[reels.length - 1].to : 0;
+  const totalBars = Math.max(1, bars);
   // One short line of where he is in a section: a professional list says it in a few words.
   const status = (x: (typeof rows)[number]) => {
     if (x.watched) return L('Learnt', 'Aprendida');
@@ -126,16 +129,16 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
     if (x.seenN) return L(`${x.seenN} of ${x.of} videos`, `${x.seenN} de ${x.of} vídeos`);
     return L(`${x.of} videos`, `${x.of} vídeos`);
   };
-  const totalBars = Math.max(1, bars);
   return (
     <div className="page journey">
       <header className="song-head">
         <div className="song-top">
-          <span className="song-kicker">{L('Learning now', 'A aprender')}</span>
+          <span className="song-kicker">{greeting()} {L('Learning now:', 'A aprender:')}</span>
           <button className="btn quiet" onClick={onSongs}>{L('Change song', 'Mudar de música')}</button>
         </div>
         <h1>{entry.title}</h1>
         <p className="song-meta">{[entry.composer, reels.length ? L(`${reels.length} sections, ${bars} bars`, `${reels.length} secções, ${bars} compassos`) : ''].filter(Boolean).join(', ')}</p>
+        <HomeStaff key={song.entry.id} song={song} done={rows.filter(x => x.watched).reduce((s, x) => s + (x.r.to - x.r.from + 1), 0) / totalBars} />
       </header>
 
       {/* His progress through the song: one segment per section, as long as its bars, filled by what
@@ -179,6 +182,12 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
       />
     </div>
   );
+}
+
+/** A word for the time of day, as the page greets him. */
+function greeting() {
+  const h = new Date().getHours();
+  return h < 5 ? L('Late night.', 'Noite dentro.') : h < 12 ? L('Good morning.', 'Bom dia.') : h < 20 ? L('Good afternoon.', 'Boa tarde.') : L('Good evening.', 'Boa noite.');
 }
 
 interface PathNode {

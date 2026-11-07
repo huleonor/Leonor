@@ -3,7 +3,7 @@ import { L, notePrefs, setLang, setVideoPrefs } from './lib/lang';
 import { AddSong } from './components/AddSong';
 import { onStats } from './lib/stats';
 import { scheduleReminders, startWebReminders } from './lib/reminders';
-import { currentSongId, Journey, practiceFor, setCurrentSong } from './components/Journey';
+import { currentSongId, FIRST_SONG, Journey, practiceFor, setCurrentSong } from './components/Journey';
 import { ReelFeed } from './components/Reels';
 import { ContinueCard, lastReel, rememberReel } from './components/HomePage';
 import { clipsOf, listenClip, seenReels, type Clip, type Reel } from './lib/reels';
@@ -13,6 +13,7 @@ import type { CourseStep } from './lib/course';
 import { SettingsSheet } from './components/SettingsSheet';
 import { PianoStep, pianoAsked } from './components/PianoStep';
 import { EditSong } from './components/EditSong';
+import { Intro, introDue } from './components/Intro';
 import { SongScreen, sectionsOf, type Section } from './components/SongScreen';
 import { Songs } from './components/Songs';
 import { IconHome, IconHomeFill, IconArrowLeft, IconReel, IconTabLibrary, IconTabLibraryFill, IconTabSettings, IconTabSong, IconTabSongFill, IconTabWatch } from './components/Icons';
@@ -21,7 +22,7 @@ import { refreshCatalog, refreshSong, useCatalog, type SongInfo } from './lib/ca
 import { I18nContext, makeT } from './lib/i18n';
 import { MasterySession } from './lib/mastery';
 import { connect, disconnectBle, disconnectMic, linkState, onLinkState, onNote, watchForMidi, type LinkState, type Source } from './lib/input';
-import { addToLibrary, loadSettings, removeSong, renameSong, saveSettings } from './lib/library';
+import { addToLibrary, hideSong, loadSettings, removeSong, renameSong, saveSettings, unhideSong } from './lib/library';
 import type { Settings, SongEntry } from './lib/types';
 
 /** Watch is the reel feed of the song being learnt; Song is its map; Library his songs. */
@@ -44,6 +45,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('song');
   // The song being learnt: one at a time, Interstellar Experience first.
   const [current, setCurrent] = useState(currentSongId);
+  const [intro, setIntro] = useState(introDue);
   const choose = (id: string) => { setCurrent(id); setCurrentSong(id); };
   const [openId, setOpenId] = useState<string | null>(null);
   const [lesson, setLesson] = useState<{ id: string; section: string; step?: string; n: number; only?: Section; back?: number } | null>(null);
@@ -309,7 +311,7 @@ export default function App() {
               ) : journey
             ) : tab === 'song' ? journey : (
               <Songs infos={infos} entries={entries} ready={ready} current={current}
-                onOpen={info => { choose(info.entry.slot ?? info.entry.id); addToLibrary(info.entry.slot ?? info.entry.id); setTab('song'); }}
+                onOpen={info => { choose(info.entry.slot ?? info.entry.id); addToLibrary(info.entry.slot ?? info.entry.id); unhideSong(info.entry.id); setTab('song'); }}
                 onAdd={slot => pickFile(slot)} onEdit={setEditing} />
             )}
           </main>
@@ -325,7 +327,15 @@ export default function App() {
           entry={editing}
           onClose={() => setEditing(null)}
           onSave={async (title, composer) => { await renameSong(editing, title, composer); setEditing(null); await refreshCatalog(); }}
-          onDelete={async () => { await removeSong(editing); setEditing(null); await refreshCatalog(); }}
+          onDelete={async () => {
+            // A piece the app ships is hidden; a file he brought is deleted. The song being learnt
+            // gives way to the first one.
+            const id = editing.slot ?? editing.id;
+            if (editing.builtIn && !editing.slot) hideSong(editing.id); else await removeSong(editing);
+            setEditing(null);
+            if (current === id || current === editing.id) choose(FIRST_SONG);
+            await refreshCatalog();
+          }}
         />
       )}
       {adding && (
@@ -344,6 +354,7 @@ export default function App() {
       )}
       {sheet === 'check' && <InputCheck links={links} naming={settings.naming} onClose={() => setSheet(pianoNext ? null : 'settings')} />}
       {notice && <div className={`toast ${notice.error ? 'error' : ''}`} role="status">{notice.text}</div>}
+      {intro && <Intro onDone={() => setIntro(false)} />}
       </Fragment>
     </I18nContext.Provider>
   );

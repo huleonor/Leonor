@@ -5,6 +5,7 @@
  * Phosphor glyph. Colour and glyph come from the song, so it always looks the same. No photos.
  */
 import { Headphones, MusicNote, MusicNotes, MusicNotesSimple, PianoKeys, VinylRecord, Waveform, type Icon as PhIcon } from '@phosphor-icons/react';
+import { motion } from 'motion/react';
 import { useMemo } from 'react';
 import { BUILT_IN } from '../lib/library';
 import type { Song, SongEntry } from '../lib/types';
@@ -31,7 +32,7 @@ const STEP = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
 const stepOf = (midi: number) => Math.floor(midi / 12) * 7 + STEP[midi % 12];
 
 /** The opening melody: the top note of each of the first few onsets the right hand plays. */
-function opening(song: Song, count = 7) {
+export function opening(song: Song, count = 7) {
   const hand = song.hands.includes('R') ? 'R' : song.hands[0];
   const byTick = new Map<number, number>();
   for (const n of song.notes) if (n.hand === hand) byTick.set(n.ticks, Math.max(byTick.get(n.ticks) ?? 0, n.midi));
@@ -99,5 +100,66 @@ export function OpeningStaff({ song, count = 10 }: { song?: Song; count?: number
         );
       })}
     </svg>
+  );
+}
+
+/**
+ * The song on the Song page (the user's "a more creative home", 2026-11): its opening written
+ * across a wide staff, ruled in line by line and the notes set down one by one each time the page
+ * opens, printed in the two inks (a pink head on a teal plate a little off register), with a pink
+ * line where he has got to in the song.
+ */
+export function HomeStaff({ song, done = 0 }: { song: Song; done?: number }) {
+  const steps = useMemo(() => opening(song, 12), [song]);
+  if (steps.length < 3) return null;
+  const W = 340, gap = 9, mid = 50;
+  const centre = Math.round((Math.min(...steps) + Math.max(...steps)) / 2);
+  const dx = (W - 60) / Math.max(1, steps.length - 1);
+  const EXPO = [0.16, 1, 0.3, 1] as const;
+  const at = 14 + Math.max(0, Math.min(1, done)) * (W - 28);
+  return (
+    <svg className="home-staff" viewBox={`0 0 ${W} 100`} aria-hidden="true">
+      {[-2, -1, 0, 1, 2].map((k, i) => (
+        <motion.line key={k} className="rule" x1={6} x2={W - 6} y1={mid + k * gap} y2={mid + k * gap}
+          initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.6, delay: i * 0.05, ease: EXPO }} />
+      ))}
+      {done > 0 && (
+        <motion.line className="now" x1={at} x2={at} y1={mid - 3 * gap} y2={mid + 3 * gap}
+          initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} style={{ transformOrigin: `${at}px ${mid}px` }} transition={{ duration: 0.4, delay: 0.9, ease: EXPO }} />
+      )}
+      {steps.map((st, i) => {
+        const y = Math.max(mid - 4 * gap, Math.min(mid + 4 * gap, mid - (st - centre) * gap / 2));
+        const x = 30 + i * dx, up = y >= mid;
+        return (
+          <motion.g key={i} initial={{ opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.3 + i * 0.05, ease: EXPO }}>
+            <ellipse className="plate" cx={x + 1.8} cy={y + 1.8} rx={5.6} ry={4} transform={`rotate(-22 ${x + 1.8} ${y + 1.8})`} />
+            <ellipse className="head" cx={x} cy={y} rx={5.6} ry={4} transform={`rotate(-22 ${x} ${y})`} />
+            <line className="stem" x1={up ? x + 4.9 : x - 4.9} x2={up ? x + 4.9 : x - 4.9} y1={y} y2={up ? y - 24 : y + 24} />
+          </motion.g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/**
+ * A loading or empty state drawn in the notebook (the user's "loading and empty states drawn",
+ * 2026-11): a staff ruled across the page once, line by line, with a bar line and, for an empty
+ * page, a whole rest in its first bar; and a line saying what is happening.
+ */
+export function Ruling({ text, rest }: { text: string; rest?: boolean }) {
+  const EXPO = [0.16, 1, 0.3, 1] as const;
+  return (
+    <div className="ruling" role="status" aria-live="polite">
+      <svg viewBox="0 0 340 60" aria-hidden="true">
+        {[-2, -1, 0, 1, 2].map((k, i) => (
+          <motion.line key={k} x1={4} x2={336} y1={30 + k * 8} y2={30 + k * 8}
+            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.7, delay: i * 0.06, ease: EXPO }} />
+        ))}
+        <motion.line className="bar" x1={170} x2={170} y1={14} y2={46} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} />
+        {rest && <motion.rect className="rest" x={74} y={22} width={18} height={6} initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.35, ease: EXPO }} />}
+      </svg>
+      <p>{text}</p>
+    </div>
   );
 }

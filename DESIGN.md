@@ -3,10 +3,10 @@ name: Leonor
 description: "Lo-Fi (2026-11): Leonor as a practice notebook. Paper-yellow page, three system faces colliding (Times for titles, Helvetica for words and the big note letters, Courier for labels and numbers), index cards taped on a little off the grid, riso pink for the right hand and riso teal for the left, halftone dots on the song cards, titles printed slightly off register. A bottom tab bar like an app's. No logo."
 source: "The user chose anchor C, Lo-Fi, out of three mockups made with the frontend-design skill (Ilm-Alan/frontend-design) and its anti-slop rules; it replaces Cartaz. Nothing is copied from a brand."
 colors:
-  paper: "#EDE4CF  the notebook page (paper-yellow, never cream)"
+  paper: "#EADFC4  the notebook page (paper-yellow, never cream), with a fixed fine grain (--grain)"
   paper-2: "#E2D7BB  wells"
   paper-3: "#D6C9A8  pressed, tracks"
-  white: "#F5EDD8  index cards, keys, inputs, the lesson page"
+  white: "#FBF6EA  index cards, keys, inputs, the lesson page (lighter, so the cards stand off the paper)"
   desk: "#D9CCAA  the desk around the page on a wide screen, with a fine dot"
   ink: "#1B1A17  type, edges, the primary control"
   ink-2: "#3C3931  secondary text"
@@ -19,9 +19,9 @@ colors:
   mark: "#E0301E  a wrong note"
   ok: "#1E8A44  a right note, a good run"
 typography:
-  display: { fontFamily: "Times New Roman, Times", weight: 700, use: "page titles, song and phase names, captions (italic on the videos)" }
-  body: { fontFamily: "Helvetica Neue, Helvetica, Arial", weight: "400 text, 700 buttons, 900 the huge note letters and count-in", size: "16px" }
-  mono: { fontFamily: "Courier New, Courier", weight: 700, use: "labels, meta lines, tab labels, numbers, percents" }
+  display: { fontFamily: "Fraunces (OFL, public/fonts), Times fallback", weight: 700, use: "page titles, song and phase names, captions (italic on the videos)" }
+  body: { fontFamily: "Bricolage Grotesque (OFL, public/fonts), Helvetica fallback", weight: "400 text, 700 buttons, 800 the huge note letters and count-in", size: "16px" }
+  mono: { fontFamily: "JetBrains Mono (OFL, public/fonts), Courier fallback", weight: 700, use: "labels, meta lines, tab labels, numbers, percents" }
 rounded: { all: 0, dots: "50% (status dots only)" }
 spacing: "10px unit: 10 / 20 / 30 / 40"
 edges: { card: "2px solid ink", rule: "1px dashed rule-2", control: "2px solid ink" }
@@ -67,7 +67,7 @@ A practice notebook on a music stand. The page is paper-yellow; what he works on
 
 ## Motion
 
-State-driven only (`src/components/Motion.tsx`), as before. CSS transitions step like stop-motion (`steps(3)`, 240ms) instead of gliding. No loops, no confetti. Everything sits inside `<MotionConfig reducedMotion="user">`.
+State-driven only (`src/components/Motion.tsx`), as before. CSS transitions step like stop-motion (`steps(3)`, 240ms) instead of gliding, except three on one eased curve (`--ease-out`, option 1 of the 2026-11 design lab): the primary button pressed like a stamp, a progress segment filling like ink, a learnt tick stamped down. No loops, no confetti. Everything sits inside `<MotionConfig reducedMotion="user">`.
 
 ## Anti-slop rules (fixed)
 

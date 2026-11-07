@@ -39,7 +39,7 @@ function palette(el: Element) {
     ink: v('--key-ink'), paper: v('--paper'), muted: v('--muted'), bad: v('--mark'), next: v('--marker'), tR: v('--pink-text'), tL: v('--teal-text'), lane: v('--reel-lane'), now: v('--now-line'),
   };
 }
-const FACE = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+const FACE = "'Bricolage Grotesque', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 
 /**
  * The reel's clock: the audio clock while it plays, so the keys and the sound never drift apart.
@@ -366,7 +366,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
       const last = [...tl.notes].reverse().find(n => n.t <= t && n.t > t - 1.2);
       if (last) {
         const beats = tl.beats ?? 4;
-        ctx.font = `700 15px 'Courier New', Courier, monospace`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+        ctx.font = `700 15px 'JetBrains Mono', 'Courier New', Courier, monospace`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
         for (let i = 0; i < beats; i++) {
           const x = 16 + i * 24, y = kbTop - 20;
           if (i === last.beat % beats) { ctx.fillStyle = pal.next; ctx.fillRect(x - 10, y - 10, 20, 20); }
@@ -401,7 +401,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
             // Every C is marked small with its octave (C3, C4 is middle C, C5) to find the place.
             ctx.fillStyle = mine.has(m) ? pal.paper : pal.muted;
             ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-            ctx.font = `700 ${Math.round(Math.max(9, Math.min(13, k.w * 0.42)))}px 'Courier New', Courier, monospace`;
+            ctx.font = `700 ${Math.round(Math.max(9, Math.min(13, k.w * 0.42)))}px 'JetBrains Mono', 'Courier New', Courier, monospace`;
             ctx.fillText(`${N("C")}${m / 12 - 1}`, k.x + k.w / 2, kbTop + h - 8);
           }
         }
@@ -510,7 +510,7 @@ function Lanes({ tl, range, now, held, flats, named, namedUntil, presses, shape,
           g.beginPath(); g.roundRect((lo + hi) / 2 - cw / 2, cy, cw, 40, 8); g.fill(); g.stroke();
           // Finger numbers on the tips while playing.
           if (p < 0.5) {
-            g.fillStyle = pal.ink; g.font = `700 ${Math.round(Math.max(10, fw * 0.48))}px 'Courier New', Courier, monospace`;
+            g.fillStyle = pal.ink; g.font = `700 ${Math.round(Math.max(10, fw * 0.48))}px 'JetBrains Mono', 'Courier New', Courier, monospace`;
             g.textAlign = 'center'; g.textBaseline = 'middle';
             for (const x of fingers) if (!x.press) g.fillText(String(x.f), x.tx, x.ty + fw * 0.55);
           }

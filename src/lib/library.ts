@@ -199,4 +199,19 @@ function saveLibrary(ids: string[]) {
 export const inLibrary = (id: string) => myLibrary().includes(id);
 export const addToLibrary = (id: string) => { if (!inLibrary(id)) saveLibrary([...myLibrary(), id]); };
 export const removeFromLibrary = (id: string) => saveLibrary(myLibrary().filter(x => x !== id));
+/**
+ * Songs he took out of his library (the user's choice 2026-11: "it must be possible to remove
+ * songs"): a piece the app ships is only hidden, and comes back from Add songs; a file he brought is
+ * deleted (removeSong).
+ */
+const HIDDEN = 'hugos-piano:hidden-songs';
+export function hiddenSongs(): string[] {
+  try { return JSON.parse(localStorage.getItem(HIDDEN) ?? '[]'); } catch { return []; }
+}
+function saveHidden(ids: string[]) {
+  try { localStorage.setItem(HIDDEN, JSON.stringify(ids)); } catch { /* storage unavailable */ }
+  libListeners.forEach(fn => fn());
+}
+export const hideSong = (id: string) => { if (!hiddenSongs().includes(id)) saveHidden([...hiddenSongs(), id]); };
+export const unhideSong = (id: string) => saveHidden(hiddenSongs().filter(x => x !== id));
 export const onLibrary = (fn: () => void) => { libListeners.add(fn); return () => { libListeners.delete(fn); }; };

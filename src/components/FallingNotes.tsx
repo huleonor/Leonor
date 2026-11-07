@@ -17,7 +17,7 @@ function palette() {
     right: v('--pink'), rightLit: v('--pink-soft'), left: v('--teal'), leftLit: v('--teal-soft'), leftInk: v('--ink'), red: v('--mark'), gate: v('--ok'),
   };
 }
-const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+const SANS = "'Bricolage Grotesque', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const VISIBLE_SECONDS = 3.2;
 
 export function FallingNotes({ engine, lo, hi, naming, fingers, inset, onTap }: Props) {
