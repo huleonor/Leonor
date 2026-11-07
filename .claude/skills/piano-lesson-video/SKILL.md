@@ -82,6 +82,21 @@ Where the words live: hand-written per phase in `src/lib/reelScripts.ts` (`talk`
 
 The look is DESIGN.md (Cartaz): paper, ink, the right hand blue, the left red. One keyboard for both hands; the step's kicker small and its notes huge at the top; the caption under the keyboard; air below. Motion follows HyperFrames' craft: everything drawn from the clock (scrub works), the camera pushes in on the video's keys in the first second, expo arrivals, short exits, titles and captions blurring in word by word, no bounce, no loops for decoration.
 
+### The staff over the falling notes (2026-11)
+
+The user's choice, from a falling-notes video he sent ("learn with the keys falling and the staff, and still the hands below"): every video shows its bars engraved as a strip of music above the falling notes (`ReelStaff.tsx`, the lessons' own engraving), sliding under a pink now line in step with the video's clock. A hand-alone video prints only that hand's staff. Two links tie reading to playing, and every new video keeps them:
+- the notes sounding now print in their hand's ink (pink right, teal left) on the staff, the same colour as the falling note and the key below;
+- while the voice names keys (and while the video waits for him), those notes light on the staff as they light on the keys.
+The Staff button beside the video and Settings, Videos, "Staff over the notes", turn it off.
+
+### From explainer-video craft (iart-ai/explainer-video-skills, MIT)
+
+Ideas kept, as they fit a lesson clip: one core idea per video, the one line he could repeat (the kicker and the voice's first sentence say it); the voice is the spine and the picture shows the line being said, never ahead of it; one analogy, kept for the whole section; slow down on the "how" (Train with me), brisk on the set-up; about 2.3 words a second for the voice, 2.0 on technical lines, and a beat of at least a second for a picture with no words.
+
+### Reading a video he sends
+
+The project skill `watch` (bradautomates/claude-video, MIT, `.claude/skills/watch`) turns a video file into timestamped frames and a transcript. From the cloud, YouTube refuses downloads ("sign in to confirm you're not a bot"): ask him for the file itself, or read the cover frames (`i.ytimg.com/vi/<id>/oardefault.jpg`) and the title (YouTube's oEmbed).
+
 ## 6. Sound
 
 Few and exact, each with a cause on screen (`public/sfx`, Pixabay licence): a whoosh as a title arrives, a click on each count-in beat, a pop for each run counted, a riser into an impact as the whole phase starts. No chimes, no music bed: the piano is the music.

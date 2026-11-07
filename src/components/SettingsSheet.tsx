@@ -1,7 +1,7 @@
 import { naturalState, naturalVoiceWanted, onVoice, setNaturalVoice } from '../lib/voice';
 import { useEffect, useState } from 'react';
 import { useI18n } from '../lib/i18n';
-import { handsShown, L, showHands } from '../lib/lang';
+import { handsShown, L, showHands, showStaff, staffShown } from '../lib/lang';
 import { isNative, nativeMidiStatus, support, type LinkState, type Source } from '../lib/input';
 import type { FingerMode, Lang, Settings } from '../lib/types';
 import { IconBluetooth, IconClose, IconKeys, IconMic } from './Icons';
@@ -72,6 +72,7 @@ export function SettingsSheet({ settings, update, links, connectInput, disconnec
     return () => window.removeEventListener('keydown', k);
   }, [onClose]);
   const [hands, setHands] = useState(handsShown);
+  const [staff, setStaff] = useState(staffShown);
   // Only the iPhone app's update notice is left of the old About card (when it is out of date).
   const [nativeBuild, setNativeBuild] = useState<number | null>(null);
   useEffect(() => { nativeMidiStatus().then(st => st && setNativeBuild(st.appBuild ?? 1)); }, []);
@@ -109,6 +110,10 @@ export function SettingsSheet({ settings, update, links, connectInput, disconnec
           <label className="toggle-row">
             <span><b>{L('Wait for me', 'Esperar por mim')}</b><small>{L('With your piano connected, the video stops at a note you have not played.', 'Com o piano ligado, o vídeo para numa nota que ainda não tocaste.')}</small></span>
             <input className="switch" type="checkbox" checked={settings.videoWait ?? true} onChange={e => update({ videoWait: e.target.checked })} />
+          </label>
+          <label className="toggle-row">
+            <span><b>{L('Staff over the notes', 'Pauta por cima das notas')}</b><small>{L('The music written above the falling notes, moving with them.', 'A música escrita por cima das notas a cair, a andar com elas.')}</small></span>
+            <input className="switch" type="checkbox" checked={staff} onChange={e => { showStaff(e.target.checked); setStaff(e.target.checked); }} />
           </label>
           <label className="toggle-row">
             <span><b>{L('Hands on the keys', 'Mãos nas teclas')}</b><small>{L('Hands that show how to play. Based on "Rigged hand" by Elena FF (Sketchfab), CC BY-SA 4.0.', 'Mãos que mostram como tocar. Baseadas em "Rigged hand" de Elena FF (Sketchfab), CC BY-SA 4.0.')}</small></span>

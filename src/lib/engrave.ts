@@ -59,6 +59,8 @@ interface Options {
   onClickNote?: (startChar: number | undefined) => void;
   /** Spread the (last) line over the whole staff width, so a short step fills the screen. */
   stretch?: boolean;
+  /** A colour that wins over the state's (the videos print the notes sounding now in their hand's ink). */
+  tint?: (ids: number[]) => string | undefined;
 }
 
 /**
@@ -112,6 +114,7 @@ export function engrave(host: HTMLElement, paper: HTMLElement, engine: Engine, s
       else if (st.every(s => s === HIT || s === AUTO) && mine) color = C.hit;
     }
     if (o.highlightNext?.() && mine && color === C.ink && engine.groups[engine.gi]?.ids.some(id => tk.ids.includes(id))) color = C.next;
+    color = o.tint?.(tk.ids) ?? color;
     for (const el of elsOf(tk)) {
       el.style.fill = color;
       el.querySelectorAll?.('path').forEach(p => ((p as SVGElement).style.fill = color));

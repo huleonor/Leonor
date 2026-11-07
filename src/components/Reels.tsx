@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { markAppPlayed } from '../lib/input';
-import { handsShown, L, N, NOTE_RE, showHands, videoPrefs } from '../lib/lang';
+import { handsShown, L, N, NOTE_RE, showHands, showStaff, staffShown, videoPrefs } from '../lib/lang';
+import { ReelStaff } from './ReelStaff';
 import { audioContext, loadPiano, onAudioReset, pianoReady, playNote, playSfx, stopAll, stopSfx, unlockAudio } from '../lib/audio';
 import { linkState, onLinkState, onNote, setExpected, setMicRange } from '../lib/input';
 // The 3D gloves load on their own (three.js is large), only where WebGL runs.
@@ -23,7 +24,7 @@ import { isBlack } from '../lib/names';
 import { explainClips, FALL, fixClip, letter, markSeen, readClip, reelsOf, timelineOf, type Clip, type Reel, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
 import { anyVoice, hush, onVoice, pauseVoice, prepareVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
-import { IconCheck, IconClose, IconExplain, IconHand, IconKeys, IconPlay, IconRestart, IconSpeaker, IconSpeakerOff, IconSpeed } from './Icons';
+import { IconCheck, IconClose, IconExplain, IconHand, IconKeys, IconPlay, IconRestart, IconSheet, IconSpeaker, IconSpeakerOff, IconSpeed } from './Icons';
 import { SOFT, SPRING } from './Motion';
 import { SectionRow } from './SectionRow';
 
@@ -929,6 +930,9 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
   const [handsOn, setHandsOn] = useState(handsShown);
   useEffect(() => { const on = () => setHandsOn(handsShown()); window.addEventListener('leonor:hands', on); return () => window.removeEventListener('leonor:hands', on); }, []);
   const toggleHands = () => showHands(!handsOn);
+  const [staffOn, setStaffOn] = useState(staffShown);
+  useEffect(() => { const on = () => setStaffOn(staffShown()); window.addEventListener('leonor:staff', on); return () => window.removeEventListener('leonor:staff', on); }, []);
+  const staffOnly = reel.segments[0].kind === 'L' || reel.segments[0].kind === 'R' ? reel.segments[0].kind as Hand : undefined;
   const firstNote = tl.notes[0]?.t ?? 0;
   // The gloves in 3D over the flat video where WebGL runs (the flat ones elsewhere).
   const use3d = useMemo(() => webglOk(), []);
@@ -1004,6 +1008,12 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
             <p className="reel-meta">{paused && L(`${reel.phase.section}, ${reel.k} of ${reel.of}`, `${reel.phase.section}, ${reel.k} de ${reel.of}`)}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">{paused ? '. ' : ''}{L('Your keys: ', 'As tuas teclas: ')}<b className="ok">{score.ok} {L('right', 'certas')}</b>, <b className="bad">{score.bad} {L('wrong', 'erradas')}</b></span>}</p>
           )}
         </header>
+        {/* The staff over the falling notes: what he reads is what lands on the keys below. */}
+        {staffOn && (
+          <div className={`reel-staff-slot ${staffOnly ? 'one' : ''}`}>
+            {active && <ReelStaff song={song} from={reel.from} to={reel.to} only={staffOnly} tl={tl} now={clock.now} playing={!paused} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />}
+          </div>
+        )}
         <div className="reel-stage">
           <Lanes tl={tl} range={range} now={clock.now} held={held} presses={presses} hands={handsOn} flatHands={!use3d} geom={geomRef} shape={reel.kind === 'pattern' || reel.kind === 'L' || reel.kind === 'R' || reel.kind === 'fix'} jump={jumpKeys} flats={song.fifths < 0} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} />
           {use3d && handsOn && <Suspense fallback={null}><Hands3D tl={tl} now={clock.now} geom={geomRef} named={waitingFor ? waitRef : named} namedUntil={waitingFor ? Infinity : firstNote} /></Suspense>}
@@ -1123,6 +1133,7 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
                   aria-label={L(`Speed: ${name}. Tap to change`, `Velocidade: ${name}. Toca para mudar`)}><span><IconSpeed size={24} /></span>{name}</button>
               );
             })()}
+            <button className="reel-act" onClick={e => { e.stopPropagation(); showStaff(!staffOn); }} aria-pressed={staffOn} aria-label={staffOn ? L('Hide the staff', 'Esconder a pauta') : L('Show the staff over the notes', 'Mostrar a pauta por cima das notas')}><span><IconSheet size={24} /></span>{L('Staff', 'Pauta')}</button>
             <button className="reel-act" onClick={e => { e.stopPropagation(); toggleHands(); }} aria-pressed={handsOn} aria-label={handsOn ? L('Hide the hands on the keys', 'Esconder as mãos nas teclas') : L('Show the hands on the keys', 'Mostrar as mãos nas teclas')}><span><IconHand size={24} /></span>{L('Hands', 'Mãos')}</button>
           </motion.aside>
         )}

@@ -22,6 +22,13 @@ export function showHands(on: boolean) {
   window.dispatchEvent(new Event('leonor:hands'));
 }
 
+/** The staff over the falling notes in the videos, on or off (Settings and the Staff button share it). */
+export const staffShown = () => { try { return localStorage.getItem('leonor:staff') !== 'off'; } catch { return true; } };
+export function showStaff(on: boolean) {
+  try { localStorage.setItem('leonor:staff', on ? 'on' : 'off'); } catch { /* this visit only */ }
+  window.dispatchEvent(new Event('leonor:staff'));
+}
+
 /** The note names he reads (Settings, Note names): letters, or Dó Ré Mi. */
 export const notePrefs = { solfege: false };
 const SOLF: Record<string, string> = { C: 'Dó', D: 'Ré', E: 'Mi', F: 'Fá', G: 'Sol', A: 'Lá', B: 'Si' };
