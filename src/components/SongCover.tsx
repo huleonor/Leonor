@@ -141,3 +141,25 @@ export function HomeStaff({ song, done = 0 }: { song: Song; done?: number }) {
     </svg>
   );
 }
+
+/**
+ * A loading or empty state drawn in the notebook (the user's "loading and empty states drawn",
+ * 2026-11): a staff ruled across the page once, line by line, with a bar line and, for an empty
+ * page, a whole rest in its first bar; and a line saying what is happening.
+ */
+export function Ruling({ text, rest }: { text: string; rest?: boolean }) {
+  const EXPO = [0.16, 1, 0.3, 1] as const;
+  return (
+    <div className="ruling" role="status" aria-live="polite">
+      <svg viewBox="0 0 340 60" aria-hidden="true">
+        {[-2, -1, 0, 1, 2].map((k, i) => (
+          <motion.line key={k} x1={4} x2={336} y1={30 + k * 8} y2={30 + k * 8}
+            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.7, delay: i * 0.06, ease: EXPO }} />
+        ))}
+        <motion.line className="bar" x1={170} x2={170} y1={14} y2={46} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} />
+        {rest && <motion.rect className="rest" x={74} y={22} width={18} height={6} initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.35, ease: EXPO }} />}
+      </svg>
+      <p>{text}</p>
+    </div>
+  );
+}

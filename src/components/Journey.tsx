@@ -6,7 +6,7 @@ import { meterOf, pctOf } from '../lib/mastery';
 import { clipsOf, onSeen, reelsOf, seenReels, type Reel } from '../lib/reels';
 import { askStrategy } from '../lib/strategy';
 import { hiddenSongs } from '../lib/library';
-import { HomeStaff } from './SongCover';
+import { HomeStaff, Ruling } from './SongCover';
 import type { Song, SongEntry } from '../lib/types';
 import { IconCheck, IconImport, IconKeysFill, IconPlay, IconSpeaker, IconStop } from './Icons';
 import { SPRING } from './Motion';
@@ -79,7 +79,7 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
   const others = entries.filter(e => !e.missing && !hiddenSongs().includes(e.id) && e.id !== entry?.id && infos[e.id]?.song).slice(0, 6);
 
   // Shown as soon as its own song is read (the catalog reads it first), not after the whole library.
-  if (!ready && !info) return <div className="page journey" aria-busy="true"><span className="journey-hero skeleton" /></div>;
+  if (!ready && !info) return <div className="page journey" aria-busy="true"><Ruling text={L('Reading the song...', 'A ler a música...')} /></div>;
 
   if (!entry || entry.missing || !song || !info) {
     const slot = entry ?? entries.find(e => e.id === FIRST_SONG);

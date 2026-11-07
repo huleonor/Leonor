@@ -20,7 +20,7 @@
   --rule-2: #8C8068;
   /* Riso inks: fluorescent pink (the right hand, what is next), teal (the left hand), yellow marker */
   --pink: #FF006E;
-  --pink-text: #C2004F;
+  --pink-text: var(--pink-700);
   --pink-soft: #FFD6E6;
   --teal: #00A99D;
   --teal-text: #006A62;
@@ -32,11 +32,11 @@
   --riso: none;
   /* "Field" is the highlighted card now: a pink-tinted sheet with ink on it */
   --blue: var(--pink);
-  --field: var(--pink-soft);
-  --field-2: #FFC2DA;
+  --field: var(--pink-50);
+  --field-2: var(--pink-100);
   --field-ink: var(--ink);
   --field-muted: var(--ink-2);
-  --field-rule: #E89AB8;
+  --field-rule: var(--pink-200);
   /* Right and wrong: riso green and riso red */
   --mark: #E0301E;
   --mark-ink: #F5EDD8;
@@ -215,7 +215,7 @@ p { margin: 0; }
 .choice small { color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
 .choice svg { color: var(--ink); margin-bottom: 4px; }
 .choice:hover { background: var(--marker); }
-.choice.on, .choice.selected { background: var(--pink-soft); }
+.choice.on, .choice.selected { background: var(--pink-50); border-color: var(--pink); }
 .choice.error small { color: var(--mark-text); }
 .choice:disabled { opacity: .5; }
 
@@ -308,7 +308,8 @@ p { margin: 0; }
 /* A learnt section's tick lands like a stamp: dropped, turned a little, set down. */
 .sec-row.done .sec-num svg { animation: stamp var(--t-stamp) var(--ease-out) both; }
 @keyframes stamp { 0% { opacity: 0; transform: scale(2.2) rotate(-18deg); } 55% { opacity: 1; transform: scale(.9) rotate(-8deg); } 100% { opacity: 1; transform: scale(1) rotate(-8deg); } }
-.sec-row.next { background: var(--pink-soft); }
+.sec-row.next { background: var(--pink-50); }
+.sec-row.next .sec-main:hover { background: var(--pink-100); }
 .sec-row.next .sec-num { background: var(--pink); color: var(--white); }
 .sec-row.next .sec-words small { color: var(--pink-text); }
 .sec-row.finale { background: var(--ink); }
@@ -323,7 +324,14 @@ p { margin: 0; }
 .journey-hero .num-line .num { font-size: 30px; color: var(--ink); background: var(--marker); padding: 0 6px; transform: rotate(-2deg); display: inline-block; }
 .journey-actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
 .journey-hero.skeleton { height: 220px; background: var(--paper-2); }
-.journey-hero.waiting { padding: 24px 20px; background: var(--pink-soft); border: 2px solid var(--ink); transform: rotate(-1deg); }
+/* Loading and empty states: a staff ruled across the page, once (no loop), with what is happening. */
+.ruling { display: grid; gap: 10px; padding: 30px 0; }
+.ruling svg { width: 100%; height: auto; overflow: visible; }
+.ruling line { stroke: var(--ink); stroke-width: 1.2; }
+.ruling .rest { fill: var(--ink); }
+.ruling .bar { stroke-width: 2; }
+.ruling p { margin: 0; font: 700 13px var(--font-mono); color: var(--muted); }
+.journey-hero.waiting { padding: 24px 20px; background: var(--pink-50); border: 2px solid var(--ink); transform: rotate(-1deg); }
 .journey-hero.waiting .sub { color: var(--ink-2); }
 
 /* The next one: pink sheet, taped down */
@@ -366,6 +374,8 @@ p { margin: 0; }
 .song-card-foot b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.05; }
 .song-card.big .song-card-foot b { font-size: 28px; }
 .song-card-foot small { display: block; margin-top: 4px; font-family: var(--font-mono); color: var(--ink-2); font-size: 11px; }
+.song-card-foot small i { display: block; font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.song-card-foot > span:first-child { min-width: 0; }
 .song-card.big .song-card-foot small { font-size: 13px; }
 .song-card-foot .num { font-family: var(--font-mono); font-weight: 700; font-size: 15px; padding: 0 3px; }
 .song-card-foot .num i { font-style: normal; font-size: .7em; }
@@ -427,7 +437,12 @@ p { margin: 0; }
 .set-group { display: grid; gap: 12px; padding: 16px 14px; background: var(--white); border: 2px solid var(--ink); }
 .set-group:nth-of-type(odd) { transform: rotate(-.5deg); }
 .set-group:nth-of-type(even) { transform: rotate(.5deg); }
-.set-group h3 { font-size: 22px; }
+.set-group h3 { font-size: 22px; display: flex; align-items: baseline; gap: 10px; }
+.set-group h3 .tab { font: 700 13px var(--font-mono); background: var(--marker); padding: 1px 7px; transform: rotate(-2deg); }
+.set-group h3 .keys { margin-left: auto; display: flex; height: 18px; border: 2px solid var(--ink); }
+.set-group h3 .keys i { width: 9px; background: var(--white); border-right: 1px solid var(--ink); position: relative; }
+.set-group h3 .keys i:last-child { border-right: 0; }
+.set-group h3 .keys i.b::after { content: ""; position: absolute; right: -4px; top: 0; width: 6px; height: 10px; background: var(--ink); z-index: 1; }
 .input-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .input-choices .choice { min-width: 0; }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; cursor: pointer; }
@@ -902,7 +917,7 @@ p { margin: 0; }
 .sec-more .btn.quiet { min-height: 44px; }
 .sec-card.ahead .sec-num { border-style: dashed; color: var(--ink-2); }
 .sec-card.done .sec-num { background: var(--teal-soft); }
-.sec-card.next { background: var(--pink-soft); }
+.sec-card.next { background: var(--pink-50); }
 .sec-card.next .sec-num { background: var(--pink); color: var(--white); border-color: var(--ink); }
 .sec-card.next::before { content: ''; position: absolute; top: -10px; left: 30px; width: 64px; height: 20px; background: var(--tape); transform: rotate(-6deg); }
 .sec-card.finale { background: var(--ink); }
@@ -935,7 +950,7 @@ p { margin: 0; }
 .home-item b { font-family: var(--font-display); font-weight: 700; font-size: 21px; }
 .home-item small { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
 
-.lib-now.waiting { background: var(--pink-soft); margin-bottom: 10px; }
+.lib-now.waiting { background: var(--pink-50); margin-bottom: 10px; }
 .lib-now.waiting .lib-now-foot { flex-wrap: wrap; }
 /* His piano on the video: connect it, and his right and wrong keys counted as he plays along. */
 .reel-explain { position: absolute; z-index: 7; top: 26px; right: 14px; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 10px; background: var(--white); border: 1px solid var(--rule-2); color: var(--ink-2); font: 700 12px var(--font-mono); }
