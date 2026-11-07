@@ -327,8 +327,8 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
               else if (t < t1) { z = top - depth; press = 1; }
               else if (t < t1 + 0.2) { const e = smooth((t - t1) / 0.2); z = top - depth + (hover + depth) * e; press = 1 - e; }
               // Into the black keys and out again gradually, as the note comes, not in one jump.
-              const restY = G.kbTop + G.kbH * (f === 1 ? 0.88 : 0.6);
-              const keyY = G.kbTop + G.kbH * (black ? 0.3 : f === 1 ? 0.88 : 0.6);
+              const restY = G.kbTop + G.kbH * (f === 1 ? 0.74 : 0.6);
+              const keyY = G.kbTop + G.kbH * (black ? 0.3 : f === 1 ? 0.74 : 0.6);
               const soon = Math.max(0, t0 - t), into = t >= t0 ? 1 : smooth(1 - soon / 0.7);
               want[f] = { x: k.x + k.w / 2, y: restY + (keyY - restY) * into, z, real: true, soon, press, since: Math.max(0, t - t0), gap: nx.t - mine.reduce((a, n) => (n.t < nx.t - 0.01 && n.t > a ? n.t : a), -1e9), n: nx, kx: k.x + k.w / 2 };
             } else want[f] = { y: G.kbTop + G.kbH * 0.6, z: hover * 1.8, real: false, soon: 9, press: 0 };
@@ -356,6 +356,13 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           for (let f = 4; f >= 2; f--) {
             const gap = dir * (want[f + 1].x! - want[f].x!);
             if (gap < step * 0.8 && !busy(f)) want[f].x = want[f + 1].x! - dir * step;
+          }
+          // A thumb with nothing to play rests close under the index, a key or so in, as a pianist's
+          // does (lying out flat to the side looked broken, 2026-11).
+          if (!want[1].real || want[1].soon > 0.6) {
+            const gap = dir * (want[2].x! - want[1].x!);
+            if (gap > step * 1.1 || gap < step * 0.5) want[1].x = want[2].x! - dir * step * 0.85;
+            if (!want[1].real) want[1].y = G.kbTop + G.kbH * 0.7;
           }
           rig.root.visible = true;
           // Tendons: a pressing finger pulls its neighbours down a little.
@@ -394,7 +401,19 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // keeps it sounding (the check found the wrist left halfway on a B to high C).
           const coming = [1, 2, 3, 4, 5].filter(g => want[g].real && want[g].soon > 0 && want[g].soon < 0.45).map(g => want[g].x!);
           for (let f = 1; f <= 5; f++) { const far = want[f].real ? Math.abs(want[f].x! - rig.wx) / kw : 0; const lead = Math.min(0.25 + Math.min(0.55, far * 0.06), Math.max(0.12, (want[f].gap ?? 9) * 0.5)); const held = want[f].real && want[f].soon === 0 && (want[f].since ?? 0) > 0.2 && coming.length > 0; const left = !held ? 1 : coming.some(x => Math.abs(x - want[f].x!) > kw * 5) ? 0.08 : 0.15; const w = want[f].real ? left / (0.06 + Math.max(0, want[f].soon - lead) + 0.6 * Math.max(0, (want[f].since ?? 0) - 0.15)) : 0.15; const wt = f === 1 && want[f].real ? w * 2 : w; sx += ((want[f].real ? want[f].x! : rig.fingers[f - 1].x) - (f - 3) * dir * (rig.span * s) / 3) * wt; sw += wt; }
-          const handX = p > 0.5 ? rig.px + dir * kw * 0.9 : sx / sw;
+          let handX = p > 0.5 ? rig.px + dir * kw * 0.9 : sx / sw;
+          // The whole hand goes to the thumb (or the little finger) before it plays a key further out
+          // than it sits, instead of the finger stretching flat along the keys (the user saw the thumb
+          // look broken, 2026-11): as its note comes, the hand shifts by what the finger would have to
+          // reach past a key beyond its own place. Not when both edges play at once (an octave).
+          const urge = (f: number) => (want[f].real ? Math.max(want[f].press, smooth(1 - want[f].soon / 0.5)) : 0);
+          const past = (f: number) => {
+            if (!want[f].real) return 0;
+            const nat = handX + REST_KEYS[f] * dir * step, out = f === 1 ? -dir : dir;
+            return Math.max(0, (want[f].x! - nat) * out - step * 1.2) * out;
+          };
+          const u1 = urge(1), u5 = urge(5);
+          if (p <= 0.5 && !(u1 > 0.3 && u5 > 0.3)) handX += past(1) * u1 * 0.6 + past(5) * u5 * 0.5;
           // A stiff, critically damped spring (no overshoot), towards a target that already leans on
           // the notes coming in the next quarter second (earlier for a far jump, about 0.06 s a key,
           // so a hand crossing over arrives on time), so the hand arrives with them, not after.
@@ -422,7 +441,7 @@ export function Hands3D({ tl, now, geom, named, namedUntil }: Props) {
           // on a critically damped spring: it glides forward and back, never overshoots.
           const restY = G.kbTop + G.kbH * 0.6;
           let reachY = restY;
-          for (let f = 1; f <= 5; f++) if (want[f].real && want[f].soon < 1) reachY = Math.min(reachY, want[f].y + (f === 1 ? -G.kbH * 0.5 : 0));
+          for (let f = 1; f <= 5; f++) if (want[f].real && want[f].soon < 1) reachY = Math.min(reachY, want[f].y + (f === 1 ? -G.kbH * 0.36 : 0));
           const kyWant = p > 0.5 ? rig.py : reachY;
           if (!rig.ky) rig.ky = kyWant;
           for (let k = 0; k < steps; k++) { rig.vky += (144 * (kyWant - rig.ky) - 2 * 12 * rig.vky) * h2; rig.ky += rig.vky * h2; }
