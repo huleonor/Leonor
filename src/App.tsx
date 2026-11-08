@@ -319,12 +319,12 @@ export default function App() {
       )}
 
       <input
-        ref={fileRef} type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden
+        ref={fileRef} type="file" accept=".mid,.midi,audio/midi,audio/x-midi,.pdf,application/pdf" hidden
         onChange={e => { const f = e.target.files?.[0]; if (f) setAdding({ file: f, slot: slotRef.current }); e.target.value = ''; }}
       />
       {editing && (
         <EditSong
-          entry={editing}
+          entry={editing} song={infos[editing.id]?.song}
           onClose={() => setEditing(null)}
           onSave={async (title, composer) => { await renameSong(editing, title, composer); setEditing(null); await refreshCatalog(); }}
           onDelete={async () => {
@@ -342,6 +342,7 @@ export default function App() {
         <AddSong
           file={adding.file} slot={adding.slot}
           onClose={() => setAdding(null)}
+          onPickAgain={() => { const slot = adding.slot; setAdding(null); window.setTimeout(() => pickFile(slot), 0); }}
           onDone={async entry => { setAdding(null); await refreshCatalog(); choose(entry.slot ?? entry.id); const waits = viaPiano(() => { setWatch(null); setTab('watch'); }); setNotice({ text: waits ? L(`“${entry.title}” is ready.`, `“${entry.title}” está pronta.`) : L(`“${entry.title}” is ready: its videos start now.`, `“${entry.title}” está pronta: os vídeos começam agora.`) }); }}
         />
       )}

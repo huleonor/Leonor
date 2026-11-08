@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { L } from '../lib/lang';
-import type { SongEntry } from '../lib/types';
+import type { Song, SongEntry } from '../lib/types';
+import { ScoreCheck } from './ScoreCheck';
 import { IconClose, IconTrash } from './Icons';
 
 interface Props {
   entry: SongEntry;
+  /** The song's notes, to check them against a PDF score. */
+  song?: Song;
   onSave: (title: string, composer: string) => void;
   onDelete: () => void;
   onClose: () => void;
 }
 
 /** Rename or delete one of his own songs; a piece the app ships can only be taken out of the library. */
-export function EditSong({ entry, onSave, onDelete, onClose }: Props) {
+export function EditSong({ entry, song, onSave, onDelete, onClose }: Props) {
   const [title, setTitle] = useState(entry.title);
   const [composer, setComposer] = useState(entry.composer ?? '');
   const [confirm, setConfirm] = useState(false);
@@ -28,6 +31,7 @@ export function EditSong({ entry, onSave, onDelete, onClose }: Props) {
           <label className="field">{L('Composer', 'Compositor')}<input value={composer} onChange={e => setComposer(e.target.value)} placeholder={L('Optional', 'Opcional')} /></label>
           <button className="btn go" type="submit">{L('Save', 'Guardar')}</button>
         </form>}
+        {!shipped && song && <ScoreCheck song={song} />}
         <section className="set-group">
           {confirm ? (
             <>

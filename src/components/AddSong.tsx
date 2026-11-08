@@ -6,8 +6,10 @@ import { useI18n } from '../lib/i18n';
 import { readMidi, saveImported } from '../lib/library';
 import { formatTime } from '../lib/names';
 import type { Song, SongEntry } from '../lib/types';
-import { IconClose } from './Icons';
+import { IconClose, IconImport } from './Icons';
 import { SheetThumb } from './SheetThumb';
+import { ScoreCheck } from './ScoreCheck';
+import { keepPendingScore } from '../lib/pdfCheck';
 
 interface Props {
   file: File;
@@ -15,10 +17,50 @@ interface Props {
   slot?: SongEntry;
   onDone: (entry: SongEntry) => void;
   onClose: () => void;
+  /** Choose a file again (after a PDF, the MIDI). */
+  onPickAgain?: () => void;
 }
 
 /** A MIDI file becomes a song: name it, see how it will be taught, save it. */
-export function AddSong({ file, slot, onDone, onClose }: Props) {
+export function AddSong(props: Props) {
+  return /\.pdf$/i.test(props.file.name) || props.file.type === 'application/pdf' ? <PdfFirst {...props} /> : <AddMidi {...props} />;
+}
+
+/**
+ * A PDF chosen where a MIDI was expected: the app cannot read the notes of a printed score (that is
+ * optical music recognition, which apps made for it do far better), so it says how to turn it into
+ * a MIDI file, and keeps the PDF to check that MIDI against it when it comes.
+ */
+function PdfFirst({ file, slot, onClose, onPickAgain }: Props) {
+  useEffect(() => { file.arrayBuffer().then(keepPendingScore).catch(() => {}); }, [file]);
+  return (
+    <div className="upload-page" role="dialog" aria-modal="true" aria-labelledby="pdf-title">
+      <header className="upload-head">
+        <h2 id="pdf-title">{L('A score in PDF', 'Uma partitura em PDF')}</h2>
+        <button className="icon-btn ghost" onClick={onClose} aria-label={L('Close', 'Fechar')}><IconClose /></button>
+      </header>
+      <div className="upload-body">
+        <div className="upload-form">
+          <section className="set-group">
+            <p>{L('The videos and lessons are made from a MIDI file. A PDF is a printed page: turn it into MIDI with an app made for reading scores, then add that file here.', 'Os vídeos e as lições são feitos a partir de um ficheiro MIDI. Um PDF é uma página impressa: transforma-o em MIDI com uma app feita para ler partituras e junta aqui esse ficheiro.')}</p>
+            <ol className="pdf-steps">
+              <li>{L('Open the PDF in PlayScore 2 (iPhone) or MuseScore Studio (Import PDF).', 'Abre o PDF no PlayScore 2 (iPhone) ou no MuseScore Studio (Importar PDF).')}</li>
+              <li>{L('Export it as MIDI.', 'Exporta-o em MIDI.')}</li>
+              <li>{L('Add the MIDI here. This PDF is kept for now: the app checks the MIDI against it.', 'Junta aqui o MIDI. Este PDF fica guardado por agora: a app verifica o MIDI com ele.')}</li>
+            </ol>
+            <p className="fine file-name">{file.name}{slot ? `, ${slot.title}` : ''}</p>
+          </section>
+          <div className="upload-actions">
+            {onPickAgain && <button className="btn go big" type="button" onClick={onPickAgain}><IconImport size={16} />{L('Choose the MIDI file', 'Escolher o ficheiro MIDI')}</button>}
+            <button className="btn outline big" type="button" onClick={onClose}>{L('Close', 'Fechar')}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddMidi({ file, slot, onDone, onClose }: Props) {
   const { t } = useI18n();
   const [read, setRead] = useState<{ song: Song; data: ArrayBuffer } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +119,7 @@ export function AddSong({ file, slot, onDone, onClose }: Props) {
               </div>
             </form>
           )}
+          {read && <ScoreCheck song={read.song} />}
         </div>
       </div>
     </div>
