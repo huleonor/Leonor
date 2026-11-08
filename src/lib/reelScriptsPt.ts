@@ -15,6 +15,63 @@ const ph = (title: string, hook: string, tricks: string[], L: string, R: string,
   ({ title, hook, tricks, L, R, cues, tip, talk });
 
 export const SCRIPTS_PT: Record<string, PhasePt[]> = {
+  'fly-me-to-the-moon-accomp': [
+    ph('Responder a quem canta', 'O baixo anda, a direita enche os espaços', [
+      'Esquerda: uma nota por tempo, a andar para o acorde',
+      'Direita: calada enquanto cantam, uma subida na pausa',
+    ], 'Uma nota por tempo, E, A, D, G pelas quintas', 'Subidas curtas pelo acorde nos espaços da melodia', {
+      2: 'Em7: a voz começa, a direita espera',
+      3: 'Am7: uma subida pelo acorde enquanto seguram',
+      5: 'Gmaj7: responde outra vez, depois acordes',
+      8: 'B7 leva de volta ao E',
+    }, 'Deixa espaço à melodia. Toca nos espaços, suave.', {
+      intro: 'Aqui és tu a banda. Quem canta tem a melodia. A tua mão esquerda faz o baixo a andar, uma nota em cada tempo, e a direita responde nos espaços.',
+      L: 'Mão esquerda: um baixo a andar. Uma nota por tempo, a caminho do acorde seguinte: E, A, D, G, pelas quintas.',
+      R: 'Mão direita: espera enquanto a voz canta, e depois uma subida curta pelo acorde quando ela respira.',
+      both: 'Juntas, devagar. O baixo nunca para. A direita só fala nos espaços.',
+      outro: 'Deixa espaço à melodia. Toca nos espaços, suave.',
+    }),
+    ph('In other words', 'Acordes fora do tempo sobre o baixo a andar', [
+      'Direita: acordes curtos, entre os tempos',
+      'Esquerda: continua a andar, A, D, G, pelas quintas',
+    ], 'Baixo: A, D, G, depois B, E, A, D', 'Acordes curtos e uma resposta aguda a cada frase', {
+      10: 'Am7, D7, Gmaj7: a queda em quintas',
+      13: 'Bm7, E7: a mesma queda outra vez',
+      16: 'G: em casa, depois B7 de volta ao verso',
+    }, 'Mantém a esquerda firme. A direita só dá cor.', {
+      intro: 'In other words. Aqui os acordes caem em quintas, e a direita toca acordes curtos entre os tempos enquanto o baixo continua a andar.',
+      L: 'Mão esquerda: continua a andar. A, D, G, e depois B, E, A, D.',
+      R: 'Mão direita: acordes curtos fora do tempo, e uma resposta aguda depois de cada frase.',
+      both: 'Juntas. A esquerda é o relógio. A direita só dá cor.',
+      outro: 'Mantém a esquerda firme. A direita só dá cor.',
+    }),
+    ph('Fill my heart', 'Um ritmo de swing na direita, compasso a compasso', [
+      'Direita: o mesmo ritmo em cada compasso, fora do tempo',
+      'Esquerda: o baixo a andar do verso 1',
+    ], 'O caminho do verso 1 outra vez: E, A, D, G', 'Um ritmo de acompanhamento, levado a cada acorde', {
+      18: 'Em7: o ritmo de acompanhamento começa',
+      21: 'Gmaj7, G7: inclina para o C',
+      24: 'B7 leva ao Em',
+    }, 'Um ritmo, muitos acordes. Deixa o swing cair fora do tempo.', {
+      intro: 'O verso dois. A mão direita encontra um ritmo de swing e mantém-no, compasso a compasso, em cada acorde novo.',
+      L: 'Mão esquerda: o mesmo caminho do verso um. Já o conheces.',
+      R: 'Mão direita: um ritmo de acompanhamento, fora do tempo. Leva-o a cada acorde novo.',
+      both: 'Juntas. Um ritmo, muitos acordes. Deixa-o ter swing.',
+      outro: 'Um ritmo, muitos acordes. Deixa o swing cair fora do tempo.',
+    }),
+    ph('I love you', 'Acordes longos para fechar a canção', [
+      'Direita: acordes mais longos sob as últimas palavras',
+      'Esquerda: A, D, e depois em casa no G',
+    ], 'Baixo: A, D, G, a última queda em quintas', 'Acordes segurados, depois o pequeno final', {
+      26: 'Am7, depois D7: segura sob a voz',
+    }, 'Abranda com quem canta. Deixa soar o último acorde.', {
+      intro: 'O último refrão. Acordes mais longos sob as últimas palavras, e a canção acaba em casa, no G.',
+      L: 'Mão esquerda: A, D, e depois em casa no G.',
+      R: 'Mão direita: segura os acordes sob a voz, e depois o pequeno final.',
+      both: 'Juntas, devagar. Segue quem canta, e deixa soar o último acorde.',
+      outro: 'Abranda com quem canta. Deixa soar o último acorde.',
+    }),
+  ],
   'fly-me-to-the-moon': [
     ph('Melodia a descer', 'Uma melodia que desce a escala, com swing', [
       'Direita: a melodia, G F# E D C, a descer',
