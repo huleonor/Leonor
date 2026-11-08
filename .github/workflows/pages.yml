@@ -31,8 +31,6 @@ jobs:
           BASE_PATH: /Leonor/
       # A link opened deep in the app still finds it.
       - run: cp dist/index.html dist/404.html
-      # The workshop's management page (oficina-gestao/), a plain static page beside the app.
-      - run: cp -r oficina-gestao dist/oficina-gestao
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
