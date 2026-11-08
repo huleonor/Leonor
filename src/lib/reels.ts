@@ -11,7 +11,7 @@
  * without a script gets phases cut from its course parts and words the rules write from the notes.
  */
 import { splitBars } from './analysis';
-import { barIndex, barLength, barStart, type BarGrid } from './bars';
+import { barGrid as barGridOf, barIndex, barLength, barStart, type BarGrid } from './bars';
 import { buildCourse } from './course';
 import { readSong } from './reading';
 import { RULE_SECTIONS, SCRIPTS, SECTIONS } from './reelScripts';
@@ -220,6 +220,17 @@ function scriptIdFor(song: Song, bars: BarFacts[]): string | undefined {
       const marks = Object.entries(sc.fingerprint);
       const same = marks.filter(([bar, bass]) => bars[Number(bar) - 1]?.chord === bass).length;
       if (same < marks.length * 0.7) return false;
+    }
+    // A script that teaches the tune fits only a file whose right hand plays it (an accompaniment
+    // of the same song, his choice 2026-11, has the same bass but other words to learn it by).
+    if (sc.tune) {
+      const grid = barGridOf(song);
+      const a = grid.starts[sc.tune.bar - 1] ?? 0, b = grid.starts[sc.tune.bar] ?? Infinity;
+      const tops = new Map<number, number>();
+      for (const n of song.notes) if (n.hand === 'R' && n.ticks >= a && n.ticks < b) tops.set(n.ticks, Math.max(tops.get(n.ticks) ?? 0, n.midi));
+      const seq = [...tops.entries()].sort((x, y) => x[0] - y[0]).map(([, m]) => letter(m));
+      const plays = seq.slice(0, sc.tune.notes.length).join(' ') === sc.tune.notes.join(' ');
+      if (plays === !!sc.tune.not) return false;
     }
     return !!sc.version || !!sc.fingerprint;
   };

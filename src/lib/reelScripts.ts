@@ -16,7 +16,12 @@
  */
 import type { PhaseWords, Talk } from './reelShape';
 
-export interface SongScript { version?: string; fingerprint?: Record<number, string>; phases: PhaseWords[] }
+export interface SongScript {
+  version?: string; fingerprint?: Record<number, string>;
+  /** For a script that teaches the tune: the right hand's first notes in a bar (its top line), so an accompaniment of the same song does not take these words. */
+  tune?: { bar: number; notes: string[]; not?: boolean };
+  phases: PhaseWords[];
+}
 
 const ph = (from: number, to: number, title: string, hook: string, tricks: string[], L: string, R: string, cues: Record<number, string>, tip: string): PhaseWords =>
   ({ from, to, title, hook, tricks, L, R, cues, tip });
@@ -194,6 +199,7 @@ export const SCRIPTS: Record<string, SongScript> = {
   // walking bass in the left (midi.ts melodyTrack). The fingerprint is that walking bass.
   'fly-me-to-the-moon': {
     fingerprint: { 2: 'E', 3: 'A', 4: 'D', 5: 'G', 6: 'C', 7: 'F#', 8: 'B', 9: 'E', 10: 'A', 11: 'D', 12: 'G', 13: 'B', 14: 'A', 16: 'G', 17: 'F#', 18: 'E', 19: 'A', 20: 'D', 21: 'G', 22: 'C', 23: 'F#' },
+    tune: { bar: 2, notes: ['G', 'F#', 'E', 'D'] },
     phases: [
       ph(1, 9, 'The tune steps down', 'A tune that walks down the scale, with swing', [
         'Right: the tune, G F# E D C, step by step down',
@@ -231,6 +237,47 @@ export const SCRIPTS: Record<string, SongScript> = {
       }, 'Hold the last note and let it ring.'),
     ],
   },
+  // Fly Me to the Moon, the accompaniment (his choice 2026-11: "to accompany someone singing"): the
+  // piano part of the same score (his Piano.mid), the same bass, the tune left to the singer. The
+  // same four sections; the words teach the pianist's job: walk the bass, answer the voice in its
+  // gaps, comp the chords off the beat. Fits only a file whose right hand does not play the tune.
+  'fly-me-to-the-moon-accomp': {
+    fingerprint: { 2: 'E', 3: 'A', 4: 'D', 5: 'G', 6: 'C', 7: 'F#', 8: 'B', 9: 'E', 10: 'A', 11: 'D', 12: 'G', 13: 'B', 14: 'A', 16: 'G', 17: 'F#', 18: 'E', 19: 'A', 20: 'D', 21: 'G', 22: 'C', 23: 'F#' },
+    tune: { bar: 2, notes: ['G', 'F#', 'E', 'D'], not: true },
+    phases: [
+      ph(1, 9, 'Answer the singer', 'The bass walks, the right hand fills the gaps', [
+        'Left: one note a beat, walking to the next chord',
+        'Right: quiet while they sing, a run when they breathe',
+      ], 'One note a beat, E, A, D, G down the fifths', 'Short runs up the chord in the gaps of the tune', {
+        2: 'Em7: the singer starts, the right hand waits',
+        3: 'Am7: a run up the chord while they hold',
+        5: 'Gmaj7: answer again, then chords',
+        8: 'B7 leads back to E',
+      }, 'Leave the tune room. Play in the gaps, softly.'),
+      ph(10, 17, 'In other words', 'Chords off the beat over the walking bass', [
+        'Right: short chords, between the beats',
+        'Left: keeps walking, A, D, G, the fall of fifths',
+      ], 'A, D, G, then B, E, A, D: one note a beat', 'Short chords and a high answer after each line', {
+        10: 'Am7, D7, Gmaj7: the fall of fifths',
+        13: 'Bm7, E7: the same fall again',
+        16: 'G: home, then B7 back to the verse',
+      }, 'Keep the left hand steady. The right hand only colours.'),
+      ph(18, 25, 'Fill my heart', 'A swing pattern in the right hand, bar after bar', [
+        'Right: the same rhythm every bar, off the beat',
+        'Left: the walking bass you know from verse 1',
+      ], 'The walk of verse 1 again: E, A, D, G', 'One comping rhythm, moved to each new chord', {
+        18: 'Em7: the comping pattern starts',
+        21: 'Gmaj7, G7: lean into C',
+        24: 'B7 leads to E minor',
+      }, 'One rhythm, many chords. Let the swing lean on the off beats.'),
+      ph(26, 33, 'I love you', 'Held chords to land the song', [
+        'Right: longer chords under the last words',
+        'Left: A, D, then home to G',
+      ], 'A, D, G: the last fall of fifths', 'Held chords, then the little tag at the end', {
+        26: 'Am7, then D7: hold under the voice',
+      }, 'Slow down with the singer. Let the last chord ring.'),
+    ],
+  },
 };
 
 /**
@@ -239,6 +286,36 @@ export const SCRIPTS: Record<string, SongScript> = {
  * names are written as they read ("F sharp"); a capital A alone is read as the letter.
  */
 const TALK: Record<string, Talk[]> = {
+  'fly-me-to-the-moon-accomp': [
+    {
+      intro: 'Here you are the band. The singer has the tune. Your left hand walks the bass, one note on every beat, and your right hand answers in the gaps.',
+      L: 'Left hand: a walking bass. One note a beat, stepping to the next chord: E, A, D, G, down the fifths.',
+      R: 'Right hand: wait while the voice sings, then a short run up the chord when it breathes.',
+      both: 'Together, slowly. The bass never stops. The right hand only speaks in the gaps.',
+      outro: 'Leave the tune room. Play in the gaps, softly.',
+    },
+    {
+      intro: 'In other words. The chords fall in fifths, and the right hand plays short chords between the beats while the bass keeps walking.',
+      L: 'Left hand: keep walking. A, D, G, then B, E, A, D.',
+      R: 'Right hand: short chords off the beat, and a high answer after each line.',
+      both: 'Together. The left hand is the clock. The right hand only colours.',
+      outro: 'Keep the left hand steady. The right hand only colours.',
+    },
+    {
+      intro: 'Verse two. The right hand finds one swing rhythm and keeps it, bar after bar, on each new chord.',
+      L: 'Left hand: the same walk as verse one. You already know it.',
+      R: 'Right hand: one comping rhythm, off the beat. Move it to each new chord.',
+      both: 'Together. One rhythm, many chords. Let it swing.',
+      outro: 'One rhythm, many chords. Let the swing lean on the off beats.',
+    },
+    {
+      intro: 'The last chorus. Longer chords under the last words, and the song lands home on G.',
+      L: 'Left hand: A, D, then home to G.',
+      R: 'Right hand: hold the chords under the voice, then the little tag at the end.',
+      both: 'Together, slowly. Follow the singer, and let the last chord ring.',
+      outro: 'Slow down with the singer. Let the last chord ring.',
+    },
+  ],
   'fly-me-to-the-moon': [
     {
       intro: 'Fly Me to the Moon swings. The tune walks down the scale, G, F sharp, E, D, C, and under it the left hand walks too, one bass note on every beat.',
@@ -462,6 +539,12 @@ for (const [id, tips] of Object.entries(STEP_TIPS)) SCRIPTS[id]?.phases.forEach(
  * what links, what builds, what ends. A phase without a name is "Part n".
  */
 export const SECTIONS: Record<string, [string, string, string, string][]> = {
+  'fly-me-to-the-moon-accomp': [
+    ['Verse 1', 'Verso 1', 'verse 1', 'o verso 1'],
+    ['Chorus 1', 'Refrão 1', 'chorus 1', 'o refrão 1'],
+    ['Verse 2', 'Verso 2', 'verse 2', 'o verso 2'],
+    ['Chorus 2', 'Refrão 2', 'chorus 2', 'o refrão 2'],
+  ],
   'fly-me-to-the-moon': [
     ['Verse 1', 'Verso 1', 'verse 1', 'o verso 1'],
     ['Chorus 1', 'Refrão 1', 'chorus 1', 'o refrão 1'],
