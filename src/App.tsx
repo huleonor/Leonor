@@ -62,7 +62,10 @@ export default function App() {
   const [pianoNext, setPianoNext] = useState<(() => void) | null>(null);
   // A section played through with the hands (Hear on the Song tab): one video on its own.
   const [hearing, setHearing] = useState<Clip | null>(null);
-  useEffect(() => { if (tab !== 'watch') setHearing(null); }, [tab]);
+  // The whole song watched from its own screen: that song (maybe not the one being learnt), and back to that screen.
+  const [hearInfo, setHearInfo] = useState<SongInfo | null>(null);
+  useEffect(() => { if (tab !== 'watch') { setHearing(null); setHearInfo(null); } }, [tab]);
+  const back = () => { if (hearInfo) setOpenId(hearInfo.entry.id); setTab('song'); };
   /** Runs fn now, or after the piano step when it is due; true when it waits for the step. */
   const viaPiano = (fn: () => void) => {
     if (!pianoAsked() && !Object.values(linkState()).some(l => l.status === 'on')) { setPianoNext(() => fn); return true; }
@@ -275,6 +278,7 @@ export default function App() {
           info={open} settings={settings} links={links}
           onExit={() => setOpenId(null)}
           onTeach={section => { unlockAudio(); ensureInput(); setLesson({ id: open.entry.id, section: section.id, n: 0 }); }}
+          onWatch={() => { const c = listenSongClip(open.song!); if (c) { unlockAudio(); setHearInfo(open); setHearing(c); setOpenId(null); setTab('watch'); } }}
           onMastery={() => { unlockAudio(); ensureInput(); setMastery({ id: open.entry.id, n: 0, session: new MasterySession(open.song!) }); }}
           onSettings={() => setSheet('settings')}
         />
@@ -283,11 +287,14 @@ export default function App() {
           {!watching && nav}
           {watching && (
             // Back to the song, always there (the 2026-11 audit): the videos open from it.
-            <button className="nav-toggle back" onClick={() => setTab('song')} aria-label={L('Back to the song', 'Voltar à música')}><IconArrowLeft size={24} /></button>
+            <button className="nav-toggle back" onClick={back} aria-label={L('Back to the song', 'Voltar à música')}><IconArrowLeft size={24} /></button>
           )}
           <main className={`content ${watching ? 'tab-watch' : ''}`}>
             {tab === 'watch' ? (
-              currentInfo?.song && currentReels.length ? (
+              hearing && hearInfo?.song ? (
+                <ReelFeed key={`${hearInfo.entry.id}-${hearing.id}`} embedded song={hearInfo.song} reels={[hearing]} start={0}
+                  onClose={back} onPiano={() => setSheet('settings')} onPractice={() => {}} />
+              ) : currentInfo?.song && currentReels.length ? (
                 <ReelFeed
                   key={`${currentInfo.entry.id}-${hearing?.id ?? watch?.n ?? 0}`} embedded
                   song={currentInfo.song} reels={hearing ? [hearing] : currentReels} start={hearing ? 0 : feedStart()}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { L } from '../lib/lang';
+import { L, LISTEN_SPEEDS, listenPace, setListenPace } from '../lib/lang';
 import { loadPiano, unlockAudio } from '../lib/audio';
 import type { SongInfo } from '../lib/catalog';
 import { barsToTime } from '../lib/analysis';
@@ -16,7 +16,7 @@ import type { HandsChoice, Settings } from '../lib/types';
 import { AnimatePresence, motion } from 'motion/react';
 import { HelpKeys } from './HelpKeys';
 import {
-  IconCap, IconCheck, IconClose, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconStop, IconTarget,
+  IconCap, IconCheck, IconClose, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconSpeed, IconStop, IconTarget,
 } from './Icons';
 import { Bump, Cheer, ProgressBar, SOFT, SPRING } from './Motion';
 import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
@@ -58,6 +58,8 @@ interface Props {
   onTeach: (section: Section) => void;
   /** Starts the next lesson Mastery planned. */
   onMastery: () => void;
+  /** The whole song played through with the hands and the falling notes, at the speed picked here. */
+  onWatch?: () => void;
   onSettings: () => void;
 }
 
@@ -66,7 +68,7 @@ interface Props {
  * The music waits for him (or runs in tempo); the keyboard only rises when he needs help; the
  * other choices live in a small options sheet; "Learn step by step" opens the song's sections.
  */
-export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, onSettings }: Props) {
+export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, onSettings, onWatch }: Props) {
   const song = info.song!;
   const [mode, setMode] = useState<Mode>('play');
   const [scroll, setScroll] = useState<Scroll>('magic');
@@ -78,6 +80,7 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
   const pct = pctOf(mastery.meter.value);
   const pickerWasPlaying = useRef(false);
   const [options, setOptions] = useState(false);
+  const [watchPace, setWatchPace] = useState(listenPace);
   const [alwaysKeys, setAlwaysKeys] = useState(() => { try { return localStorage.getItem('hugos-piano:keys') === 'always'; } catch { return false; } });
   const toggleKeys = () => setAlwaysKeys(a => { try { localStorage.setItem('hugos-piano:keys', a ? 'help' : 'always'); } catch { /* ignore */ } return !a; });
   const [hands, setHands] = useState<HandsChoice>('both');
@@ -207,6 +210,18 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
       {!teach && <HelpKeys engine={engine} naming={settings.naming} fingers={settings.fingers} always={alwaysKeys} />}
 
       <footer className="song-foot">
+        {onWatch && (
+          <span className="watch-pair">
+            <motion.button className="btn" whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMode('play'); onWatch(); }}
+              aria-label={L(`Watch the whole song with the hands, at ${Math.round(watchPace * 100)}%`, `Ver a música toda com as mãos, a ${Math.round(watchPace * 100)}%`)}>
+              <IconPlay size={18} />{L('Watch', 'Ver')}
+            </motion.button>
+            <button className="btn speed-chip" onClick={() => { const v = LISTEN_SPEEDS[(LISTEN_SPEEDS.indexOf(watchPace) + 1) % LISTEN_SPEEDS.length]; setListenPace(v); setWatchPace(v); }}
+              aria-label={L(`Speed: ${Math.round(watchPace * 100)}%. Tap to change`, `Velocidade: ${Math.round(watchPace * 100)}%. Toca para mudar`)}>
+              <IconSpeed size={18} />{Math.round(watchPace * 100)}%
+            </button>
+          </span>
+        )}
         <motion.button className={`btn ${mode === 'listen' ? 'on' : ''}`} whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMode(m => (m === 'listen' ? 'play' : 'listen')); }} aria-pressed={mode === 'listen'}>
           {mode === 'listen' ? <><IconStop size={18} />{L('Stop', 'Parar')}</> : <><IconSpeaker size={18} />{L('Listen', 'Ouvir')}</>}
         </motion.button>
