@@ -61,13 +61,15 @@ interface Props {
   resume?: React.ReactNode;
   /** Hear a section played through with the hands (a video); without it, the piano alone. */
   onHear?: (r: Reel) => void;
+  /** The whole song played through with the hands and the falling notes, at a speed he picks. */
+  onHearSong?: () => void;
 }
 
 /**
  * Song: the song being learnt, phase by phase. Every phase is one video that explains its patterns
  * and tricks, and its practice; the next thing to do is lit.
  */
-export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, onPractice, onWholeSong, onBringMidi, onSongs, resume, onHear }: Props) {
+export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, onPractice, onWholeSong, onBringMidi, onSongs, resume, onHear, onHearSong }: Props) {
   useBump(onSeen);
   const entry = entries.find(e => e.id === id || e.slot === id);
   const info = entry ? infos[entry.id] : undefined;
@@ -170,7 +172,7 @@ export function Journey({ songId: id, onChoose, infos, entries, ready, onWatch, 
 
       <h2 className="song-sections-title">{L('Sections', 'Secções')}</h2>
       <SectionList
-        song={song} onHear={onHear}
+        song={song} onHear={onHear} onHearSong={onHearSong}
         nodes={[
           ...rows.map(x => ({
             key: x.r.id, n: String(x.r.n), title: x.r.section, about: x.r.words.title === x.r.section ? '' : x.r.words.title, line: status(x),
@@ -205,7 +207,7 @@ interface PathNode {
  * videos; at the right, Hear (the section played through with the hands) and Practise (its
  * lessons) as square icon buttons. The next row is pink; Full song closes the card in ink.
  */
-function SectionList({ song, nodes, onHear }: { song: Song; nodes: PathNode[]; onHear?: (r: Reel) => void }) {
+function SectionList({ song, nodes, onHear, onHearSong }: { song: Song; nodes: PathNode[]; onHear?: (r: Reel) => void; onHearSong?: () => void }) {
   const [, bump] = useState(0);
   useEffect(() => onListening(() => bump(x => x + 1)), []);
   useEffect(() => () => stopListening(), []);
@@ -226,6 +228,12 @@ function SectionList({ song, nodes, onHear }: { song: Song; nodes: PathNode[]; o
               <span className="sec-acts">
                 <button className="sec-act" onClick={() => (onHear ? onHear(r) : on ? stopListening() : listenBars(song, r.from, r.to))} aria-pressed={onHear ? undefined : on}
                   aria-label={L(`Hear ${x.title}`, `Ouvir ${x.title}`)}>{on ? <IconStop size={18} /> : <IconSpeaker size={20} />}</button>
+              </span>
+            )}
+            {x.state === 'finale' && onHearSong && (
+              <span className="sec-acts">
+                <button className="sec-act" onClick={() => { stopListening(); onHearSong(); }}
+                  aria-label={L('Watch the full song played, with the hands and the falling notes', 'Ver a música toda tocada, com as mãos e as notas a cair')}><IconPlay size={20} /></button>
               </span>
             )}
           </li>
