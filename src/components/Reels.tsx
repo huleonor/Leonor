@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { markAppPlayed } from '../lib/input';
-import { handsShown, L, N, NOTE_RE, showHands, showStaff, staffShown, videoPrefs } from '../lib/lang';
+import { handsShown, L, N, NOTE_RE, showHands, showStaff, staffShown, videoPrefs, listenPace, setListenPace, LISTEN_SPEEDS } from '../lib/lang';
 import { ReelStaff } from './ReelStaff';
 import { audioContext, loadPiano, onAudioReset, pianoReady, playNote, playSfx, stopAll, stopSfx, unlockAudio } from '../lib/audio';
 import { linkState, onLinkState, onNote, setExpected, setMicRange } from '../lib/input';
@@ -738,7 +738,8 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
   // The pace is taken when the video comes on screen, so it never changes under him.
   // A speed chosen from the paused video takes effect at once (speedN), from the start of the video.
   const [speedN, setSpeedN] = useState(0);
-  const paceAt = useMemo(() => pace * videoPrefs.pace, [reel, active, speedN]); // eslint-disable-line react-hooks/exhaustive-deps
+  const isListen = reel.id.endsWith('-listen');
+  const paceAt = useMemo(() => (isListen ? listenPace() : pace * videoPrefs.pace), [reel, active, speedN]); // eslint-disable-line react-hooks/exhaustive-deps
   const tl = useMemo(() => timelineOf(song, reel, paceAt), [song, reel, paceAt]);
   // One keyboard for both hands, framed on this video's notes.
   const range = useMemo<[number, number]>(() => {
@@ -1151,7 +1152,16 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
                 <span>{voice.on ? <IconSpeaker size={24} /> : <IconSpeakerOff size={24} />}</span>{L('Voice', 'Voz')}
               </button>
             )}
-            {onSpeed && (() => {
+            {isListen && (() => {
+              // Played through (Hear, Full song): his own pick of 100%, 75% or 50%, from the start.
+              const v = listenPace(), next = LISTEN_SPEEDS[(LISTEN_SPEEDS.indexOf(v) + 1) % LISTEN_SPEEDS.length];
+              const name = `${Math.round(v * 100)}%`;
+              return (
+                <button className="reel-act" onClick={e => { e.stopPropagation(); setListenPace(next); setSpeedN(x => x + 1); window.setTimeout(replay, 0); }}
+                  aria-label={L(`Speed: ${name}. Tap to change`, `Velocidade: ${name}. Toca para mudar`)}><span><IconSpeed size={24} /></span>{name}</button>
+              );
+            })()}
+            {onSpeed && !isListen && (() => {
               const v = videoPrefs.pace, next = v < 0.9 ? 1 : v < 1.1 ? 1.2 : 0.8;
               const name = v < 0.9 ? L('Slower', 'Mais lento') : v < 1.1 ? L('Normal', 'Normal') : L('Faster', 'Mais rápido');
               return (

@@ -885,7 +885,8 @@ export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
   sfx.push({ t: 0.05, name: clip.k % 2 ? 'whoosh-short' : 'whoosh', gain: 0.35 });
   if (clip.kind === 'intro') { cards.push({ t: 0, until: TITLE, kind: 'title' }); t = TITLE; }
   const sg0 = clip.segments[0];
-  const sg = clip.kind === 'intro' ? sg0 : { ...sg0, speed: Math.max(0.25, Math.min(clip.kind === 'run' ? 1 : 0.85, sg0.speed * pace)) };
+  // A song or section played through (Hear) takes the speed he picked for it, never above real speed.
+  const sg = clip.id.endsWith('-listen') ? { ...sg0, speed: Math.max(0.25, Math.min(1, sg0.speed * pace)) } : clip.kind === 'intro' ? sg0 : { ...sg0, speed: Math.max(0.25, Math.min(clip.kind === 'run' ? 1 : 0.85, sg0.speed * pace)) };
   const hands: Hand[] = sg.kind === 'both' ? song.hands : [sg.kind];
   const [tLo, tHi] = sg.ticks ?? [barStart(grid, sg.from - 1), barStart(grid, sg.to)];
   const ns = song.notes.filter(n => hands.includes(n.hand) && n.ticks >= tLo - 1 && n.ticks < tHi - 1);
@@ -1091,6 +1092,25 @@ export function listenClip(song: Song, reel: Reel): Clip | undefined {
     ...first, id: `${reel.id}-listen`, kind: 'intro', head: reel.section, say: '', from: reel.from, to: reel.to, where: '', k: 1, of: 1, next: undefined,
     segments: [{ kind: 'both', from: reel.from, to: reel.to, speed: 1, label: tr('Listen', 'Ouve'), listen: true }],
     chords: reel.chords,
+  };
+}
+
+/**
+ * The whole song played through with the hands and the falling notes (Full song on the Song tab,
+ * the user's choice 2026-11), at the speed he picks in the paused video. Never counted as watched.
+ */
+export function listenSongClip(song: Song): Clip | undefined {
+  const reels = reelsOf(song).filter(r => r.n > 0);
+  const first = clipsOf(song).find(c => c.phase.id === reels[0]?.id);
+  if (!first || !reels.length) return undefined;
+  const from = reels[0].from, to = reels[reels.length - 1].to;
+  const head = tr('Full song', 'Música toda');
+  const words = { ...first.words, title: song.entry.title, hook: tr('The whole song, played with the hands', 'A música toda, tocada com as mãos') };
+  const phase: Reel = { ...reels[0], id: 'song-listen', section: head, sectionSaid: head, from, to, words, chords: reels.flatMap(r => r.chords) };
+  return {
+    ...first, id: 'song-listen', phase, words, kind: 'intro', head, section: head, sectionSaid: head, say: '', from, to, where: '', k: 1, of: 1, next: undefined,
+    segments: [{ kind: 'both', from, to, speed: 1, label: tr('Listen', 'Ouve'), listen: true }],
+    chords: reels.flatMap(r => r.chords),
   };
 }
 

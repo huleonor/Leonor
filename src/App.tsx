@@ -6,7 +6,7 @@ import { scheduleReminders, startWebReminders } from './lib/reminders';
 import { currentSongId, FIRST_SONG, Journey, practiceFor, setCurrentSong } from './components/Journey';
 import { ReelFeed } from './components/Reels';
 import { ContinueCard, lastReel, rememberReel } from './components/HomePage';
-import { clipsOf, listenClip, seenReels, type Clip, type Reel } from './lib/reels';
+import { clipsOf, listenClip, listenSongClip, seenReels, type Clip, type Reel } from './lib/reels';
 import { InputCheck } from './components/InputCheck';
 import { Lesson } from './components/Lesson';
 import type { CourseStep } from './lib/course';
@@ -213,6 +213,7 @@ export default function App() {
       onBringMidi={slot => pickFile(slot)}
       onSongs={() => setTab('library')}
       onHear={r => { const song = currentInfo?.song; const c = song && listenClip(song, r); if (c) { unlockAudio(); setHearing(c); setTab('watch'); } }}
+      onHearSong={() => { const song = currentInfo?.song; const c = song && listenSongClip(song); if (c) { unlockAudio(); setHearing(c); setTab('watch'); } }}
       resume={currentInfo?.song && currentReels.length && currentEntry && (currentEntry.id === current || currentEntry.slot === current) ? (
         <ContinueCard song={currentInfo.song} clip={currentReels[feedStart()]} onContinue={() => { unlockAudio(); viaPiano(() => { setWatch(null); setTab('watch'); }); }} />
       ) : undefined}

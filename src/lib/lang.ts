@@ -15,6 +15,10 @@ export const L = (en: string, pt: string) => (current === 'pt' ? pt : en);
  *  stop for him to play. Set by App.tsx on each render, read by the videos as they start. */
 export const videoPrefs = { pace: 1, wait: true };
 export function setVideoPrefs(p: { pace?: number; wait?: boolean }) { Object.assign(videoPrefs, p); }
+/** The speed he picks for a song or a section played through (Hear, Full song): 100%, 75% or 50%. */
+export const LISTEN_SPEEDS = [1, 0.75, 0.5];
+export const listenPace = () => { try { const v = Number(localStorage.getItem('leonor:listen-pace')); return LISTEN_SPEEDS.includes(v) ? v : 1; } catch { return 1; } };
+export function setListenPace(v: number) { try { localStorage.setItem('leonor:listen-pace', String(v)); } catch { /* this visit only */ } }
 /** The hands drawn over the keys in the videos, on or off (Settings and the Hands button share it). */
 export const handsShown = () => { try { return localStorage.getItem('leonor:hands') !== 'off'; } catch { return true; } };
 export function showHands(on: boolean) {
