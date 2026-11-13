@@ -885,8 +885,8 @@ export function timelineOf(song: Song, clip: Clip, pace = 1): ReelTimeline {
   sfx.push({ t: 0.05, name: clip.k % 2 ? 'whoosh-short' : 'whoosh', gain: 0.35 });
   if (clip.kind === 'intro') { cards.push({ t: 0, until: TITLE, kind: 'title' }); t = TITLE; }
   const sg0 = clip.segments[0];
-  // A song or section played through (Hear) takes the speed he picked for it, never above real speed.
-  const sg = clip.id.endsWith('-listen') ? { ...sg0, speed: Math.max(0.25, Math.min(1, sg0.speed * pace)) } : clip.kind === 'intro' ? sg0 : { ...sg0, speed: Math.max(0.25, Math.min(clip.kind === 'run' ? 1 : 0.85, sg0.speed * pace)) };
+  // A song or section played through (Hear) takes the speed he picked for it, 50% to 150%.
+  const sg = clip.id.endsWith('-listen') ? { ...sg0, speed: Math.max(0.25, Math.min(1.5, sg0.speed * pace)) } : clip.kind === 'intro' ? sg0 : { ...sg0, speed: Math.max(0.25, Math.min(clip.kind === 'run' ? 1 : 0.85, sg0.speed * pace)) };
   const hands: Hand[] = sg.kind === 'both' ? song.hands : [sg.kind];
   const [tLo, tHi] = sg.ticks ?? [barStart(grid, sg.from - 1), barStart(grid, sg.to)];
   const ns = song.notes.filter(n => hands.includes(n.hand) && n.ticks >= tLo - 1 && n.ticks < tHi - 1);

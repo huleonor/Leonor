@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { L, LISTEN_SPEEDS, listenPace, setListenPace } from '../lib/lang';
+import { L, listenPace, setListenPace, stepListenPace } from '../lib/lang';
 import { loadPiano, unlockAudio } from '../lib/audio';
 import type { SongInfo } from '../lib/catalog';
 import { barsToTime } from '../lib/analysis';
@@ -16,7 +16,7 @@ import type { HandsChoice, Settings } from '../lib/types';
 import { AnimatePresence, motion } from 'motion/react';
 import { HelpKeys } from './HelpKeys';
 import {
-  IconCap, IconCheck, IconClose, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconRestart, IconSpeaker, IconSpeed, IconStop, IconTarget,
+  IconCap, IconCheck, IconClose, IconGear, IconKeys, IconLoop, IconMagic, IconPlay, IconMinus, IconPlus, IconRestart, IconSpeaker, IconStop, IconTarget,
 } from './Icons';
 import { Bump, Cheer, ProgressBar, SOFT, SPRING } from './Motion';
 import { metronomeOn, setMetronome, useMetronome } from '../lib/metronome';
@@ -216,10 +216,13 @@ export function SongScreen({ info, settings, links, onExit, onTeach, onMastery, 
               aria-label={L(`Watch the whole song with the hands, at ${Math.round(watchPace * 100)}%`, `Ver a música toda com as mãos, a ${Math.round(watchPace * 100)}%`)}>
               <IconPlay size={18} />{L('Watch', 'Ver')}
             </motion.button>
-            <button className="btn speed-chip" onClick={() => { const v = LISTEN_SPEEDS[(LISTEN_SPEEDS.indexOf(watchPace) + 1) % LISTEN_SPEEDS.length]; setListenPace(v); setWatchPace(v); }}
-              aria-label={L(`Speed: ${Math.round(watchPace * 100)}%. Tap to change`, `Velocidade: ${Math.round(watchPace * 100)}%. Toca para mudar`)}>
-              <IconSpeed size={18} />{Math.round(watchPace * 100)}%
-            </button>
+            <span className="speed-step" role="group" aria-label={L('Speed', 'Velocidade')}>
+              {([-1, 1] as const).map(d => {
+                const to = stepListenPace(watchPace, d);
+                const b = <button key={d} onClick={() => { setListenPace(to); setWatchPace(to); }} disabled={to === watchPace} aria-label={d < 0 ? L('Slower', 'Mais lento') : L('Faster', 'Mais rápido')}>{d < 0 ? <IconMinus size={16} /> : <IconPlus size={16} />}</button>;
+                return d < 0 ? <span key="s">{b}<b aria-live="polite">{Math.round(watchPace * 100)}%</b></span> : b;
+              })}
+            </span>
           </span>
         )}
         <motion.button className={`btn ${mode === 'listen' ? 'on' : ''}`} whileTap={{ scale: 0.96 }} onClick={() => { setTeach(false); setMode(m => (m === 'listen' ? 'play' : 'listen')); }} aria-pressed={mode === 'listen'}>

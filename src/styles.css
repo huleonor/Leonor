@@ -635,6 +635,11 @@ p { margin: 0; }
 .reel-side { position: absolute; right: 12px; top: 50%; translate: 0 -50%; z-index: 8; display: grid; gap: 12px; }
 .reel-act { display: grid; justify-items: center; gap: 4px; font: 700 11px var(--font-mono); color: var(--ink); background: var(--paper); padding: 2px 0; }
 .reel-act span { width: 50px; height: 50px; display: grid; place-items: center; border: 2px solid var(--ink); background: var(--white); color: var(--ink); transition: background-color var(--dur) var(--ease); }
+.reel-speed { display: grid; justify-items: center; font: 700 11px var(--font-mono); color: var(--ink); background: var(--paper); padding: 2px 0; }
+.reel-speed button { width: 50px; height: 36px; display: grid; place-items: center; border: 2px solid var(--ink); background: var(--white); color: var(--ink); }
+.reel-speed button:disabled { color: var(--muted); }
+.reel-speed b { width: 50px; padding: 4px 0; text-align: center; font: 700 14px var(--font-mono); background: var(--white); border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); }
+.reel-speed small { margin-top: 4px; font: inherit; }
 .reel-act:nth-child(odd) span { transform: rotate(3deg); }
 .reel-act:nth-child(even) span { transform: rotate(-2deg); }
 .reel-act:hover span { background: var(--marker); }
@@ -700,7 +705,11 @@ p { margin: 0; }
 .song-foot .piano-chip { margin-right: auto; }
 .song-foot .btn.on { background: var(--pink-soft); color: var(--ink); }
 .song-foot .watch-pair { display: inline-flex; gap: 6px; }
-.song-foot .speed-chip { padding-left: 10px; padding-right: 10px; font-family: var(--font-mono); }
+.song-foot .speed-step, .song-foot .speed-step > span { display: inline-flex; align-items: stretch; }
+.song-foot .speed-step { border: 2px solid var(--ink); background: var(--white); }
+.song-foot .speed-step button { width: 36px; display: grid; place-items: center; color: var(--ink); }
+.song-foot .speed-step button:disabled { color: var(--muted); }
+.song-foot .speed-step b { min-width: 52px; display: grid; place-items: center; font: 700 14px var(--font-mono); border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); }
 .progress { position: relative; flex: 1; height: 6px; background: var(--paper-3); overflow: hidden; }
 .progress > i { position: absolute; inset: 0 auto 0 0; background: var(--pink); }
 .progress > i > b { position: absolute; inset: 0; background: var(--field-ink); }

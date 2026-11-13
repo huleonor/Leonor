@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { markAppPlayed } from '../lib/input';
-import { handsShown, L, N, NOTE_RE, showHands, showStaff, staffShown, videoPrefs, listenPace, setListenPace, LISTEN_SPEEDS } from '../lib/lang';
+import { handsShown, L, N, NOTE_RE, showHands, showStaff, staffShown, videoPrefs, listenPace, setListenPace, stepListenPace } from '../lib/lang';
 import { ReelStaff } from './ReelStaff';
 import { audioContext, loadPiano, onAudioReset, pianoReady, playNote, playSfx, stopAll, stopSfx, unlockAudio } from '../lib/audio';
 import { linkState, onLinkState, onNote, setExpected, setMicRange } from '../lib/input';
@@ -24,7 +24,7 @@ import { isBlack } from '../lib/names';
 import { explainClips, FALL, fixClip, letter, markSeen, readClip, reelsOf, timelineOf, type Clip, type Reel, type ReelLine, type ReelNote, type ReelTimeline } from '../lib/reels';
 import { anyVoice, hush, onVoice, pauseVoice, prepareVoice, resumeVoice, say, setVoiceOn, speaking, unlockVoice, voiceOn } from '../lib/voice';
 import type { Hand, Song } from '../lib/types';
-import { IconCheck, IconClose, IconExplain, IconHand, IconKeys, IconPlay, IconRestart, IconSheet, IconSpeaker, IconSpeakerOff, IconSpeed } from './Icons';
+import { IconCheck, IconClose, IconExplain, IconHand, IconKeys, IconPlay, IconRestart, IconSheet, IconSpeaker, IconSpeakerOff, IconSpeed, IconMinus, IconPlus } from './Icons';
 import { SOFT, SPRING } from './Motion';
 import { SectionRow } from './SectionRow';
 
@@ -137,7 +137,9 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void, onHo
   // Scrubbing, TikTok style: jump anywhere in the video and play on from there.
   const seek = (to: number) => { const s = state.current; if (s.playing) { s.playing = false; stopAll(); } play(Math.max(0, Math.min(tl.duration - 0.05, to))); };
 
-  return { playing, ready, now, play, pause, seek };
+  // Back to the top without playing (a new speed picked while paused: he may step it again before play).
+  const rewind = () => { const s = state.current; if (s.playing) { s.playing = false; stopAll(); stopSfx(); setPlaying(false); } s.t = 0; };
+  return { playing, ready, now, play, pause, seek, rewind };
 }
 
 
@@ -933,6 +935,16 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
 
   const toggle = () => { unlockVoice(); if (clock.playing) clock.pause(); else { unlockAudio(); clock.play(); } };
   const replay = () => { unlockAudio(); unlockVoice(); hush(); setLoops(0); setEpoch(e => e + 1); clock.play(0); };
+  // A new speed makes a new timeline: start again from the top once it is in (the clock of the render
+  // before it still held the old notes, so the speed was never heard).
+  const replayNext = useRef(false);
+  // Played through (Hear, Full song), it goes back to the top and stays paused, so he can step the speed again before play.
+  useEffect(() => {
+    if (!replayNext.current) return;
+    replayNext.current = false;
+    if (isListen) { hush(); clock.rewind(); setLoops(0); setEpoch(e => e + 1); } else replay();
+  }, [tl]); // eslint-disable-line react-hooks/exhaustive-deps
+  const newSpeed = () => { replayNext.current = true; setSpeedN(x => x + 1); };
   const sayLine = place.line >= 0 && loops === 0 ? tl.lines[place.line] : undefined;
   const spoken = useWordAt(sayLine, place.line, clock.now, voice.word);
   // The keys the voice has named so far, numbered in the order it named them (E, C, A, C: 1 2 3 4),
@@ -1153,19 +1165,22 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
               </button>
             )}
             {isListen && (() => {
-              // Played through (Hear, Full song): his own pick of 100%, 75% or 50%, from the start.
-              const v = listenPace(), next = LISTEN_SPEEDS[(LISTEN_SPEEDS.indexOf(v) + 1) % LISTEN_SPEEDS.length];
-              const name = `${Math.round(v * 100)}%`;
+              // Played through (Hear, Full song): slower or faster, 50% to 150%, from the start.
+              const v = listenPace(), go = (d: -1 | 1) => (e: React.MouseEvent) => { e.stopPropagation(); setListenPace(stepListenPace(v, d)); newSpeed(); };
               return (
-                <button className="reel-act" onClick={e => { e.stopPropagation(); setListenPace(next); setSpeedN(x => x + 1); window.setTimeout(replay, 0); }}
-                  aria-label={L(`Speed: ${name}. Tap to change`, `Velocidade: ${name}. Toca para mudar`)}><span><IconSpeed size={24} /></span>{name}</button>
+                <div className="reel-speed" role="group" aria-label={L(`Speed ${Math.round(v * 100)}%`, `Velocidade ${Math.round(v * 100)}%`)} onClick={e => e.stopPropagation()}>
+                  <button onClick={go(1)} disabled={stepListenPace(v, 1) === v} aria-label={L('Faster', 'Mais rápido')}><IconPlus size={20} /></button>
+                  <b aria-live="polite">{Math.round(v * 100)}%</b>
+                  <button onClick={go(-1)} disabled={stepListenPace(v, -1) === v} aria-label={L('Slower', 'Mais lento')}><IconMinus size={20} /></button>
+                  <small>{L('Speed', 'Velocidade')}</small>
+                </div>
               );
             })()}
             {onSpeed && !isListen && (() => {
               const v = videoPrefs.pace, next = v < 0.9 ? 1 : v < 1.1 ? 1.2 : 0.8;
               const name = v < 0.9 ? L('Slower', 'Mais lento') : v < 1.1 ? L('Normal', 'Normal') : L('Faster', 'Mais rápido');
               return (
-                <button className="reel-act" onClick={e => { e.stopPropagation(); onSpeed(next); setSpeedN(x => x + 1); window.setTimeout(replay, 0); }}
+                <button className="reel-act" onClick={e => { e.stopPropagation(); onSpeed(next); newSpeed(); }}
                   aria-label={L(`Speed: ${name}. Tap to change`, `Velocidade: ${name}. Toca para mudar`)}><span><IconSpeed size={24} /></span>{name}</button>
               );
             })()}
