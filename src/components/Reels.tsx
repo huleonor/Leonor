@@ -739,7 +739,9 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
   // A speed chosen from the paused video takes effect at once (speedN), from the start of the video.
   const [speedN, setSpeedN] = useState(0);
   const isListen = reel.id.endsWith('-listen');
-  const paceAt = useMemo(() => (isListen ? listenPace() : pace * videoPrefs.pace), [reel, active, speedN]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The overview and a section's idea take his Speed too (they ignored it, so the button seemed
+  // broken on the first video of every section), but never his adaptive pace and never past real speed.
+  const paceAt = useMemo(() => (isListen ? listenPace() : reel.kind === 'intro' ? Math.min(1, videoPrefs.pace) : pace * videoPrefs.pace), [reel, active, speedN]); // eslint-disable-line react-hooks/exhaustive-deps
   const tl = useMemo(() => timelineOf(song, reel, paceAt), [song, reel, paceAt]);
   // One keyboard for both hands, framed on this video's notes.
   const range = useMemo<[number, number]>(() => {
@@ -1162,8 +1164,11 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
               );
             })()}
             {onSpeed && !isListen && (() => {
-              const v = videoPrefs.pace, next = v < 0.9 ? 1 : v < 1.1 ? 1.2 : 0.8;
-              const name = v < 0.9 ? L('Slower', 'Mais lento') : v < 1.1 ? L('Normal', 'Normal') : L('Faster', 'Mais rápido');
+              // The overview and an idea are at real speed already: there it is Normal or Slower only,
+              // so a tap always changes what he hears.
+              const v = videoPrefs.pace, real = reel.kind === 'intro';
+              const next = real ? (v < 0.9 ? 1 : 0.8) : v < 0.9 ? 1 : v < 1.1 ? 1.2 : 0.8;
+              const name = v < 0.9 ? L('Slower', 'Mais lento') : v < 1.1 || real ? L('Normal', 'Normal') : L('Faster', 'Mais rápido');
               return (
                 <button className="reel-act" onClick={e => { e.stopPropagation(); onSpeed(next); setSpeedN(x => x + 1); window.setTimeout(replay, 0); }}
                   aria-label={L(`Speed: ${name}. Tap to change`, `Velocidade: ${name}. Toca para mudar`)}><span><IconSpeed size={24} /></span>{name}</button>
