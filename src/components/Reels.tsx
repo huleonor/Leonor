@@ -96,7 +96,7 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void, onHo
   useEffect(() => {
     if (active && ready) { unlockAudio(); play(0); }
     if (!active) { pause(); state.current.t = 0; }
-    return () => { if (state.current.playing) { state.current.playing = false; stopAll(); } };
+    return () => { if (state.current.playing) { state.current.playing = false; stopAll(); stopSfx(); } };
   }, [active, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Schedules the notes coming up and stops at the end.
@@ -108,6 +108,9 @@ function useReelClock(tl: ReelTimeline, active: boolean, onEnd: () => void, onHo
       const t = now();
       while (s.next < tl.notes.length && tl.notes[s.next].t < t + 0.2) {
         const n = tl.notes[s.next++];
+        // A stalled frame (the hands loading, a slow phone, the page coming back) must not fire the
+        // notes it skipped all at once: a note already past is left out.
+        if (n.t < t - 0.15) continue;
         // The piano steps back a little while the voice talks, like music under a voice-over;
         // in Train with me it only guides, quietly, while he plays.
         // Without his piano connected he is only watching: the piano stays at its guiding level.
@@ -765,6 +768,8 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
       if (reel.k === reel.of) markSeen(song.entry.id, reel.phase.id);
     }
     setLoops(n => n + 1);
+    // A song or section played through stops at its end (play starts it again from the top).
+    if (isListen) return;
     // TikTok: it starts again by itself, from Train with me.
     window.setTimeout(() => clockRef.current?.play(tl.loopFrom), 0);
   }, () => {
@@ -1047,7 +1052,7 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
           <motion.p key={label} className="reel-kicker" initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.18, ease: ARRIVE }}>{label}</motion.p>
           <h2 className={`reel-hook hand-${seg.kind} ${reel.head.split(' ').some(x => !new RegExp(`^${NOTE_RE}$`).test(x) && x !== 'octaves' && x !== 'oitavas') ? 'words' : ''}`}>{reel.head.split(' ').map((x, i) => <motion.span key={`${reel.id}-${i}`} initial={{ opacity: 0, filter: 'blur(6px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ duration: 0.13, delay: 0.1 + i * 0.067, ease: ARRIVE }}>{x} </motion.span>)}</h2>
           {(paused || (inputOn && score.ok + score.bad > 0)) && (
-            <p className="reel-meta">{paused && L(`${reel.phase.section}, ${reel.k} of ${reel.of}`, `${reel.phase.section}, ${reel.k} de ${reel.of}`)}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">{paused ? '. ' : ''}{L('Your keys: ', 'As tuas teclas: ')}<b className="ok">{score.ok} {L('right', 'certas')}</b>, <b className="bad">{score.bad} {L('wrong', 'erradas')}</b></span>}</p>
+            <p className="reel-meta">{paused && (isListen ? L(`${reel.phase.section}, played through`, `${reel.phase.section}, tocada do início ao fim`) : L(`${reel.phase.section}, ${reel.k} of ${reel.of}`, `${reel.phase.section}, ${reel.k} de ${reel.of}`))}{inputOn && score.ok + score.bad > 0 && <span className="reel-score" aria-live="polite">{paused ? '. ' : ''}{L('Your keys: ', 'As tuas teclas: ')}<b className="ok">{score.ok} {L('right', 'certas')}</b>, <b className="bad">{score.bad} {L('wrong', 'erradas')}</b></span>}</p>
           )}
         </header>
         <div className={`reel-stage ${staffOn ? 'on-staff' : ''}`}>
@@ -1159,7 +1164,7 @@ export function ReelPlayer({ song, reel, active, onPiano, onExplain, pace = 1, o
         {paused && (
           <motion.aside key="side" className="reel-side" initial={{ x: 70, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 70, opacity: 0, transition: { duration: 0.14, ease: LEAVE } }} transition={{ duration: 0.3, ease: ARRIVE }}>
             <button className="reel-act" onClick={replay} aria-label={L('From the start, with the voice', 'Do início, com a voz')}><span><IconRestart size={24} /></span>{L('Again', 'Outra vez')}</button>
-            {anyVoice() && (
+            {anyVoice() && !isListen && (
               <button className="reel-act" onClick={e => { e.stopPropagation(); unlockVoice(); setVoiceOn(!voice.on); }} aria-pressed={voice.on} aria-label={voice.on ? L('Turn the voice off', 'Desligar a voz') : L('Turn the voice on', 'Ligar a voz')}>
                 <span>{voice.on ? <IconSpeaker size={24} /> : <IconSpeakerOff size={24} />}</span>{L('Voice', 'Voz')}
               </button>

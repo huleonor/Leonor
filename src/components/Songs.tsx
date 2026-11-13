@@ -14,7 +14,7 @@ import { SongPreview } from './SongPreview';
 
 const COLLECTIONS: [NonNullable<SongEntry['collection']>, () => string][] = [['classical', () => L('Classical', 'Clássica')], ['film', () => L('Film scores', 'Bandas sonoras')], ['modern', () => L('Modern piano', 'Piano moderno')]];
 
-export const byLine = (e: SongEntry) => [e.composer, e.film && e.film !== e.title ? e.film : undefined].filter(Boolean).join(' · ');
+export const byLine = (e: SongEntry) => [e.composer, e.film && e.film !== e.title ? e.film : undefined].filter(Boolean).join(', ');
 
 /** A small square cover, the same design for every song (SongCover.tsx). */
 function Cover({ entry, song }: { entry: SongEntry; song?: Song }) {

@@ -1,7 +1,7 @@
 import type { CourseStep } from '../lib/course';
 import { IconStar } from './Icons';
 
-export const stepName = (s: CourseStep) => (s.part !== undefined ? `Part ${s.part} · ${s.title}` : s.title);
+export const stepName = (s: CourseStep) => (s.part !== undefined ? `Part ${s.part}, ${s.title}` : s.title);
 
 export function Stars({ n, of = 3 }: { n: number; of?: number }) {
   return (

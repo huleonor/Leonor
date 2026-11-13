@@ -707,7 +707,7 @@ p { margin: 0; }
 .song-foot .watch-pair { display: inline-flex; gap: 6px; }
 .song-foot .speed-step, .song-foot .speed-step > span { display: inline-flex; align-items: stretch; }
 .song-foot .speed-step { border: 2px solid var(--ink); background: var(--white); }
-.song-foot .speed-step button { width: 36px; display: grid; place-items: center; color: var(--ink); }
+.song-foot .speed-step button { width: 44px; min-height: 44px; display: grid; place-items: center; color: var(--ink); }
 .song-foot .speed-step button:disabled { color: var(--muted); }
 .song-foot .speed-step b { min-width: 52px; display: grid; place-items: center; font: 700 14px var(--font-mono); border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); }
 .progress { position: relative; flex: 1; height: 6px; background: var(--paper-3); overflow: hidden; }
@@ -715,8 +715,9 @@ p { margin: 0; }
 .progress > i > b { position: absolute; inset: 0; background: var(--field-ink); }
 .score { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; background: var(--white); color: var(--ink); -webkit-overflow-scrolling: touch; }
 .score-page { max-width: 1120px; margin: 0 auto; padding: 14px 14px 120px; }
-.score-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 0 10px 4px; }
-.score-head h1 { font-size: 28px; }
+.score-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding: 0 10px 4px; }
+/* Never narrower than its longest word: a long title keeps whole words and the composer goes under it. */
+.score-head h1 { font-size: 28px; min-width: min-content; }
 .score-head p { font-size: 15px; color: var(--ink-2); }
 .score-page svg { display: block; width: 100%; height: auto; }
 .score .abcjs-title, .score svg text { fill: var(--ink); }
@@ -772,6 +773,8 @@ p { margin: 0; }
   .song-foot .btn.big { flex: 1; }
   .song-foot .btn.mastery-btn { order: -1; flex: 1 1 100%; }
   .song-foot .btn:not(.mastery-btn) { flex: 1 1 auto; padding: 0 12px; }
+  .song-foot .watch-pair { flex: 1 1 100%; }
+  .song-foot .watch-pair > .btn { flex: 1 1 auto; }
 }
 
 /* ---------- The keyboard ---------- */
